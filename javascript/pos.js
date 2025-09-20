@@ -2105,18 +2105,26 @@ async function viewOMRDetails(scanId) {
 function initializeScanButton() {
     const scanBtn = document.getElementById('scanBtn');
     if (scanBtn) {
-        scanBtn.addEventListener('click', function() {
-            console.log('🔍 Scan button clicked - Navigating to OMR scanner...');
-            
-            // Show loading state briefly
+        scanBtn.addEventListener('click', async function() {
+            console.log('🔍 Scan button clicked - Running OMR scanner backend...');
             const originalHTML = scanBtn.innerHTML;
             scanBtn.disabled = true;
-            scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Opening...';
-            
-            // Navigate to OMR page after short delay
-            setTimeout(() => {
-                window.location.href = './omr.html';
-            }, 500);
+            scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Scanning...';
+            try {
+                const response = await fetch('/api/scan-omr', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('✅ OMR scan completed!', 'success');
+                    // Optionally, handle data.output here
+                } else {
+                    showToast('❌ OMR scan failed: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('❌ Error running OMR scan: ' + err.message, 'error');
+            } finally {
+                scanBtn.disabled = false;
+                scanBtn.innerHTML = originalHTML;
+            }
         });
     }
 }
