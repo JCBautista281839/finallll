@@ -683,7 +683,7 @@ function updateWelcomeMessage(userData) {
       displayName = userData.displayName;
     }
     
-    welcomeElement.textContent = `Hi, ${displayName}!`;
+    welcomeElement.textContent = `Welcome, ${displayName}!`;
     console.log(`✅ Welcome message updated: ${displayName}`);
   }
 }
