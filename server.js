@@ -6,9 +6,6 @@ const cors = require('cors');
 
 const app = express();
 
-// For running Python scripts
-const { spawn } = require('child_process');
-
 // Basic middleware
 app.use(cors());
 app.use(express.json());
@@ -80,25 +77,6 @@ app.post('/api/place-order', async (req, res) => {
 });
 
 /* ====== Local app routes (static pages) ====== */
-// Route to run omr_web_circle_scanner.py
-app.post('/api/scan-omr', (req, res) => {
-  const pythonProcess = spawn('python', [path.join(__dirname, 'omr', 'omr_web_circle_scanner.py')]);
-  let output = '';
-  let errorOutput = '';
-  pythonProcess.stdout.on('data', (data) => {
-    output += data.toString();
-  });
-  pythonProcess.stderr.on('data', (data) => {
-    errorOutput += data.toString();
-  });
-  pythonProcess.on('close', (code) => {
-    if (code === 0) {
-      res.json({ success: true, output });
-    } else {
-      res.status(500).json({ success: false, error: errorOutput || 'Python script failed' });
-    }
-  });
-});
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/pos', (req, res) => res.sendFile(path.join(__dirname, 'html', 'pos.html')));
 app.get('/payment', (req, res) => res.sendFile(path.join(__dirname, 'html', 'payment.html')));
