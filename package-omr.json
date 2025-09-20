@@ -1,0 +1,12 @@
+{
+  "name": "viktoria-omr-autostart",
+  "version": "1.0.0",
+  "description": "Auto-start helper for OMR Scanner",
+  "main": "omr-autostart.js",
+  "scripts": {
+    "start-omr": "node omr-autostart.js"
+  },
+  "dependencies": {},
+  "keywords": ["omr", "scanner", "autostart"],
+  "author": "Viktoria's POS System"
+}

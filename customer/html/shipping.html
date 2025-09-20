@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shipping Options</title>
+  <link rel="stylesheet" href="../css/shipping.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Top Nav -->
+    <div class="top-nav">
+      <a href="../html/details.html" class="back-btn">← BACK</a>
+      <div class="nav-links">
+        <a href="#">Home</a>
+        <a href="../html/menu.html" class="active">Menu</a>
+        <div class="search-box">
+          <input type="text" placeholder="Search">
+          <span class="search-icon">🔍</span>
+        </div>
+        <span class="icon">👤</span>
+        <span class="icon">🛒</span>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="checkout">
+      <!-- Left Section -->
+      <div class="form-section">
+        <h2 class="form-title">SHIPPING OPTIONS</h2>
+
+        <h3>Contact Information</h3>
+        <div class="contact-box">
+          <div class="contact-left">
+            <p class="label">Contact</p>
+            <p><b>John Doe</b><br>johndoe@gmail.com<br>0912345987</p>
+          </div>
+          <div class="contact-right">
+            <p class="label">Deliver to</p>
+            <p><b>John Doe</b><br>johndoe@gmail.com<br>0912345987</p>
+          </div>
+        </div>
+
+        <h3>Contact Information</h3>
+        <div class="shipping-option selected">
+          <input type="radio" name="shipping" checked>
+          <span class="option-title">Pick Up in Store</span>
+          <span class="option-desc">Free pickup at our location</span>
+          <span class="price">FREE</span>
+        </div>
+
+        <div class="shipping-option">
+          <input type="radio" name="shipping">
+          <span class="option-title">Lalamove Delivery</span>
+          <span class="option-desc">Door-to-door delivery service</span>
+          <span class="price">₱89.00<br><small>SEDAN • 0.5km</small></span>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h2>ORDER FORM</h2>
+        <div class="order-item">
+          <span>1</span>
+          <span>Crispy Kare-Kare</span>
+          <span class="price">Php 500</span>
+        </div>
+        <hr>
+        <div class="total">
+          <span>Total</span>
+          <span class="price">Php 500</span>
+        </div>
+        <!-- Shipping page continue button -->
+<button class="continue-btn" onclick="window.location.href='payment.html'">
+  Payment
+</button>
+
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

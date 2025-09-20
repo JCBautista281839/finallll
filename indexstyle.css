@@ -1,0 +1,794 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #ffffff;
+  color: #333;
+  overflow-x: hidden;
+}
+
+/* Header Styles */
+.header {
+  padding: 20px 0;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.navbar-brand {
+  padding: 0;
+}
+
+.logo-img {
+  height: 80px;
+  width: auto;
+  border-radius: 50%;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  gap: 40px;
+  margin: 0;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #8B2E20;
+  font-weight: 500;
+  font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #6B1E10;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: flex-end;
+}
+
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  padding: 10px 40px 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  width: 200px;
+  font-size: 14px;
+}
+
+.search-icon {
+  position: absolute;
+  right: 15px;
+  color: #8B2E20;
+}
+
+.header-icons {
+  display: flex;
+  gap: 20px;
+}
+
+.icon-link {
+  color: #8B2E20;
+  font-size: 20px;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.icon-link:hover {
+  color: #6B1E10;
+}
+
+/* Main Content Styles */
+.main-content {
+  padding: 60px 0;
+  min-height: calc(100vh - 200px);
+  overflow-x: hidden;
+}
+
+.content-left {
+  padding: 40px 40px 40px 20px;
+}
+
+
+.info-section {
+  margin-top: -80px;
+  margin-bottom: 80px;
+}
+
+.info-title {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 10px;
+  font-weight: 400;
+}
+
+.hours {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.location {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: #666;
+  font-size: 16px;
+}
+
+.location-icon {
+  color: #8B2E20;
+}
+
+.headline-section {
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.main-headline {
+  line-height: 1.1;
+  position: relative;
+}
+@font-face {
+  font-family: 'pinyon-script';
+  src: url(/src/font/PinyonScript-Regular.ttf);
+}
+@font-face {
+  font-family: 'poppins';
+  src: url(/src/font/poppins.regular.ttf);
+}
+.filipino {
+  display: block;
+  font-family: 'pinyon-script';
+  font-size: 150px;
+  color: #8B2E20;
+  margin-bottom: -60px;
+  position: relative;
+  z-index: 2;
+  margin-left: 50px;
+}
+
+.comfort-food {
+  font-family: 'poppins';
+  display: block;
+  font-size: 90px;
+  font-weight: 300;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: -6px;
+  z-index: 0;
+  margin-top: -40px;
+  position: relative;
+  z-index: 1;
+}
+
+.description-section {
+  margin-bottom: 40px;
+}
+
+.description {
+  font-size: 23px;
+  line-height: 1.6;
+  color: #555;
+  max-width: 700px;
+  margin-top: -20px;
+}
+
+
+/* Signature dishes */
+.signature-section {
+  padding: 40px 0 60px;
+}
+
+.signature-title {
+  font-family: 'poppins';
+  font-weight: 500;
+  letter-spacing: -2px;
+  color: #8B2E20;
+  margin-bottom: 24px;
+}
+
+.signature-row {
+  margin-top: 10px;
+}
+
+.dish {
+  margin-top: 90px;
+  position: relative;
+  text-align: center;
+}
+
+.dish-plate {
+  width: 260px;
+  height: 170px;
+  background: #790F0F;
+  border-radius: 50%;
+  margin: -28px auto 0;
+  position: relative;
+  z-index: 1;
+}
+
+.dish-img {
+  margin-top:-300px ;
+  width: 295px;
+  height: 295px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+}
+
+.dish-name {
+  margin-top: 12px;
+  font-family: 'poppins';
+  font-size: 16px;
+  color: #8B2E20;
+}
+
+.cta-section {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cta-btn {
+  background-color: #8B2E20;
+  border: none;
+  color: white;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.cta-btn:hover {
+  background-color: #6B1E10;
+  color: white;
+}
+
+.cta-btn-outline {
+  border: 2px solid #282828;
+  color: #282828;
+  background-color: transparent;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.cta-btn-outline:hover {
+  background-color: #8B2E20;
+  color: white;
+}
+
+/* Right Content Styles */
+.content-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background: transparent;
+}
+
+.food-image-container {
+  position: relative;
+  max-width: 100%;
+  text-align: center;
+  background: transparent;
+ 
+}
+
+.food-image {
+  max-width: 150%;
+  width: 105%;
+  height: auto;
+}
+
+.rating-badge {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.rating-star {
+  color: #FFD700;
+  font-size: 18px;
+}
+
+.rating-text {
+  font-weight: 600;
+  color: #3e3e3e;
+  font-size: 14px;
+}
+
+/* Scroll-in animations for hero columns */
+.scroll-left,
+.scroll-right {
+  opacity: 0;
+  transition: transform 2000ms ease, opacity 2000ms ease;
+}
+
+.scroll-left {
+  transform: translateX(-60px);
+}
+
+.scroll-right {
+  transform: translateX(60px);
+}
+
+.in-view {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* When coming from bottom, reset translateY as well */
+.in-view.scroll-up {
+  transform: translateY(0);
+}
+
+/* Exit animations */
+.exit-left {
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: transform 5000ms ease, opacity 5000ms ease;
+}
+
+.exit-right {
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 5000ms ease, opacity 5000ms ease;
+}
+
+/* Dine In & Alfresco Section */
+.dine-option {
+  position: relative;
+  height: 50vh;
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.dine-option .background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s ease;
+}
+
+
+.dine-option .background-image::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dine-in .background-image::after {
+  background: linear-gradient(to right, white 25%, rgba(255, 255, 255, 0) 70%);
+}
+
+.alfresco .background-image::after {
+  background: linear-gradient(to left, white 25%, rgba(255, 255, 255, 0) 70%);
+}
+
+.dine-option-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 0 8%;
+}
+
+.dine-in .dine-option-content {
+  text-align: left;
+}
+
+.alfresco .dine-option-content {
+  text-align: right;
+}
+
+.dine-option-title {
+  font-family: 'pinyon-script';
+  font-size: 150px;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #8B2E20;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: #faf9f9;
+  color: #000000;
+  padding: 60px 0;
+  font-family: 'poppins', sans-serif;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.footer-social,
+.footer-copyright,
+.footer-links {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+}
+
+.footer-social {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.footer-links {
+  text-align: right;
+}
+
+.footer-social span,
+.footer-copyright span,
+.footer-links a {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.footer-social span{
+  color: #000000;
+}
+.footer-copyright span {
+  color: #a6a6a6;
+}
+
+.footer-links a {
+  color: #000000;
+}
+
+.footer-links a:hover {
+  color: #8B2E20;
+}
+
+.social-icon {
+  color: #1a1a1a;
+  background-color: #f0f0f0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.social-icon:hover {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.social-icon i {
+  font-size: 14px;
+}
+
+/* Responsive Design */
+
+/* Desktop Large (default) */
+/* No media query needed */
+
+/* Laptop - (max-width: 1200px) */
+@media (max-width: 1200px) {
+  .nav-list {
+    gap: 30px;
+  }
+  .search-input {
+    width: 170px;
+  }
+  .filipino {
+    font-size: 100px;
+    margin-bottom: -40px;
+  }
+
+  .comfort-food {
+    font-size: 70px;
+    letter-spacing: -5px;
+    margin-top: -35px;
+  }
+
+  .description {
+    font-size: 21px;
+  }
+
+  .dine-option-title {
+    font-size: 130px;
+  }
+}
+
+/* iPad Pro - (max-width: 1024px) */
+@media (max-width: 1024px) and (orientation: portrait) {
+  .filipino {
+    font-size: 120px;
+    margin-bottom: -45px;
+  }
+
+  .comfort-food {
+    font-size: 80px;
+    letter-spacing: -5px;
+    margin-top: -35px;
+  }
+
+  .dish-plate {
+    width: 180px;
+    height: 120px;
+  }
+
+  .dish-img {
+    width: 200px;
+    height: 200px;
+    margin-top: -210px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .filipino {
+    font-size: 110px;
+    margin-bottom: -40px;
+  }
+
+  .comfort-food {
+    font-size: 75px;
+    letter-spacing: -4px;
+    margin-top: -30px;
+  }
+
+  .description {
+    font-size: 20px;
+  }
+
+  .dish-plate {
+    width: 220px;
+    height: 145px;
+  }
+
+  .dish-img {
+    width: 245px;
+    height: 245px;
+    margin-top: -250px;
+  }
+
+  .dine-option-title {
+    font-size: 125px;
+  }
+}
+
+/* Tablet - (max-width: 992px) */
+@media (max-width: 992px) {
+  .navbar-collapse {
+    margin-top: 20px;
+  }
+  .main-nav {
+    margin: 0 !important;
+  }
+  .nav-list {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  .header-actions {
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+  }
+  .logo-img {
+    height: 70px;
+  }
+  .nav-list {
+    gap: 22px;
+  }
+  .nav-link {
+    font-size: 16px;
+  }
+  .header-actions {
+    gap: 15px;
+  }
+  .search-input {
+    width: 140px;
+  }
+  .icon-link {
+    font-size: 18px;
+  }
+  .filipino {
+    font-size: 120px;
+    margin-bottom: -40px;
+  }
+
+  .comfort-food {
+    font-size: 70px;
+    letter-spacing: -4px;
+    margin-top: -30px;
+  }
+
+  .description {
+    font-size: 20px;
+  }
+
+  .dish-plate {
+    width: 200px;
+    height: 130px;
+  }
+
+  .dish-img {
+    width: 220px;
+    height: 220px;
+    margin-top: -230px;
+  }
+
+  .dine-option-title {
+    font-size: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .scroll-left,
+  .scroll-right {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .header .row > [class*="col-"] {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+  .header .row > [class*="col-"]:last-child {
+    margin-bottom: 0;
+  }
+  .header-actions {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .search-input {
+    width: 150px;
+  }
+  
+  .content-left {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .location {
+    justify-content: center;
+  }
+  
+  .filipino {
+    font-size: 80px;
+    margin-bottom: -30px;
+    margin-left: 0;
+  }
+  
+  .comfort-food {
+    font-size: 56px;
+    letter-spacing: -2px;
+    margin-top: -20px;
+  }
+  
+  .cta-section {
+    justify-content: center;
+  }
+  
+  .food-image-container {
+    margin-top: 40px;
+  }
+
+  .rating-badge {
+    bottom: -30px;
+  }
+
+  .dine-option-title {
+    font-size: 80px;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .footer-social,
+  .footer-copyright,
+  .footer-links {
+    text-align: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .header {
+    padding: 10px 0;
+  }
+
+  .logo-img {
+    height: 60px;
+  }
+
+  .nav-list {
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    font-size: 16px;
+  }
+  
+  .filipino {
+    margin-left: -55px;
+    font-size: 80px;
+    margin-bottom: -30px;
+  }
+  
+  .comfort-food {
+    font-size: 40px;
+    letter-spacing: -1px;
+    margin-top: -15px;
+  }
+  
+  .description {
+    font-size: 16px;
+  }
+
+  .dish-plate {
+    width: 140px;
+    height: 90px;
+  }
+
+  .dish-img {
+    width: 160px;
+    height: 160px;
+    margin-top: -170px;
+  }
+
+  .dine-option-title {
+    font-size: 60px;
+  }
+}
+
+
+

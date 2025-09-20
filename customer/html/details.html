@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="../css/details.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <!-- Back button -->
+    <div class="top-nav">
+      <a href="../html/menu.html" class="back-btn">← BACK</a>
+      <div class="nav-links">
+        <a href="#">Home</a>
+        <a href="../html/menu.html" class="active">Menu</a>
+        <div class="search-box">
+          <input type="text" placeholder="Search">
+          <span class="search-icon">🔍</span>
+        </div>
+        <span class="icon">👤</span>
+        <span class="icon">🛒</span>
+      </div>
+    </div>
+
+    <!-- Checkout form and order summary -->
+    <div class="checkout">
+      <!-- Contact and Shipping Details -->
+      <div class="form-section">
+        <h2 class="form-title">ENTER YOUR CONTACT AND SHIPPING DETAILS</h2>
+
+        <h3>Contact Information</h3>
+        <label>Email Address *</label>
+        <input type="email" placeholder="Enter your email">
+
+        <h3>Shipping Address</h3>
+        <div class="row">
+          <div class="col">
+            <label>First Name *</label>
+            <input type="text">
+          </div>
+          <div class="col">
+            <label>Last Name *</label>
+            <input type="text">
+          </div>
+        </div>
+
+        <label>Address *</label>
+        <input type="text">
+
+        <div class="row">
+          <div class="col">
+            <label>Barangay *</label>
+            <input type="text">
+          </div>
+          <div class="col">
+            <label>Postal Code *</label>
+            <input type="text">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>City *</label>
+            <input type="text">
+          </div>
+          <div class="col">
+            <label>Province *</label>
+            <input type="text">
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h2>ORDER SUMMARY</h2>
+        <div class="order-item">
+          <span>1</span>
+          <span>Crispy Kare-Kare</span>
+          <span class="price">Php 500</span>
+        </div>
+        <hr>
+        <div class="total">
+          <span>Total</span>
+          <span class="price">Php 500</span>
+        </div>
+        <!-- Checkout page continue button -->
+<button class="continue-btn" onclick="window.location.href='shipping.html'">
+  Continue
+</button>
+      </div>
+    </div>
+
+    <!-- Location Confirmation -->
+    <div class="location-section">
+      <h3>Location Confirmation</h3>
+      <p>Pin and confirm your address below</p>
+      <div class="map-box">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Openstreetmap_example.png/640px-Openstreetmap_example.png" alt="Map Placeholder">
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

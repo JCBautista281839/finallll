@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Menu - Viktoria's Bistro</title>
+
+    <link rel="icon" type="image/png" href="/src/Logo.png">
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Your Custom Styles -->
+    <link rel="stylesheet" href="../menu.css"> 
+  
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="menu-header">
+      <div class="container-fluid">
+        <div class="row align-items-center">
+          <div class="col-lg-3 col-md-4 col-6">
+            <a href="/index.html" class="back-to-menu" id="back-btn">
+              <i class="fas fa-arrow-left"></i>
+            </a>
+          </div>
+          <div class="col-lg-9 col-md-8 col-6">
+            <div class="header-right-content">
+              <nav class="main-nav d-none d-lg-flex">
+                <ul class="nav-list">
+                  <li><a href="/index.html" class="nav-link">Home</a></li>
+                  <li><a href="#" class="nav-link active">Menu</a></li>
+                </ul>
+              </nav>
+              <div class="header-actions">
+                <div class="search-bar d-none d-md-flex">
+                  <input type="text" placeholder="Search" class="search-input">
+                  <i class="fas fa-search search-icon"></i>
+                </div>
+                <div class="header-icons">
+                  <a href="login.html" class="icon-link"><i class="fas fa-user"></i></a>
+                  <a href="#" class="icon-link"><i class="fas fa-shopping-bag"></i></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="menu-page container-fluid">
+      <div class="row">
+        <!-- Left: Menu Items -->
+        <div class="col-lg-8">
+          <div class="menu-categories">
+            <span class="categories-title d-none d-md-inline">Categories</span>
+            <a href="#" class="category-link">Appetizers</a>
+            <a href="#" class="category-link active">Main Course</a>
+            <a href="#" class="category-link">Sandwiches</a>
+            <a href="#" class="category-link d-none d-md-inline">Specials</a>
+            <a href="#" class="category-link d-none d-md-inline">Feasts</a>
+            <a href="#" class="category-link d-none d-md-inline">Drinks</a>
+            <a href="#" class="category-link d-none d-md-inline"><i class="fas fa-chevron-right"></i></a>
+          </div>
+
+          <div class="row menu-items-grid g-4">
+            <!-- Menu Item 1 -->
+            <div class="col-lg-3 col-md-4 col-6">
+              <div class="menu-item">
+                <img src="/src/Orange Chicken.png" alt="Orange Chicken" class="menu-item-img">
+                <div class="menu-item-details">
+                  <div>
+                    <div class="menu-item-name">Orange Chicken</div>
+                    <div class="menu-item-price">Php 200</div>
+                  </div>
+                  <button class="add-to-cart-btn">+</button>
+                </div>
+              </div>
+            </div>
+            <!-- Menu Item 2 -->
+            <div class="col-lg-3 col-md-4 col-6">
+              <div class="menu-item">
+                <img src="/src/Orange Chicken.png" alt="Orange Chicken" class="menu-item-img">
+                <div class="menu-item-details">
+                  <div>
+                    <div class="menu-item-name">Orange Chicken</div>
+                    <div class="menu-item-price">Php 200</div>
+                  </div>
+                  <button class="add-to-cart-btn">+</button>
+                </div>
+              </div>
+            </div>
+            <!-- Menu Item 3 -->
+            <div class="col-lg-3 col-md-4 col-6">
+              <div class="menu-item">
+                <img src="/src/Orange Chicken.png" alt="Orange Chicken" class="menu-item-img">
+                <div class="menu-item-details">
+                  <div>
+                    <div class="menu-item-name">Orange Chicken</div>
+                    <div class="menu-item-price">Php 200</div>
+                  </div>
+                  <button class="add-to-cart-btn">+</button>
+                </div>
+              </div>
+            </div>
+            <!-- Menu Item 4 -->
+            <div class="col-lg-3 col-md-4 col-6">
+              <div class="menu-item">
+                <img src="/src/Orange Chicken.png" alt="Orange Chicken" class="menu-item-img">
+                <div class="menu-item-details">
+                  <div>
+                    <div class="menu-item-name">Orange Chicken</div>
+                    <div class="menu-item-price">Php 200</div>
+                  </div>
+                  <button class="add-to-cart-btn">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Order Summary -->
+        <div class="col-lg-4">
+          <div class="order-summary">
+            <div class="delivery-toggle">
+              <button class="toggle-btn active">Delivery</button>
+              <button class="toggle-btn">Pick-up</button>
+            </div>
+            <div class="address-section">
+              <h5>Your Address</h5>
+              <div class="address-details">
+                <i class="fas fa-map-marker-alt"></i>
+                <div class="address-text">
+                  <strong>John Doe Adress</strong>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </div>
+                <button class="change-btn">Change</button>
+              </div>
+            </div>
+            <div class="order-menu">
+              <h5>Order Menu</h5>
+              <div class="order-item">
+                <span>1 Crispy Kare-Kare</span>
+                <span class="order-item-price">Php 500</span>
+              </div>
+            </div>
+            <div class="order-total">
+              <span>Total</span>
+              <span class="order-total-price">Php 500</span>
+            </div>
+            <button class="checkout-btn">Checkout</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="../firebase-config.js"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const backBtn = document.getElementById('back-btn');
+        if (backBtn) {
+          backBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/index.html';
+          });
+        }
+      });
+    </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const checkoutBtn = document.querySelector('.checkout-btn');
+        if (checkoutBtn) {
+          checkoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/customer/html/OrderCheckout.html';
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

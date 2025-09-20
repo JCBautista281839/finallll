@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Circle Scanner</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 10px 0 10px;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.7rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+        .header p {
+            font-size: 1.15rem;
+            opacity: 0.95;
+        }
+        .scan-options {
+            display: flex;
+            gap: 32px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 900px) {
+            .scan-options {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+        .scan-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(102,126,234,0.10);
+            padding: 36px 28px 32px 28px;
+            flex: 1 1 0;
+            min-width: 260px;
+            text-align: center;
+            transition: box-shadow 0.2s;
+        }
+        .scan-card:hover {
+            box-shadow: 0 12px 36px rgba(118,75,162,0.18);
+        }
+        .scan-icon {
+            font-size: 3.2rem;
+            margin-bottom: 18px;
+            color: #764ba2;
+        }
+        .scan-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .scan-card p {
+            margin: 0 0 8px 0;
+            color: #666;
+            font-size: 1rem;
+        }
+        .choose-btn, .webcam-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .choose-btn:hover, .webcam-btn:hover {
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.18);
+            transform: translateY(-2px);
+        }
+        .file-input {
+            display: none;
+        }
+        .results-section {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(102,126,234,0.10);
+            margin-top: 32px;
+            padding: 28px 24px 20px 24px;
+        }
+        .alert-success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px 18px;
+            border-radius: 7px;
+            border-left: 6px solid #4CAF50;
+            margin-bottom: 18px;
+            font-size: 1.08rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-list {
+            margin: 0 0 0 18px;
+            padding: 0;
+            color: #333;
+        }
+        .summary-list li {
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button onclick="window.location.href='pos.html'" style="background:#6c757d;color:white;border:none;padding:10px 25px;border-radius:6px;font-size:1rem;cursor:pointer;margin-bottom:18px;float:right;">← Back to POS</button>
+        <div class="header" style="clear:both;">
+            <h1>⚫ OMR Circle Scanner</h1>
+            <p>Upload your OMR form or use webcam to detect shaded circles</p>
+        </div>
+        <div class="scan-options">
+            <div class="scan-card">
+                <div class="scan-icon">📄</div>
+                <h3>Upload OMR Form</h3>
+                <p>Drag and drop your image here or click to select</p>
+                <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                    Supports: PNG, JPG, JPEG, GIF (Max 16MB)
+                </p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+                <button type="button" class="choose-btn">Choose File</button>
+            </div>
+            <div class="scan-card">
+                <div class="scan-icon">📹</div>
+                <h3>Use Webcam</h3>
+                <p>Scan OMR forms using your camera in real-time</p>
+                <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                    Perfect for live scanning and quick results
+                </p>
+                <button type="button" class="webcam-btn" onclick="alert('Webcam scanning coming soon!')">Open Camera</button>
+            </div>
+        </div>
+        <div class="results-section" id="resultsSection" style="display:none;">
+            <div class="alert-success" id="resultsAlert">
+                <span>✅ Scan completed successfully!</span>
+            </div>
+            <div class="summary-title"><span>⚫</span> <span>Shaded Circles Detected:</span></div>
+            <ul class="summary-list" id="detectedList">
+                <!-- JS will populate detected circles here -->
+            </ul>
+            <div class="summary-title"><span>📊</span> <span>Summary:</span></div>
+            <ul class="summary-list" id="summaryList">
+                <!-- JS will populate summary here -->
+            </ul>
+        </div>
+    </div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Main Firebase Configuration -->
+    <script src="../main.js"></script>
+    <script>
+    // --- Firebase menu status ---
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initializeFirebase === 'function') {
+            initializeFirebase();
+        }
+        // Show menu status from Firestore
+        function updateMenuStatus(count) {
+            const statusLine = document.querySelector('.status-line');
+            if (statusLine) {
+                statusLine.innerHTML = `<span style='color: #ffeb3b;'>🔥 Connected to Firebase: <span style='color:#7fffd4'>${count} menu items loaded</span></span>`;
+            }
+        }
+        // Try to get menu count from Firestore
+        if (window.firebase && firebase.firestore) {
+            firebase.firestore().collection('menu').get().then(qs => {
+                updateMenuStatus(qs.size);
+            }).catch(() => {
+                updateMenuStatus('0');
+            });
+        }
+    });
+
+    // --- OMR backend upload logic ---
+    const OMR_SERVER_URL = 'http://127.0.0.1:5000';
+    // UI logic for file upload
+    document.querySelector('.choose-btn').onclick = function() {
+        document.getElementById('fileInput').click();
+    };
+    document.getElementById('fileInput').onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        // Validate file type
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+            alert('Please select a valid image file (PNG, JPG, JPEG, or GIF)');
+            return;
+        }
+        // Validate file size (16MB)
+        if (file.size > 16 * 1024 * 1024) {
+            alert('File size must be less than 16MB');
+            return;
+        }
+        // Show uploading status
+        document.getElementById('resultsSection').style.display = 'block';
+        document.getElementById('resultsAlert').innerHTML = '⏳ Uploading and scanning...';
+        document.getElementById('detectedList').innerHTML = '';
+        document.getElementById('summaryList').innerHTML = '';
+        // Upload to OMR backend
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const response = await fetch(`${OMR_SERVER_URL}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) throw new Error('OMR server error');
+            const data = await response.json();
+            document.getElementById('resultsAlert').innerHTML = '✅ Scan completed successfully!';
+            // Connect to Firestore menu and show shaded items
+            if (window.firebase && firebase.firestore && data && data.detected) {
+                firebase.firestore().collection('menu').get().then(qs => {
+                    const menuItems = {};
+                    qs.forEach(doc => {
+                        const d = doc.data();
+                        menuItems[(d.name||'').toLowerCase()] = d;
+                    });
+                    const detectedHtml = data.detected.map(d => {
+                        const label = (d.label||'').toLowerCase();
+                        const menu = menuItems[label];
+                        if (menu) {
+                            return `<li>✔ <b>${menu.name}</b> <span style='color:#888'>(Fill: ${d.fill})</span></li>`;
+                        } else {
+                            return `<li>✔ <span style='color:#888'>${d.label} (Fill: ${d.fill})</span> <span style='color:red'>(not in menu)</span></li>`;
+                        }
+                    }).join('');
+                    document.getElementById('detectedList').innerHTML = detectedHtml;
+                }).catch(() => {
+                    document.getElementById('detectedList').innerHTML = data.detected.map(
+                        d => `<li>✔ ${d.label} (Fill: ${d.fill})</li>`
+                    ).join('');
+                });
+            } else if (data && data.detected) {
+                document.getElementById('detectedList').innerHTML = data.detected.map(
+                    d => `<li>✔ ${d.label} (Fill: ${d.fill})</li>`
+                ).join('');
+            }
+            // Populate summary
+            if (data && data.summary) {
+                document.getElementById('summaryList').innerHTML = Object.entries(data.summary).map(
+                    ([k,v]) => `<li><b>${k}:</b> ${v}</li>`
+                ).join('');
+            }
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
+        } catch (err) {
+            document.getElementById('resultsAlert').innerHTML = '❌ Error connecting to OMR server!';
+            document.getElementById('detectedList').innerHTML = '';
+            document.getElementById('summaryList').innerHTML = '';
+            alert('Failed to connect to OMR server.');
+        }
+    };
+    </script>
+</body>
+</html>

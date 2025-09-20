@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+     <!-- Font Awesome 6 -->
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+     <!-- Bootstrap 5 CSS -->
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+ 
+     <!-- Your Custom Styles -->
+      <link rel="stylesheet" href="/css/nav.css"> 
+       <link rel="stylesheet" href="/css/cart.css"> 
+       <link rel="stylesheet" href="/css/Checkout.css"> 
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary custom-navbar">
+        <div class="container-fluid">
+          <!-- Logo -->
+          <a class="navbar-brand" href="#">
+            <img src="/src/Logo.png" alt="Logo" class="navbar-logo">
+          </a>
+  
+          <!-- Collapsible Menu -->
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+  
+          <!-- Nav Links -->
+          <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav align-items-center">
+              <li class="nav-item">
+                <a class="nav-link text-brown" href="/index.html">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-brown" href="/html/menu.html">Menu</a>
+              </li>
+    <li class="nav-item position-relative">
+    <a class="nav-link text-brown open-cart" href="#">
+      <i class="fa-solid fa-bag-shopping fa-2x"></i>
+      <span id="cart-count" class="cart-count-badge">0</span>
+    </a>
+          </li> 
+              <li class="nav-item">
+                <a class="nav-link text-brown" href="/html/login.html"><i class="fa-solid fa-user fa-2x"></i></a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+      <div class="container py-5" style="background: #f3f5f4; min-height: 100vh;">
+        <div class="row justify-content-center">
+          <!-- Left: Details Form -->
+          <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm rounded-4 p-4">
+              <h5 class="fw-bold mb-3">Your Details</h5>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <input type="text" class="form-control rounded-pill" placeholder="First Name" value="">
+                </div>
+                <div class="col-md-6">
+                  <input type="text" class="form-control rounded-pill" placeholder="Last Name" value=""">
+                </div>
+                <div class="col-md-6">
+                  <input type="email" class="form-control rounded-pill" placeholder="Email" value="">
+                </div>
+                <div class="col-md-6">
+                  <input type="text" class="form-control rounded-pill" placeholder="Phone" value="">
+                </div>
+              </div>
+              <div class="d-flex justify-content-center mb-4">
+                <div class="bg-light rounded-4 d-flex w-100" style="max-width: 420px;">
+                  <button type="button" id="btn-delivery" class="btn w-50 py-2 fw-bold text-white" style="background: #ff5c5c; border-radius: 14px; margin: 8px 4px 8px 8px;">Delivery</button>
+                  <button type="button" id="btn-pickup" class="btn w-50 py-2 fw-bold text-white" style="background: #888; border-radius: 14px; margin: 8px 8px 8px 4px;">Pick-Up</button>
+                </div>
+              </div>
+              <div id="address-section">
+                <h6 class="fw-bold mt-4 mb-2">Address Details</h6>
+                <input type="text" class="form-control rounded-pill mb-3" placeholder="Address (House No/Unit No., Street, Barangay)">
+              </div>
+              <h6 class="fw-bold mt-4 mb-2">Order Details</h6>
+              <input type="text" class="form-control rounded-pill mb-3" placeholder="Remarks / Instructions">
+              <h6 class="fw-bold mt-4 mb-2">Discount Cards</h6>
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <select class="form-select rounded-pill">
+                    <option>Card Type</option>
+                  </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-center">
+                  <input type="text" class="form-control rounded-pill" placeholder="ID Number">
+                  <button class="btn btn-link ms-2"><i class="fa fa-trash"></i></button>
+                </div>
+              </div>
+              <button class="btn btn-secondary rounded-pill mb-3" style="background: #aab0b8;">Add Discount ID</button>
+              <h6 class="fw-bold mt-4 mb-2">Payment Details</h6>
+              <div class="mb-3">
+                <div class="form-check mb-3 p-3 bg-white border rounded-3">
+                  <input class="form-check-input" type="radio" name="payment" id="cash" checked>
+                  <label class="form-check-label" for="cash">
+                    Cash (On Pickup or Delivery)
+                  </label>
+                </div>
+                <div class="form-check d-flex align-items-center justify-content-between p-3 bg-white border rounded-3">
+                  <div>
+                    <input class="form-check-input" type="radio" name="payment" id="gcash">
+                    <label class="form-check-label" for="gcash">
+                      GCash<br>
+                      <span class="text-muted" style="font-size:0.95rem;">Pay using GCash. NOTE: A ₱10 Service Fee may be added.</span>
+                    </label>
+                  </div>
+                  <img src="/src/gcash-logo.png" alt="GCash" style="height:38px; width:auto;"/>
+                </div>
+              </div>
+              <div class="text-center mt-4">
+                <button class="btn rounded-pill px-5 py-2 fw-bold" style="background:#ff5c5c; color:#fff; font-size:1.15rem;">Review and Select Payment</button>
+              </div>
+            </div>
+          </div>
+          <!-- Right: Order Summary -->
+          <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm rounded-4 p-4">
+              <h5 class="fw-bold mb-3">Order Summary </h5>
+              <div class="mb-2">
+                <span class="fw-bold"></span>
+                <span class="float-end"></span>
+              </div>
+              <div class="mb-2">
+                <span class="badge bg-light text-dark">Variant</span>
+                <span class="badge bg-light text-dark">3 to 5 persons</span>
+              </div>
+              <hr>
+              <div class="d-flex justify-content-between">
+                <span>Subtotal</span>
+                <span class="fw-bold text-danger"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="shopping-cart" class="cart-overlay">
+        <div class="cart-content">
+          <span class="close-cart">×</span>
+          <h2>Your Cart</h2>
+          <div class="cart-items" id="cart-items">
+            <p class="empty-cart">No items in cart.</p>
+          </div>
+          <hr>
+          <div class="cart-subtotal-row">
+            <span class="cart-subtotal-label">Subtotal</span>
+            <span class="cart-subtotal-value"></span>
+          </div>
+          <button class="proceed-checkout-btn">Proceed to Checkout</button>
+        </div>
+      </div>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+      <script src="/javascript/menu.js"></script>
+       <script src="/javascript/cart.js"></script>
+       <script src="/javascript/Delivery.js"></script>
+</body>
+</html>

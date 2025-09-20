@@ -1,0 +1,136 @@
+
+/* styleNotification.css - Matches Inventory page styles for full consistency */
+
+.main-content {
+    background: #ffffff;
+    min-height: calc(100vh - 40px);
+    border-radius: 40px;
+    margin: 30px;
+}
+
+.header-action-row {
+    background: transparent;
+    padding: 1.25rem;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 0.75rem;
+}
+
+.inventory-header {
+    flex-shrink: 0;
+}
+
+.inventory-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.inventory-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 0;
+    font-weight: 500;
+}
+
+.inventory-table-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.inventory-table {
+    margin: 0;
+    border-collapse: collapse;
+}
+
+.inventory-table thead {
+    background: transparent;
+}
+
+.inventory-table th {
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.inventory-table td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    color: #333;
+    font-weight: 500;
+}
+
+.inventory-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.inventory-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.bi {
+    font-size: 1.5rem;
+    vertical-align: middle;
+}
+
+@media (max-width: 1200px) {
+    .header-action-row {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+    .inventory-title {
+        font-size: 2rem;
+    }
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        border-radius: 0;
+    }
+    .header-action-row {
+        padding: 1.5rem;
+    }
+    .inventory-title {
+        font-size: 2rem;
+    }
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-action-row {
+        padding: 1rem;
+    }
+    .inventory-title {
+        font-size: 1.75rem;
+    }
+    .inventory-subtitle {
+        font-size: 1rem;
+    }
+    .inventory-table-container {
+        border-radius: 8px;
+    }
+    .inventory-table th,
+    .inventory-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+}

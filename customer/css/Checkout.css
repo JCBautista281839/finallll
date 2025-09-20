@@ -1,0 +1,119 @@
+body {
+  background: #f3f5f4;
+}
+
+.card {
+  border-radius: 1.5rem !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06) !important;
+  border: none;
+}
+
+.rounded-4 {
+  border-radius: 1.5rem !important;
+}
+
+.form-control,
+.form-select {
+  border-radius: 2rem !important;
+  font-size: 1.08rem;
+  padding: 0.7rem 1.2rem;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+input.form-control:focus,
+select.form-select:focus {
+  border-color: #aab0b8;
+  box-shadow: 0 0 0 0.1rem #aab0b820;
+}
+
+.btn, .btn-secondary {
+  background: #933F32 !important;
+  color: #fff !important;
+  border: none;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.btn:hover, .btn-secondary:hover {
+  background: #a94a3a !important;
+  color: #fff !important;
+}
+.btn-link {
+  color: #933F32 !important;
+  font-size: 1.2rem;
+  padding: 0 0.5rem;
+}
+.btn-link i {
+  color: #fff !important;
+}
+
+.badge.bg-light {
+  background: #f3f5f4 !important;
+  color: #555 !important;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 0.7rem;
+  margin-right: 0.3rem;
+}
+
+.fw-bold {
+  font-weight: 600 !important;
+}
+
+@media (max-width: 991px) {
+  .col-lg-7, .col-lg-4 {
+    max-width: 100%;
+    flex: 0 0 100%;
+  }
+  .card {
+    margin-bottom: 1.5rem;
+    padding: 1.2rem !important;
+  }
+  .btn, .btn-secondary {
+    font-size: 1rem;
+    padding: 0.5rem 1.2rem;
+  }
+  .form-control, .form-select {
+    font-size: 1rem;
+    padding: 0.5rem 0.8rem;
+  }
+  .rounded-4 {
+    border-radius: 1rem !important;
+  }
+  .payment-logo {
+    height: 28px !important;
+  }
+}
+@media (max-width: 600px) {
+  .card {
+    padding: 0.7rem !important;
+  }
+  .btn, .btn-secondary {
+    font-size: 0.95rem;
+    padding: 0.4rem 1rem;
+  }
+  .form-control, .form-select {
+    font-size: 0.95rem;
+    padding: 0.4rem 0.7rem;
+  }
+  .payment-logo {
+    height: 22px !important;
+  }
+}
+@media (max-width: 400px) {
+  .card {
+    padding: 0.3rem !important;
+  }
+  .btn, .btn-secondary {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.7rem;
+  }
+  .form-control, .form-select {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.5rem;
+  }
+  .payment-logo {
+    height: 16px !important;
+  }
+}
+

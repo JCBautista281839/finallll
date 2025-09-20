@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Victoria's Bistro - Profile Settings</title>
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/settings.css"">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="back-btn" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="page-title">PROFILE SETTINGS</h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">Menu</a>
+                <a href="#" class="nav-link">About Us</a>
+            </nav>
+            
+            <div class="header-right">
+                <button class="search-btn">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search" class="search-input">
+                </button>
+                <button class="profile-btn">
+                    <i class="fas fa-user"></i>
+                </button>
+                <button class="cart-btn">
+                    <i class="fas fa-shopping-bag"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Side - Edit Profile -->
+            <section class="edit-profile-section">
+                <div class="section-header">
+                    <h2>Edit Profile</h2>
+                    <button class="edit-btn">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+
+                <div class="profile-fields">
+                    <div class="field-group">
+                        <label class="field-label">Full Name</label>
+                        <span class="field-sublabel">Your display name</span>
+                        <div class="field-value">John Doe</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Email Address</label>
+                        <div class="field-value">johndoe@gmail.com</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Contact Number</label>
+                        <div class="field-value">09123456789</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Password</label>
+                        <div class="field-value password-field">••••••••••••</div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Address</label>
+                        <button class="add-address-btn">
+                            <span>Add New Address</span>
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Vertical Divider -->
+            <div class="vertical-divider"></div>
+
+            <!-- Right Side - Order History -->
+            <section class="order-history-section">
+                <h2>Order History</h2>
+                <div class="order-history-placeholder">
+                    <!-- Order history content would go here -->
+                    <p class="no-orders">No orders yet</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-left">
+                <span class="follow-text">FOLLOW US</span>
+                <div class="social-icons">
+                    <a href="#" class="social-icon">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="social-icon">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="social-icon">
+                        <i class="fab fa-tiktok"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="footer-center">
+                <span class="copyright">VIKTORIA'S BISTRO. ALL RIGHTS RESERVED.</span>
+            </div>
+            
+            <div class="footer-right">
+                <a href="#" class="terms-link">TERMS OF SERVICE</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+
+        // Search functionality
+        document.querySelector('.search-btn').addEventListener('click', function() {
+            const searchInput = document.querySelector('.search-input');
+            searchInput.style.display = searchInput.style.display === 'block' ? 'none' : 'block';
+            if (searchInput.style.display === 'block') {
+                searchInput.focus();
+            }
+        });
+
+        // Edit profile functionality
+        document.querySelector('.edit-btn').addEventListener('click', function() {
+            alert('Edit functionality would be implemented here');
+        });
+
+        // Add address functionality
+        document.querySelector('.add-address-btn').addEventListener('click', function() {
+            alert('Add address functionality would be implemented here');
+        });
+    </script>
+</body>
+</html>
