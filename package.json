@@ -4,8 +4,11 @@
   "description": "Viktoria's Bistro OMR Scanner with Auto Python Server",
   "main": "auto-server.js",
   "scripts": {
-    "start": "node auto-server.js",
-    "dev": "nodemon auto-server.js"
+    "start": "node start-system.js",
+    "dev": "nodemon start-system.js",
+    "server": "node server.js",
+    "omr": "node omr-launcher.js",
+    "old-start": "node auto-server.js"
   },
   "dependencies": {
     "express": "^4.18.2",

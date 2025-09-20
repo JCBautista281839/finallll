@@ -2106,26 +2106,55 @@ function initializeScanButton() {
     const scanBtn = document.getElementById('scanBtn');
     if (scanBtn) {
         scanBtn.addEventListener('click', async function() {
-            console.log('🔍 Scan button clicked - Running OMR scanner backend...');
-            const originalHTML = scanBtn.innerHTML;
-            scanBtn.disabled = true;
-            scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Scanning...';
+            console.log('🔍 Scan button clicked - Opening OMR scanner...');
+            
+            // Check if OMR server is running
             try {
-                const response = await fetch('/api/scan-omr', { method: 'POST' });
-                const data = await response.json();
-                if (data.success) {
-                    showToast('✅ OMR scan completed!', 'success');
-                    // Optionally, handle data.output here
+                const statusResponse = await fetch('http://127.0.0.1:5000/status');
+                if (statusResponse.ok) {
+                    // OMR server is running, open it directly
+                    openOMRScanner();
                 } else {
-                    showToast('❌ OMR scan failed: ' + (data.error || 'Unknown error'), 'error');
+                    // OMR server not running, try to start it first
+                    await startOMRServerAndOpen();
                 }
-            } catch (err) {
-                showToast('❌ Error running OMR scan: ' + err.message, 'error');
-            } finally {
-                scanBtn.disabled = false;
-                scanBtn.innerHTML = originalHTML;
+            } catch (error) {
+                console.log('OMR server not running, attempting to start it...');
+                await startOMRServerAndOpen();
             }
         });
+    }
+}
+
+// Start OMR server and open scanner
+async function startOMRServerAndOpen() {
+    try {
+        showToast('🚀 Starting OMR scanner...', 'info');
+        
+        // Try to start OMR server via launcher
+        const launcherResponse = await fetch('http://localhost:3001/start-omr', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (launcherResponse.ok) {
+            // Wait a moment for server to start
+            setTimeout(() => {
+                openOMRScanner();
+            }, 2000);
+        } else {
+            // Fallback: try to run Python directly
+            showToast('📋 Please ensure OMR scanner is running (python omr/omr_web_circle_scanner.py)', 'warning');
+            // Try to open anyway in case server is already running
+            setTimeout(() => {
+                openOMRScanner();
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('Error starting OMR server:', error);
+        showToast('⚠️ Please start OMR scanner manually: python omr/omr_web_circle_scanner.py', 'warning');
+        // Try to open anyway
+        openOMRScanner();
     }
 }
 
@@ -2469,17 +2498,71 @@ function openOMRScanner() {
 // Initialize listener for OMR scanner messages (popup integration)
 function initializeOMRMessageListener() {
     window.addEventListener('message', function(event) {
-        // Security: Check origin if needed
-        // if (event.origin !== 'expected-origin') return;
+        console.log('📨 Received message from origin:', event.origin, 'Data:', event.data);
+        
+        // Accept messages from OMR scanner origins
+        const validOrigins = [
+            'http://127.0.0.1:5000',
+            'http://localhost:5000',
+            window.location.origin  // Same origin for local OMR
+        ];
+        
+        if (!validOrigins.includes(event.origin)) {
+            console.log('⚠️ Ignoring message from unknown origin:', event.origin);
+            return;
+        }
         
         if (event.data && event.data.type === 'OMR_SCAN_RESULT') {
-            console.log('📨 Received OMR results via postMessage:', event.data.results);
+            console.log('✅ Valid OMR scan result received');
+            console.log('📋 OMR Data:', event.data);
             
-            // Process the results
-            processDirectOMRResults(event.data.results);
-            
-            // Show notification
-            showToast('📋 OMR scan results imported successfully!', 'success');
+            try {
+                // Handle both data structures (results vs direct data)
+                const resultsData = event.data.results || event.data.data || event.data;
+                
+                // Validate the data structure
+                if (!resultsData) {
+                    showToast('❌ Invalid OMR scan data received', 'error');
+                    return;
+                }
+                
+                // Convert Python OMR scanner data format to POS format
+                let processedData = resultsData;
+                
+                // If it's data from your Python scanner with shaded_selections
+                if (resultsData.shaded_selections && Array.isArray(resultsData.shaded_selections)) {
+                    processedData = {
+                        success: true,
+                        timestamp: new Date().toISOString(),
+                        scan_type: resultsData.scan_type || 'OMR_CIRCLE_SCAN',
+                        results: {
+                            shaded_selections: resultsData.shaded_selections.map(item => ({
+                                item: item.item,
+                                quantity: 1, // Default quantity for circle scans
+                                fill_percent: item.fill_percent || 100,
+                                center: item.center,
+                                radius: item.radius,
+                                bbox: item.bbox
+                            }))
+                        },
+                        total_circles: resultsData.total_circles || 0,
+                        total_selected: resultsData.total_selected || resultsData.shaded_selections.length
+                    };
+                }
+                
+                console.log('🔄 Processed OMR data for POS:', processedData);
+                
+                // Process the results
+                processDirectOMRResults(processedData);
+                
+                // Show success notification
+                const itemCount = processedData.results?.shaded_selections?.length || 0;
+                showToast(`✅ OMR scan complete! Found ${itemCount} selected items`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error processing OMR results:', error);
+                showToast('❌ Error processing OMR scan results', 'error');
+            }
         }
     });
 }
@@ -2679,56 +2762,56 @@ function processOMRResults(scanResults) {
     showToast(`Successfully added ${itemCount} item(s) from OMR scan!`, 'success');
 }
 
-// Process Direct OMR scan results and add to order
-function processDirectOMRResults(scanResults) {
-    console.log('📋 Processing OMR scan results:', scanResults);
-    console.log('🏪 Available menu items in POS:', Object.keys(menuItemsData));
-    
-    // Show processing message
-    showToast('📋 Processing OMR scan results...', 'info');
-    
-    // Handle different data structures
-    let selections = [];
-    
-    if (scanResults.results && scanResults.results.shaded_selections) {
-        selections = scanResults.results.shaded_selections;
-    } else if (scanResults.shaded_selections) {
-        selections = scanResults.shaded_selections;
-    } else {
-        showToast('No items selected in OMR scan', 'warning');
-        return;
-    }
-
-    if (selections.length === 0) {
-        showToast('No shaded circles detected in OMR form', 'warning');
-        return;
-    }
-    
-    let addedCount = 0;
-    let notFoundItems = [];
-    let mappedItems = [];
-    
-    // Add each selected item to the order
-    selections.forEach(selection => {
-        const itemName = selection.item;
-        const quantity = selection.quantity || 1;
-        const fillPercent = selection.fill_percent || 100;
-        const mappedFrom = selection.mapped_from || null;
-        const isUnmapped = selection.unmapped || false;
+    // Process Direct OMR scan results and add to order
+    function processDirectOMRResults(scanResults) {
+        console.log('📋 Processing OMR scan results:', scanResults);
+        console.log('🏪 Available menu items in POS:', Object.keys(menuItemsData));
         
-        console.log(`🔍 Processing OMR item: "${itemName}" (Qty: ${quantity}, Fill: ${fillPercent}%)`);
-        if (mappedFrom) {
-            console.log(`🔄 Originally mapped from: "${mappedFrom}"`);
+        // Show processing message
+        showToast('📋 Processing OMR scan results...', 'info');
+        
+        // Handle different data structures
+        let selections = [];
+        
+        if (scanResults.results && scanResults.results.shaded_selections) {
+            selections = scanResults.results.shaded_selections;
+        } else if (scanResults.shaded_selections) {
+            selections = scanResults.shaded_selections;
+        } else {
+            showToast('No items selected in OMR scan', 'warning');
+            return;
+        }
+
+        if (selections.length === 0) {
+            showToast('No shaded circles detected in OMR form', 'warning');
+            return;
         }
         
-        // If the item already has Firebase data from OMR scanner
-        if (selection.firebase_id && selection.price) {
-            console.log(`🔥 Using Firebase data from OMR: ${itemName} (₱${selection.price})`);
+        let addedCount = 0;
+        let notFoundItems = [];
+        let mappedItems = [];
+        
+        // Add each selected item to the order
+        selections.forEach(selection => {
+            const itemName = selection.item;
+            const quantity = selection.quantity || 1;
+            const fillPercent = selection.fill_percent || 100;
+            const mappedFrom = selection.mapped_from || null;
+            const isUnmapped = selection.unmapped || false;
             
-            const itemPrice = `₱${selection.price.toFixed(2)}`;
-            const itemImage = selection.photoUrl || '/src/Icons/default-food.png';
+            console.log(`🔍 Processing OMR item: "${itemName}" (Qty: ${quantity}, Fill: ${fillPercent}%)`);
+            if (mappedFrom) {
+                console.log(`🔄 Originally mapped from: "${mappedFrom}"`);
+            }
             
-            // Add item to order with specified quantity
+            // If the item already has Firebase data from OMR scanner
+            if (selection.firebase_id && selection.price) {
+                console.log(`🔥 Using Firebase data from OMR: ${itemName} (₱${selection.price})`);
+                
+                const itemPrice = `₱${selection.price.toFixed(2)}`;
+                const itemImage = selection.photoUrl || '/src/Icons/default-food.png';
+                
+                // Add item to order with specified quantity
             for (let i = 0; i < quantity; i++) {
                 addItemToOrder(itemName, itemPrice, itemImage);
             }
