@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: omr-scanner
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python omr_web_circle_scanner.py
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
+      - key: DEBUG
+        value: False
+    disk:
+      name: omr-scanner-disk
+      mountPath: /opt/render/project/src/uploads
+      sizeGB: 1

@@ -844,4 +844,16 @@ def server_status():
     })
 
 if __name__ == '__main__':
-   app.run(debug=True, host='127.0.0.1', port=5000)
+    # Configuration for online deployment
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    host = os.environ.get('HOST', '0.0.0.0')  # Allow external connections
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    print(f"🚀 Starting OMR Scanner Server...")
+    print(f"📡 Host: {host}")
+    print(f"🔌 Port: {port}")
+    print(f"🐛 Debug: {debug}")
+    print(f"🌐 Access: http://{host}:{port}")
+    
+    app.run(debug=debug, host=host, port=port)

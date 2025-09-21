@@ -1,0 +1,7 @@
+# OMR Scanner Environment Variables
+HOST=0.0.0.0
+PORT=5000
+DEBUG=False
+
+# For production deployment
+FLASK_ENV=production
