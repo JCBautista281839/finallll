@@ -1,100 +1,127 @@
-// Deduct stock for weight/volume units and return updated stock in base and display units
-// Always store and deduct in kg/L/pcs. Convert g→kg and ml→L before math.
-function deductStock(currentStock, orderQty, orderUnit, type = 'weight') {
-    // type: 'weight', 'volume', or 'piece'
-    // currentStock and return value are always in kg, L, or pcs
-    let baseStock = currentStock;
-    let deduction = 0;
-    let unitLabel = '';
-    if (type === 'weight') {
-        // Weight: store in kg
-        if (orderUnit.toLowerCase() === 'kg') deduction = orderQty;
-        else if (orderUnit.toLowerCase() === 'g') deduction = orderQty / 1000;
-        else throw new Error('Unsupported weight unit');
-        unitLabel = 'kg';
-    } else if (type === 'volume') {
-        // Volume: store in L
-        if (orderUnit.toLowerCase() === 'l') deduction = orderQty;
-        else if (orderUnit.toLowerCase() === 'ml') deduction = orderQty / 1000;
-        else throw new Error('Unsupported volume unit');
-        unitLabel = 'L';
-    } else if (type === 'piece' || type === 'pcs') {
-        deduction = orderQty;
-        unitLabel = 'pcs';
-    } else {
-        throw new Error('Type must be weight, volume, or piece');
+// Update the status cell in an inventory row
+function updateRowStatus(row) {
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 4) return;
+
+    const itemName = (cells[0].textContent || '').trim();
+    const stockText = (cells[1].textContent || '').trim();
+    const stockValue = parseFloat(stockText);
+    const stock = isNaN(stockValue) ? 0 : stockValue;
+
+    let statusClass = '';
+    let statusLabel = '';
+    let notifyType = '';
+    let notifyMsg = '';
+
+    if (stock === 0) {
+        statusClass = 'empty';
+        statusLabel = 'Empty';
+        notifyType = 'empty';
+        notifyMsg = `${itemName} is out of stock!`;
+    } else if (stock >= 1 && stock <= 5) {
+        statusClass = 'restock';
+        statusLabel = 'Need Restocking';
+        notifyType = 'restock';
+        notifyMsg = `Low stock: ${itemName}`;
+    } else if (stock >= 6) {
+        statusClass = 'steady';
+        statusLabel = 'Steady';
     }
-    let updatedStock = baseStock - deduction;
-    if (updatedStock < 0) updatedStock = 0;
-    return {
-        baseUnit: unitLabel,
-        stockInBaseUnit: updatedStock,
-        display: `${updatedStock} ${unitLabel}`,
-        displayValue: updatedStock,
-        displayUnit: unitLabel
-    };
+
+    // Only update the status cell
+    if (!statusClass) {
+        cells[3].innerHTML = '';
+        return;
+    }
+
+    cells[3].innerHTML = '<div class="status-item">' +
+        '<span class="status-indicator ' + statusClass + '"></span>' +
+        '<span class="status-text">' + statusLabel + '</span>' +
+    '</div>';
+}
+// Convert for display: always show in user-friendly unit
+function getDisplayStock(quantity, baseUnit) {
+    // baseUnit: 'g', 'ml', 'pcs'
+    if (baseUnit === 'g') {
+        if (quantity >= 1000) return { value: +(quantity / 1000).toFixed(2), unit: 'kg' };
+        return { value: quantity, unit: 'g' };
+    }
+    if (baseUnit === 'ml') {
+        if (quantity >= 1000) return { value: +(quantity / 1000).toFixed(2), unit: 'L' };
+        return { value: quantity, unit: 'ml' };
+    }
+    if (baseUnit === 'pcs') {
+        return { value: quantity, unit: 'pcs' };
+    }
+    return { value: quantity, unit: baseUnit };
+}
+// Create a table row for an inventory item
+function createInventoryRow(docId, data) {
+    const row = document.createElement('tr');
+    row.setAttribute('data-doc-id', docId);
+    row.setAttribute('data-restock-threshold', data.minQuantity || 10);
+    // Always display in user-friendly units
+    let display = { value: data.quantity || 0, unit: data.unitOfMeasure || '' };
+    if (data.quantity != null && data.unitOfMeasure) {
+        display = getDisplayStock(data.quantity, data.unitOfMeasure);
+    }
+    row.innerHTML = `
+        <td>${data.name || 'N/A'}</td>
+        <td>${display.value}</td>
+        <td>${display.unit || 'N/A'}</td>
+        <td></td>
+    `;
+    updateRowStatus(row);
+    return row;
+}
+// Convert to base unit (g, ml, pcs)
+function toBaseUnit(value, unit, piecesPerBox) {
+    unit = unit.toLowerCase();
+    if (unit === 'kg') return value * 1000;
+    if (unit === 'g') return value;
+    if (unit === 'l') return value * 1000;
+    if (unit === 'ml') return value;
+    if (unit === 'pcs' || unit === 'piece' || unit === 'pieces') return value;
+    if (unit === 'box') {
+        if (!piecesPerBox) throw new Error('piecesPerBox required for box conversion');
+        return value * piecesPerBox;
+    }
+    throw new Error('Unsupported unit: ' + unit);
 }
 
-// Example usage:
-// let result = deductStock(2000, 250, 'g', 'weight');
-// result => { baseUnit: 'g', stockInBaseUnit: 1750, display: '1.75 Kg', displayValue: '1.75', displayUnit: 'Kg' }
-
-// Scan or input ingredient, check inventory, update or prompt to add
-window.handleIngredientInput = async function({ name, unit, quantity }) {
-    if (!name || !unit || typeof quantity !== 'number') {
-        alert('Please provide ingredient name, unit of measure, and quantity.');
-        return;
-    }
-    const db = (window.firebase && firebase.firestore) ? firebase.firestore() : null;
-    if (!db) {
-        alert('Inventory system not ready. Please refresh and try again.');
-        return;
-    }
-    // Convert to base unit (kg/L/pcs) before storing
-    let baseQty = quantity;
-    let baseUnit = unit.toLowerCase();
+// Convert from base unit to display unit
+function fromBaseUnit(value, baseUnit, piecesPerBox) {
     if (baseUnit === 'g') {
-        baseQty = quantity / 1000;
-        baseUnit = 'kg';
-    } else if (baseUnit === 'ml') {
-        baseQty = quantity / 1000;
-        baseUnit = 'l';
-    } else if (baseUnit === 'piece') {
-        baseUnit = 'pcs';
+        if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'kg' };
+        return { value, unit: 'g' };
     }
-    try {
-        // Check if ingredient exists
-        const query = await db.collection('inventory').where('name', '==', name).limit(1).get();
-        if (!query.empty) {
-            // Ingredient exists, update quantity (always in base unit)
-            const doc = query.docs[0];
-            const data = doc.data();
-            const newQty = (data.quantity || 0) + baseQty;
-            await db.collection('inventory').doc(doc.id).update({ quantity: newQty, unitOfMeasure: baseUnit });
-            alert(`Updated ${name}: new quantity is ${newQty} ${baseUnit}`);
-        } else {
-            // Ingredient not found, prompt to add
-            if (confirm(`Ingredient '${name}' not found. Add to inventory?`)) {
-                const docRef = await db.collection('inventory').add({
-                    name,
-                    unitOfMeasure: baseUnit,
-                    quantity: baseQty,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                if (docRef && docRef.id) {
-                    alert(`Added new ingredient: ${name} (${baseQty} ${baseUnit}) to inventory.\nDocument ID: ${docRef.id}`);
-                } else {
-                    alert(`Added new ingredient: ${name} (${baseQty} ${baseUnit}) to inventory.`);
-                }
-            } else {
-                alert('Ingredient not added.');
-            }
+    if (baseUnit === 'ml') {
+        if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'L' };
+        return { value, unit: 'ml' };
+    }
+    if (baseUnit === 'pcs') {
+        if (piecesPerBox && value >= piecesPerBox) {
+            return { value: +(value / piecesPerBox).toFixed(2), unit: 'box' };
         }
-    } catch (err) {
-        console.error('Error handling ingredient input:', err);
-        alert('Error updating inventory: ' + err.message);
+        return { value, unit: 'pcs' };
     }
-};
+    return { value, unit: baseUnit };
+}
+
+// Deduct inventory and return new values
+function deductInventory({ inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, piecesPerBox }) {
+    const invBase = toBaseUnit(inventoryQty, inventoryUnit, piecesPerBox);
+    const orderBase = toBaseUnit(orderQty, orderUnit, piecesPerBox);
+    let newBase = invBase - orderBase;
+    if (newBase < 0) newBase = 0;
+    const display = fromBaseUnit(newBase, baseUnit, piecesPerBox);
+    return {
+        stockBase: newBase,
+        stockDisplay: `${display.value} ${display.unit}`,
+        value: display.value,
+        unit: display.unit
+    };
+}
 // Ensure notifications.js is loaded so sendInventoryNotification is available
 if (typeof sendInventoryNotification === 'undefined') {
     var script = document.createElement('script');
@@ -102,12 +129,17 @@ if (typeof sendInventoryNotification === 'undefined') {
     document.head.appendChild(script);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     console.log('Inventory page loaded, initializing Firebase...');
-    
-   
+
+    // Always call setupEventListeners at the end to ensure all static buttons are wired up
+    document.addEventListener('readystatechange', function() {
+        if (document.readyState === 'complete') {
+            setupEventListeners();
+        }
+    });
+
     function waitForFirebase() {
-       
         if (window.isFirebaseReady && window.isFirebaseReady()) {
             console.log('Firebase is ready from main.js!');
             initializeInventory();
@@ -281,25 +313,28 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 tbody.innerHTML = '';
+                let loadedRows = 0;
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    console.log('Document data:', data);
+                    // Store original stock as data attribute for threshold logic
                     const row = createInventoryRow(doc.id, data);
+                    row.setAttribute('data-original-stock', data.quantity || 0);
                     tbody.appendChild(row);
+                    loadedRows++;
                 });
                 sortInventoryByStatus();
                 updateRegisteredItemsCount(querySnapshot.size);
                 addRowClickHandlers();
-                console.log('Inventory loaded successfully!');
+                console.log('Inventory loaded successfully! Rows loaded:', loadedRows);
+                if (loadedRows === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning">No inventory items found after loading.</td></tr>';
+                }
             })
             .catch((error) => {
                 console.error('Error loading inventory:', error);
                 alert('Error loading inventory: ' + error.message);
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading inventory. Please try again.</td></tr>';
             });
-    }
-
-    function createInventoryRow(docId, data) {
         const row = document.createElement('tr');
         row.setAttribute('data-doc-id', docId);
         row.setAttribute('data-restock-threshold', data.minQuantity || 10);
@@ -334,6 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Track notified items to prevent duplicate notifications
+// Track notified items to prevent duplicate notifications
 const notifiedInventoryStatus = {};
 
 function updateRowStatus(row) {
@@ -745,61 +781,72 @@ function updateRowStatus(row) {
         removeEditButtons();
     }
 
+    // Save inventory item (add or update) - always store in base units (g, ml, pcs)
     function saveInventoryItem() {
         const name = document.getElementById('ingredientName').value.trim();
-        const uom = document.getElementById('ingredientUom').value;
+        const uom = document.getElementById('ingredientUom').value.trim().toLowerCase();
         const qtyText = document.getElementById('ingredientQty').value.trim();
         const qty = parseFloat(qtyText);
-
-       
-        if (!name) {
-        const db = firebase.firestore();
-        // Role-based restrictions
-        // Convert to base unit (kg/L/pcs) before storing
-        uom = uom.toLowerCase();
-        if (uom === 'g') {
-            qty = qty / 1000;
-            uom = 'kg';
-        } else if (uom === 'ml') {
-            qty = qty / 1000;
-            uom = 'l';
-        } else if (uom === 'piece') {
-            uom = 'pcs';
+        if (!name || isNaN(qty)) {
+            showMessage('Please enter a valid name and quantity.', 'error');
+            return;
         }
-       
+        // Normalize to base unit
+        let baseUnit, baseQty;
+        if (uom === 'kg') {
+            baseUnit = 'g';
+            baseQty = qty * 1000;
+        } else if (uom === 'g') {
+            baseUnit = 'g';
+            baseQty = qty;
+        } else if (uom === 'l') {
+            baseUnit = 'ml';
+            baseQty = qty * 1000;
+        } else if (uom === 'ml') {
+            baseUnit = 'ml';
+            baseQty = qty;
+        } else if (['pcs', 'piece', 'pieces'].includes(uom)) {
+            baseUnit = 'pcs';
+            baseQty = qty;
+        } else {
+            showMessage('Unsupported unit of measure.', 'error');
+            return;
+        }
+        const db = firebase.firestore();
         const currentUser = firebase.auth().currentUser;
         if (!currentUser) {
             showMessage('You must be signed in to save inventory items.', 'error');
             return;
         }
-
+        const currentDocId = document.getElementById('ingredientModal').getAttribute('data-current-doc-id');
+        const inventoryData = {
+            name: name,
+            quantity: baseQty, // always base
+            unitOfMeasure: baseUnit, // always base
+            lastUpdated: firebase.firestore.Timestamp.now()
+        };
         if (currentDocId) {
-           
             db.collection('inventory').doc(currentDocId).update(inventoryData)
                 .then(() => {
-                    console.log('Item updated successfully');
                     closeModal();
                     showMessage('Item updated successfully!', 'success');
-
-                   
                     db.collection('inventory').doc(currentDocId).get()
                         .then((doc) => {
                             if (!doc.exists) {
-                               
                                 loadInventoryFromFirebase();
                                 return;
                             }
                             const data = doc.data();
                             const row = document.querySelector(`#inventoryStatus tr[data-doc-id="${currentDocId}"]`);
                             if (row) {
-                               
                                 const cells = row.querySelectorAll('td');
                                 cells[0].textContent = data.name || 'N/A';
-                                cells[1].textContent = (data.quantity != null) ? data.quantity : 0;
-                                cells[2].textContent = data.unitOfMeasure || 'N/A';
+                                // Convert for display
+                                const display = getDisplayStock(data.quantity, data.unitOfMeasure);
+                                cells[1].textContent = display.value;
+                                cells[2].textContent = display.unit;
                                 updateRowStatus(row);
                             } else {
-                               
                                 const tbody = document.getElementById('inventoryStatus');
                                 if (tbody) tbody.appendChild(createInventoryRow(doc.id, data));
                             }
@@ -809,38 +856,26 @@ function updateRowStatus(row) {
                         });
                 })
                 .catch((error) => {
-                    console.error('Error updating item:', error);
                     showMessage('Error updating item. Please try again.', 'error');
                 });
         } else {
-           
             db.collection('inventory').add(inventoryData)
                 .then((docRef) => {
-                    console.log('Item added successfully', docRef.id);
                     closeModal();
                     showMessage('Item added successfully!', 'success');
-
-                   
                     db.collection('inventory').doc(docRef.id).get()
                         .then((savedDoc) => {
                             if (!savedDoc.exists) {
-                               
                                 setTimeout(loadInventoryFromFirebase, 300);
                                 return;
                             }
-
                             const savedData = savedDoc.data();
                             const tbody = document.getElementById('inventoryStatus');
                             if (tbody) {
-                               
                                 const existing = document.querySelector(`#inventoryStatus tr[data-doc-id="${savedDoc.id}"]`);
                                 if (existing) existing.remove();
-
-                               
                                 const newRow = createInventoryRow(savedDoc.id, savedData);
                                 tbody.appendChild(newRow);
-
-                               
                                 const subtitle = document.querySelector('.inventory-subtitle');
                                 if (subtitle) {
                                     const match = (subtitle.textContent || '').match(/(\d+)\s+registered items/);
@@ -852,13 +887,10 @@ function updateRowStatus(row) {
                             }
                         })
                         .catch((err) => {
-                            console.error('Error reading back saved document:', err);
-                           
                             setTimeout(loadInventoryFromFirebase, 300);
                         });
                 })
                 .catch((error) => {
-                    console.error('Error adding item:', error);
                     showMessage('Error adding item. Please try again.', 'error');
                 });
         }
@@ -1268,72 +1300,68 @@ function updateRowStatus(row) {
 
         for (let i = dataStartRow; i < excelData.length; i++) {
             const row = excelData[i];
-            // Skip empty rows
             if (Object.keys(row).length === 0) continue;
-
-            // Try different possible column names for item name
             const itemName = row['Item Name'] || row['item name'] || row['Name'] || row['name'] || 
                            row['Item'] || row['item'] || row['Product'] || row['product'] ||
                            row['ITEM NAME'] || row['ITEM'] || row['PRODUCT'];
-
-            // Try different possible column names for quantity
             let restockQty = row['Restock Quantity'] || row['restock quantity'] || row['Quantity'] || 
                             row['quantity'] || row['Qty'] || row['qty'] || row['Amount'] || row['amount'] ||
                             row['Current Stock'] || row['current stock'] || row['Stock'] || row['stock'] ||
                             row['RESTOCK QUANTITY'] || row['QUANTITY'] || row['CURRENT STOCK'] || row['STOCK'];
-
-            // Try different possible column names for unit of measure
-            const unitOfMeasure = row['Unit of Measure'] || row['unit of measure'] || row['Unit'] || row['unit'] || row['UOM'] || row['uom'] || row['UNIT OF MEASURE'] || row['UNIT'];
-
-            // Skip rows without item name
-            if (!itemName || itemName.toString().trim() === '') {
-                continue;
-            }
-
-            // Skip obvious header/summary rows
+            let unitOfMeasure = row['Unit of Measure'] || row['unit of measure'] || row['Unit'] || row['unit'] || row['UOM'] || row['uom'] || row['UNIT OF MEASURE'] || row['UNIT'];
+            if (!itemName || itemName.toString().trim() === '') continue;
             const itemNameStr = itemName.toString().toLowerCase();
             if (itemNameStr.includes('summary') || 
                 itemNameStr.includes('total') || 
                 itemNameStr.includes('priority') ||
                 itemNameStr.includes('action') ||
                 itemNameStr.includes('report') ||
-                itemNameStr.includes('generated')) {
-                continue;
-            }
-
-            // If no restock quantity found, try to determine default behavior
+                itemNameStr.includes('generated')) continue;
             if (restockQty === undefined || restockQty === null || restockQty === '') {
-                // For restock reports, assume they want to add a default amount
-                // For current stock reports, use current stock as restock amount
                 const currentStock = row['Current Stock'] || row['current stock'] || row['Stock'] || row['stock'];
                 if (currentStock !== undefined && currentStock !== null && currentStock !== '') {
                     restockQty = currentStock;
                 } else {
-                    // Skip rows without quantity data
                     continue;
                 }
             }
-
             const qty = parseFloat(restockQty);
             if (isNaN(qty) || qty < 0) {
                 errors.push(`Row ${i + 1}: Invalid quantity "${restockQty}" for item "${itemName}"`);
                 continue;
             }
-
-            // Skip zero quantities (unless explicitly requested)
-            // Add processed item with unit of measure
-            processedItems.push({
-                itemName: itemName.toString().trim(),
-                restockQuantity: qty,
-                unitOfMeasure: unitOfMeasure ? unitOfMeasure.toString().trim() : undefined
-            });
-            if (qty === 0) {
-                continue;
+            // --- ENFORCE BASE UNIT CONVERSION FOR UPLOAD ---
+            let baseQty = qty;
+            let baseUnit = '';
+            if (unitOfMeasure) {
+                let uom = unitOfMeasure.toString().trim().toLowerCase();
+                if (uom === 'kg') {
+                    baseUnit = 'g';
+                    baseQty = qty * 1000;
+                } else if (uom === 'g') {
+                    baseUnit = 'g';
+                    baseQty = qty;
+                } else if (uom === 'l' || uom === 'liter' || uom === 'liters') {
+                    baseUnit = 'ml';
+                    baseQty = qty * 1000;
+                } else if (uom === 'ml') {
+                    baseUnit = 'ml';
+                    baseQty = qty;
+                } else if (['pcs', 'piece', 'pieces'].includes(uom)) {
+                    baseUnit = 'pcs';
+                    baseQty = qty;
+                } else {
+                    baseUnit = 'pcs';
+                    baseQty = qty;
+                }
+            } else {
+                baseUnit = 'pcs';
+                baseQty = qty;
             }
-
             processedItems.push({
                 itemName: itemName.toString().trim(),
-                restockQuantity: qty
+                restockQuantity: baseQty,
+                unitOfMeasure: baseUnit
             });
         }
 
@@ -1361,17 +1389,29 @@ function updateRowStatus(row) {
 
         for (const item of restockItems) {
             try {
-                // Convert to base unit (kg/L/pcs) before storing
+                // Normalize unit string and always store in base units (g, ml, pcs)
+                let rawUnit = item.unitOfMeasure ? String(item.unitOfMeasure).trim().toLowerCase() : '';
                 let baseQty = item.restockQuantity;
-                let baseUnit = item.unitOfMeasure ? item.unitOfMeasure.toLowerCase() : '';
-                if (baseUnit === 'g') {
-                    baseQty = item.restockQuantity / 1000;
-                    baseUnit = 'kg';
-                } else if (baseUnit === 'ml') {
-                    baseQty = item.restockQuantity / 1000;
-                    baseUnit = 'l';
-                } else if (baseUnit === 'piece') {
+                let baseUnit = '';
+                if (rawUnit === 'kg') {
+                    baseUnit = 'g';
+                    baseQty = item.restockQuantity * 1000;
+                } else if (rawUnit === 'g') {
+                    baseUnit = 'g';
+                    baseQty = item.restockQuantity;
+                } else if (rawUnit === 'l' || rawUnit === 'liter' || rawUnit === 'liters') {
+                    baseUnit = 'ml';
+                    baseQty = item.restockQuantity * 1000;
+                } else if (rawUnit === 'ml') {
+                    baseUnit = 'ml';
+                    baseQty = item.restockQuantity;
+                } else if (['pcs', 'piece', 'pieces'].includes(rawUnit)) {
                     baseUnit = 'pcs';
+                    baseQty = item.restockQuantity;
+                } else {
+                    // fallback: treat as pieces
+                    baseUnit = 'pcs';
+                    baseQty = item.restockQuantity;
                 }
                 // Find the inventory item by name
                 const querySnapshot = await db.collection('inventory')
@@ -1383,7 +1423,7 @@ function updateRowStatus(row) {
                     await db.collection('inventory').add({
                         name: item.itemName,
                         quantity: baseQty,
-                        unitOfMeasure: baseUnit || 'N/A',
+                        unitOfMeasure: baseUnit,
                         lastUpdated: firebase.firestore.Timestamp.now()
                     });
                     addedCount++;
@@ -1395,7 +1435,7 @@ function updateRowStatus(row) {
                     const newQuantity = (currentData.quantity || 0) + baseQty;
                     batch.update(doc.ref, {
                         quantity: newQuantity,
-                        unitOfMeasure: baseUnit || 'N/A',
+                        unitOfMeasure: baseUnit,
                         lastUpdated: firebase.firestore.Timestamp.now()
                     });
                     updatedCount++;
@@ -1542,7 +1582,7 @@ window.deductIngredientsForProduct = async function(product) {
     let deductionSummary = [];
     let errors = [];
     for (const ingredient of product.ingredients) {
-        const { name, quantity, docId } = ingredient;
+        const { name, quantity, unit, docId } = ingredient;
         if (!name || !quantity) continue;
         try {
             let docRef = null;
@@ -1559,13 +1599,30 @@ window.deductIngredientsForProduct = async function(product) {
                 }
             }
             if (docRef && docData) {
-                const newQty = (docData.quantity || 0) - quantity;
+                // Always convert deduction to base unit
+                let baseDeduct = 0;
+                let orderUnit = unit ? unit.trim().toLowerCase() : '';
+                if (orderUnit === 'kg' && docData.unitOfMeasure === 'g') {
+                    baseDeduct = quantity * 1000;
+                } else if (orderUnit === 'g' && docData.unitOfMeasure === 'g') {
+                    baseDeduct = quantity;
+                } else if ((orderUnit === 'l' || orderUnit === 'liter' || orderUnit === 'liters') && docData.unitOfMeasure === 'ml') {
+                    baseDeduct = quantity * 1000;
+                } else if (orderUnit === 'ml' && docData.unitOfMeasure === 'ml') {
+                    baseDeduct = quantity;
+                } else if (['pcs', 'piece', 'pieces'].includes(orderUnit) && docData.unitOfMeasure === 'pcs') {
+                    baseDeduct = quantity;
+                } else {
+                    errors.push(`Unit mismatch for ${name}. Inventory unit: ${docData.unitOfMeasure}, deduction unit: ${unit}`);
+                    continue;
+                }
+                const newQty = (docData.quantity || 0) - baseDeduct;
                 if (newQty < 0) {
-                    errors.push(`Not enough stock for ${name}. Required: ${quantity}, Available: ${docData.quantity}`);
+                    errors.push(`Not enough stock for ${name}. Required: ${baseDeduct}, Available: ${docData.quantity}`);
                     continue;
                 }
                 await docRef.update({ quantity: newQty });
-                deductionSummary.push(`${name}: -${quantity} (new: ${newQty})`);
+                deductionSummary.push(`${name}: -${baseDeduct} (new: ${newQty})`);
             } else {
                 errors.push(`Ingredient not found in inventory: ${name}`);
             }
@@ -1661,27 +1718,6 @@ function deductAndStatus({
 // });
 // result => { stockBase: 1750, stockDisplay: '1.75 Kg', status: 'Steady' }
 
-// Returns inventory status string and values based on stock and threshold
-function getInventoryStatus(stockBase, thresholdBase) {
-    let status;
-    if (stockBase <= 0) {
-        status = `Empty (${stockBase} / ${thresholdBase})`;
-    } else if (stockBase > 0 && stockBase <= thresholdBase) {
-        status = `Need Restocking (${stockBase} / ${thresholdBase})`;
-    } else {
-        status = `Steady (${stockBase} / ${thresholdBase})`;
-    }
-    return {
-        statusString: status,
-        stockBase: stockBase,
-        thresholdBase: thresholdBase
-    };
-}
-
-// Example usage:
-// getInventoryStatus(0, 1000) // "Empty (0 / 1000)"
-// getInventoryStatus(800, 1000) // "Need Restocking (800 / 1000)"
-// getInventoryStatus(1750, 1000) // "Steady (1750 / 1000)"
 
 // --- UNIT CONVERSION MAP AND DEDUCTION LOGIC ---
 const UNIT_CONVERSIONS = {
@@ -1748,14 +1784,6 @@ function deductInventory({
     };
 }
 
-// Example usage:
-// deductInventory({ inventoryQty: 2, inventoryUnit: 'kg', orderQty: 250, orderUnit: 'g', baseUnit: 'g' })
-// => { stockBase: 1750, stockDisplay: '1.75 kg', value: 1.75, unit: 'kg' }
-// deductInventory({ inventoryQty: 3, inventoryUnit: 'L', orderQty: 150, orderUnit: 'ml', baseUnit: 'ml' })
-// => { stockBase: 2850, stockDisplay: '2.85 L', value: 2.85, unit: 'L' }
-// deductInventory({ inventoryQty: 2, inventoryUnit: 'box', orderQty: 3, orderUnit: 'pcs', baseUnit: 'pcs', piecesPerBox: 12 })
-// => { stockBase: 21, stockDisplay: '1.75 box', value: 1.75, unit: 'box' }
-
 // --- DEDUCT INVENTORY WITH THRESHOLD AND STATUS ---
 function deductInventoryWithStatus({
     inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, thresholdBase, piecesPerBox
@@ -1785,13 +1813,6 @@ function deductInventoryWithStatus({
     };
 }
 
-// Example usage:
-// deductInventoryWithStatus({ inventoryQty: 5, inventoryUnit: 'kg', orderQty: 500, orderUnit: 'g', baseUnit: 'g', thresholdBase: 1000 })
-// => { stockBase: 4500, stockDisplay: '4.5 kg', value: 4.5, unit: 'kg', status: 'Steady' }
-// deductInventoryWithStatus({ inventoryQty: 4.5, inventoryUnit: 'kg', orderQty: 3600, orderUnit: 'g', baseUnit: 'g', thresholdBase: 1000 })
-// => { stockBase: 900, stockDisplay: '900 g', value: 900, unit: 'g', status: 'Need Restocking' }
-// deductInventoryWithStatus({ inventoryQty: 900, inventoryUnit: 'g', orderQty: 900, orderUnit: 'g', baseUnit: 'g', thresholdBase: 1000 })
-// => { stockBase: 0, stockDisplay: '0 g', value: 0, unit: 'g', status: 'Empty' }
 
 // --- FIXED: DEDUCT INVENTORY WITH PROPER UNIT CONVERSION ---
 function deductInventoryWithConversion({
@@ -1816,10 +1837,6 @@ function deductInventoryWithConversion({
         unit: display.unit
     };
 }
-
-// Example usage:
-// deductInventoryWithConversion({ inventoryQty: 50, inventoryUnit: 'kg', orderQty: 50, orderUnit: 'g', baseUnit: 'g' })
-// => { stockBase: 49950, stockDisplay: '49.95 kg', value: 49.95, unit: 'kg' }
 
 // --- FIXED: UNIVERSAL INVENTORY DEDUCTION LOGIC ---
 function convertToBase(value, unit) {
@@ -1857,9 +1874,9 @@ function deductInventoryBase(item, deduction, deductionUnit) {
     // item.unit should always be base (g, ml, pcs)
 }
 
-// --- DISPLAY HELPER ---
+// Format stock for display
 function getDisplayStock(quantity, baseUnit) {
+
     return convertFromBase(quantity, baseUnit);
 }
-    }
-});
+}); // <-- Close DOMContentLoaded event listener
