@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Menu Selection System</title>
+    <link rel="stylesheet" href="omr_css.css">
+</head>
+<body>
+    <div class="container">
+        <h1>OMR Menu Selection Analysis</h1>
+        
+        <div class="upload-section">
+            <h2>Upload Menu Forms</h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <p>Drop images here or click to browse</p>
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="processBtn" class="btn primary" disabled>Process Forms</button>
+            <button id="clearBtn" class="btn secondary">Clear All</button>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <h2>Detection Results</h2>
+            <div id="resultsContainer"></div>
+        </div>
+
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h2>Image Preview</h2>
+            <div id="imagePreview"></div>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script src="omr_javascript.js"></script>
+</body>
+</html>
