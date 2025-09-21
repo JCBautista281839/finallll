@@ -11,8 +11,8 @@ app.use(express.json());
 // === CONFIG ===
 // Change to "https://rest.lalamove.com/v3" when you go live
 const LALA_BASE = 'https://rest.sandbox.lalamove.com/v3';
-const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_c98241026e7b9a0b14ca5d6c8c7b4b9b';
-const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_WT5U0EOp4P7qJ7vGgPJlEv7wx5sQ9LNb9ErEjeic+mPCx6PWsJ/M664WNmlX+qMz';
+const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
+const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
 const MARKET = process.env.MARKET || 'PH'; // Philippines
 
 // === Helper: generate HMAC signature ===
