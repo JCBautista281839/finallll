@@ -259,9 +259,6 @@
                     <button class="btn btn-outline-secondary ms-2" id="clearBtn" style="display: none;">
                         <i class="fas fa-trash"></i> Clear Results
                     </button>
-                    <button class="btn btn-outline-info ms-2" id="testBtn">
-                        <i class="fas fa-bug"></i> Test Results
-                    </button>
                 </div>
                 
                 <div class="loading" id="loading">
@@ -321,7 +318,6 @@
         const fileInput = document.getElementById('fileInput');
         const scanBtn = document.getElementById('scanBtn');
         const clearBtn = document.getElementById('clearBtn');
-        const testBtn = document.getElementById('testBtn');
         const loading = document.getElementById('loading');
         const resultsSection = document.getElementById('resultsSection');
         const scanResults = document.getElementById('scanResults');
@@ -372,11 +368,6 @@
         // Clear button handler
         clearBtn.addEventListener('click', () => {
             clearResults();
-        });
-        
-        // Test button handler
-        testBtn.addEventListener('click', () => {
-            testResults();
         });
         
         function handleFileSelect(file) {
@@ -507,30 +498,6 @@
                 </div>
             `;
             resultsSection.style.display = 'block';
-        }
-        
-        // Test results function
-        function testResults() {
-            console.log('Testing results display...');
-            
-            // Create test data
-            const testResult = {
-                success: true,
-                results: {
-                    shaded_selections: [
-                        { item: 'isda', fill_percent: 98.3 },
-                        { item: 'water', fill_percent: 98.7 }
-                    ]
-                },
-                summary: {
-                    total_circles: 6,
-                    total_selected: 2,
-                    scan_type: 'SHADED CIRCLES ONLY'
-                },
-                debug_image: null
-            };
-            
-            displayResults(testResult);
         }
         
         // Clear results function
