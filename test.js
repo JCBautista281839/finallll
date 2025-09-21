@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Lalamove sandbox credentials (from environment.json)
   const hostname = 'rest.sandbox.lalamove.com';
   const apikey = 'pk_test_5e6d8d33b32952622d173377b443ca5f';
-  const secret = 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu';
+  const secret = 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
   const market = 'PH';
 
   // Helper: create HMAC-SHA256 hex signature
@@ -79,19 +79,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const bodyObj = {
         data: {
           serviceType: 'MOTORCYCLE',
-          specialRequests: ['CASH_ON_DELIVERY'],
           language: 'en_PH',
-          stops: [
-            { coordinates: { lat: '14.599512', lng: '120.984222' }, address: 'SM Mall of Asia, Pasay, Metro Manila' },
-            { coordinates: { lat: '14.554729', lng: '121.024445' }, address: 'Bonifacio High Street, Taguig, Metro Manila' }
-          ],
           isRouteOptimized: false,
-          item: {
-            quantity: '12',
-            weight: 'LESS_THAN_3_KG',
-            categories: ['FOOD_DELIVERY','OFFICE_ITEM'],
-            handlingInstructions: ['KEEP_UPRIGHT']
-          }
+          stops: [
+            { coordinates: { lat: 14.599512, lng: 120.984222 }, address: 'SM Mall of Asia, Pasay, Metro Manila' },
+            { coordinates: { lat: 14.554729, lng: 121.024445 }, address: 'Bonifacio High Street, Taguig, Metro Manila' }
+          ]
         }
       };
 
@@ -141,24 +134,15 @@ async function placeOrder({ useMock = false } = {}) {
       showOutput(mock);
       return mock;
     }
-
-    // STEP 1: Get Quotation first
-    const quotationRes = await fetch('http://localhost:5000/api/quotation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        serviceType: 'MOTORCYCLE',
-        stops: [
-          { coordinates: { lat: '14.599512', lng: '120.984222' }, address: 'SM Mall of Asia, Pasay, Metro Manila' },
-          { coordinates: { lat: '14.554729', lng: '121.024445' }, address: 'Bonifacio High Street, Taguig, Metro Manila' }
-        ],
-        item: { quantity: '1', weight: 'LESS_THAN_3_KG', categories: ['FOOD_DELIVERY'] }
-      })
-    });
-    const quotationData = await quotationRes.json();
+    // STEP 1: Reuse getQuotation so request shape is consistent
+    const quotation = await getQuotation({ useMock: false });
+    if (!quotation || !quotation.data || !quotation.data.quotationId) {
+      throw new Error('Failed to fetch quotation');
+    }
+    const quotationData = quotation;
     const quotationId = quotationData.data.quotationId;
 
-    // STEP 2: Place order using quotationId
+    // STEP 2: Place order using quotationId and stops from quotation
     const orderBody = {
       data: {
         quotationId,

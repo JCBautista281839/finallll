@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname)));
 // Configuration (use real sandbox keys in env)
 const LALA_HOST = 'rest.sandbox.lalamove.com';
 const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
-const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu';
+const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
 const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 
 // helper to sign requests
@@ -27,10 +27,53 @@ function makeSignature(secret, timestamp, method, path, body) {
 /* ====== Proxy endpoints ====== */
 
 app.post('/api/quotation', async (req, res) => {
+  // Extra logging for stops
+  if (!req.body || !req.body.data || !Array.isArray(req.body.data.stops)) {
+    console.error('[proxy] ERROR: No stops array found in request body!');
+  } else {
+    console.log('[proxy] Stops array received:', JSON.stringify(req.body.data.stops, null, 2));
+    if (req.body.data.stops.length < 2) {
+      console.error('[proxy] ERROR: Less than 2 stops provided!');
+    }
+  }
   console.log('[proxy] /api/quotation incoming');
+  console.log('[proxy] Request body received from frontend:', JSON.stringify(req.body, null, 2));
   try {
-    const bodyObj = req.body;
+    // If frontend wrapped payload in { data: { ... } }, Lalamove expects the fields at the top-level.
+    let bodyObj = req.body;
+    if (bodyObj && bodyObj.data) {
+      // unwrap to avoid double-wrapping (sending { data: { ... } } to Lalamove causes bad request)
+      bodyObj = bodyObj.data;
+      console.log('[proxy] Unwrapped payload.data for Lalamove:', JSON.stringify(bodyObj, null, 2));
+    }
+
+    // Basic validation & normalization
+    if (!bodyObj || !Array.isArray(bodyObj.stops)) {
+      console.error('[proxy] invalid payload: missing stops array');
+      return res.status(400).json({ error: 'Invalid payload: stops array required' });
+    }
+    if (bodyObj.stops.length < 2) {
+      console.error('[proxy] invalid payload: need at least 2 stops');
+      return res.status(400).json({ error: 'Invalid payload: at least 2 stops required' });
+    }
+
+    // Ensure numeric coordinates and addresses
+    const normalizedStops = bodyObj.stops.map((s, idx) => {
+      const coords = s.coordinates || s.location || {};
+      const lat = Number(coords.lat);
+      const lng = Number(coords.lng || coords.lon || coords.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) {
+        throw new Error(`Invalid coordinates for stop ${idx}`);
+      }
+      return {
+        coordinates: { lat, lng },
+        address: s.address || s.name || ''
+      };
+    });
+
+    bodyObj.stops = normalizedStops;
     const body = JSON.stringify(bodyObj);
+    console.log('[proxy] Body sent to Lalamove:', body);
     const ts = Date.now().toString();
     const signature = makeSignature(API_SECRET, ts, 'POST', '/v3/quotations', body);
 
@@ -47,6 +90,49 @@ app.post('/api/quotation', async (req, res) => {
     res.status(response.status).json(response.data);
   } catch (err) {
     console.error('[proxy] quotation error', err?.response?.data || err.message);
+    // If validation error thrown above, respond 400
+    if (err.message && err.message.startsWith('Invalid coordinates')) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
+  }
+});
+
+// Helper test route: call Lalamove from server-side with provided JSON (or example)
+app.post('/api/quote-test', async (req, res) => {
+  console.log('[proxy] /api/quote-test incoming');
+  try {
+    // use provided body or fallback example
+    let payload = req.body && Object.keys(req.body).length ? req.body : {
+      serviceType: 'MOTORCYCLE',
+      language: 'en_PH',
+      isRouteOptimized: false,
+      stops: [
+        { coordinates: { lat: 14.599512, lng: 120.984222 }, address: 'SM Mall of Asia, Pasay' },
+        { coordinates: { lat: 14.554729, lng: 121.024445 }, address: 'Bonifacio High Street, Taguig' }
+      ]
+    };
+
+    // validate similar to quotation endpoint
+    if (!Array.isArray(payload.stops) || payload.stops.length < 2) {
+      return res.status(400).json({ error: 'Invalid test payload: at least 2 stops required' });
+    }
+
+    payload.stops = payload.stops.map(s => ({ coordinates: { lat: Number(s.coordinates.lat), lng: Number(s.coordinates.lng) }, address: s.address || '' }));
+    const body = JSON.stringify(payload);
+    const ts = Date.now().toString();
+    const signature = makeSignature(API_SECRET, ts, 'POST', '/v3/quotations', body);
+    const url = `https://${LALA_HOST}/v3/quotations`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `hmac ${API_KEY}:${ts}:${signature}`,
+      'Market': MARKET
+    };
+    console.log('[proxy] quote-test forwarding to Lalamove', { url, headers, body });
+    const response = await axios.post(url, body, { headers });
+    return res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error('[proxy] quote-test error', err?.response?.data || err.message);
     res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
   }
 });
@@ -54,7 +140,12 @@ app.post('/api/quotation', async (req, res) => {
 app.post('/api/place-order', async (req, res) => {
   console.log('[proxy] /api/place-order incoming');
   try {
-    const bodyObj = req.body;
+    // Allow frontend to send { data: { ... } } and unwrap for Lalamove
+    let bodyObj = req.body;
+    if (bodyObj && bodyObj.data) {
+      bodyObj = bodyObj.data;
+      console.log('[proxy] Unwrapped place-order payload.data for Lalamove:', JSON.stringify(bodyObj, null, 2));
+    }
     const body = JSON.stringify(bodyObj);
     const ts = Date.now().toString();
     const signature = makeSignature(API_SECRET, ts, 'POST', '/v3/orders', body);
