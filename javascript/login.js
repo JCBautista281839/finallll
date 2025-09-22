@@ -63,10 +63,11 @@ async function handleLogin(email, password) {
         
         // Get user data to determine role
         const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+        let userRole = 'customer'; // Default role
         
         if (userDoc.exists) {
             const userData = userDoc.data();
-            let userRole = userData.role || 'customer';
+            userRole = userData.role || 'customer';
             
             // Check if the selected type matches the user's actual role
             if (selectedUserType === 'admin') {
