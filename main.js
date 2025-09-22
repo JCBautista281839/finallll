@@ -114,6 +114,29 @@ function initializeFirebase() {
 // Initialize Firebase and get auth and db instances
 const { auth, db } = initializeFirebase();
 
+// Simple path resolver for the specific server structure
+function getServerPath(path) {
+    const currentUrl = window.location.href;
+    
+    // If we're on the live server, use simple relative paths
+    if (currentUrl.includes('viktoriasbistro.restaurant')) {
+        if (path === '/html/login.html') {
+            return './login.html';
+        } else if (path === '/html/Dashboard.html') {
+            return './Dashboard.html';
+        } else if (path === '/customer/html/menu.html') {
+            return '../customer/html/menu.html';
+        } else if (path.startsWith('/html/')) {
+            return './' + path.split('/').pop();
+        } else if (path.startsWith('/customer/')) {
+            return path.replace('/customer/', '../customer/');
+        }
+    }
+    
+    // For local development, use original paths
+    return path;
+}
+
 // Helper function to get correct paths based on current location
 function getCorrectPath(path) {
     const currentPath = window.location.pathname;
@@ -127,18 +150,33 @@ function getCorrectPath(path) {
     // Check if we're on the live server (viktoriasbistro.restaurant)
     if (currentUrl.includes('viktoriasbistro.restaurant')) {
         console.log('  Server: Live server detected');
-        // For live server, use relative paths to avoid double /html/ issue
+        
+        // For live server, we need to use the correct base path
+        // The server structure is: viktoriasbistro.restaurant/home/html/
+        // So we need to construct paths relative to the actual file location
+        
         if (path.startsWith('/html/')) {
-            const resolvedPath = path.replace('/html/', './html/');
-            console.log('  Resolved Path:', resolvedPath);
-            return resolvedPath;
+            // If we're already in /html/ directory, just use the filename
+            if (currentPath.includes('/html/')) {
+                const filename = path.split('/').pop();
+                const resolvedPath = `./${filename}`;
+                console.log('  Resolved Path (same directory):', resolvedPath);
+                return resolvedPath;
+            } else {
+                // If we're not in /html/, go to html directory
+                const resolvedPath = './html/' + path.split('/').pop();
+                console.log('  Resolved Path (to html):', resolvedPath);
+                return resolvedPath;
+            }
         } else if (path.startsWith('/customer/')) {
+            // For customer pages, use relative path
             const resolvedPath = path.replace('/customer/', './customer/');
-            console.log('  Resolved Path:', resolvedPath);
+            console.log('  Resolved Path (customer):', resolvedPath);
             return resolvedPath;
         } else if (path.startsWith('/')) {
+            // For other absolute paths, make them relative
             const resolvedPath = '.' + path;
-            console.log('  Resolved Path:', resolvedPath);
+            console.log('  Resolved Path (relative):', resolvedPath);
             return resolvedPath;
         }
     }
@@ -225,7 +263,7 @@ function initializeLogin() {
             .then((userCredential) => {
                 console.log('Login successful:', userCredential.user);
                
-                window.location.replace(getCorrectPath('/html/Dashboard.html'));
+                window.location.replace(getServerPath('/html/Dashboard.html'));
             })
             .catch((error) => {
                 // Only show error, do NOT reload or redirect
@@ -267,14 +305,14 @@ function checkAuthState() {
             console.log('User is authenticated:', user.email);
             if (onLoginPage) {
                 console.log('Redirecting to dashboard...');
-                window.location.replace(getCorrectPath('/html/Dashboard.html'));
+                window.location.replace(getServerPath('/html/Dashboard.html'));
             }
         } else {
            
             console.log('No user signed in.');
             if (!onLoginPage) {
                 console.log('Redirecting to login page...');
-                window.location.replace(getCorrectPath('/html/login.html'));
+                window.location.replace(getServerPath('/html/login.html'));
             }
         }
     });
@@ -315,7 +353,7 @@ async function checkUserRoleAndRedirect() {
                 
                 if (!allowedCustomerPages.includes(currentPage)) {
                     console.log('👤 Customer redirected to menu page');
-                    window.location.href = getCorrectPath('/customer/html/menu.html');
+                    window.location.href = getServerPath('/customer/html/menu.html');
                     return;
                 }
                 
@@ -335,7 +373,7 @@ async function checkUserRoleAndRedirect() {
                 
                 if (!allowedKitchenPages.includes(currentPage)) {
                     console.log('🍳 Kitchen staff redirected to kitchen.html');
-                    window.location.href = getCorrectPath('/html/kitchen.html');
+                    window.location.href = getServerPath('/html/kitchen.html');
                     return;
                 }
                 
@@ -352,7 +390,7 @@ async function checkUserRoleAndRedirect() {
                 
                 if (restrictedServerPages.includes(currentPage)) {
                     console.log('👤 Server redirected to dashboard');
-                    window.location.href = getCorrectPath('/html/Dashboard.html');
+                    window.location.href = getServerPath('/html/Dashboard.html');
                     return;
                 }
             }
@@ -385,7 +423,10 @@ firebase.auth().onAuthStateChanged(async (user) => {
             !window.location.pathname.includes('signup') &&
             !window.location.pathname.includes('customer')
         ) {
-            window.location.href = getCorrectPath('/html/login.html');
+            // Use the simple server path resolver
+            const loginPath = getServerPath('/html/login.html');
+            console.log('🔄 Redirecting to login:', loginPath);
+            window.location.href = loginPath;
         }
     }
 });
