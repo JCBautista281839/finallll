@@ -130,17 +130,7 @@
               <button class="toggle-btn active">Delivery</button>
               <button class="toggle-btn">Pick-up</button>
             </div>
-            <div class="address-section">
-              <h5>Your Address</h5>
-              <div class="address-details">
-                <i class="fas fa-map-marker-alt"></i>
-                <div class="address-text">
-                  <strong>John Doe Adress</strong>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                </div>
-                <button class="change-btn">Change</button>
-              </div>
-            </div>
+
             <div class="order-menu">
               <h5>Order Menu</h5>
               <div class="order-item">
@@ -168,6 +158,9 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Menu JavaScript -->
+    <script src="../javascript/menu.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const backBtn = document.getElementById('back-btn');
@@ -185,7 +178,7 @@
         if (checkoutBtn) {
           checkoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            window.location.href = '/customer/html/OrderCheckout.html';
+            window.location.href = '/customer/html/details.html';
           });
         }
       });

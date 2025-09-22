@@ -190,3 +190,8 @@ hr {
   height: auto;
   display: block;
 }
+
+#map {
+  width: 100%;
+  height: 400px; /* or any size you want */
+}

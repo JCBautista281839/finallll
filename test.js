@@ -33,6 +33,119 @@ document.addEventListener('DOMContentLoaded', function() {
     return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
+  // Geocoding functions
+  async function geocodeAddress(address) {
+    showOutput('Geocoding address...');
+    try {
+      console.log('[geocode] Geocoding address:', address);
+      const response = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Geocoding failed');
+      }
+
+      const result = await response.json();
+      console.log('[geocode] Result:', result);
+      showOutput(result);
+      return result;
+    } catch (error) {
+      console.error('[geocode] Error:', error);
+      showOutput('Geocoding Error: ' + error.message);
+      throw error;
+    }
+  }
+
+  async function reverseGeocode(lat, lng) {
+    showOutput('Reverse geocoding coordinates...');
+    try {
+      console.log('[reverse-geocode] Coordinates:', lat, lng);
+      const response = await fetch('/api/reverse-geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Reverse geocoding failed');
+      }
+
+      const result = await response.json();
+      console.log('[reverse-geocode] Result:', result);
+      showOutput(result);
+      return result;
+    } catch (error) {
+      console.error('[reverse-geocode] Error:', error);
+      showOutput('Reverse Geocoding Error: ' + error.message);
+      throw error;
+    }
+  }
+
+  // Enhanced getQuotation with geocoding option
+  async function getQuotationWithAddresses(pickupAddress, deliveryAddress) {
+    showOutput('Geocoding addresses and getting quotation...');
+    try {
+      // Geocode both addresses
+      const [pickupResult, deliveryResult] = await Promise.all([
+        geocodeAddress(pickupAddress),
+        geocodeAddress(deliveryAddress)
+      ]);
+
+      // Use the geocoded coordinates for quotation
+      const bodyObj = {
+        data: {
+          serviceType: 'MOTORCYCLE',
+          specialRequests: ['CASH_ON_DELIVERY'],
+          language: 'en_PH',
+          stops: [
+            { 
+              coordinates: pickupResult.coordinates, 
+              address: pickupResult.address
+            },
+            { 
+              coordinates: deliveryResult.coordinates, 
+              address: deliveryResult.address
+            }
+          ],
+          isRouteOptimized: false,
+          item: {
+            quantity: "12",
+            weight: "LESS_THAN_3_KG",
+            categories: ["FOOD_DELIVERY", "OFFICE_ITEM"],
+            handlingInstructions: ["KEEP_UPRIGHT"]
+          }
+        }
+      };
+
+      // Call quotation API
+      const proxyUrl = 'http://localhost:5000/api/quotation';
+      console.log('[getQuotation] Request with geocoded addresses ->', proxyUrl, bodyObj);
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyObj)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Proxy error ${res.status}: ${text}`);
+      }
+      const data = await res.json();
+      console.log('[getQuotation] Response', data);
+      showOutput(data);
+      return data;
+    } catch (err) {
+      console.error('[getQuotation] Error', err);
+      showOutput('Error: ' + (err.message || err));
+      throw err;
+    }
+  }
+
   // getQuotation: if useMock=true returns the Postman sample instantly,
   // otherwise posts to local proxy at http://localhost:5000/api/quotation
   async function getQuotation({ useMock = true } = {}) {
@@ -79,12 +192,25 @@ document.addEventListener('DOMContentLoaded', function() {
       const bodyObj = {
         data: {
           serviceType: 'MOTORCYCLE',
+          specialRequests: ['CASH_ON_DELIVERY'],
           language: 'en_PH',
-          isRouteOptimized: false,
           stops: [
-            { coordinates: { lat: 14.599512, lng: 120.984222 }, address: 'SM Mall of Asia, Pasay, Metro Manila' },
-            { coordinates: { lat: 14.554729, lng: 121.024445 }, address: 'Bonifacio High Street, Taguig, Metro Manila' }
-          ]
+            { 
+              coordinates: { lat: "14.599512", lng: "120.984222" }, 
+              address: 'SM Mall of Asia, Pasay, Metro Manila' 
+            },
+            { 
+              coordinates: { lat: "14.554729", lng: "121.024445" }, 
+              address: 'Bonifacio High Street, Taguig, Metro Manila' 
+            }
+          ],
+          isRouteOptimized: false,
+          item: {
+            quantity: "12",
+            weight: "LESS_THAN_3_KG",
+            categories: ["FOOD_DELIVERY", "OFFICE_ITEM"],
+            handlingInstructions: ["KEEP_UPRIGHT"]
+          }
         }
       };
 
@@ -183,12 +309,12 @@ async function placeOrder({ useMock = false } = {}) {
 }
 
 
-  // wire button to new function; if you want real request set {useMock:false}
+  // wire button to new function; default to real API calls
   const btn = document.getElementById('btn-get-quotation');
   if (btn) {
     btn.addEventListener('click', function() {
-      // toggle useMock via Ctrl key for quick testing:
-      const useMock = !event.ctrlKey && true; // default true; hold Ctrl to attempt real proxy call
+      // default to real API call; hold Ctrl for mock response
+      const useMock = event.ctrlKey; // default false; hold Ctrl to use mock
       getQuotation({ useMock: useMock }).catch(()=>{});
     });
   } else {
@@ -199,8 +325,8 @@ async function placeOrder({ useMock = false } = {}) {
   const btnPlace = document.getElementById('btn-place-order');
   if (btnPlace) {
     btnPlace.addEventListener('click', function(event) {
-      // default uses REAL proxy call; hold Ctrl to use mock if needed
-      const useMock = event.ctrlKey;        // changed: ctrl -> mock, default = real
+      // default to real API call; hold Ctrl for mock response
+      const useMock = event.ctrlKey; // default false; hold Ctrl to use mock
       placeOrder({ useMock }).catch(()=>{});
     });
   } else {
@@ -226,4 +352,50 @@ async function placeOrder({ useMock = false } = {}) {
       showOutput(`Button clicked: ${action.label}\n(Implement API call as needed)`);
     });
   });
+
+  // ====== NEW: Geocoding Event Listeners ======
+  
+  // Geocode address button
+  const btnGeocode = document.getElementById('btn-geocode');
+  if (btnGeocode) {
+    btnGeocode.addEventListener('click', function() {
+      const address = document.getElementById('geocode-address').value.trim();
+      if (!address) {
+        showOutput('Please enter an address to geocode');
+        return;
+      }
+      geocodeAddress(address).catch(() => {});
+    });
+  }
+
+  // Reverse geocode button
+  const btnReverseGeocode = document.getElementById('btn-reverse-geocode');
+  if (btnReverseGeocode) {
+    btnReverseGeocode.addEventListener('click', function() {
+      const lat = document.getElementById('reverse-lat').value.trim();
+      const lng = document.getElementById('reverse-lng').value.trim();
+      if (!lat || !lng) {
+        showOutput('Please enter both latitude and longitude');
+        return;
+      }
+      reverseGeocode(lat, lng).catch(() => {});
+    });
+  }
+
+  // Smart quotation with addresses button
+  const btnSmartQuotation = document.getElementById('btn-smart-quotation');
+  if (btnSmartQuotation) {
+    btnSmartQuotation.addEventListener('click', function() {
+      const pickupAddress = document.getElementById('pickup-address').value.trim();
+      const deliveryAddress = document.getElementById('delivery-address').value.trim();
+      
+      if (!pickupAddress || !deliveryAddress) {
+        showOutput('Please enter both pickup and delivery addresses');
+        return;
+      }
+      
+      getQuotationWithAddresses(pickupAddress, deliveryAddress).catch(() => {});
+    });
+  }
+
 });

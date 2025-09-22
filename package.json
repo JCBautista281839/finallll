@@ -2,10 +2,10 @@
   "name": "viktoria-bistro-omr",
   "version": "1.0.0",
   "description": "Viktoria's Bistro OMR Scanner with Auto Python Server",
-  "main": "auto-server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node auto-server.js",
-    "dev": "nodemon auto-server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "axios": "^1.12.2",

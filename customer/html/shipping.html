@@ -35,27 +35,46 @@
         <div class="contact-box">
           <div class="contact-left">
             <p class="label">Contact</p>
-            <p><b>John Doe</b><br>johndoe@gmail.com<br>0912345987</p>
+            <p id="contact-info"><b>John Doe</b><br>johndoe@gmail.com<br>0912345987</p>
           </div>
           <div class="contact-right">
             <p class="label">Deliver to</p>
-            <p><b>John Doe</b><br>johndoe@gmail.com<br>0912345987</p>
+            <p id="delivery-info"><b>John Doe</b><br>johndoe@gmail.com<br>0912345987</p>
           </div>
         </div>
 
-        <h3>Contact Information</h3>
-        <div class="shipping-option selected">
-          <input type="radio" name="shipping" checked>
+        <h3>Shipping Options</h3>
+        <div class="shipping-option selected" id="pickup-option">
+          <input type="radio" name="shipping" id="pickup-radio" checked>
           <span class="option-title">Pick Up in Store</span>
           <span class="option-desc">Free pickup at our location</span>
           <span class="price">FREE</span>
         </div>
 
-        <div class="shipping-option">
-          <input type="radio" name="shipping">
+        <div class="shipping-option" id="lalamove-option">
+          <input type="radio" name="shipping" id="lalamove-radio">
           <span class="option-title">Lalamove Delivery</span>
           <span class="option-desc">Door-to-door delivery service</span>
           <span class="price">₱89.00<br><small>SEDAN • 0.5km</small></span>
+        </div>
+
+        <!-- Payment Information Section -->
+        <h2 class="form-title payment-title">PAYMENT INFORMATION</h2>
+
+        <h3>Payment</h3>
+        <div class="payment-option">
+          <input type="radio" name="payment" id="cod-payment" checked>
+          <span>💵 Cash On Delivery</span>
+        </div>
+
+        <div class="payment-option">
+          <input type="radio" name="payment" id="gcash-payment">
+          <span>📱 GCash</span>
+        </div>
+
+        <div class="payment-option">
+          <input type="radio" name="payment" id="card-payment">
+          <span>💳 Card</span>
         </div>
       </div>
 
@@ -73,7 +92,7 @@
           <span class="price">Php 500</span>
         </div>
         <!-- Shipping page continue button -->
-<button class="continue-btn" onclick="window.location.href='payment.html'">
+<button class="continue-btn" id="place-order-btn">
   Payment
 </button>
 
@@ -81,5 +100,7 @@
     </div>
 
   </div>
+  
+  <script src="../javascript/shipping.js"></script>
 </body>
 </html>

@@ -31,43 +31,51 @@
         <h2 class="form-title">ENTER YOUR CONTACT AND SHIPPING DETAILS</h2>
 
         <h3>Contact Information</h3>
-        <label>Email Address *</label>
-        <input type="email" placeholder="Enter your email">
+        <div class="row">
+          <div class="col">
+            <label>Email Address *</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+          </div>
+          <div class="col">
+            <label>Phone Number *</label>
+            <input type="tel" id="phone" placeholder="Enter your phone number" required>
+          </div>
+        </div>
 
         <h3>Shipping Address</h3>
         <div class="row">
           <div class="col">
             <label>First Name *</label>
-            <input type="text">
+            <input type="text" id="firstName" required>
           </div>
           <div class="col">
             <label>Last Name *</label>
-            <input type="text">
+            <input type="text" id="lastName" required>
           </div>
         </div>
 
         <label>Address *</label>
-        <input type="text">
+        <input type="text" id="address" required>
 
         <div class="row">
           <div class="col">
             <label>Barangay *</label>
-            <input type="text">
+            <input type="text" id="barangay" required>
           </div>
           <div class="col">
             <label>Postal Code *</label>
-            <input type="text">
+            <input type="text" id="postalCode" required>
           </div>
         </div>
 
         <div class="row">
           <div class="col">
-            <label>City *</label>
-            <input type="text">
+            <label>City / Municipality *</label>
+            <input type="text" id="city" required>
           </div>
           <div class="col">
             <label>Province *</label>
-            <input type="text">
+            <input type="text" id="province" required>
           </div>
         </div>
       </div>
@@ -93,14 +101,21 @@
     </div>
 
     <!-- Location Confirmation -->
-    <div class="location-section">
-      <h3>Location Confirmation</h3>
+  <div class="location-section">
+    <h3>Location Confirmation</h3>
       <p>Pin and confirm your address below</p>
-      <div class="map-box">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Openstreetmap_example.png/640px-Openstreetmap_example.png" alt="Map Placeholder">
-      </div>
-    </div>
 
+    <input id="address-input" type="text" placeholder="Enter your address" style="width:100%;padding:10px;margin-bottom:10px;">
+    <div id="coords-result" style="margin-top:10px; font-weight:600;"></div>
+
+    <!-- Map Container -->
+    <div class="map-box">
+      <div id="map"></div>
+    </div>
   </div>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
+  <script src="../javascript/maps.js"></script>
+  <script src="../javascript/details.js"></script>
+  
 </body>
 </html>
