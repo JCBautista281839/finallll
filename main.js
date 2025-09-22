@@ -26,7 +26,20 @@ function initializeFirebase() {
             if (currentDomain !== 'localhost' && currentDomain !== '127.0.0.1' && 
                 firebaseConfig.authDomain && !firebaseConfig.authDomain.includes(currentDomain)) {
                 console.warn(`⚠️ Authentication domain warning: Your current domain (${currentDomain}) ` +
-                    `is not authorized in Firebase. Add it to Firebase console -> Authentication -> Settings -> Authorized domains`);
+                    `is not authorized in Firebase.`);
+                console.warn(`🔧 To fix this:`);
+                console.warn(`1. Go to Firebase Console: https://console.firebase.google.com/`);
+                console.warn(`2. Select your project: victoria-s-bistro`);
+                console.warn(`3. Go to Authentication -> Settings -> Authorized domains`);
+                console.warn(`4. Add your domain: ${currentDomain}`);
+                console.warn(`5. Save the changes`);
+                
+                // Show user-friendly error message
+                if (typeof showError === 'function') {
+                    showError(`Domain not authorized. Please add "${currentDomain}" to Firebase authorized domains.`);
+                } else {
+                    alert(`Domain Authorization Required:\n\nYour domain "${currentDomain}" is not authorized in Firebase.\n\nTo fix this:\n1. Go to Firebase Console\n2. Select project: victoria-s-bistro\n3. Go to Authentication -> Settings -> Authorized domains\n4. Add your domain: ${currentDomain}\n5. Save changes\n\nThen refresh this page.`);
+                }
             }
             
             // Set up offline persistence with better error handling
@@ -159,7 +172,7 @@ function initializeLogin() {
             .then((userCredential) => {
                 console.log('Login successful:', userCredential.user);
                
-                window.location.replace('../html/Dashboard.html');
+                window.location.replace('/html/Dashboard.html');
             })
             .catch((error) => {
                 // Only show error, do NOT reload or redirect
@@ -201,14 +214,14 @@ function checkAuthState() {
             console.log('User is authenticated:', user.email);
             if (onLoginPage) {
                 console.log('Redirecting to dashboard...');
-                window.location.replace('../html/Dashboard.html');
+                window.location.replace('/html/Dashboard.html');
             }
         } else {
            
             console.log('No user signed in.');
             if (!onLoginPage) {
                 console.log('Redirecting to login page...');
-                window.location.replace('../html/login.html');
+                window.location.replace('/html/login.html');
             }
         }
     });
@@ -233,23 +246,23 @@ async function checkUserRoleAndRedirect() {
             // Customer users should only access customer pages
             if (userRole === 'customer') {
                 const allowedCustomerPages = [
-                    '../customer/html/menu.html',
-                    '../customer/html/account.html',
-                    '../customer/html/settings.html',
-                    '../customer/html/cart.html',
-                    '../customer/html/checkout.html',
-                    '../customer/html/confirmation.html',
-                    '../customer/html/payment.html',
-                    '../customer/html/shipping.html',
-                    '../customer/html/details.html',
-                    '../customer/html/Review.html',
-                    '../index.html',
+                    '/customer/html/menu.html',
+                    '/customer/html/account.html',
+                    '/customer/html/settings.html',
+                    '/customer/html/cart.html',
+                    '/customer/html/checkout.html',
+                    '/customer/html/confirmation.html',
+                    '/customer/html/payment.html',
+                    '/customer/html/shipping.html',
+                    '/customer/html/details.html',
+                    '/customer/html/Review.html',
+                    '/index.html',
                     '/'
                 ];
                 
                 if (!allowedCustomerPages.includes(currentPage)) {
                     console.log('👤 Customer redirected to menu page');
-                    window.location.href = '../customer/html/menu.html';
+                    window.location.href = '/customer/html/menu.html';
                     return;
                 }
                 
@@ -259,11 +272,11 @@ async function checkUserRoleAndRedirect() {
             // Kitchen staff should only access kitchen.html, inventory.html and logout
             if (userRole === 'kitchen') {
                 const allowedKitchenPages = [
-                    '../html/kitchen.html',
-                    '../html/Inventory.html',
-                    '../html/Inventory kitchen.html',
-                    '../html/Order kitchen.html', // Allow kitchen orders view
-                    '../index.html',
+                    '/html/kitchen.html',
+                    '/html/Inventory.html',
+                    '/html/Inventory kitchen.html',
+                    '/html/Order kitchen.html', // Allow kitchen orders view
+                    '/index.html',
                     '/'
                 ];
                 
@@ -280,13 +293,13 @@ async function checkUserRoleAndRedirect() {
             // Server staff restrictions (if needed)
             if (userRole === 'server') {
                 const restrictedServerPages = [
-                    '../html/Settings.html',
-                    '../html/Inventory.html'
+                    '/html/Settings.html',
+                    '/html/Inventory.html'
                 ];
                 
                 if (restrictedServerPages.includes(currentPage)) {
                     console.log('👤 Server redirected to dashboard');
-                    window.location.href = '../html/Dashboard.html';
+                    window.location.href = '/html/Dashboard.html';
                     return;
                 }
             }
@@ -313,13 +326,13 @@ firebase.auth().onAuthStateChanged(async (user) => {
         console.log("No user signed in");
         // Prevent auto-refresh/redirect loop
         if (
-            window.location.pathname !== '../html/login.html' &&
-            window.location.pathname !== '../login.html' &&
+            window.location.pathname !== '/html/login.html' &&
+            window.location.pathname !== '/login.html' &&
             window.location.pathname !== '/' &&
             !window.location.pathname.includes('signup') &&
             !window.location.pathname.includes('customer')
         ) {
-            window.location.href = '../html/login.html';
+            window.location.href = '/html/login.html';
         }
     }
 });
