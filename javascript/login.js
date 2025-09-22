@@ -96,19 +96,19 @@ async function handleLogin(email, password) {
                 // Admin login redirects
                 switch(userRole) {
                     case 'kitchen':
-                        window.location.replace('/html/kitchen.html');
+                        window.location.replace('../html/kitchen.html');
                         break;
                     case 'server':
                     case 'manager':
                     case 'admin':
-                        window.location.replace('/html/Dashboard.html');
+                        window.location.replace('../html/Dashboard.html');
                         break;
                     default:
-                        window.location.replace('/html/Dashboard.html');
+                        window.location.replace('../html/Dashboard.html');
                 }
             } else {
                 // Customer login redirect
-                window.location.replace('/customer/html/menu.html');
+                window.location.replace('../customer/html/menu.html');
             }
         } else {
             throw new Error('User data not found');
