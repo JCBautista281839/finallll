@@ -26,6 +26,40 @@
   font-style: normal;
 }
 
+/* Back Button Styles */
+.back-button-container {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  background-color: #ffffff;
+  border: 2px solid #8b1d1d;
+  border-radius: 50%;
+  color: #8b1d1d;
+  text-decoration: none;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #8b1d1d;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 29, 29, 0.3);
+}
+
+.back-button i {
+  font-size: 16px;
+}
 
 body {
     background: #f3f5f4;
@@ -44,44 +78,70 @@ body {
 .role-choice{
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 0;
     margin-bottom: 15px;
     margin-top: -30px;
-    margin-left: 100px;
+    margin-left: 0;
     background-color: #8B2E20;
     width: fit-content;
     border-radius: 25px;
+    margin: -30px auto 15px auto;
 }
 
-.btn-outline-primary{
+.btn-outline-primary, .btn-primary{
     color: white;
     border: none;
     padding: 10px 20px;
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s;
+    background-color: transparent;
+    width: 120px;
+    text-align: center;
 }
 
-.btn-outline-secondary{
+.btn-outline-secondary, .btn-secondary{
     color: white;
     border: none;
     padding: 10px 20px;
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s;
+    background-color: transparent;
+    width: 120px;
+    text-align: center;
 }
 
-.btn-outline-primary:hover{
-    background-color: #a94a3a;
+/* Active states - Light red when selected */
+.btn-primary{
+    background-color: #e57373;
+    border-radius: 25px 0 0 25px;
+}
+
+.btn-secondary{
+    background-color: #e57373;
+    border-radius: 0 25px 25px 0;
+}
+
+/* First button (Admin) rounded left */
+.btn-outline-primary, .btn-primary{
+    border-radius: 25px 0 0 25px;
+}
+
+/* Second button (Customer) rounded right */
+.btn-outline-secondary, .btn-secondary{
+    border-radius: 0 25px 25px 0;
+}
+
+.btn-outline-primary:hover, .btn-primary:hover{
+    background-color: #e57373;
     transform: translateY(-1px);
-    border-radius: 25px;
     box-shadow: 0 4px 15px rgba(139, 46, 32, 0.3);
 }
 
-.btn-outline-secondary:hover{
-    background-color: #a94a3a;
+.btn-outline-secondary:hover, .btn-secondary:hover{
+    background-color: #e57373;
     transform: translateY(-1px);
-    border-radius: 25px;
     box-shadow: 0 4px 15px rgba(139, 46, 32, 0.3);
 }
 
