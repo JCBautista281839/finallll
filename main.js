@@ -12,6 +12,12 @@ const firebaseConfig = {
 // Initialize Firebase
 function initializeFirebase() {
     try {
+        // Prevent multiple initializations
+        if (window.firebaseInitialized) {
+            console.log('Firebase already initialized, skipping...');
+            return;
+        }
+        
         if (!firebase.apps.length) {
             console.log('Initializing Firebase with config:', JSON.stringify({
                 projectId: firebaseConfig.projectId,
@@ -51,20 +57,28 @@ function initializeFirebase() {
             }
             
             // Set up offline persistence with better error handling
-            firebase.firestore().enablePersistence({ synchronizeTabs: true })
-                .then(() => {
-                    console.log('Firestore persistence enabled successfully');
-                })
-                .catch((err) => {
-                    if (err.code === 'failed-precondition') {
-                        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time');
-                    } else if (err.code === 'unimplemented') {
-                        console.warn('The current browser does not support offline persistence');
-                    } else {
-                        console.error('Error enabling persistence:', err);
-                    }
-                    // Continue despite persistence issues
-                });
+            // Only enable persistence if it hasn't been enabled yet
+            if (!window.firestorePersistenceEnabled) {
+                firebase.firestore().enablePersistence({ synchronizeTabs: true })
+                    .then(() => {
+                        console.log('Firestore persistence enabled successfully');
+                        window.firestorePersistenceEnabled = true;
+                    })
+                    .catch((err) => {
+                        if (err.code === 'failed-precondition') {
+                            console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time');
+                        } else if (err.code === 'unimplemented') {
+                            console.warn('The current browser does not support offline persistence');
+                        } else if (err.message && err.message.includes('already been started')) {
+                            console.warn('Firestore persistence already enabled or Firestore already initialized');
+                        } else {
+                            console.error('Error enabling persistence:', err);
+                        }
+                        window.firestorePersistenceEnabled = true; // Mark as attempted
+                    });
+            } else {
+                console.log('Firestore persistence already enabled or attempted');
+            }
                 
             // Set network status listeners for better debugging
             firebase.firestore().enableNetwork()
@@ -100,11 +114,12 @@ function initializeFirebase() {
             console.log('Firestore data is in sync');
         });
         
-        // Return Firebase services
-        return {
-            auth: firebase.auth(),
-            db: firebase.firestore()
-        };
+        // Set auth persistence
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .catch(err => console.warn('setPersistence warning:', err));
+        
+        // Mark Firebase as initialized
+        window.firebaseInitialized = true;
     } catch (error) {
         console.error('Error initializing Firebase:', error);
         // More detailed error handling
@@ -119,8 +134,10 @@ function initializeFirebase() {
     }
 }
 
-// Initialize Firebase and get auth and db instances
-const { auth, db } = initializeFirebase();
+// Initialize Firebase when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFirebase();
+});
 
 // Simple path resolver for the specific server structure
 function getServerPath(path) {
@@ -214,8 +231,6 @@ function getCorrectPath(path) {
 }
 
 
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-    .catch(err => console.warn('setPersistence warning:', err));
 const DEFAULT_EMAIL_DOMAIN = 'victoria-s-bistro.com';
 
 
