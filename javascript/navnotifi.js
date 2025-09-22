@@ -38,7 +38,7 @@ function loadDropdownNotifications() {
                 const data = doc.data();
                 html += `<div class="dropdown-item d-flex align-items-center py-2 px-2">
                     <div class="avatar rounded-circle bg-light me-2" style="width:44px;height:44px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-                        <img src="${data.photoUrl || '/src/icons/user.png'}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                        <img src="${data.photoUrl || '../src/Icons/user.png'}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                     </div>
                     <div class="flex-grow-1">
                         <div style="font-weight:600;color:#4361EE;">${data.name || 'System'}</div>

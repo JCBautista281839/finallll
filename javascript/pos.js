@@ -353,7 +353,7 @@ async function startPOSSystem() {
             card.setAttribute('data-category', (item.category || '').toLowerCase());
             card.innerHTML = `
                 <div class="item-image">
-                    <img src="${item.photoUrl || '/src/icons/menu.png'}" alt="${item.name || 'Item'}">
+                    <img src="${item.photoUrl || '../src/Icons/menu.png'}" alt="${item.name || 'Item'}">
                 </div>
                 <div class="item-details">
                     <h6 class="item-name">${item.name || ''}</h6>

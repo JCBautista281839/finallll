@@ -52,7 +52,7 @@ async function initializeRoleBasedNavigation() {
                     kitchenNav.className = 'nav-link text-white';
                     kitchenNav.title = 'Kitchen';
                     kitchenNav.innerHTML = `
-                        <img src="/src/icons/chef-hat.png" alt="Kitchen" class="nav-icon" onerror="this.innerHTML='🍳'">
+                        <img src="../src/Icons/chef-hat.png" alt="Kitchen" class="nav-icon" onerror="this.innerHTML='🍳'">
                         <div class="nav-text">Kitchen</div>
                     `;
                     

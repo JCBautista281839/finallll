@@ -172,13 +172,13 @@ document.addEventListener('DOMContentLoaded', function () {
             imageHtml = `
                 <div class="product-image-container">
                     <img src="${data.photoUrl}" alt="${data.name || 'Product'}" class="product-image" 
-                         onerror="this.src='/src/icons/menu.png'; this.classList.add('fallback-image');">
+                         onerror="this.src='../src/Icons/menu.png'; this.classList.add('fallback-image');">
                 </div>
             `;
         } else {
             imageHtml = `
                 <div class="product-image-container">
-                    <img src="/src/icons/menu.png" alt="No image" class="product-image fallback-image">
+                    <img src="../src/Icons/menu.png" alt="No image" class="product-image fallback-image">
                 </div>
             `;
         }
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         if (editBtn.textContent.includes('Edit')) {
            
-            editBtn.innerHTML = '<img src="/src/icons/edit.png" alt="Done" class="edit-icon me-2">Done';
+            editBtn.innerHTML = '<img src="../src/Icons/edit.png" alt="Done" class="edit-icon me-2">Done';
             editBtn.classList.remove('btn-outline-primary');
             editBtn.classList.add('btn-primary');
             
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
             enableAvailabilityEditing();
         } else {
            
-            editBtn.innerHTML = '<img src="/src/icons/edit.png" alt="Edit" class="edit-icon me-2">Edit';
+            editBtn.innerHTML = '<img src="../src/Icons/edit.png" alt="Edit" class="edit-icon me-2">Edit';
             editBtn.classList.remove('btn-primary');
             editBtn.classList.add('btn-outline-primary');
             
