@@ -56,29 +56,8 @@ function initializeFirebase() {
                 testFirebaseConnection();
             }
             
-            // Set up offline persistence with better error handling
-            // Only enable persistence if it hasn't been enabled yet
-            if (!window.firestorePersistenceEnabled) {
-                firebase.firestore().enablePersistence({ synchronizeTabs: true })
-                    .then(() => {
-                        console.log('Firestore persistence enabled successfully');
-                        window.firestorePersistenceEnabled = true;
-                    })
-                    .catch((err) => {
-                        if (err.code === 'failed-precondition') {
-                            console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time');
-                        } else if (err.code === 'unimplemented') {
-                            console.warn('The current browser does not support offline persistence');
-                        } else if (err.message && err.message.includes('already been started')) {
-                            console.warn('Firestore persistence already enabled or Firestore already initialized');
-                        } else {
-                            console.error('Error enabling persistence:', err);
-                        }
-                        window.firestorePersistenceEnabled = true; // Mark as attempted
-                    });
-            } else {
-                console.log('Firestore persistence already enabled or attempted');
-            }
+            // Skip persistence for now to avoid initialization conflicts
+            console.log('Skipping Firestore persistence to avoid initialization conflicts');
                 
             // Set network status listeners for better debugging
             firebase.firestore().enableNetwork()
