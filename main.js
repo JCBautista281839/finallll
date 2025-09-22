@@ -1,6 +1,6 @@
 const firebaseConfig = {
   apiKey: "AIzaSyAXFKAt6OGLlUfQBnNmEhek6uqNQm4634Y",
-  authDomain: "viktoriasbistro.restaurant,victoria-s-bistro.firebaseapp.com",
+  authDomain: "viktoriasbistro.restaurant",
   databaseURL: "https://victoria-s-bistro-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "victoria-s-bistro",
   storageBucket: "victoria-s-bistro.firebasestorage.app",
@@ -114,6 +114,26 @@ function initializeFirebase() {
 // Initialize Firebase and get auth and db instances
 const { auth, db } = initializeFirebase();
 
+// Helper function to get correct paths based on current location
+function getCorrectPath(path) {
+    const currentPath = window.location.pathname;
+    
+    // If we're in a subdirectory, use relative paths
+    if (currentPath.includes('/html/') || currentPath.includes('/customer/')) {
+        // We're already in a subdirectory, use relative paths
+        if (path.startsWith('/html/')) {
+            return path.replace('/html/', './html/');
+        } else if (path.startsWith('/customer/')) {
+            return path.replace('/customer/', './customer/');
+        } else if (path.startsWith('/')) {
+            return '.' + path;
+        }
+    }
+    
+    // If we're at root, use absolute paths
+    return path;
+}
+
 
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
     .catch(err => console.warn('setPersistence warning:', err));
@@ -172,7 +192,7 @@ function initializeLogin() {
             .then((userCredential) => {
                 console.log('Login successful:', userCredential.user);
                
-                window.location.replace('/html/Dashboard.html');
+                window.location.replace(getCorrectPath('/html/Dashboard.html'));
             })
             .catch((error) => {
                 // Only show error, do NOT reload or redirect
@@ -214,14 +234,14 @@ function checkAuthState() {
             console.log('User is authenticated:', user.email);
             if (onLoginPage) {
                 console.log('Redirecting to dashboard...');
-                window.location.replace('/html/Dashboard.html');
+                window.location.replace(getCorrectPath('/html/Dashboard.html'));
             }
         } else {
            
             console.log('No user signed in.');
             if (!onLoginPage) {
                 console.log('Redirecting to login page...');
-                window.location.replace('/html/login.html');
+                window.location.replace(getCorrectPath('/html/login.html'));
             }
         }
     });
@@ -262,7 +282,7 @@ async function checkUserRoleAndRedirect() {
                 
                 if (!allowedCustomerPages.includes(currentPage)) {
                     console.log('👤 Customer redirected to menu page');
-                    window.location.href = '/customer/html/menu.html';
+                    window.location.href = getCorrectPath('/customer/html/menu.html');
                     return;
                 }
                 
@@ -282,7 +302,7 @@ async function checkUserRoleAndRedirect() {
                 
                 if (!allowedKitchenPages.includes(currentPage)) {
                     console.log('🍳 Kitchen staff redirected to kitchen.html');
-                    window.location.href = '/html/kitchen.html';
+                    window.location.href = getCorrectPath('/html/kitchen.html');
                     return;
                 }
                 
@@ -299,7 +319,7 @@ async function checkUserRoleAndRedirect() {
                 
                 if (restrictedServerPages.includes(currentPage)) {
                     console.log('👤 Server redirected to dashboard');
-                    window.location.href = '/html/Dashboard.html';
+                    window.location.href = getCorrectPath('/html/Dashboard.html');
                     return;
                 }
             }
@@ -332,7 +352,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             !window.location.pathname.includes('signup') &&
             !window.location.pathname.includes('customer')
         ) {
-            window.location.href = '/html/login.html';
+            window.location.href = getCorrectPath('/html/login.html');
         }
     }
 });
