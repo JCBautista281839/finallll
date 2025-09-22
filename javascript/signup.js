@@ -154,16 +154,19 @@ async function createUserAccount(name, email, phone, password) {
 
         // Redirect to customer menu page after a short delay
         setTimeout(() => {
-            // Try multiple path options to avoid 404 errors
-            const possiblePaths = [
-                '../customer/html/menu.html',
-                '/customer/html/menu.html',
-                './customer/html/menu.html',
-                'customer/html/menu.html'
-            ];
+            // Smart path resolution based on current server
+            const currentUrl = window.location.href;
+            let redirectPath;
             
-            // Try the first path, if it fails, try others
-            window.location.href = possiblePaths[0];
+            if (currentUrl.includes('viktoriasbistro.restaurant')) {
+                // Live server - use relative path to avoid double /html/ issue
+                redirectPath = '../customer/html/menu.html';
+            } else {
+                // Local development - use absolute path
+                redirectPath = '/customer/html/menu.html';
+            }
+            
+            window.location.href = redirectPath;
         }, 2000);
 
     } catch (error) {

@@ -117,20 +117,53 @@ const { auth, db } = initializeFirebase();
 // Helper function to get correct paths based on current location
 function getCorrectPath(path) {
     const currentPath = window.location.pathname;
+    const currentUrl = window.location.href;
     
-    // If we're in a subdirectory, use relative paths
-    if (currentPath.includes('/html/') || currentPath.includes('/customer/')) {
-        // We're already in a subdirectory, use relative paths
+    console.log('🔍 Path Resolution Debug:');
+    console.log('  Current URL:', currentUrl);
+    console.log('  Current Path:', currentPath);
+    console.log('  Requested Path:', path);
+    
+    // Check if we're on the live server (viktoriasbistro.restaurant)
+    if (currentUrl.includes('viktoriasbistro.restaurant')) {
+        console.log('  Server: Live server detected');
+        // For live server, use relative paths to avoid double /html/ issue
         if (path.startsWith('/html/')) {
-            return path.replace('/html/', './html/');
+            const resolvedPath = path.replace('/html/', './html/');
+            console.log('  Resolved Path:', resolvedPath);
+            return resolvedPath;
         } else if (path.startsWith('/customer/')) {
-            return path.replace('/customer/', './customer/');
+            const resolvedPath = path.replace('/customer/', './customer/');
+            console.log('  Resolved Path:', resolvedPath);
+            return resolvedPath;
         } else if (path.startsWith('/')) {
-            return '.' + path;
+            const resolvedPath = '.' + path;
+            console.log('  Resolved Path:', resolvedPath);
+            return resolvedPath;
+        }
+    }
+    
+    // If we're in a subdirectory locally, use relative paths
+    if (currentPath.includes('/html/') || currentPath.includes('/customer/')) {
+        console.log('  Server: Local subdirectory detected');
+        if (path.startsWith('/html/')) {
+            const resolvedPath = path.replace('/html/', './html/');
+            console.log('  Resolved Path:', resolvedPath);
+            return resolvedPath;
+        } else if (path.startsWith('/customer/')) {
+            const resolvedPath = path.replace('/customer/', './customer/');
+            console.log('  Resolved Path:', resolvedPath);
+            return resolvedPath;
+        } else if (path.startsWith('/')) {
+            const resolvedPath = '.' + path;
+            console.log('  Resolved Path:', resolvedPath);
+            return resolvedPath;
         }
     }
     
     // If we're at root, use absolute paths
+    console.log('  Server: Root directory, using absolute path');
+    console.log('  Resolved Path:', path);
     return path;
 }
 
