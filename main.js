@@ -97,9 +97,13 @@ function initializeFirebase() {
         };
         
         // Add global error handler for Firestore
-        firebase.firestore().onSnapshotsInSync(() => {
-            console.log('Firestore data is in sync');
-        });
+        try {
+            firebase.firestore().onSnapshotsInSync(() => {
+                console.log('Firestore data is in sync');
+            });
+        } catch (error) {
+            console.warn('Firestore sync monitoring setup failed:', error);
+        }
         
         // Set auth persistence
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
@@ -509,12 +513,13 @@ async function setupKitchenDataReception(user) {
                 const db = firebase.firestore();
                 
                 // Listen for new orders from POS system
-                db.collection('orders')
-                    .where('status', 'in', ['Processing', 'in the kitchen', 'Pending Payment'])
-                    .onSnapshot((snapshot) => {
-                        console.log('📦 Kitchen received order updates from POS:', snapshot.size);
-                        
-                        // Store kitchen-relevant data globally for access by kitchen.js
+                try {
+                    db.collection('orders')
+                        .where('status', 'in', ['Processing', 'in the kitchen', 'Pending Payment'])
+                        .onSnapshot((snapshot) => {
+                            console.log('📦 Kitchen received order updates from POS:', snapshot.size);
+                            
+                            // Store kitchen-relevant data globally for access by kitchen.js
                         window.kitchenOrdersData = [];
                         
                         snapshot.forEach(doc => {
@@ -542,6 +547,9 @@ async function setupKitchenDataReception(user) {
                     }, (error) => {
                         console.error('❌ Kitchen data reception error:', error);
                     });
+                } catch (listenerError) {
+                    console.error('❌ Error setting up kitchen listener:', listenerError);
+                }
                 
                 console.log('✅ Kitchen data reception from POS system is active');
             }

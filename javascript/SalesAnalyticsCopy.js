@@ -1,35 +1,5 @@
 // --- TOP PRODUCTS DASHBOARD-STYLE LOGIC ---
-async function loadTopProductsData() {
-  try {
-    console.log('Loading top products data (analytics)...');
-    const db = firebase.firestore();
-    const ordersSnapshot = await db.collection('orders').get();
-    const productCounts = {};
-    ordersSnapshot.forEach(doc => {
-      const order = doc.data();
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach(item => {
-          const productName = item.name || item.productName || 'Unknown Product';
-          const quantity = parseInt(item.quantity) || 1;
-          if (productCounts[productName]) {
-            productCounts[productName] += quantity;
-          } else {
-            productCounts[productName] = quantity;
-          }
-        });
-      }
-    });
-    const sortedProducts = Object.entries(productCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5); // Top 5 only
-    updateTopProductsDisplay(sortedProducts);
-    console.log('Top products loaded (analytics):', sortedProducts);
-  } catch (error) {
-    console.error('Error loading top products data (analytics):', error);
-    updateTopProductsDisplay([]);
-  }
-}
+// Note: loadTopProductsData is now handled by scriptdash.js to avoid conflicts
 
 function updateTopProductsDisplay(products) {
   const tbody = document.getElementById('topProductsBody');
@@ -990,11 +960,25 @@ let ordersUnsubscribe = null;
 function startRealtimeOrdersListener(startDate, endDate, timeRange) {
   console.log('[Firestore] Starting realtime listener for orders...', startDate, endDate);
 
+  // Prevent duplicate listeners
+  if (window.analyticsListenerActive) {
+    console.log('[Firestore] Listener already active, skipping duplicate call');
+    return;
+  }
+
   // unsubscribe previous listener if any
   if (ordersUnsubscribe) {
     try { ordersUnsubscribe(); } catch(e){/*ignore*/ }
     ordersUnsubscribe = null;
   }
+  
+  window.analyticsListenerActive = true;
+
+  // Set a timeout to fall back to sample data if Firebase is slow
+  const fallbackTimeout = setTimeout(() => {
+    console.warn('[Analytics] Firebase timeout - loading fallback data');
+    loadFallbackAnalyticsData(timeRange);
+  }, 5000); // 5 second timeout
 
   const db = firebase.firestore();
   const ordersRef = db.collection('orders');
@@ -1040,6 +1024,10 @@ function startRealtimeOrdersListener(startDate, endDate, timeRange) {
       // sort and update UI
       orders.sort((a,b) => a.timestamp - b.timestamp);
       console.log(`[Firestore] Realtime snapshot processed, ${orders.length} orders in range.`);
+      
+      // Clear the fallback timeout since we got data
+      clearTimeout(fallbackTimeout);
+      
       updateChartsWithData(orders, timeRange);
       updateSummaryCards(orders);
       updateDataSourceIndicator('firebase');
@@ -1047,13 +1035,96 @@ function startRealtimeOrdersListener(startDate, endDate, timeRange) {
     } catch (err) {
       console.error('[Firestore] Error processing snapshot:', err);
       showError('Error processing orders snapshot.');
+      // Reset flag on error
+      window.analyticsListenerActive = false;
     }
   }, err => {
     console.error('[Firestore] realtime listener error:', err);
-    showError('Realtime listener error: ' + (err && err.message));
+    
+    // Handle specific error types
+    if (err.code === 'permission-denied') {
+      console.warn('[Firestore] Permission denied - using fallback data');
+      showError('Permission denied. Using sample data for demonstration.');
+      // Load fallback data
+      loadFallbackAnalyticsData(timeRange);
+    } else if (err.code === 'unavailable') {
+      console.warn('[Firestore] Service unavailable - using fallback data');
+      showError('Firestore unavailable. Using sample data for demonstration.');
+      loadFallbackAnalyticsData(timeRange);
+    } else {
+      showError('Realtime listener error: ' + (err && err.message));
+    }
+    
+    // Reset flag on error
+    window.analyticsListenerActive = false;
   });
 }
 
+// Cleanup function to stop listeners
+function stopRealtimeListener() {
+  if (ordersUnsubscribe) {
+    try {
+      ordersUnsubscribe();
+      console.log('[Firestore] Realtime listener stopped');
+    } catch (e) {
+      console.warn('[Firestore] Error stopping listener:', e);
+    }
+    ordersUnsubscribe = null;
+  }
+  window.analyticsListenerActive = false;
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', stopRealtimeListener);
+
+// Fallback data function for when Firestore is unavailable
+function loadFallbackAnalyticsData(timeRange) {
+  console.log('[Analytics] Loading fallback data for demonstration');
+  
+  // Generate sample data
+  const sampleOrders = [];
+  const now = new Date();
+  
+  // Generate 30 days of sample data
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    
+    // Generate 3-8 orders per day
+    const orderCount = Math.floor(Math.random() * 6) + 3;
+    for (let j = 0; j < orderCount; j++) {
+      const orderTime = new Date(date);
+      orderTime.setHours(Math.floor(Math.random() * 12) + 8); // 8 AM to 8 PM
+      orderTime.setMinutes(Math.floor(Math.random() * 60));
+      
+      const total = Math.random() * 2000 + 100; // $100 - $2100
+      
+      sampleOrders.push({
+        id: `sample_${i}_${j}`,
+        timestamp: orderTime,
+        total: total,
+        items: [
+          { name: 'Adobo', quantity: Math.floor(Math.random() * 3) + 1 },
+          { name: 'Sinigang', quantity: Math.floor(Math.random() * 2) + 1 }
+        ],
+        payment: { 
+          method: ['Cash', 'GCash', 'Card'][Math.floor(Math.random() * 3)], 
+          total: total 
+        },
+        discount: Math.random() * 50,
+        tax: total * 0.12,
+        paxNumber: Math.floor(Math.random() * 4) + 1
+      });
+    }
+  }
+  
+  // Update UI with sample data
+  updateChartsWithData(sampleOrders, timeRange);
+  updateSummaryCards(sampleOrders);
+  updateDataSourceIndicator('sample');
+  
+  console.log('[Analytics] Fallback data loaded:', sampleOrders.length, 'orders');
+}
 
 function createDayCell(day, dateKey, date) {
     const dayCell = document.createElement('div');
