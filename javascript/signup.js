@@ -154,7 +154,16 @@ async function createUserAccount(name, email, phone, password) {
 
         // Redirect to customer menu page after a short delay
         setTimeout(() => {
-            window.location.href = '/customer/html/menu.html';
+            // Try multiple path options to avoid 404 errors
+            const possiblePaths = [
+                '../customer/html/menu.html',
+                '/customer/html/menu.html',
+                './customer/html/menu.html',
+                'customer/html/menu.html'
+            ];
+            
+            // Try the first path, if it fails, try others
+            window.location.href = possiblePaths[0];
         }, 2000);
 
     } catch (error) {
