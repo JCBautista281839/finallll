@@ -230,6 +230,32 @@ async function checkUserRoleAndRedirect() {
             // Define role-based access rules
             const currentPage = window.location.pathname;
             
+            // Customer users should only access customer pages
+            if (userRole === 'customer') {
+                const allowedCustomerPages = [
+                    '/customer/html/menu.html',
+                    '/customer/html/account.html',
+                    '/customer/html/settings.html',
+                    '/customer/html/cart.html',
+                    '/customer/html/checkout.html',
+                    '/customer/html/confirmation.html',
+                    '/customer/html/payment.html',
+                    '/customer/html/shipping.html',
+                    '/customer/html/details.html',
+                    '/customer/html/Review.html',
+                    '/index.html',
+                    '/'
+                ];
+                
+                if (!allowedCustomerPages.includes(currentPage)) {
+                    console.log('👤 Customer redirected to menu page');
+                    window.location.href = '/customer/html/menu.html';
+                    return;
+                }
+                
+                console.log('👤 Customer authenticated - can access customer pages');
+            }
+            
             // Kitchen staff should only access kitchen.html, inventory.html and logout
             if (userRole === 'kitchen') {
                 const allowedKitchenPages = [
@@ -290,7 +316,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
             window.location.pathname !== '/html/login.html' &&
             window.location.pathname !== '/login.html' &&
             window.location.pathname !== '/' &&
-            !window.location.pathname.includes('signup')
+            !window.location.pathname.includes('signup') &&
+            !window.location.pathname.includes('customer')
         ) {
             window.location.href = '/html/login.html';
         }
