@@ -15,6 +15,30 @@
  * - Works with both real API and fallback mock orders
  */
 
+// Utility function to format Philippine phone numbers to E.164 format
+function formatPhoneNumber(phone) {
+  if (!phone) return '+639189876543'; // Default fallback
+  
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+  
+  // Handle different Philippine number formats
+  if (digits.startsWith('63')) {
+    // Already has country code (63)
+    return '+' + digits;
+  } else if (digits.startsWith('09')) {
+    // Mobile number starting with 09 (e.g., 09171234567)
+    return '+63' + digits.substring(1); // Remove '0' and add '+63'
+  } else if (digits.startsWith('9') && digits.length === 10) {
+    // Mobile number without leading 0 (e.g., 9171234567)
+    return '+63' + digits;
+  } else {
+    // Invalid format, return default
+    console.warn('Invalid phone number format:', phone, 'Using default.');
+    return '+639189876543';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   
   // Utility function to display messages/status
@@ -62,9 +86,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     try {
+      const formData = JSON.parse(savedFormData);
+      const quotationData = JSON.parse(savedQuotationData);
+      
+      // Also save formData in the standard key for modal access
+      sessionStorage.setItem('formData', JSON.stringify(formData));
+      
       return {
-        formData: JSON.parse(savedFormData),
-        quotationData: JSON.parse(savedQuotationData),
+        formData: formData,
+        quotationData: quotationData,
         pickupAddress: savedPickupAddress,
         deliveryAddress: savedDeliveryAddress
       };
@@ -159,18 +189,22 @@ document.addEventListener('DOMContentLoaded', function() {
           quotationId: quotationData.data.quotationId,
           sender: {
             stopId: quotationData.data.stops[0].stopId,
-            name: 'Restaurant', // Replace with actual restaurant name
+            name: "Viktoria's Bistro", // Updated to actual restaurant name
             phone: '+639171234567' // Replace with actual restaurant phone
           },
           recipients: [
             {
               stopId: quotationData.data.stops[1].stopId,
               name: `${formData.firstName} ${formData.lastName}`,
-              phone: formData.phone || '+639189876543', // Use form phone or default
+              phone: formatPhoneNumber(formData.phone), // Format phone to E.164
               remarks: 'Food delivery order - Handle with care!'
             }
           ],
-          isPODEnabled: false
+          isPODEnabled: false,
+          // Add webhook URL for production
+          metadata: {
+            webhookUrl: 'https://viktoriasbistro.restaurant/api/webhook/lalamove'
+          }
         }
       };
 
@@ -210,8 +244,8 @@ document.addEventListener('DOMContentLoaded', function() {
           address: formData.fullAddress
         },
         restaurant: {
-          name: 'Your Restaurant',
-          address: 'SM Mall of Asia, Pasay, Metro Manila' // Replace with actual address
+          name: "Viktoria's Bistro",
+          address: "Viktoria's Bistro, Philippines" // Updated to actual restaurant address
         },
         price: { total: '500', currency: 'PHP' },
         createdAt: new Date().toISOString(),
@@ -269,28 +303,68 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('[shipping.js] Order completed:', orderResult);
 
-      // Show order confirmation
-      const orderDetails = selectedShippingOption === 'pickup' 
-        ? `Order Type: Store Pickup\nOrder ID: ${orderResult.data.orderId}\nPickup Time: ${orderResult.data.estimatedPickupTime ? new Date(orderResult.data.estimatedPickupTime).toLocaleString() : 'To be confirmed'}`
-        : `Order Type: Lalamove Delivery\nOrder ID: ${orderResult.data.orderId}\nStatus: ${orderResult.data.state}\nService: ${orderResult.data.serviceType}`;
-
-      const totalPrice = orderResult.data.price ? orderResult.data.price.total : '500';
-      
-      const proceed = confirm(
-        `Order Confirmation:\n\n${orderDetails}\n\nTotal: ₱${totalPrice}\n\nProceed to payment confirmation?`
-      );
-
-      if (proceed) {
-        // Navigate to payment page or confirmation page
-        window.location.href = 'payment.html';
-      } else {
-        showStatus('Order saved. You can complete payment later.', false);
-      }
+      // Show order confirmation modal instead of confirm dialog
+      showOrderConfirmationModal(orderResult, selectedShippingOption);
       
     } catch (error) {
       console.error('[shipping.js] Payment process failed:', error);
       showStatus('Error: ' + error.message, true);
     }
+  }
+
+  // Function to show the order confirmation modal
+  function showOrderConfirmationModal(orderResult, selectedShippingOption) {
+    const modal = document.getElementById('order-confirmation-modal');
+    
+    // Try to get form data from both possible keys
+    let formDataString = sessionStorage.getItem('formData') || sessionStorage.getItem('orderFormData');
+    let formData = null;
+    
+    // Safely parse formData with fallback
+    try {
+      formData = formDataString ? JSON.parse(formDataString) : null;
+    } catch (e) {
+      console.warn('Could not parse formData from sessionStorage:', e);
+      formData = null;
+    }
+    
+    console.log('Form data for modal:', formData); // Debug log
+    
+    // Get total price
+    const totalPrice = orderResult.data.price ? orderResult.data.price.total : '500';
+    
+    // Update modal content with actual form data
+    document.getElementById('modal-customer-name').textContent = formData ? 
+      `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || 'Customer' : 'Customer';
+    document.getElementById('modal-contact-number').textContent = formData && formData.phone ? 
+      formData.phone : 'N/A';
+    document.getElementById('modal-order-type').textContent = selectedShippingOption === 'pickup' ? 'Store Pickup' : 'Lalamove Delivery';
+    document.getElementById('modal-order-id').textContent = orderResult.data.orderId || 'N/A';
+    document.getElementById('modal-status').textContent = orderResult.data.state || 'Pending';
+    document.getElementById('modal-service').textContent = selectedShippingOption === 'pickup' ? 'N/A' : 'MOTORCYCLE';
+    document.getElementById('modal-total').textContent = `₱${totalPrice}`;
+    
+    // Show the modal
+    modal.style.display = 'flex';
+    
+    // Handle modal buttons
+    document.getElementById('modal-continue').onclick = function() {
+      modal.style.display = 'none';
+      window.location.href = 'payment.html';
+    };
+    
+    document.getElementById('modal-cancel').onclick = function() {
+      modal.style.display = 'none';
+      showStatus('Order saved. You can complete payment later.', false);
+    };
+    
+    // Close modal when clicking outside
+    modal.onclick = function(e) {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        showStatus('Order saved. You can complete payment later.', false);
+      }
+    };
   }
 
   // Initialize shipping options change handlers

@@ -249,7 +249,7 @@ app.post('/api/quote-test', async (req, res) => {
       language: 'en_PH',
       isRouteOptimized: false,
       stops: [
-        { coordinates: { lat: 14.599512, lng: 120.984222 }, address: 'SM Mall of Asia, Pasay' },
+        { coordinates: { lat: 14.4457549030656, lng: 120.92354136968974 }, address: "Viktoria's Bistro, Philippines" },
         { coordinates: { lat: 14.554729, lng: 121.024445 }, address: 'Bonifacio High Street, Taguig' }
       ]
     };
@@ -313,6 +313,18 @@ app.post('/api/webhook/lalamove', (req, res) => {
   console.log('[webhook] Body:', JSON.stringify(req.body, null, 2));
   
   try {
+    // Webhook security validation
+    const signature = req.headers['x-lalamove-signature'];
+    const timestamp = req.headers['x-timestamp'];
+    
+    if (!validateWebhookSignature(req.body, signature, timestamp)) {
+      console.warn('[webhook] Invalid webhook signature');
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Invalid webhook signature' 
+      });
+    }
+    
     const webhookData = req.body;
     
     // Extract key information from webhook
@@ -377,55 +389,200 @@ app.post('/api/webhook/lalamove', (req, res) => {
   }
 });
 
-// Webhook event handlers
-function handleDriverAssigning(orderId, webhookData) {
+// Webhook signature validation
+function validateWebhookSignature(body, signature, timestamp) {
+  try {
+    // Skip validation in development mode
+    if (!IS_PRODUCTION) {
+      console.log('[webhook] Skipping signature validation in development mode');
+      return true;
+    }
+    
+    if (!signature || !timestamp) {
+      console.log('[webhook] Missing signature or timestamp');
+      return false;
+    }
+    
+    // Check timestamp is within 5 minutes
+    const now = Date.now();
+    const webhookTime = parseInt(timestamp) * 1000;
+    const timeDiff = Math.abs(now - webhookTime);
+    
+    if (timeDiff > 5 * 60 * 1000) { // 5 minutes
+      console.log('[webhook] Webhook timestamp too old');
+      return false;
+    }
+    
+    // Validate signature using Lalamove webhook secret
+    const webhookSecret = process.env.LALAMOVE_WEBHOOK_SECRET || API_SECRET;
+    const bodyString = JSON.stringify(body);
+    const expectedSignature = crypto.createHmac('sha256', webhookSecret)
+      .update(timestamp + bodyString)
+      .digest('hex');
+    
+    const isValid = signature === expectedSignature;
+    
+    if (!isValid) {
+      console.log('[webhook] Signature mismatch - expected:', expectedSignature, 'received:', signature);
+    }
+    
+    return isValid;
+  } catch (error) {
+    console.error('[webhook] Error validating signature:', error);
+    return false;
+  }
+}
+
+// Webhook event handlers with Firebase integration
+async function handleDriverAssigning(orderId, webhookData) {
   console.log(`[webhook-handler] Processing driver assignment for order ${orderId}`);
-  // Add your custom logic here - e.g., update database, notify customers, etc.
-  // Example: updateOrderStatus(orderId, 'DRIVER_ASSIGNING');
+  
+  try {
+    // Update order status in database/storage
+    await updateOrderStatus(orderId, {
+      status: 'DRIVER_ASSIGNING',
+      updatedAt: new Date().toISOString(),
+      message: 'Looking for a driver for your order...',
+      webhookData: webhookData
+    });
+    
+    // You can add customer notification here
+    console.log(`[webhook-handler] Order ${orderId} status updated to DRIVER_ASSIGNING`);
+  } catch (error) {
+    console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
+  }
 }
 
-function handleOrderOngoing(orderId, driverId, driverInfo, webhookData) {
+async function handleOrderOngoing(orderId, driverId, driverInfo, webhookData) {
   console.log(`[webhook-handler] Order ${orderId} started with driver ${driverId}`);
-  if (driverInfo) {
-    console.log(`[webhook-handler] Driver details:`, driverInfo);
+  
+  try {
+    const updateData = {
+      status: 'ON_GOING',
+      driverId: driverId,
+      driverInfo: driverInfo,
+      updatedAt: new Date().toISOString(),
+      message: 'Your order is on the way!',
+      webhookData: webhookData
+    };
+    
+    if (driverInfo) {
+      console.log(`[webhook-handler] Driver details:`, driverInfo);
+      updateData.driverName = driverInfo.name;
+      updateData.driverPhone = driverInfo.phone;
+      updateData.vehicleInfo = driverInfo.plateNumber;
+    }
+    
+    await updateOrderStatus(orderId, updateData);
+    
+    // Notify customer
+    await notifyCustomer(orderId, 'Your order is on the way!', {
+      driverInfo: driverInfo,
+      status: 'ON_GOING'
+    });
+    
+    console.log(`[webhook-handler] Order ${orderId} status updated to ON_GOING`);
+  } catch (error) {
+    console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
   }
-  // Add your custom logic here
-  // Example: notifyCustomer(orderId, 'Your order is on the way!', driverInfo);
 }
 
-function handleOrderPickedUp(orderId, driverId, webhookData) {
+async function handleOrderPickedUp(orderId, driverId, webhookData) {
   console.log(`[webhook-handler] Order ${orderId} picked up by driver ${driverId}`);
-  // Add your custom logic here
-  // Example: updateOrderStatus(orderId, 'PICKED_UP');
-  // Example: sendSMS(customerPhone, 'Your order has been picked up!');
-}
-
-function handleOrderCompleted(orderId, webhookData) {
-  console.log(`[webhook-handler] Order ${orderId} completed successfully`);
-  // Add your custom logic here
-  // Example: updateOrderStatus(orderId, 'COMPLETED');
-  // Example: sendCompletionNotification(orderId);
-}
-
-function handleOrderCanceled(orderId, webhookData) {
-  console.log(`[webhook-handler] Order ${orderId} was canceled`);
-  const reason = webhookData?.data?.cancelReason;
-  if (reason) {
-    console.log(`[webhook-handler] Cancellation reason: ${reason}`);
+  
+  try {
+    await updateOrderStatus(orderId, {
+      status: 'PICKED_UP',
+      driverId: driverId,
+      pickedUpAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      message: 'Your order has been picked up and is on the way to you!',
+      webhookData: webhookData
+    });
+    
+    // Notify customer
+    await notifyCustomer(orderId, 'Your order has been picked up!', {
+      status: 'PICKED_UP',
+      estimatedDelivery: 'Expected delivery in 15-30 minutes'
+    });
+    
+    console.log(`[webhook-handler] Order ${orderId} status updated to PICKED_UP`);
+  } catch (error) {
+    console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
   }
-  // Add your custom logic here
-  // Example: processRefund(orderId);
-  // Example: notifyCustomer(orderId, 'Your order has been canceled');
+}
+
+async function handleOrderCompleted(orderId, webhookData) {
+  console.log(`[webhook-handler] Order ${orderId} completed successfully`);
+  
+  try {
+    await updateOrderStatus(orderId, {
+      status: 'COMPLETED',
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      message: 'Your order has been delivered successfully! Thank you for choosing Viktoria\'s Bistro!',
+      webhookData: webhookData
+    });
+    
+    // Notify customer
+    await notifyCustomer(orderId, 'Order delivered successfully!', {
+      status: 'COMPLETED',
+      thankYouMessage: 'Thank you for choosing Viktoria\'s Bistro!'
+    });
+    
+    console.log(`[webhook-handler] Order ${orderId} status updated to COMPLETED`);
+  } catch (error) {
+    console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
+  }
+}
+
+async function handleOrderCanceled(orderId, webhookData) {
+  console.log(`[webhook-handler] Order ${orderId} was canceled`);
+  const reason = webhookData?.data?.cancelReason || 'No reason provided';
+  
+  try {
+    await updateOrderStatus(orderId, {
+      status: 'CANCELED',
+      canceledAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      cancelReason: reason,
+      message: `Your order has been canceled. Reason: ${reason}`,
+      webhookData: webhookData
+    });
+    
+    // Notify customer about cancellation
+    await notifyCustomer(orderId, 'Order canceled', {
+      status: 'CANCELED',
+      reason: reason,
+      refundMessage: 'If you were charged, a refund will be processed within 3-5 business days.'
+    });
+    
+    console.log(`[webhook-handler] Order ${orderId} status updated to CANCELED`);
+  } catch (error) {
+    console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
+  }
 }
 
 function handleUnknownState(orderId, orderState, webhookData) {
   console.log(`[webhook-handler] Unknown state ${orderState} for order ${orderId}`);
   // Log for debugging
   console.log('[webhook-handler] Full webhook data:', JSON.stringify(webhookData, null, 2));
+  
+  // Still try to update with unknown state for tracking
+  updateOrderStatus(orderId, {
+    status: orderState,
+    updatedAt: new Date().toISOString(),
+    message: `Order status: ${orderState}`,
+    webhookData: webhookData
+  }).catch(error => {
+    console.error(`[webhook-handler] Error updating unknown state:`, error);
+  });
 }
 
 // Store webhook events (you can modify this to use a database)
 const webhookEvents = [];
+const orderStatuses = new Map(); // In-memory order status storage
+
 function storeWebhookEvent(webhookData) {
   const event = {
     id: Date.now().toString(),
@@ -445,12 +602,156 @@ function storeWebhookEvent(webhookData) {
   console.log(`[webhook-storage] Stored webhook event ${event.id}`);
 }
 
+// Order status management functions
+async function updateOrderStatus(orderId, statusData) {
+  try {
+    console.log(`[order-status] Updating order ${orderId}:`, statusData);
+    
+    // Store in memory (you can replace this with Firebase/database call)
+    orderStatuses.set(orderId, {
+      orderId: orderId,
+      ...statusData,
+      lastUpdated: new Date().toISOString()
+    });
+    
+    // TODO: Integrate with Firebase Firestore
+    // Example Firebase integration:
+    /*
+    const admin = require('firebase-admin');
+    const db = admin.firestore();
+    await db.collection('orders').doc(orderId).update({
+      ...statusData,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    });
+    */
+    
+    console.log(`[order-status] Successfully updated order ${orderId}`);
+    return true;
+  } catch (error) {
+    console.error(`[order-status] Error updating order ${orderId}:`, error);
+    throw error;
+  }
+}
+
+async function notifyCustomer(orderId, message, additionalData = {}) {
+  try {
+    console.log(`[customer-notification] Sending notification for order ${orderId}: ${message}`);
+    
+    // Get order details to find customer contact info
+    const orderStatus = orderStatuses.get(orderId);
+    
+    // Store notification for retrieval by frontend
+    const notification = {
+      orderId: orderId,
+      message: message,
+      timestamp: new Date().toISOString(),
+      data: additionalData,
+      type: 'order_update'
+    };
+    
+    // Store notification (in production, use proper notification service)
+    if (!global.customerNotifications) {
+      global.customerNotifications = [];
+    }
+    global.customerNotifications.push(notification);
+    
+    // TODO: Implement actual notification methods
+    // Examples:
+    // - Send SMS via Twilio
+    // - Send email via SendGrid
+    // - Push notification via Firebase Cloud Messaging
+    // - WebSocket notification for real-time updates
+    
+    console.log(`[customer-notification] Notification stored for order ${orderId}`);
+    return true;
+  } catch (error) {
+    console.error(`[customer-notification] Error sending notification for order ${orderId}:`, error);
+    return false;
+  }
+}
+
 // API to retrieve webhook events (for debugging)
 app.get('/api/webhook/events', (req, res) => {
   res.json({
     total: webhookEvents.length,
     events: webhookEvents
   });
+});
+
+// API to get order status
+app.get('/api/order/:orderId/status', (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const orderStatus = orderStatuses.get(orderId);
+    
+    if (!orderStatus) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found',
+        orderId: orderId
+      });
+    }
+    
+    res.json({
+      success: true,
+      orderId: orderId,
+      status: orderStatus
+    });
+  } catch (error) {
+    console.error('[order-status] Error retrieving order status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving order status',
+      error: error.message
+    });
+  }
+});
+
+// API to get customer notifications
+app.get('/api/notifications/:orderId', (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const notifications = (global.customerNotifications || [])
+      .filter(n => n.orderId === orderId)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    res.json({
+      success: true,
+      orderId: orderId,
+      notifications: notifications,
+      count: notifications.length
+    });
+  } catch (error) {
+    console.error('[notifications] Error retrieving notifications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving notifications',
+      error: error.message
+    });
+  }
+});
+
+// API to get all order statuses (for admin dashboard)
+app.get('/api/orders/status', (req, res) => {
+  try {
+    const allOrders = Array.from(orderStatuses.entries()).map(([orderId, status]) => ({
+      orderId,
+      ...status
+    }));
+    
+    res.json({
+      success: true,
+      orders: allOrders,
+      count: allOrders.length
+    });
+  } catch (error) {
+    console.error('[orders] Error retrieving all orders:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving orders',
+      error: error.message
+    });
+  }
 });
 
 // Test webhook endpoint (for development/testing)
@@ -562,8 +863,10 @@ app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'index.html'
 
 /* ====== Start server (single listen) ====== */
 const PORT = process.env.PORT || 5001; // Changed from 5000 to avoid conflicts
+
 app.listen(PORT, () => {
   console.log(`Proxy/server listening on http://localhost:${PORT}`);
   console.log(`POS: http://localhost:${PORT}/pos`);
   console.log(`Menu: http://localhost:${PORT}/menu`);
+  console.log(`Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT'}`);
 });

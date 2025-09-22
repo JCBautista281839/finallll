@@ -101,6 +101,59 @@
 
   </div>
   
+  <!-- Order Confirmation Modal -->
+  <div id="order-confirmation-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 class="modal-title">ORDER CONFIRMATION</h2>
+      
+      <div class="confirmation-details">
+        <div class="detail-row">
+          <span class="label">Customer Name:</span>
+          <span class="value" id="modal-customer-name">Vonn Isaac</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Contact Number:</span>
+          <span class="value" id="modal-contact-number">09568992189</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Order Type:</span>
+          <span class="value" id="modal-order-type">Lalamove Delivery</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Order ID:</span>
+          <span class="value" id="modal-order-id">332426758424512859</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Status:</span>
+          <span class="value" id="modal-status">undefined</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Service:</span>
+          <span class="value" id="modal-service">MOTORCYCLE</span>
+        </div>
+        
+        <div class="detail-row total-row">
+          <span class="label">Total:</span>
+          <span class="value total-amount" id="modal-total">₱500</span>
+        </div>
+      </div>
+      
+      <div class="modal-question">
+        <p>Would you like to proceed to Payment and Shipping Options?</p>
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="modal-cancel">Cancel</button>
+        <button class="btn-continue" id="modal-continue">Continue</button>
+      </div>
+    </div>
+  </div>
+  
   <script src="../javascript/shipping.js"></script>
 </body>
 </html>

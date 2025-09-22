@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         stops: [
           {
             stopId: "1",
-            coordinates: { lat: "14.599512", lng: "120.984222" },
+            coordinates: { lat: "14.4457549030656", lng: "120.92354136968974" },
             address: pickupAddress
           },
           {
@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('[details.js] Form data collected:', formData);
       
       // Default pickup address (restaurant/store location)
-      const pickupAddress = "SM Mall of Asia, Pasay, Metro Manila"; // Replace with actual store address
+      const pickupAddress = "Viktoria's Bistro, Philippines"; // Updated to actual restaurant location
       const deliveryAddress = formData.fullAddress;
       
       if (!deliveryAddress) {
