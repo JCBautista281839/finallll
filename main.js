@@ -27,6 +27,14 @@ function initializeFirebase() {
             firebase.initializeApp(firebaseConfig);
             console.log('Firebase initialized in main.js');
             
+            // Set up cleanup on page unload to prevent duplicate listeners
+            window.addEventListener('beforeunload', () => {
+                console.log('Cleaning up Firebase listeners...');
+                // Reset flags to allow fresh initialization on page reload
+                window.firebaseInitialized = false;
+                window.firebaseConnectionTested = false;
+            });
+            
             // Check if the current domain is authorized in Firebase (non-blocking)
             const currentDomain = window.location.hostname;
             if (currentDomain !== 'localhost' && currentDomain !== '127.0.0.1' && 
@@ -114,7 +122,19 @@ function initializeFirebase() {
 }
 
 // Initialize Firebase when DOM is ready
+// Reset loading flags on page load
+function resetLoadingFlags() {
+    window.chartsLoaded = false;
+    window.salesSummaryLoaded = false;
+    window.topProductsLoaded = false;
+    window.inventoryLoaded = false;
+    window.firebaseInitialized = false;
+    window.firebaseConnectionTested = false;
+    console.log('Loading flags reset');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    resetLoadingFlags();
     initializeFirebase();
 });
 
@@ -443,28 +463,34 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
 // Test Firebase connection to verify domain authorization
 function testFirebaseConnection() {
-    console.log('🔍 Testing Firebase connection...');
+    // Prevent multiple connection tests
+    if (window.firebaseConnectionTested) {
+        console.log('🔍 Firebase connection already tested, skipping...');
+        return;
+    }
     
-    // Test Firestore connection
-    firebase.firestore().collection('test').limit(1).get()
+    console.log('🔍 Testing Firebase connection...');
+    window.firebaseConnectionTested = true;
+    
+    // Test Firestore connection with a simple query
+    firebase.firestore().collection('users').limit(1).get()
         .then(() => {
             console.log('✅ Firebase Firestore connection: OK');
         })
         .catch((error) => {
             console.error('❌ Firebase Firestore connection failed:', error.message);
             if (error.code === 'permission-denied') {
-                console.warn('🔒 Permission denied - this may be due to domain authorization issues');
+                console.warn('🔒 Permission denied - this may be due to:');
+                console.warn('1. Firestore security rules blocking access');
+                console.warn('2. Domain not authorized in Firebase Console');
+                console.warn('3. User not authenticated for protected data');
+                console.warn('🔧 To fix: Check Firebase Console -> Firestore -> Rules');
+            } else if (error.code === 'unavailable') {
+                console.warn('🌐 Firestore service temporarily unavailable');
+            } else if (error.code === 'unauthenticated') {
+                console.warn('🔐 User not authenticated - this is normal for public pages');
             }
         });
-    
-    // Test Auth connection
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            console.log('✅ Firebase Auth connection: OK (user signed in)');
-        } else {
-            console.log('✅ Firebase Auth connection: OK (no user signed in)');
-        }
-    });
 }
 
 // Function to set up kitchen data reception from POS

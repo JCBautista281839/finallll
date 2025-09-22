@@ -61,8 +61,15 @@ function initializeCharts() {
 
 // Load charts data from Firebase
 async function loadChartsData() {
+  // Prevent duplicate execution
+  if (window.chartsLoaded) {
+    console.log('Charts already loaded, skipping...');
+    return;
+  }
+  
   try {
     console.log('Loading charts data...');
+    window.chartsLoaded = true;
     
     // Set a timeout to show fallback data if Firebase is slow
     const timeoutId = setTimeout(() => {
@@ -136,6 +143,11 @@ async function loadChartsData() {
     
   } catch (error) {
     console.error('Error loading charts data:', error);
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied for charts data - showing fallback data');
+    } else if (error.code === 'unavailable') {
+      console.warn('Firestore unavailable - showing fallback data');
+    }
     showFallbackChartsData();
   }
 }
@@ -488,7 +500,14 @@ function updateChartLabels() {
 
 // Inventory status loader
 function loadInventoryStatus() {
+  // Prevent duplicate execution
+  if (window.inventoryLoaded) {
+    console.log('Inventory already loaded, skipping...');
+    return;
+  }
+  
   console.log('Loading inventory status...');
+  window.inventoryLoaded = true;
   
   function waitForFirebase() {
     console.log('Checking Firebase availability...');
@@ -594,6 +613,11 @@ function loadInventoryStatus() {
         .catch((error) => {
           clearTimeout(timeoutId);
           console.error('Error loading inventory status:', error);
+          if (error.code === 'permission-denied') {
+            console.warn('Permission denied for inventory - showing fallback data');
+          } else if (error.code === 'unavailable') {
+            console.warn('Firestore unavailable - showing fallback data');
+          }
           showFallbackInventoryData(inventoryBody);
         });
     } catch (error) {
@@ -818,8 +842,15 @@ function updateSalesCard(type, value) {
 
 // Load sales summary data
 async function loadSalesSummaryData() {
+  // Prevent duplicate execution
+  if (window.salesSummaryLoaded) {
+    console.log('Sales summary already loaded, skipping...');
+    return;
+  }
+  
   try {
     console.log('Loading sales summary data...');
+    window.salesSummaryLoaded = true;
     
     const db = firebase.firestore();
     const today = new Date();
@@ -928,6 +959,11 @@ async function loadSalesSummaryData() {
     
   } catch (error) {
     console.error('Error loading sales summary data:', error);
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied for sales data - using default values');
+    } else if (error.code === 'unavailable') {
+      console.warn('Firestore unavailable - using default values');
+    }
     // Set default values on error
     updateSalesSummary(0, 0, 0, 0);
   }
@@ -959,8 +995,15 @@ function updateSalesSummary(total, thisMonth, today, growthPercentage) {
 
 // Load top products data
 async function loadTopProductsData() {
+  // Prevent duplicate execution
+  if (window.topProductsLoaded) {
+    console.log('Top products already loaded, skipping...');
+    return;
+  }
+  
   try {
     console.log('Loading top products data...');
+    window.topProductsLoaded = true;
     
     // Set a timeout to show fallback data if Firebase is slow
     const timeoutId = setTimeout(() => {
@@ -1008,6 +1051,11 @@ async function loadTopProductsData() {
     
   } catch (error) {
     console.error('Error loading top products data:', error);
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied for top products - showing fallback data');
+    } else if (error.code === 'unavailable') {
+      console.warn('Firestore unavailable - showing fallback data');
+    }
     showFallbackTopProductsData();
   }
 }
