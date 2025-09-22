@@ -133,8 +133,9 @@
            
            <div class="search-container">
             <div class="input-group">
-              <button class="btn btn-outline-primary me-2" type="button" id="scanBtn" title="Scan OMR Form">
+              <button class="btn btn-outline-primary me-2" type="button" id="scanBtn" title="Scan OMR Form - Opens OMR Scanner">
                 <img src="/src/Icons/scan.png" alt="Scan" class="scan-icon">
+                <span class="ms-1">OMR Scan</span>
               </button>
               <button class="btn btn-outline-success me-2" type="button" id="loadOMRBtn" title="Show OMR Scans from Firebase" onclick="loadLatestOMR()">
                 <img src="/src/Icons/add.png" alt="OMR Scans" class="scan-icon" style="width: 16px; height: 16px;">
@@ -265,6 +266,15 @@
           if (typeof loadNotifications === 'function') {
             loadNotifications();
           }
+        });
+      }
+      
+      // Add OMR Scanner redirect functionality
+      var scanBtn = document.getElementById('scanBtn');
+      if (scanBtn) {
+        scanBtn.addEventListener('click', function() {
+          // Redirect to OMR Scanner HTML page
+          window.open('omr.html', '_blank');
         });
       }
     });

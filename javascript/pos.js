@@ -1305,7 +1305,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add global function to show OMR scans from Firebase
     window.loadLatestOMR = function() {
-        console.log('� MANUAL: Showing OMR scans from Firebase');
+        console.log('  MANUAL: Showing OMR scans from Firebase');
         showOMRScansModal();
     };
     
@@ -2106,16 +2106,17 @@ function initializeScanButton() {
     const scanBtn = document.getElementById('scanBtn');
     if (scanBtn) {
         scanBtn.addEventListener('click', function() {
-            console.log('🔍 Scan button clicked - Navigating to OMR scanner...');
+            console.log('🔍 Scan button clicked - Opening OMR scanner...');
             
             // Show loading state briefly
             const originalHTML = scanBtn.innerHTML;
             scanBtn.disabled = true;
             scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Opening...';
             
-            // Navigate to OMR page after short delay
+            // Open OMR scanner directly
             setTimeout(() => {
-                window.location.href = './omr.html';
+                openOMRScanner();
+                resetScanButton();
             }, 500);
         });
     }
@@ -2423,7 +2424,7 @@ function openOMRDirect() {
 function openOMRScanner() {
     console.log('📋 Opening OMR Scanner interface...');
     
-    // Try to open the OMR web interface first
+    // Open the Python Flask OMR server directly
     const omrWindow = window.open('http://127.0.0.1:5000', 'omr_scanner', 'width=1200,height=800,scrollbars=yes,resizable=yes');
     
     if (omrWindow) {

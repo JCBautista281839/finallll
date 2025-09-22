@@ -3,7 +3,10 @@ const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
+
 require('dotenv').config(); // Load environment variables
+
+const { spawn, exec } = require('child_process');
 
 const app = express();
 

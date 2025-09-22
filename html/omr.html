@@ -3,283 +3,560 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OMR Circle Scanner</title>
+    <title>OMR Scanner - Viktoria's Bistro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px 10px 0 10px;
+        
+        .scanner-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1200px;
+            overflow: hidden;
         }
-        .header {
-            text-align: center;
+        
+        .scanner-header {
+            background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
-            margin-bottom: 30px;
+            padding: 30px;
+            text-align: center;
         }
-        .header h1 {
-            font-size: 2.7rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        
+        .scanner-header h1 {
+            margin: 0;
+            font-size: 2.5rem;
             font-weight: 700;
         }
-        .header p {
-            font-size: 1.15rem;
-            opacity: 0.95;
+        
+        .scanner-header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
-        .scan-options {
-            display: flex;
-            gap: 32px;
-            justify-content: center;
-            margin-bottom: 30px;
+        
+        .scanner-content {
+            padding: 40px;
         }
-        @media (max-width: 900px) {
-            .scan-options {
-                flex-direction: column;
-                gap: 20px;
-            }
-        }
-        .scan-card {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 8px 32px rgba(102,126,234,0.10);
-            padding: 36px 28px 32px 28px;
-            flex: 1 1 0;
-            min-width: 260px;
+        
+        .upload-area {
+            border: 3px dashed #28a745;
+            border-radius: 15px;
+            padding: 60px 20px;
             text-align: center;
-            transition: box-shadow 0.2s;
-        }
-        .scan-card:hover {
-            box-shadow: 0 12px 36px rgba(118,75,162,0.18);
-        }
-        .scan-icon {
-            font-size: 3.2rem;
-            margin-bottom: 18px;
-            color: #764ba2;
-        }
-        .scan-card h3 {
-            margin: 0 0 8px 0;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-        .scan-card p {
-            margin: 0 0 8px 0;
-            color: #666;
-            font-size: 1rem;
-        }
-        .choose-btn, .webcam-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 32px;
-            border-radius: 25px;
-            font-size: 1rem;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
             cursor: pointer;
-            margin-top: 16px;
-            transition: box-shadow 0.2s, transform 0.2s;
         }
-        .choose-btn:hover, .webcam-btn:hover {
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.18);
-            transform: translateY(-2px);
+        
+        .upload-area:hover {
+            border-color: #20c997;
+            background: #e8f5e8;
         }
+        
+        .upload-area.dragover {
+            border-color: #20c997;
+            background: #e8f5e8;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2rem;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .upload-subtext {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
         .file-input {
             display: none;
         }
-        .results-section {
-            background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(102,126,234,0.10);
-            margin-top: 32px;
-            padding: 28px 24px 20px 24px;
-        }
-        .alert-success {
-            background: #e8f5e8;
-            color: #2e7d32;
-            padding: 15px 18px;
-            border-radius: 7px;
-            border-left: 6px solid #4CAF50;
-            margin-bottom: 18px;
-            font-size: 1.08rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .summary-title {
-            font-weight: 700;
+        
+        .scan-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            padding: 15px 40px;
             font-size: 1.1rem;
-            margin-top: 18px;
-            margin-bottom: 8px;
+            font-weight: 600;
+            border-radius: 50px;
+            color: white;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .scan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .scan-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results-section {
+            margin-top: 40px;
+            display: none;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-left: 5px solid #28a745;
+        }
+        
+        .result-title {
+            color: #28a745;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .selected-items {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .selected-items li {
+            background: white;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
         }
-        .summary-list {
-            margin: 0 0 0 18px;
-            padding: 0;
-            color: #333;
+        
+        .item-name {
+            font-weight: 600;
+            color: #495057;
         }
-        .summary-list li {
-            margin-bottom: 4px;
-            font-size: 1rem;
+        
+        .item-confidence {
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #28a745;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .debug-image {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #28a745;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #28a745;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <button onclick="window.location.href='pos.html'" style="background:#6c757d;color:white;border:none;padding:10px 25px;border-radius:6px;font-size:1rem;cursor:pointer;margin-bottom:18px;float:right;">← Back to POS</button>
-        <div class="header" style="clear:both;">
-            <h1>⚫ OMR Circle Scanner</h1>
-            <p>Upload your OMR form or use webcam to detect shaded circles</p>
-        </div>
-        <div class="scan-options">
-            <div class="scan-card">
-                <div class="scan-icon">📄</div>
-                <h3>Upload OMR Form</h3>
-                <p>Drag and drop your image here or click to select</p>
-                <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
-                    Supports: PNG, JPG, JPEG, GIF (Max 16MB)
-                </p>
-                <input type="file" id="fileInput" class="file-input" accept="image/*">
-                <button type="button" class="choose-btn">Choose File</button>
+    <div class="container-fluid">
+        <div class="scanner-container">
+            <div class="scanner-header">
+                <h1><i class="fas fa-qrcode"></i> OMR Scanner</h1>
+                <p>Upload your OMR form to automatically detect selected items</p>
             </div>
-            <div class="scan-card">
-                <div class="scan-icon">📹</div>
-                <h3>Use Webcam</h3>
-                <p>Scan OMR forms using your camera in real-time</p>
-                <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
-                    Perfect for live scanning and quick results
-                </p>
-                <button type="button" class="webcam-btn" onclick="alert('Webcam scanning coming soon!')">Open Camera</button>
+            
+            <div class="scanner-content">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">Drop your OMR form here or click to browse</div>
+                    <div class="upload-subtext">Supports JPG, PNG, and other image formats</div>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn scan-btn" id="scanBtn" disabled>
+                        <i class="fas fa-search"></i> Scan Image
+                    </button>
+                    <button class="btn btn-outline-secondary ms-2" id="clearBtn" style="display: none;">
+                        <i class="fas fa-trash"></i> Clear Results
+                    </button>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Processing your OMR form...</p>
+                </div>
+                
+                <div class="results-section" id="resultsSection" style="display: block;">
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-check-circle"></i> Scan Results
+                            <small class="text-muted ms-2">(Results stay visible until cleared)</small>
+                        </div>
+                        <div id="scanResults">
+                            <div class="text-muted text-center py-4">
+                                <i class="fas fa-upload fa-2x mb-3"></i>
+                                <p>Upload an OMR form to see scan results here</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-stats" id="summaryStats">
+                        <div class="stat-card">
+                            <div class="stat-number">-</div>
+                            <div class="stat-label">Total Circles</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">-</div>
+                            <div class="stat-label">Selected Items</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">-</div>
+                            <div class="stat-label">Scan Type</div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <div class="result-title">
+                            <i class="fas fa-image"></i> Debug Image
+                        </div>
+                        <div id="debugImageContainer">
+                            <div class="text-muted text-center py-4">
+                                <i class="fas fa-image fa-2x mb-3"></i>
+                                <p>Debug analysis will appear here after scanning</p>
+                            </div>
+                            <img id="debugImage" class="debug-image" alt="Debug analysis" style="display: none;">
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="results-section" id="resultsSection" style="display:none;">
-            <div class="alert-success" id="resultsAlert">
-                <span>✅ Scan completed successfully!</span>
-            </div>
-            <div class="summary-title"><span>⚫</span> <span>Shaded Circles Detected:</span></div>
-            <ul class="summary-list" id="detectedList">
-                <!-- JS will populate detected circles here -->
-            </ul>
-            <div class="summary-title"><span>📊</span> <span>Summary:</span></div>
-            <ul class="summary-list" id="summaryList">
-                <!-- JS will populate summary here -->
-            </ul>
         </div>
     </div>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <!-- Main Firebase Configuration -->
-    <script src="../main.js"></script>
-    <script>
-    // --- Firebase menu status ---
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof initializeFirebase === 'function') {
-            initializeFirebase();
-        }
-        // Show menu status from Firestore
-        function updateMenuStatus(count) {
-            const statusLine = document.querySelector('.status-line');
-            if (statusLine) {
-                statusLine.innerHTML = `<span style='color: #ffeb3b;'>🔥 Connected to Firebase: <span style='color:#7fffd4'>${count} menu items loaded</span></span>`;
-            }
-        }
-        // Try to get menu count from Firestore
-        if (window.firebase && firebase.firestore) {
-            firebase.firestore().collection('menu').get().then(qs => {
-                updateMenuStatus(qs.size);
-            }).catch(() => {
-                updateMenuStatus('0');
-            });
-        }
-    });
 
-    // --- OMR backend upload logic ---
-    const OMR_SERVER_URL = 'http://127.0.0.1:5000';
-    // UI logic for file upload
-    document.querySelector('.choose-btn').onclick = function() {
-        document.getElementById('fileInput').click();
-    };
-    document.getElementById('fileInput').onchange = async function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        // Validate file type
-        const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
-        if (!validTypes.includes(file.type)) {
-            alert('Please select a valid image file (PNG, JPG, JPEG, or GIF)');
-            return;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const scanBtn = document.getElementById('scanBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const scanResults = document.getElementById('scanResults');
+        const summaryStats = document.getElementById('summaryStats');
+        const debugImage = document.getElementById('debugImage');
+        
+        let selectedFile = null;
+        
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileSelect(file);
+            }
+        });
+        
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFileSelect(file);
+            }
+        });
+        
+        // Scan button handler
+        scanBtn.addEventListener('click', () => {
+            if (selectedFile) {
+                scanImage();
+            }
+        });
+        
+        // Clear button handler
+        clearBtn.addEventListener('click', () => {
+            clearResults();
+        });
+        
+        function handleFileSelect(file) {
+            selectedFile = file;
+            scanBtn.disabled = false;
+            
+            // Update upload area text
+            const uploadText = uploadArea.querySelector('.upload-text');
+            uploadText.textContent = `Selected: ${file.name}`;
+            uploadText.style.color = '#28a745';
+            
+            // Keep previous results visible - don't hide them
+            // resultsSection.style.display = 'none';
         }
-        // Validate file size (16MB)
-        if (file.size > 16 * 1024 * 1024) {
-            alert('File size must be less than 16MB');
-            return;
-        }
-        // Show uploading status
-        document.getElementById('resultsSection').style.display = 'block';
-        document.getElementById('resultsAlert').innerHTML = '⏳ Uploading and scanning...';
-        document.getElementById('detectedList').innerHTML = '';
-        document.getElementById('summaryList').innerHTML = '';
-        // Upload to OMR backend
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-            const response = await fetch(`${OMR_SERVER_URL}/upload`, {
-                method: 'POST',
-                body: formData
-            });
-            if (!response.ok) throw new Error('OMR server error');
-            const data = await response.json();
-            document.getElementById('resultsAlert').innerHTML = '✅ Scan completed successfully!';
-            // Connect to Firestore menu and show shaded items
-            if (window.firebase && firebase.firestore && data && data.detected) {
-                firebase.firestore().collection('menu').get().then(qs => {
-                    const menuItems = {};
-                    qs.forEach(doc => {
-                        const d = doc.data();
-                        menuItems[(d.name||'').toLowerCase()] = d;
-                    });
-                    const detectedHtml = data.detected.map(d => {
-                        const label = (d.label||'').toLowerCase();
-                        const menu = menuItems[label];
-                        if (menu) {
-                            return `<li>✔ <b>${menu.name}</b> <span style='color:#888'>(Fill: ${d.fill})</span></li>`;
-                        } else {
-                            return `<li>✔ <span style='color:#888'>${d.label} (Fill: ${d.fill})</span> <span style='color:red'>(not in menu)</span></li>`;
-                        }
-                    }).join('');
-                    document.getElementById('detectedList').innerHTML = detectedHtml;
-                }).catch(() => {
-                    document.getElementById('detectedList').innerHTML = data.detected.map(
-                        d => `<li>✔ ${d.label} (Fill: ${d.fill})</li>`
-                    ).join('');
+        
+        async function scanImage() {
+            if (!selectedFile) return;
+            
+            // Show loading
+            loading.style.display = 'block';
+            scanBtn.disabled = true;
+            // Don't hide results section - keep previous results visible
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                const response = await fetch('http://127.0.0.1:5000/upload', {
+                    method: 'POST',
+                    body: formData
                 });
-            } else if (data && data.detected) {
-                document.getElementById('detectedList').innerHTML = data.detected.map(
-                    d => `<li>✔ ${d.label} (Fill: ${d.fill})</li>`
-                ).join('');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('Scan result:', result); // Debug log
+                
+                if (result.success) {
+                    displayResults(result);
+                } else {
+                    throw new Error(result.error || 'Scan failed');
+                }
+                
+            } catch (error) {
+                console.error('Scan error:', error);
+                showError('Failed to scan image: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                scanBtn.disabled = false;
             }
-            // Populate summary
-            if (data && data.summary) {
-                document.getElementById('summaryList').innerHTML = Object.entries(data.summary).map(
-                    ([k,v]) => `<li><b>${k}:</b> ${v}</li>`
-                ).join('');
-            }
-            // Scroll to results
-            document.getElementById('resultsSection').scrollIntoView({behavior:'smooth'});
-        } catch (err) {
-            document.getElementById('resultsAlert').innerHTML = '❌ Error connecting to OMR server!';
-            document.getElementById('detectedList').innerHTML = '';
-            document.getElementById('summaryList').innerHTML = '';
-            alert('Failed to connect to OMR server.');
         }
-    };
+        
+        function displayResults(result) {
+            console.log('Displaying results:', result); // Debug log
+            const results = result.results;
+            console.log('Results data:', results); // Debug log
+            
+            // Ensure results section is visible
+            resultsSection.style.display = 'block';
+            
+            // Display selected items
+            if (results && results.shaded_selections && results.shaded_selections.length > 0) {
+                const itemsList = results.shaded_selections.map(item => `
+                    <li>
+                        <span class="item-name">${item.item}</span>
+                        <span class="item-confidence">${item.fill_percent}%</span>
+                    </li>
+                `).join('');
+                
+                scanResults.innerHTML = `
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i> 
+                        Successfully detected ${results.shaded_selections.length} selected items
+                    </div>
+                    <ul class="selected-items">${itemsList}</ul>
+                `;
+            } else {
+                console.log('No shaded selections found'); // Debug log
+                scanResults.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        No shaded circles detected. Please check your form.
+                    </div>
+                `;
+            }
+            
+            // Display summary stats
+            summaryStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${result.summary.total_circles}</div>
+                    <div class="stat-label">Total Circles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${result.summary.total_selected}</div>
+                    <div class="stat-label">Selected Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${result.summary.scan_type}</div>
+                    <div class="stat-label">Scan Type</div>
+                </div>
+            `;
+            
+            // Display debug image
+            const debugImageContainer = document.getElementById('debugImageContainer');
+            if (result.debug_image) {
+                debugImage.src = 'data:image/jpeg;base64,' + result.debug_image;
+                debugImage.style.display = 'block';
+                debugImageContainer.querySelector('.text-muted').style.display = 'none';
+            } else {
+                debugImage.style.display = 'none';
+                debugImageContainer.querySelector('.text-muted').style.display = 'block';
+            }
+            
+            // Show results and clear button
+            console.log('Showing results section'); // Debug log
+            resultsSection.style.display = 'block';
+            clearBtn.style.display = 'inline-block';
+            console.log('Results section display:', resultsSection.style.display); // Debug log
+        }
+        
+        function showError(message) {
+            scanResults.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    ${message}
+                </div>
+            `;
+            resultsSection.style.display = 'block';
+        }
+        
+        // Clear results function
+        function clearResults() {
+            // Reset to default state but keep results section visible
+            clearBtn.style.display = 'none';
+            
+            // Reset file input
+            fileInput.value = '';
+            selectedFile = null;
+            scanBtn.disabled = true;
+            
+            // Reset upload area text
+            const uploadText = uploadArea.querySelector('.upload-text');
+            uploadText.textContent = 'Drop your OMR form here or click to browse';
+            uploadText.style.color = '#495057';
+            
+            // Reset results to default state
+            scanResults.innerHTML = `
+                <div class="text-muted text-center py-4">
+                    <i class="fas fa-upload fa-2x mb-3"></i>
+                    <p>Upload an OMR form to see scan results here</p>
+                </div>
+            `;
+            
+            // Reset summary stats
+            summaryStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Total Circles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Selected Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Scan Type</div>
+                </div>
+            `;
+            
+            // Reset debug image
+            const debugImageContainer = document.getElementById('debugImageContainer');
+            debugImage.style.display = 'none';
+            debugImageContainer.querySelector('.text-muted').style.display = 'block';
+        }
+        
+        // Reset form
+        function resetForm() {
+            selectedFile = null;
+            scanBtn.disabled = true;
+            resultsSection.style.display = 'none';
+            clearBtn.style.display = 'none';
+            loading.style.display = 'none';
+            
+            const uploadText = uploadArea.querySelector('.upload-text');
+            uploadText.textContent = 'Drop your OMR form here or click to browse';
+            uploadText.style.color = '#495057';
+        }
     </script>
 </body>
 </html>
