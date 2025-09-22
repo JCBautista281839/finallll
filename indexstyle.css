@@ -149,11 +149,12 @@ body {
 }
 @font-face {
   font-family: 'pinyon-script';
-  src: url(/src/font/PinyonScript-Regular.ttf);
+  src: url(/src/fonts/PinyonScript-Regular.ttf);
 }
 @font-face {
   font-family: 'poppins';
-  src: url(/src/font/poppins.regular.ttf);
+  src: url(/src/fonts/Poppins-Regular.woff2) format('woff2'),
+       url(/src/fonts/Poppins-Regular.woff) format('woff');
 }
 .filipino {
   display: block;
