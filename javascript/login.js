@@ -66,14 +66,27 @@ async function handleLogin(email, password) {
         
         if (userDoc.exists) {
             const userData = userDoc.data();
-            const userRole = userData.role || 'customer';
+            let userRole = userData.role || 'customer';
             
             // Check if the selected type matches the user's actual role
             if (selectedUserType === 'admin') {
                 // Admin login - only allow admin, manager, server, kitchen roles
                 if (!['admin', 'manager', 'server', 'kitchen'].includes(userRole)) {
-                    await firebase.auth().signOut(); // Sign out the user
-                    throw new Error('Access denied. This account is not authorized for admin access.');
+                    // If user doesn't have admin role, try to update it
+                    console.log('User role is:', userRole, 'Updating to admin role...');
+                    try {
+                        await firebase.firestore().collection('users').doc(user.uid).update({
+                            role: 'admin',
+                            userType: 'admin',
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        console.log('User role updated to admin successfully');
+                        userRole = 'admin'; // Update local variable
+                    } catch (updateError) {
+                        console.error('Error updating user role:', updateError);
+                        await firebase.auth().signOut(); // Sign out the user
+                        throw new Error('Access denied. This account is not authorized for admin access. Please contact administrator.');
+                    }
                 }
             } else {
                 // Customer login - only allow customer role
@@ -82,9 +95,35 @@ async function handleLogin(email, password) {
                     throw new Error('Access denied. Please use admin login for staff accounts.');
                 }
             }
-            
-            // Set role in localStorage to prevent redirect glitch
-            localStorage.setItem('userRole', userRole);
+        } else {
+            // User document doesn't exist, create it with admin role if admin login
+            if (selectedUserType === 'admin') {
+                console.log('User document not found, creating with admin role...');
+                try {
+                    await firebase.firestore().collection('users').doc(user.uid).set({
+                        email: user.email,
+                        role: 'admin',
+                        userType: 'admin',
+                        isActive: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('User document created with admin role successfully');
+                    userRole = 'admin';
+                } catch (createError) {
+                    console.error('Error creating user document:', createError);
+                    await firebase.auth().signOut();
+                    throw new Error('Error creating user account. Please try again.');
+                }
+            } else {
+                await firebase.auth().signOut();
+                throw new Error('User account not found. Please sign up first.');
+            }
+        }
+        
+        // Set role in localStorage to prevent redirect glitch
+        localStorage.setItem('userRole', userRole);
             
             // Clear any existing timeouts
             if (window.redirectTimeout) {
@@ -110,9 +149,6 @@ async function handleLogin(email, password) {
                 // Customer login redirect
                 window.location.replace('../customer/html/menu.html');
             }
-        } else {
-            throw new Error('User data not found');
-        }
     } catch (error) {
         console.error('Login error:', error);
         showToast(error.message, 'error');
