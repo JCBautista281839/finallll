@@ -1,6 +1,6 @@
 const firebaseConfig = {
   apiKey: "AIzaSyAXFKAt6OGLlUfQBnNmEhek6uqNQm4634Y",
-  authDomain: "viktoriasbistro.restaurant",
+  authDomain: "victoria-s-bistro.firebaseapp.com",
   databaseURL: "https://victoria-s-bistro-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "victoria-s-bistro",
   storageBucket: "victoria-s-bistro.firebasestorage.app",
@@ -21,7 +21,7 @@ function initializeFirebase() {
             firebase.initializeApp(firebaseConfig);
             console.log('Firebase initialized in main.js');
             
-            // Check if the current domain is authorized in Firebase
+            // Check if the current domain is authorized in Firebase (non-blocking)
             const currentDomain = window.location.hostname;
             if (currentDomain !== 'localhost' && currentDomain !== '127.0.0.1' && 
                 firebaseConfig.authDomain && !firebaseConfig.authDomain.includes(currentDomain)) {
@@ -34,20 +34,12 @@ function initializeFirebase() {
                 console.warn(`4. Add your domain: ${currentDomain}`);
                 console.warn(`5. Save the changes`);
                 
-                // Show user-friendly error message with direct link
-                const firebaseConsoleUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`;
-                const errorMessage = `Domain Authorization Required:\n\nYour domain "${currentDomain}" is not authorized in Firebase.\n\nTo fix this:\n1. Go to Firebase Console: ${firebaseConsoleUrl}\n2. Click "Add domain"\n3. Enter: ${currentDomain}\n4. Click "Done" and "Save"\n5. Refresh this page\n\nOr click OK to continue (some features may not work).`;
+                // Set a flag to prevent auto-refresh loops
+                window.firebaseDomainWarningShown = true;
                 
-                // Show warning but don't block the app
-                console.warn('⚠️ App will continue but authentication may not work properly');
-                
-                // Only show alert if it's a critical page
-                if (window.location.pathname.includes('signup') || window.location.pathname.includes('login')) {
-                    if (typeof showError === 'function') {
-                        showError(errorMessage);
-                    } else {
-                        alert(errorMessage);
-                    }
+                // Show warning but don't block the app - only show once per session
+                if (!window.firebaseDomainWarningShown) {
+                    console.warn('⚠️ App will continue but authentication may not work properly');
                 }
             }
             
@@ -425,17 +417,25 @@ firebase.auth().onAuthStateChanged(async (user) => {
     } else {
         console.log("No user signed in");
         // Prevent auto-refresh/redirect loop
-        if (
-            window.location.pathname !== '/html/login.html' &&
-            window.location.pathname !== '/login.html' &&
-            window.location.pathname !== '/' &&
-            !window.location.pathname.includes('signup') &&
-            !window.location.pathname.includes('customer')
-        ) {
-            // Use the simple server path resolver
+        const currentPath = window.location.pathname;
+        const isLoginPage = currentPath.includes('login.html') || currentPath === '/' || currentPath === '/index.html';
+        const isSignupPage = currentPath.includes('signup');
+        const isCustomerPage = currentPath.includes('customer');
+        const isPublicPage = isLoginPage || isSignupPage || isCustomerPage;
+        
+        // Only redirect if not already on a public page and not in a redirect loop
+        if (!isPublicPage && !window.isRedirecting) {
+            window.isRedirecting = true; // Prevent redirect loops
             const loginPath = getServerPath('/html/login.html');
             console.log('🔄 Redirecting to login:', loginPath);
-            window.location.href = loginPath;
+            
+            // Reset redirect flag after 5 seconds to prevent permanent blocking
+            setTimeout(() => {
+                window.isRedirecting = false;
+            }, 5000);
+            
+            // Use replace instead of href to prevent back button issues
+            window.location.replace(loginPath);
         }
     }
 });
