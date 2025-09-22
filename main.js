@@ -1,6 +1,6 @@
 const firebaseConfig = {
   apiKey: "AIzaSyAXFKAt6OGLlUfQBnNmEhek6uqNQm4634Y",
-  authDomain: "victoria-s-bistro.firebaseapp.com",
+  authDomain: "viktoriasbistro.restaurant",
   databaseURL: "https://victoria-s-bistro-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "victoria-s-bistro",
   storageBucket: "victoria-s-bistro.firebasestorage.app",
@@ -34,11 +34,20 @@ function initializeFirebase() {
                 console.warn(`4. Add your domain: ${currentDomain}`);
                 console.warn(`5. Save the changes`);
                 
-                // Show user-friendly error message
-                if (typeof showError === 'function') {
-                    showError(`Domain not authorized. Please add "${currentDomain}" to Firebase authorized domains.`);
-                } else {
-                    alert(`Domain Authorization Required:\n\nYour domain "${currentDomain}" is not authorized in Firebase.\n\nTo fix this:\n1. Go to Firebase Console\n2. Select project: victoria-s-bistro\n3. Go to Authentication -> Settings -> Authorized domains\n4. Add your domain: ${currentDomain}\n5. Save changes\n\nThen refresh this page.`);
+                // Show user-friendly error message with direct link
+                const firebaseConsoleUrl = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`;
+                const errorMessage = `Domain Authorization Required:\n\nYour domain "${currentDomain}" is not authorized in Firebase.\n\nTo fix this:\n1. Go to Firebase Console: ${firebaseConsoleUrl}\n2. Click "Add domain"\n3. Enter: ${currentDomain}\n4. Click "Done" and "Save"\n5. Refresh this page\n\nOr click OK to continue (some features may not work).`;
+                
+                // Show warning but don't block the app
+                console.warn('⚠️ App will continue but authentication may not work properly');
+                
+                // Only show alert if it's a critical page
+                if (window.location.pathname.includes('signup') || window.location.pathname.includes('login')) {
+                    if (typeof showError === 'function') {
+                        showError(errorMessage);
+                    } else {
+                        alert(errorMessage);
+                    }
                 }
             }
             
