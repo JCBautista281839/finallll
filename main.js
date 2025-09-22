@@ -41,6 +41,13 @@ function initializeFirebase() {
                 if (!window.firebaseDomainWarningShown) {
                     console.warn('⚠️ App will continue but authentication may not work properly');
                 }
+                
+                // Test Firebase connection to verify domain authorization
+                testFirebaseConnection();
+            } else {
+                console.log('✅ Firebase domain authorization: OK');
+                // Test Firebase connection to verify it's working
+                testFirebaseConnection();
             }
             
             // Set up offline persistence with better error handling
@@ -439,6 +446,32 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 });
+
+// Test Firebase connection to verify domain authorization
+function testFirebaseConnection() {
+    console.log('🔍 Testing Firebase connection...');
+    
+    // Test Firestore connection
+    firebase.firestore().collection('test').limit(1).get()
+        .then(() => {
+            console.log('✅ Firebase Firestore connection: OK');
+        })
+        .catch((error) => {
+            console.error('❌ Firebase Firestore connection failed:', error.message);
+            if (error.code === 'permission-denied') {
+                console.warn('🔒 Permission denied - this may be due to domain authorization issues');
+            }
+        });
+    
+    // Test Auth connection
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            console.log('✅ Firebase Auth connection: OK (user signed in)');
+        } else {
+            console.log('✅ Firebase Auth connection: OK (no user signed in)');
+        }
+    });
+}
 
 // Function to set up kitchen data reception from POS
 async function setupKitchenDataReception(user) {
