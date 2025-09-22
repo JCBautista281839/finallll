@@ -1,6 +1,6 @@
 const firebaseConfig = {
   apiKey: "AIzaSyAXFKAt6OGLlUfQBnNmEhek6uqNQm4634Y",
-  authDomain: "viktoriasbistro.restaurant",
+  authDomain: "victoria-s-bistro.firebaseapp.com",
   databaseURL: "https://victoria-s-bistro-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "victoria-s-bistro",
   storageBucket: "victoria-s-bistro.firebasestorage.app",
