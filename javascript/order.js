@@ -40,6 +40,8 @@ function updateOrderTimestamp(orderNumber) {
 
 // Store orders globally for filtering
 let allOrders = [];
+let retryCount = 0;
+const maxRetries = 5;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Order page loaded, initializing...');
@@ -63,18 +65,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add a small delay to ensure Firebase is fully initialized
     setTimeout(() => {
-        // Test Firebase connection first
-        testFirebaseConnection()
-            .then(success => {
-                if (success) {
-                    // Initialize Firebase and start listening for orders
-                    initializeOrdersListener();
-                }
-            })
-            .catch(err => {
-                console.error('Error in initialization:', err);
-                showError('Initialization failed', err.message);
-            });
+        // Show loading state
+        showLoadingState();
+        
+        // Automatically retry Firebase connection
+        autoRetryFirebaseConnection();
     }, 100);
     
     // Setup search functionality
@@ -136,6 +131,73 @@ function sanitizeOrderData(orderData) {
     }
 }
 
+// Show loading state while connecting
+function showLoadingState() {
+    const tableBody = document.querySelector('table tbody');
+    if (tableBody) {
+        tableBody.innerHTML = 
+            '<tr>' +
+                '<td colspan="8" class="text-center py-4">' +
+                    '<div class="spinner-border text-primary mb-2" role="status">' +
+                        '<span class="visually-hidden">Loading...</span>' +
+                    '</div>' +
+                    '<div>Connecting to Firebase...</div>' +
+                    '<small class="text-muted">Please wait while we load your orders</small>' +
+                '</td>' +
+            '</tr>';
+    }
+}
+
+// Automatic retry mechanism for Firebase connection
+async function autoRetryFirebaseConnection() {
+    console.log(`🔄 Attempting Firebase connection (attempt ${retryCount + 1}/${maxRetries})`);
+    
+    try {
+        const success = await testFirebaseConnection();
+        if (success) {
+            console.log('✅ Firebase connection successful, initializing orders listener');
+            initializeOrdersListener();
+            return;
+        }
+    } catch (error) {
+        console.error(`❌ Connection attempt ${retryCount + 1} failed:`, error);
+    }
+    
+    retryCount++;
+    
+    if (retryCount < maxRetries) {
+        // Wait before retrying (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+        console.log(`⏳ Retrying in ${delay}ms...`);
+        
+        setTimeout(() => {
+            autoRetryFirebaseConnection();
+        }, delay);
+    } else {
+        console.error('❌ Max retries reached, showing error state');
+        showFinalErrorState();
+    }
+}
+
+// Show final error state when all retries are exhausted
+function showFinalErrorState() {
+    const tableBody = document.querySelector('table tbody');
+    if (tableBody) {
+        tableBody.innerHTML = 
+            '<tr>' +
+                '<td colspan="8" class="text-center py-4 text-warning">' +
+                    '<i class="fa fa-exclamation-triangle fa-2x mb-2 d-block"></i>' +
+                    '<div>Unable to Connect to Firebase</div>' +
+                    '<small class="text-muted">Please check your internet connection and try refreshing the page</small>' +
+                    '<br>' +
+                    '<button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">' +
+                        'Refresh Page' +
+                    '</button>' +
+                '</td>' +
+            '</tr>';
+    }
+}
+
 async function testFirebaseConnection() {
     try {
         console.log('🔍 Testing Firebase connection...');
@@ -164,30 +226,7 @@ async function testFirebaseConnection() {
     } catch (error) {
         console.error('❌ Firebase connection failed:', error);
         
-        // Handle specific Firebase errors
-        let errorMessage = error.message;
-        if (error.message.includes('Target ID already exists')) {
-            errorMessage = 'Firebase already initialized. Please refresh the page.';
-        } else if (error.message.includes('Missing or insufficient permissions')) {
-            errorMessage = 'Firebase permissions issue. Check your domain authorization.';
-        }
-        
-        // Show error in table
-        const tableBody = document.querySelector('table tbody');
-        if (tableBody) {
-            tableBody.innerHTML = 
-                '<tr>' +
-                    '<td colspan="8" class="text-center py-4 text-warning">' +
-                        '<i class="fa fa-wifi fa-2x mb-2 d-block"></i>' +
-                        '<div>Firebase Connection Failed</div>' +
-                        '<small class="text-muted">' + errorMessage + '</small>' +
-                        '<br>' +
-                        '<button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">' +
-                            'Refresh Page' +
-                        '</button>' +
-                    '</td>' +
-                '</tr>';
-        }
+        // Just return false - error handling is done by autoRetryFirebaseConnection
         return false;
     }
 }
@@ -204,6 +243,11 @@ function initializeOrdersListener() {
     
     const db = firebase.firestore();
     const tableBody = document.querySelector('table tbody');
+    
+    // Clear loading state and show success
+    if (tableBody && tableBody.innerHTML.includes('spinner-border')) {
+        tableBody.innerHTML = ''; // Clear loading state
+    }
 
     if (!tableBody) {
         console.error('Table body not found');
