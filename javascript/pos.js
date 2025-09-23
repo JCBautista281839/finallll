@@ -649,9 +649,9 @@ async function startPOSSystem() {
                     alert('Please enter both Table Number and Pax before proceeding.');
                     return;
                 }
-<<<<<<< Updated upstream
 
-                const db = firebase.firestore();
+                try {
+                    const db = firebase.firestore();
                 const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
                 const isEditMode = sessionStorage.getItem('isEditMode') === 'true';
                 const originalOrderId = sessionStorage.getItem('originalOrderId');
@@ -814,33 +814,42 @@ async function startPOSSystem() {
                     stack: error.stack
                 });
                 alert(`There was an error processing your order: ${error.message}. Please try again.`);
-=======
-                posOrder.tableNumber = tableNumberValue;
-                posOrder.pax = paxValue;
-            } else {
-                posOrder.tableNumber = '';
-                posOrder.pax = '';
->>>>>>> Stashed changes
             }
-            // Items
-            posOrder.items = orderItems.map(item => ({
-                name: item.getAttribute('data-item-name'),
-                quantity: parseInt(item.querySelector('.quantity').textContent),
-                price: parseFloat(item.getAttribute('data-unit-price')),
-                total: parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''))
-            }));
-            // Subtotal, tax, discount, total
-            posOrder.subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
-            posOrder.tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
-            posOrder.discount = typeof posOrder.discountAmount !== 'undefined' ? posOrder.discountAmount : 0;
-            posOrder.total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
-            // Status and createdAt
-            posOrder.status = 'pending payment';
-            posOrder.createdAt = new Date().toISOString();
-            // Save to sessionStorage
-            sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
-            // Navigate to payment page
-            window.location.href = '/html/payment.html';
+        } else {
+            // For takeout orders, proceed without table validation
+            try {
+                const db = firebase.firestore();
+                const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
+                
+                // Items
+                posOrder.items = orderItems.map(item => ({
+                    name: item.getAttribute('data-item-name'),
+                    quantity: parseInt(item.querySelector('.quantity').textContent),
+                    price: parseFloat(item.getAttribute('data-unit-price')),
+                    total: parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''))
+                }));
+                
+                // Subtotal, tax, discount, total
+                posOrder.subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
+                posOrder.tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
+                posOrder.discount = typeof posOrder.discountAmount !== 'undefined' ? posOrder.discountAmount : 0;
+                posOrder.total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
+                
+                // Status and createdAt
+                posOrder.status = 'pending payment';
+                posOrder.createdAt = new Date().toISOString();
+                
+                // Save to sessionStorage
+                sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+                
+                // Navigate to payment page
+                window.location.href = '/html/payment.html';
+                
+            } catch (error) {
+                console.error('Error processing takeout order:', error);
+                alert(`There was an error processing your order: ${error.message}. Please try again.`);
+            }
+        }
         });
     }
 
