@@ -827,7 +827,7 @@ async function startPOSSystem() {
                         sessionStorage.setItem('posOrder', JSON.stringify(orderData));
                         
                         // Navigate to payment page with absolute path
-                        window.location.href = window.location.origin + '/..html/payment.html';
+                        window.location.href = window.location.origin + '/payment.html';
                         return;
                     }
                 }
@@ -895,7 +895,7 @@ async function startPOSSystem() {
                 await updateOrderNumber();
                 
                 // Navigate to payment page
-                window.location.href = '../html/payment.html';
+                window.location.href = '/payment.html';
             } catch (error) {
                 console.error('Error saving order:', error);
                 console.error('Error details:', {
