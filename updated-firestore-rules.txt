@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow admin users to read/write everything
+    match /{document=**} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Inventory collection: allow all authenticated users to read and write
+    match /inventory/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Menu collection: allow authenticated users to manage menu items
+    match /menu/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Orders collection: allow authenticated users to manage orders
+    match /orders/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Counters collection: allow authenticated users to read and write
+    match /counters/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Users collection: allow users to read/write their own data
+    // AND allow admins to manage all users
+    // ALSO allow creation during signup (no auth required for create)
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+      allow create: if true; // Allow anyone to create a new user during signup
+    }
+
+    // Customers collection: allow creation during signup and user management
+    match /customers/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+      allow create: if true; // Allow anyone to create a new customer during signup
+    }
+
+    // Team members collection: allow authenticated users to manage team members
+    match /team_members/{memberId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Notifications collection: allow reads and writes for authenticated users
+    match /notifications/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Test collection for connection testing - allow public access for testing
+    match /test/{docId} {
+      allow read, write: if true; // Allow public access for connection testing
+    }
+
+    // OMR Scans collection: allow authenticated users to read and write OMR scan data
+    match /omr_scans/{scanId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // OMR Templates collection: allow authenticated users to manage OMR form templates
+    match /omr_templates/{templateId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // OMR Analytics collection: allow authenticated users to read OMR analytics data
+    match /omr_analytics/{analyticsId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Deny access to everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

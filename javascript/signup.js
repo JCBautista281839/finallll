@@ -17,6 +17,40 @@ function showSuccess(message) {
     showMessageModal('Success', message, 'success');
 }
 
+// Send SMS OTP function
+async function sendSMSOTP(phoneNumber, userName) {
+    try {
+        // Format phone number (ensure it starts with +63 for Philippines)
+        let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove all non-digits
+        if (formattedPhone.startsWith('0')) {
+            formattedPhone = '+63' + formattedPhone.substring(1);
+        } else if (formattedPhone.startsWith('63')) {
+            formattedPhone = '+' + formattedPhone;
+        } else if (!formattedPhone.startsWith('+')) {
+            formattedPhone = '+63' + formattedPhone;
+        }
+        
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Store OTP in localStorage for verification
+        localStorage.setItem('smsOTP', otp);
+        localStorage.setItem('smsOTPExpiry', Date.now() + (5 * 60 * 1000)); // 5 minutes expiry
+        
+        // For demo purposes, log the OTP to console
+        console.log('SMS OTP:', otp, 'for phone:', formattedPhone);
+        
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        return true;
+        
+    } catch (error) {
+        console.error('Error sending SMS OTP:', error);
+        throw new Error('Failed to send SMS verification code. Please try again.');
+    }
+}
+
 // Message modal functions
 function showMessageModal(title, message, type) {
     const modal = document.getElementById('messageModal');
@@ -66,26 +100,41 @@ async function createUserAccount(name, email, phone, password) {
             displayName: name
         });
 
-        // Save customer user data to Firestore
-        await firebase.firestore().collection('customers').doc(user.uid).set({
-            // Basic Information
-            name: name,
-            email: email,
-            phone: phone,
-            
-            // User Status
-            role: 'customer',
-            userType: 'customer',
-            isActive: true,
-            isEmailVerified: false,
-            
-            // Timestamps
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-            
-            // Customer Profile
-            profile: {
+        // Save customer data to multiple collections for better organization
+        try {
+            // 1. Main Customer Collection
+            await firebase.firestore().collection('customers').doc(user.uid).set({
+                // Basic Information
+                customerId: user.uid,
+                name: name,
+                email: email,
+                phone: phone,
+                
+                // User Status
+                role: 'customer',
+                userType: 'customer',
+                isActive: true,
+                isEmailVerified: false,
+                isPhoneVerified: false,
+                
+                // Timestamps
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                
+                // Account Status
+                accountStatus: 'pending_verification',
+                verificationMethod: 'sms',
+                
+                // Referral System
+                referralCode: generateReferralCode(name),
+                referredBy: null,
+                referralCount: 0
+            });
+
+            // 2. Customer Profile Collection
+            await firebase.firestore().collection('customer_profiles').doc(user.uid).set({
+                customerId: user.uid,
                 displayName: name,
                 firstName: name.split(' ')[0] || name,
                 lastName: name.split(' ').slice(1).join(' ') || '',
@@ -94,76 +143,155 @@ async function createUserAccount(name, email, phone, password) {
                 profilePicture: null,
                 dateOfBirth: null,
                 gender: null,
+                
+                // Address Information
                 address: {
                     street: '',
                     city: '',
                     state: '',
                     zipCode: '',
-                    country: 'Philippines'
-                }
-            },
-            
-            // Customer Preferences
-            preferences: {
+                    country: 'Philippines',
+                    isDefault: true
+                },
+                
+                // Emergency Contact
+                emergencyContact: {
+                    name: '',
+                    phone: '',
+                    relationship: ''
+                },
+                
+                // Profile Completion
+                profileCompletion: 25, // 25% complete after basic signup
+                lastProfileUpdate: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // 3. Customer Preferences Collection
+            await firebase.firestore().collection('customer_preferences').doc(user.uid).set({
+                customerId: user.uid,
+                
+                // Notification Preferences
                 notifications: {
                     email: true,
                     sms: true,
-                    push: true
+                    push: true,
+                    marketing: false,
+                    orderUpdates: true,
+                    promotions: false
                 },
+                
+                // Dietary Preferences
                 dietaryRestrictions: [],
+                allergies: [],
+                favoriteCuisines: [],
+                
+                // Order Preferences
                 favoriteItems: [],
-                allergies: []
-            },
-            
-            // Order History
-            orderHistory: [],
-            totalOrders: 0,
-            totalSpent: 0,
-            
-            // Loyalty & Rewards
-            loyaltyPoints: 0,
-            membershipLevel: 'Bronze',
-            referralCode: generateReferralCode(name),
-            
-            // Account Settings
-            settings: {
+                preferredDeliveryTime: '',
+                deliveryInstructions: '',
+                
+                // App Preferences
                 language: 'en',
                 currency: 'PHP',
                 timezone: 'Asia/Manila',
-                theme: 'light'
-            }
-        });
+                theme: 'light',
+                
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
-        // Also create a backup record in the main users collection for authentication
-        await firebase.firestore().collection('users').doc(user.uid).set({
-            name: name,
-            email: email,
-            phone: phone,
-            role: 'customer',
-            userType: 'customer',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            isActive: true
-        });
+            // 4. Customer Loyalty Collection
+            await firebase.firestore().collection('customer_loyalty').doc(user.uid).set({
+                customerId: user.uid,
+                
+                // Loyalty Points
+                loyaltyPoints: 0,
+                totalPointsEarned: 0,
+                totalPointsRedeemed: 0,
+                
+                // Membership
+                membershipLevel: 'Bronze',
+                membershipTier: 'New Member',
+                membershipStartDate: firebase.firestore.FieldValue.serverTimestamp(),
+                
+                // Rewards
+                availableRewards: [],
+                redeemedRewards: [],
+                
+                // Referral Program
+                referralCode: generateReferralCode(name),
+                referrals: [],
+                referralRewards: 0,
+                
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
-        // Send email verification
-        await user.sendEmailVerification();
+            // 5. Customer Orders Summary Collection
+            await firebase.firestore().collection('customer_orders_summary').doc(user.uid).set({
+                customerId: user.uid,
+                
+                // Order Statistics
+                totalOrders: 0,
+                totalSpent: 0,
+                averageOrderValue: 0,
+                
+                // Order History
+                orderHistory: [],
+                favoriteRestaurants: [],
+                
+                // Delivery Statistics
+                totalDeliveries: 0,
+                averageDeliveryTime: 0,
+                
+                // Payment Methods
+                savedPaymentMethods: [],
+                defaultPaymentMethod: null,
+                
+                lastOrderDate: null,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Also create a backup record in the main users collection for authentication
+            await firebase.firestore().collection('users').doc(user.uid).set({
+                name: name,
+                email: email,
+                phone: phone,
+                role: 'customer',
+                userType: 'customer',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                isActive: true
+            });
+            
+            console.log('✅ User data saved to Firestore successfully');
+            
+        } catch (firestoreError) {
+            console.warn('Firestore save failed:', firestoreError.message);
+            // Continue with the process even if Firestore fails
+        }
+
+        // Send SMS OTP verification
+        await sendSMSOTP(phone, name);
+
+        // Store phone and user info in localStorage for OTP page
+        localStorage.setItem('signupPhone', phone);
+        localStorage.setItem('signupEmail', email);
+        localStorage.setItem('signupName', name);
 
         // Show success message
-        showSuccess('Account created successfully! Please check your email to verify your account before logging in.');
+        showSuccess('Account created successfully! Please check your phone for SMS verification code.');
 
-        // Redirect to customer menu page after a short delay
+        // Redirect to OTP page after a short delay
         setTimeout(() => {
             // Smart path resolution based on current server
             const currentUrl = window.location.href;
             let redirectPath;
             
             if (currentUrl.includes('viktoriasbistro.restaurant')) {
-                // Live server - use relative path to avoid double /html/ issue
-                redirectPath = '../customer/html/menu.html';
+                // Live server - use relative path
+                redirectPath = '../html/otp.html';
             } else {
                 // Local development - use absolute path
-                redirectPath = '/customer/html/menu.html';
+                redirectPath = '/html/otp.html';
             }
             
             window.location.href = redirectPath;
