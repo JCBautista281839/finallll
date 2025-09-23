@@ -2518,16 +2518,29 @@ function checkForOMRResults() {
 }
 
 // Check Firebase for latest OMR scan data
+let firebaseCheckAttempts = 0;
+const maxFirebaseCheckAttempts = 10;
+
 async function checkLatestOMRFromFirebase() {
     try {
         console.log('🔥 POS: Checking Firebase for latest OMR scan...');
         
         // Wait for Firebase to be ready
         if (!window.isFirebaseReady || !window.isFirebaseReady()) {
-            console.log('⏳ POS: Waiting for Firebase to initialize...');
-            setTimeout(checkLatestOMRFromFirebase, 1000);
+            firebaseCheckAttempts++;
+            
+            if (firebaseCheckAttempts > maxFirebaseCheckAttempts) {
+                console.error('❌ POS: Firebase initialization timeout after', maxFirebaseCheckAttempts, 'attempts');
+                return;
+            }
+            
+            console.log('⏳ POS: Waiting for Firebase to initialize... (attempt', firebaseCheckAttempts, '/', maxFirebaseCheckAttempts, ')');
+            setTimeout(checkLatestOMRFromFirebase, 2000); // Increased delay to prevent rapid loops
             return;
         }
+        
+        // Reset counter on successful Firebase detection
+        firebaseCheckAttempts = 0;
 
         const db = firebase.firestore();
         

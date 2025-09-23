@@ -55,6 +55,14 @@ function testFirebaseConnection() {
     }
 }
 
+// Global Firebase ready check function
+window.isFirebaseReady = function() {
+    return typeof firebase !== 'undefined' && 
+           firebase.apps && 
+           firebase.apps.length > 0 && 
+           firebase.firestore;
+};
+
 // Auto-initialize Firebase when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, initializing Firebase...');
