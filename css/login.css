@@ -114,12 +114,12 @@ body {
 
 /* Active states - Light red when selected */
 .btn-primary{
-    background-color: #e57373;
+    background-color: #96392d;
     border-radius: 25px 0 0 25px;
 }
 
 .btn-secondary{
-    background-color: #e57373;
+    background-color: #96392d;
     border-radius: 0 25px 25px 0;
 }
 
@@ -134,13 +134,13 @@ body {
 }
 
 .btn-outline-primary:hover, .btn-primary:hover{
-    background-color: #e57373;
+    background-color: #96392d;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(139, 46, 32, 0.3);
 }
 
 .btn-outline-secondary:hover, .btn-secondary:hover{
-    background-color: #e57373;
+    background-color: #96392d;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(139, 46, 32, 0.3);
 }
