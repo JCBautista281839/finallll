@@ -142,11 +142,16 @@ document.addEventListener('DOMContentLoaded', function() {
       if (typeEl && data.orderType) {
         typeEl.textContent = `Order Type: ${data.orderType}`;
       }
-      // Show pax if available
-      const paxEl = document.getElementById('pax');
-      if (paxEl && data.pax) {
-        paxEl.textContent = `Pax: ${data.pax}`;
+      // Show pax and table number together under order number
+      const orderMetaEl = document.getElementById('orderMeta');
+      let metaText = '';
+      if (data.orderType && data.orderType.toLowerCase() === 'dine in') {
+        if (data.tableNumber) metaText += `Table: ${data.tableNumber}`;
+        if (data.pax) metaText += (metaText ? ' | ' : '') + `Pax: ${data.pax}`;
+      } else {
+        if (data.pax) metaText += `Pax: ${data.pax}`;
       }
+      if (orderMetaEl) orderMetaEl.textContent = metaText;
 
       // Auto-fill Name and ID Number for Senior Citizen/PWD discount
       const discountIDInfo = document.getElementById('discount-id-info');

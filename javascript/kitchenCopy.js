@@ -1,4 +1,56 @@
 // kitchen.js - revised version
+// --- INVENTORY DEDUCTION HELPERS ---
+// Convert to base unit (e.g., grams, ml, pcs)
+function toBaseUnit(quantity, unit) {
+  if (!unit || typeof quantity !== 'number') return quantity;
+  const u = unit.toLowerCase();
+  if (u === 'kg') return quantity * 1000;
+  if (u === 'g') return quantity;
+  if (u === 'l') return quantity * 1000;
+  if (u === 'ml') return quantity;
+  if (u === 'pcs' || u === 'pc' || u === 'piece' || u === 'pieces') return quantity;
+  return quantity;
+}
+
+// Deduct inventory for a single ingredient (atomic, idempotent)
+async function deductInventory(db, ingredientName, quantity, unit) {
+  if (!ingredientName || !quantity) return;
+  const baseQty = toBaseUnit(quantity, unit);
+  const invQuery = await db.collection('inventory').where('name', '==', ingredientName).limit(1).get();
+  if (invQuery.empty) return;
+  const doc = invQuery.docs[0];
+  const data = doc.data();
+  const currentQty = toBaseUnit(data.quantity || 0, data.unit);
+  const newQty = Math.max(currentQty - baseQty, 0);
+  await db.collection('inventory').doc(doc.id).update({ quantity: newQty });
+}
+
+// Deduct all ingredients for a product (atomic)
+async function deductIngredientsForProduct(db, product, productQty) {
+  if (!product || !Array.isArray(product.ingredients)) return;
+  for (const ingredient of product.ingredients) {
+    const name = ingredient.name;
+    const qty = (ingredient.quantity || 0) * (productQty || 1);
+    const unit = ingredient.unit || '';
+    await deductInventory(db, name, qty, unit);
+  }
+}
+
+// Deduct all ingredients for an order (atomic, idempotent)
+async function deductIngredientsForOrder(db, order) {
+  if (!order || !Array.isArray(order.items)) return;
+  for (const item of order.items) {
+    // Only deduct for items just marked as ready (not already ready before)
+    if (item.status === 'ready' && !item.inventoryDeducted) {
+      const menuQuery = await db.collection('menu').where('name', '==', item.name).limit(1).get();
+      if (!menuQuery.empty) {
+        const product = menuQuery.docs[0].data();
+        await deductIngredientsForProduct(db, product, item.quantity || 1);
+        item.inventoryDeducted = true;
+      }
+    }
+  }
+}
 // Shows multiple pending orders in a grid and updates each order individually
 
 let currentOrders = []; // array of orders currently displayed
@@ -80,11 +132,29 @@ function hideOrderOverlay() {
 }
 
 function isOrderVisible(o) {
-  const status = (o.status || '').toLowerCase();
-  const kitchenStatus = (o.kitchenStatus || '').toLowerCase();
-  if (['completed', 'cancelled', 'delivered', 'ready'].includes(status)) return false;
-  if (['ready', 'completed'].includes(kitchenStatus)) return false;
-  return true;
+  // Only show orders with status 'Pending Payment' or 'In the Kitchen', and hide 'Cancelled'/'Canceled'
+  // Debug: log every order checked for visibility
+  console.log('[Kitchen][Debug][isOrderVisible] Checking order:', {
+    id: o._docId || o.id,
+    status: o.status,
+    orderNumber: o.orderNumber,
+    orderNumberFormatted: o.orderNumberFormatted
+  });
+  if (typeof o.status === 'string') {
+    const status = o.status.toLowerCase();
+    if (status === 'cancelled' || status === 'canceled') {
+      console.log('[Kitchen][Filter] Excluded order', o, 'Reason: status is Cancelled');
+      return false;
+    }
+    if (status === 'pending payment' || status === 'in the kitchen') {
+      console.log('[Kitchen][Filter] Included order', o, 'Reason: status is', status);
+      return true;
+    }
+    // Hide all other statuses (e.g., Completed)
+    console.log('[Kitchen][Filter] Excluded order', o, 'Reason: status is', status);
+    return false;
+  }
+  return false;
 }
 
 function getOrderTime(order) {
@@ -102,24 +172,33 @@ function setupOrderListener() {
   }
   const db = firebase.firestore();
 
-  // Simple approach: listen to latest 100 orders and filter client-side
-  db.collection('orders').orderBy('timestamp', 'desc').limit(100).onSnapshot(snapshot => {
-    const orders = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      // include doc id so we can update by doc id
-      const full = { _docId: doc.id, ...data };
-      if (isOrderVisible(full)) orders.push(full);
+  // Listen to orders with status = 'in the kitchen' or 'In the Kitchen' in real time
+  db.collection('orders')
+    .orderBy('timestamp', 'desc')
+    .limit(100)
+    .onSnapshot({
+      next: (snapshot) => {
+        console.log('[Kitchen] Firestore snapshot size:', snapshot.size);
+        const orders = [];
+        const allDocs = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          allDocs.push({ id: doc.id, status: data.status, orderType: data.orderType, orderNumber: data.orderNumber, orderNumberFormatted: data.orderNumberFormatted });
+          // include doc id so we can update by doc id
+          const full = { _docId: doc.id, ...data };
+          if (isOrderVisible(full)) orders.push(full);
+        });
+        console.log('[Kitchen][Debug] All fetched orders:', allDocs);
+        console.log('[Kitchen][Debug] Orders after isOrderVisible:', orders.map(o => ({ id: o._docId, status: o.status, orderType: o.orderType, orderNumber: o.orderNumber, orderNumberFormatted: o.orderNumberFormatted })));
+        // Sort oldest -> newest so they stack in order created
+        orders.sort((a, b) => getOrderTime(a) - getOrderTime(b));
+        currentOrders = orders;
+        displayAllKitchenOrders(orders);
+      },
+      error: (err) => {
+        console.error('[Kitchen] Firestore query error:', err);
+      }
     });
-
-    // Sort oldest -> newest so they stack in order created
-    orders.sort((a, b) => getOrderTime(a) - getOrderTime(b));
-
-    currentOrders = orders;
-    displayAllKitchenOrders(orders);
-  }, (err) => {
-    console.error('orders listener error', err);
-  });
 }
 
 function updateItemsListGradients() {
@@ -159,33 +238,49 @@ function displayAllKitchenOrders(orders) {
     // Only show items that are not completed/ready
     let pendingItems = [];
     if (Array.isArray(order.items)) {
-      pendingItems = order.items.filter(i => !i.status || i.status === 'pending' || i.status === 'in the kitchen');
+  pendingItems = order.items.filter(i => !i.status || i.status === 'pending' || i.status === 'In the Kitchen');
     } else if (order.cart && Array.isArray(order.cart)) {
-      pendingItems = order.cart.filter(i => !i.status || i.status === 'pending' || i.status === 'in the kitchen');
+  pendingItems = order.cart.filter(i => !i.status || i.status === 'pending' || i.status === 'In the Kitchen');
     } else if (order.items && typeof order.items === 'object') {
       pendingItems = Object.entries(order.items)
-        .filter(([name, qty]) => !qty.status || qty.status === 'pending' || qty.status === 'in the kitchen')
+        .filter(([name, qty]) => !qty.status || qty.status === 'pending' || qty.status === 'In the Kitchen')
         .map(([name, qty]) => ({ name, quantity: qty.quantity || qty, status: qty.status }));
     }
 
     // If there are newItems (padagdag), only show those if they are pending
     let newPendingItems = [];
     if (Array.isArray(order.newItems)) {
-      newPendingItems = order.newItems.filter(i => !i.status || i.status === 'pending' || i.status === 'in the kitchen');
+  newPendingItems = order.newItems.filter(i => !i.status || i.status === 'pending' || i.status === 'In the Kitchen');
     }
 
     // Skip rendering if no pending items at all
     if (pendingItems.length === 0 && newPendingItems.length === 0) return;
 
     // Card header info
-    let dateObj;
-    if (order.completedAt) dateObj = new Date(order.completedAt);
-    else if (order.timestamp && typeof order.timestamp.toDate === 'function') dateObj = order.timestamp.toDate();
-    else if (order.timestamp && order.timestamp.seconds) dateObj = new Date(order.timestamp.seconds * 1000);
-    else if (order.createdAt) dateObj = new Date(order.createdAt);
-    else dateObj = new Date();
+  let dateObj;
+  if (order.completedAt) dateObj = new Date(order.completedAt);
+  else if (order.timestamp && typeof order.timestamp.toDate === 'function') dateObj = order.timestamp.toDate();
+  else if (order.timestamp && order.timestamp.seconds) dateObj = new Date(order.timestamp.seconds * 1000);
+  else if (order.createdAt) dateObj = new Date(order.createdAt);
+  else dateObj = new Date();
+  // If dateObj is invalid, set to null
+  if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) dateObj = null;
 
-    const orderIdLabel = order.orderNumber || order.orderNumberFormatted || order._docId || '0000';
+  // Always prefer formatted order number for display
+    // Always prefer formatted order number for display, fallback to timestamp-based if present
+    // Always match POS display: pad to 4 digits if numeric, else show as is
+    let orderIdLabel = '';
+    if (order.orderNumberFormatted) {
+      orderIdLabel = order.orderNumberFormatted;
+    } else if (order.orderNumber && /^\d+$/.test(String(order.orderNumber))) {
+      orderIdLabel = String(order.orderNumber).padStart(4, '0');
+    } else if (order.orderNumber) {
+      orderIdLabel = String(order.orderNumber);
+    } else if (order._docId) {
+      orderIdLabel = order._docId;
+    } else {
+      orderIdLabel = '0000';
+    }
     const orderType = order.orderType || order.type || 'Dine in';
 
     // Items HTML
@@ -217,8 +312,8 @@ function displayAllKitchenOrders(orders) {
             Order No. ${escapeHtml(String(orderIdLabel))} <span style="color:#444;font-weight:700;">|</span> <span style="color:#333;font-weight:600;">${escapeHtml(orderType)}</span> <span style="color:#444;font-weight:700;">|</span> <span style="color:#666;font-weight:600;">${escapeHtml(String(order.paxNumber || order.pax || '-'))}</span>
           </div>
           <div class="order-card-header-row" style="color:#aaa;font-size:13px;font-weight:500;">
-            <span>${dateObj.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            <span>${dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+            <span>${dateObj ? dateObj.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }) : 'No Date'}</span>
+            <span>${dateObj ? dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}</span>
           </div>
           <hr class="order-card-header-divider" />
         </div>
@@ -275,6 +370,7 @@ function displayNoOrders() {
 }
 
 async function markOrderReadyPOS(orderDocIdOrOrderNumber) {
+
   if (!orderDocIdOrOrderNumber) return;
   // disable the button immediately for that card
   const btn = document.querySelector(`button[data-order-id="${orderDocIdOrOrderNumber}"]`);
@@ -303,7 +399,7 @@ async function markOrderReadyPOS(orderDocIdOrOrderNumber) {
     let updated = false;
     if (Array.isArray(order.items)) {
       for (let i = 0; i < order.items.length; i++) {
-        if (!order.items[i].status || order.items[i].status === 'pending' || order.items[i].status === 'in the kitchen') {
+  if (!order.items[i].status || order.items[i].status === 'pending' || order.items[i].status === 'In the Kitchen') {
           order.items[i].status = 'ready';
           updated = true;
           break;
@@ -312,7 +408,7 @@ async function markOrderReadyPOS(orderDocIdOrOrderNumber) {
     }
     if (!updated && Array.isArray(order.newItems)) {
       for (let i = 0; i < order.newItems.length; i++) {
-        if (!order.newItems[i].status || order.newItems[i].status === 'pending' || order.newItems[i].status === 'in the kitchen') {
+  if (!order.newItems[i].status || order.newItems[i].status === 'pending' || order.newItems[i].status === 'In the Kitchen') {
           order.newItems[i].status = 'ready';
           updated = true;
           break;
@@ -325,7 +421,42 @@ async function markOrderReadyPOS(orderDocIdOrOrderNumber) {
       return;
     }
 
-    // If all items are now ready, set order status to Pending Payment, else keep as is
+    // --- INVENTORY DEDUCTION: Only for items just marked as ready and not already deducted ---
+  await deductIngredientsForOrder(db, order);
+  showInventoryDeductedNotification();
+// Show a small notification at the bottom right for inventory deduction
+function showInventoryDeductedNotification() {
+  const notif = document.createElement('div');
+  notif.textContent = 'Inventory deducted';
+  notif.style.position = 'fixed';
+  notif.style.right = '30px';
+  notif.style.background = '#28a745';
+  notif.style.color = '#fff';
+  notif.style.padding = '12px 24px';
+  notif.style.borderRadius = '8px';
+  notif.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+  notif.style.zIndex = '9999';
+  notif.style.fontSize = '16px';
+  notif.style.opacity = '0';
+  notif.style.transition = 'opacity 0.3s';
+  // Find the last notification (order ready) and position below it if present
+  const lastNotif = Array.from(document.querySelectorAll('.notification.alert')).pop();
+  if (lastNotif) {
+    // Get its bounding rect and set this one just below
+    const rect = lastNotif.getBoundingClientRect();
+    notif.style.bottom = (window.innerHeight - rect.bottom + 20) + 'px';
+  } else {
+    notif.style.bottom = '30px';
+  }
+  document.body.appendChild(notif);
+  setTimeout(() => { notif.style.opacity = '1'; }, 10);
+  setTimeout(() => {
+    notif.style.opacity = '0';
+    setTimeout(() => { if (notif.parentNode) notif.parentNode.removeChild(notif); }, 300);
+  }, 2500);
+}
+
+    // If all items are now ready, set order status to Completed, else keep as is
     let allReady = true;
     if (Array.isArray(order.items)) {
       allReady = order.items.every(i => i.status === 'ready');
@@ -337,13 +468,13 @@ async function markOrderReadyPOS(orderDocIdOrOrderNumber) {
     await docRef.update({
       items: order.items,
       newItems: order.newItems,
-      status: allReady ? 'Pending Payment' : order.status,
+      status: allReady ? 'Completed' : order.status,
       kitchenStatus: allReady ? 'ready' : order.kitchenStatus,
       completedAt: allReady ? firebase.firestore.FieldValue.serverTimestamp() : order.completedAt,
       updatedBy: 'kitchen'
     });
 
-    showNotification('Item marked as ready', 'success');
+    showNotification('Item marked as ready and inventory deducted', 'success');
     // UI will update via Firestore listener
     return;
   } catch (err) {
@@ -360,7 +491,7 @@ async function markOrderReadyPOS(orderDocIdOrOrderNumber) {
     if (!q.empty) {
       const doc = q.docs[0];
       await db.collection('orders').doc(doc.id).update({
-        status: 'Pending Payment',
+  status: 'Completed',
         kitchenStatus: 'ready',
         completedAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedBy: 'kitchen'
@@ -430,31 +561,6 @@ function markOrderReadyFromOverlay() {
   }
 }
 
-// Optional: developer helper to insert a test order (keeps the existing addTestOrder pattern)
-async function addTestOrder() {
-  if (typeof firebase === 'undefined' || !firebase.firestore) {
-    showNotification('Firebase not available', 'error');
-    return;
-  }
-  const db = firebase.firestore();
-  const docRef = db.collection('orders').doc();
-  const test = {
-    orderNumber: Math.floor(Math.random() * 9000) + 1000,
-    orderNumberFormatted: String(Math.floor(Math.random() * 9000) + 1000),
-    status: 'in the kitchen',
-    kitchenStatus: 'in the kitchen',
-    orderType: 'Take out',
-    items: [{ name: 'Test Dish', quantity: 1 }],
-    createdAt: new Date().toISOString(),
-    timestamp: firebase.firestore.Timestamp.now(),
-    createdBy: 'dev'
-  };
-  await docRef.set(test);
-  showNotification('Test order added', 'success');
-}
-
-// expose helper for console testing
-window.addTestOrder = addTestOrder;
 window.markOrderReadyPOS = markOrderReadyPOS;
 window.markOrderReadyFromOverlay = markOrderReadyFromOverlay;
 window.showOrderOverlay = showOrderOverlay;

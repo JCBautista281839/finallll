@@ -38,9 +38,10 @@ function initializeBackButton() {
           }
         } catch (e) { console.warn('Failed to restore inventory:', e); }
       }
-      sessionStorage.removeItem('posOrder');
-      sessionStorage.removeItem('laterOrder');
-      window.location.href = '/html/pos.html';
+  sessionStorage.removeItem('posOrder');
+  sessionStorage.removeItem('laterOrder');
+  sessionStorage.removeItem('pendingOrderId'); // Ensure new order number for next order
+  window.location.href = '/html/pos.html';
     });
   }
 }
@@ -57,25 +58,40 @@ function initializeOrderControls() {
         alert('Order data not found');
         return;
       }
-
-      // Set status to Pending Payment
+      // Set status to 'Pending Payment' for Later
       orderData.status = 'Pending Payment';
-      orderData.sentToKitchen = new Date().toISOString();
-      orderData.sentToKitchenServer = firebase.firestore.FieldValue.serverTimestamp();
-
+      // Save to Firestore and redirect
       try {
-        // Save order to Firestore using formatted order number as document ID
         const db = firebase.firestore();
-        await db.collection('orders').doc(orderData.orderNumberFormatted).set(orderData);
-
-        // Optionally, mark in sessionStorage that this order was sent via Later
-        sessionStorage.setItem('laterOrder', 'true');
-        // Optionally, keep posOrder for further payment
-
-        // Redirect to Orders page
+        let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+        let formatted = '';
+        if (!pendingOrderId) {
+          let orderNumber;
+          try {
+            const counterDoc = db.collection('counters').doc('orders');
+            orderNumber = await db.runTransaction(async (transaction) => {
+              const doc = await transaction.get(counterDoc);
+              const newNumber = (doc.exists ? doc.data().current : 0) + 1;
+              transaction.set(counterDoc, {
+                current: newNumber,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              return newNumber;
+            });
+          } catch (error) {
+            orderNumber = 'T' + Date.now();
+          }
+          pendingOrderId = orderNumber;
+          sessionStorage.setItem('pendingOrderId', pendingOrderId);
+        }
+        formatted = (/^\d+$/.test(pendingOrderId)) ? String(pendingOrderId).padStart(4, '0') : String(pendingOrderId);
+        orderData.orderNumber = pendingOrderId;
+        orderData.orderNumberFormatted = formatted;
+        orderData.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+        const orderRef = db.collection('orders').doc(orderData.orderNumberFormatted);
+        await orderRef.set(orderData);
         window.location.href = '/html/Order.html';
       } catch (error) {
-        console.error('Error sending order to kitchen:', error);
         alert('There was an error sending the order. Please try again.');
       }
     });
@@ -86,8 +102,18 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDateTime();
     setInterval(updateDateTime, 1000);
     
-    // Load order data from POS
-    loadOrderFromPOS();
+  // Load order data from POS
+  loadOrderFromPOS();
+  // Always update order number display as soon as DOM is ready
+  const orderNumberEl = document.getElementById('orderNumber');
+  if (orderNumberEl) {
+    let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+    let formatted = '';
+    if (pendingOrderId) {
+      formatted = (/^\d+$/.test(pendingOrderId)) ? String(pendingOrderId).padStart(4, '0') : String(pendingOrderId);
+      orderNumberEl.textContent = formatted;
+    }
+  }
     
     // Initialize all components
     initializePaymentMethods();
@@ -134,6 +160,9 @@ function loadOrderFromPOS() {
   const orderRaw = sessionStorage.getItem('posOrder');
   if (!orderRaw) {
     console.warn('No order found in sessionStorage');
+    // Still try to update the order-type span to show missing info
+    const orderTypeEl = document.querySelector('.order-type span');
+    if (orderTypeEl) orderTypeEl.textContent = 'Order type not set';
     return;
   }
   let order;
@@ -141,60 +170,127 @@ function loadOrderFromPOS() {
     order = JSON.parse(orderRaw);
   } catch (e) {
     console.error('Failed to parse order from sessionStorage', e);
+    const orderTypeEl = document.querySelector('.order-type span');
+    if (orderTypeEl) orderTypeEl.textContent = 'Order type not set';
     return;
   }
 
   // Populate order items in the UI (support both 'unitPrice' and 'price', and 'lineTotal')
   const itemsContainer = document.querySelector('.order-items');
-    if (itemsContainer && order.items && Array.isArray(order.items)) {
+  if (itemsContainer && order.items && Array.isArray(order.items)) {
     itemsContainer.innerHTML = '';
-      order.items.forEach(item => {
-        const price = (typeof item.unitPrice !== 'undefined') ? item.unitPrice : (item.price || 0);
-        const quantity = item.quantity || 0;
-        const lineTotal = (item.lineTotal !== undefined) ? item.lineTotal : (price * quantity);
-        // Render as: [qty] [name] [line total], aligned like a receipt
-        const row = document.createElement('div');
-        row.className = 'order-item-row';
-        row.style.display = 'grid';
-        row.style.gridTemplateColumns = '32px 1fr 90px';
-        row.style.alignItems = 'center';
-        row.style.width = '100%';
-        row.style.margin = '0';
-        row.style.padding = '2px 0';
-        row.innerHTML = `
-          <span class="item-qty" style="color:#a94442;font-family:'PoppinsSemiBold';font-size: 18px;text-align:left;">${quantity}</span>
-          <span class="item-name" style="font-family:'PoppinsRegular'; text-transform:capitalize; padding-left:10px;">${item.name}</span>
-          <span class="item-price" style="color:#a94442;font-family:'PoppinsSemiBold';font-size:18px;text-align:right;display:block;">₱${parseFloat(lineTotal).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
-        `;
-        itemsContainer.appendChild(row);
-      });
-    }
+    order.items.forEach(item => {
+      const price = (typeof item.unitPrice !== 'undefined') ? item.unitPrice : (item.price || 0);
+      const quantity = item.quantity || 0;
+      const lineTotal = (item.lineTotal !== undefined) ? item.lineTotal : (price * quantity);
+      // Render as: [qty] [name] [line total], aligned like a receipt
+      const row = document.createElement('div');
+      row.className = 'order-item-row';
+      row.style.display = 'grid';
+      row.style.gridTemplateColumns = '32px 1fr 90px';
+      row.style.alignItems = 'center';
+      row.style.width = '100%';
+      row.style.margin = '0';
+      row.style.padding = '2px 0';
+      row.innerHTML = `
+        <span class="item-qty" style="color:#a94442;font-family:'PoppinsSemiBold';font-size: 18px;text-align:left;">${quantity}</span>
+        <span class="item-name" style="font-family:'PoppinsRegular'; text-transform:capitalize; padding-left:10px;">${item.name}</span>
+        <span class="item-price" style="color:#a94442;font-family:'PoppinsSemiBold';font-size:18px;text-align:right;display:block;">₱${parseFloat(lineTotal).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+      `;
+      itemsContainer.appendChild(row);
+    });
+  }
 
   // Populate order info fields (order number, type, table, pax)
   const orderNumberEl = document.getElementById('orderNumber');
-  if (orderNumberEl && order.orderNumber) {
-    orderNumberEl.textContent = order.orderNumberFormatted || order.orderNumber;
+  if (orderNumberEl) {
+    let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+    let formatted = '';
+    if (pendingOrderId) {
+      formatted = (/^\d+$/.test(pendingOrderId)) ? String(pendingOrderId).padStart(4, '0') : String(pendingOrderId);
+      orderNumberEl.textContent = formatted;
+      if (order) {
+        order.orderNumber = pendingOrderId;
+        order.orderNumberFormatted = formatted;
+      }
+    } else if (order && order.orderNumberFormatted) {
+      orderNumberEl.textContent = order.orderNumberFormatted;
+    } else if (order && order.orderNumber) {
+      orderNumberEl.textContent = String(order.orderNumber).padStart(4, '0');
+    } else {
+      orderNumberEl.textContent = '—';
+    }
   }
-  // Show 'Dine In | Table: X | Pax: Y' beside order type
+  // Show 'Dine in | Table: X | Pax: Y' beside order type, robust and always formatted
   const orderTypeEl = document.querySelector('.order-type span');
-  if (orderTypeEl && order.orderType) {
-    let info = order.orderType;
-    if (order.orderType === 'Dine in') {
-      if (order.tableNumber) info += ` | Table: ${order.tableNumber}`;
-      if (order.pax) info += ` | Pax: ${order.pax}`;
+  if (orderTypeEl) {
+    let info = '';
+    if (order.orderType) {
+      let type = order.orderType.charAt(0).toUpperCase() + order.orderType.slice(1).toLowerCase();
+      info += type;
+      if (order.tableNumber !== undefined && order.tableNumber !== null && order.tableNumber !== '') {
+        info += ` | Table: ${order.tableNumber}`;
+      }
+      // Only show 'N/A' if pax is truly undefined or null
+      if (order.pax !== undefined && order.pax !== null) {
+        info += ` | Pax: ${order.pax}`;
+      } else {
+        info += ' | Pax: N/A';
+      }
+    } else {
+      info = 'Order type not set';
     }
     orderTypeEl.textContent = info;
   }
-  // Optionally clear/hide tableNumber and pax fields if present
-  const tableNumberEl = document.getElementById('tableNumber');
-  if (tableNumberEl) tableNumberEl.textContent = '';
-  const paxEl = document.getElementById('paxNumber');
-  if (paxEl) paxEl.textContent = '';
+  // Retain Table Number and Pax input values if present
+  const tableNumberInput = document.getElementById('tableNumberInput');
+  if (tableNumberInput && order && order.tableNumber !== undefined) {
+    tableNumberInput.value = order.tableNumber;
+  }
+  const paxInput = document.getElementById('paxInput');
+  if (paxInput && order && order.pax !== undefined) {
+    paxInput.value = order.pax;
+  }
+  // Retain Discount input value if present
+  const discountInput = document.getElementById('discountInput');
+  if (discountInput && order && order.discount !== undefined) {
+    discountInput.value = order.discount;
+  }
+  // Hide Table Number and Pax input for Take Out
+  if (order && order.orderType && order.orderType.toLowerCase() === 'take out') {
+    if (tableNumberInput) tableNumberInput.style.display = 'none';
+    if (paxInput) paxInput.style.display = 'none';
+  } else {
+    if (tableNumberInput) tableNumberInput.style.display = '';
+    if (paxInput) paxInput.style.display = '';
+  }
 
   // Update summary
   if (typeof updateOrderSummary === 'function') {
     updateOrderSummary();
   }
+  // Defensive: forcibly update order-type span again after a short delay in case DOM was not ready
+  setTimeout(() => {
+    const orderTypeEl2 = document.querySelector('.order-type span');
+    if (orderTypeEl2) {
+      let info2 = '';
+      if (order.orderType) {
+        let type2 = order.orderType.charAt(0).toUpperCase() + order.orderType.slice(1).toLowerCase();
+        info2 += type2;
+        if (order.tableNumber !== undefined && order.tableNumber !== null && order.tableNumber !== '') {
+          info2 += ` | Table: ${order.tableNumber}`;
+        }
+        if (order.pax !== undefined && order.pax !== null && order.pax !== '') {
+          info2 += ` | Pax: ${order.pax}`;
+        } else {
+          info2 += ' | Pax: N/A';
+        }
+      } else {
+        info2 = 'Order type not set';
+      }
+      orderTypeEl2.textContent = info2;
+    }
+  }, 200);
 }
 
 function initializePaymentMethods() {
@@ -338,19 +434,56 @@ function initializeProceedButton() {
     proceedBtn.addEventListener('click', async function() {
       if (proceedBtn.disabled) return;
       // Get order data from sessionStorage
-      const orderData = JSON.parse(sessionStorage.getItem('posOrder'));
+      let orderData = JSON.parse(sessionStorage.getItem('posOrder'));
       if (!orderData) {
         alert('Order data not found');
         return;
       }
-
+      // --- Ensure all required metadata is present and up-to-date from Payment page ---
+      // Finalize orderId/orderNumber using Firestore counter only now
+      if (!orderData.orderId || !orderData.orderNumber || !orderData.orderNumberFormatted) {
+        try {
+          const db = firebase.firestore();
+          let orderNumber;
+          try {
+            const counterDoc = db.collection('counters').doc('orders');
+            orderNumber = await db.runTransaction(async (transaction) => {
+              const doc = await transaction.get(counterDoc);
+              const newNumber = (doc.exists ? doc.data().current : 0) + 1;
+              transaction.set(counterDoc, {
+                current: newNumber,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              return newNumber;
+            });
+          } catch (error) {
+            // Fallback to timestamp-based orderId
+            orderNumber = 'T' + Date.now();
+          }
+          orderData.orderId = orderNumber;
+          orderData.orderNumber = orderNumber;
+          orderData.orderNumberFormatted = (/^\d+$/.test(String(orderNumber))) ? String(orderNumber).padStart(4, '0') : String(orderNumber);
+        } catch (error) {
+          console.error('Error generating order number:', error);
+          alert('There was an error generating the order number. Please try again.');
+          return;
+        }
+      }
+      // Remove pendingOrderId from sessionStorage on finalize
+      sessionStorage.removeItem('pendingOrderId');
+      // Always update orderType, tableNumber, pax from DOM if available
+      const orderTypeEl = document.querySelector('.order-type span');
+      if (orderTypeEl && orderTypeEl.textContent) {
+        orderData.orderType = orderTypeEl.textContent.split('|')[0].trim();
+        const tableMatch = /Table: ([^|]+)/.exec(orderTypeEl.textContent);
+        if (tableMatch) orderData.tableNumber = tableMatch[1].trim();
+        const paxMatch = /Pax: ([^|]+)/.exec(orderTypeEl.textContent);
+        if (paxMatch) orderData.pax = paxMatch[1].trim();
+      }
+      // Update payment method and details
       const total = calculateTotal();
       const paymentMethod = document.querySelector('.payment-method-btn.active span')?.textContent;
-
-      // Add payment method directly to order data for analytics
       orderData.paymentMethod = paymentMethod;
-
-      // Add payment information based on payment method
       if (paymentMethod === 'Cash') {
         const cashReceived = parseFloat(cashInput.value) || 0;
         const change = cashReceived - total;
@@ -375,53 +508,46 @@ function initializeProceedButton() {
           total: total
         };
       }
-
       // Check if order was already sent to kitchen via "Later"
       const laterOrder = sessionStorage.getItem('laterOrder');
-      let finalStatus = 'in the kitchen'; // Default status
-      if (laterOrder) {
-        // If order was already sent to kitchen, mark as completed/paid
-        finalStatus = 'paid';
-        console.log('Order was previously sent to kitchen via Later, now marking as paid');
+  // Always set status to 'In the Kitchen' (trimmed, correct case) when Proceed is clicked
+  orderData.status = 'In the Kitchen'.trim();
+  orderData.sentToKitchen = firebase.firestore.FieldValue.serverTimestamp();
+  // Do NOT set to Completed here
+      // Always recalculate subtotal, tax, discount, and total before saving
+      let subtotal = 0;
+      if (Array.isArray(orderData.items)) {
+        subtotal = orderData.items.reduce((sum, item) => {
+          const price = parseFloat(item.unitPrice || item.price) || 0;
+          const qty = parseInt(item.quantity) || 1;
+          return sum + price * qty;
+        }, 0);
       }
-
-      // Update status and transaction timestamps
-      orderData.status = finalStatus;
-      // Save both client and server timestamps for transaction
-      orderData.completedAt = new Date().toISOString();
-      orderData.completedAtServer = firebase.firestore.FieldValue.serverTimestamp();
-      if (finalStatus === 'paid') {
-        orderData.paidAt = new Date().toISOString();
-        orderData.paidAtServer = firebase.firestore.FieldValue.serverTimestamp();
-      } else {
-        orderData.sentToKitchen = firebase.firestore.FieldValue.serverTimestamp();
+      orderData.subtotal = subtotal;
+      const tax = parseFloat(orderData.tax) || 0;
+      let discount = 0;
+      if (typeof orderData.discountAmount !== 'undefined') {
+        discount = parseFloat(orderData.discountAmount) || 0;
+      } else if (typeof orderData.discount !== 'undefined') {
+        discount = parseFloat(orderData.discount) || 0;
       }
-
+      orderData.discount = discount;
+      orderData.total = subtotal + tax - discount;
+      // Remove discount fields if no discount is applied
+      if (!discount || discount === 0) {
+        delete orderData.discount;
+        delete orderData.discountAmount;
+        delete orderData.discountPercent;
+        delete orderData.discountType;
+        delete orderData.discountName;
+        delete orderData.discountID;
+      }
+      // Save the finalized order object to Firestore (no duplication, no missing fields)
       try {
-        // Save order to Firestore using formatted order number as document ID
         const db = firebase.firestore();
-  // Always recalculate total before saving
-        // Always recalculate subtotal from items before saving
-        let subtotal = 0;
-        if (Array.isArray(orderData.items)) {
-          subtotal = orderData.items.reduce((sum, item) => {
-            const price = parseFloat(item.unitPrice || item.price) || 0;
-            const qty = parseInt(item.quantity) || 1;
-            return sum + price * qty;
-          }, 0);
-        }
-        orderData.subtotal = subtotal;
-        const tax = parseFloat(orderData.tax) || 0;
-        const discount = parseFloat(orderData.discount) || 0;
-        orderData.total = subtotal + tax - discount;
   await db.collection('orders').doc(orderData.orderNumberFormatted).set(orderData);
-
-        console.log('Order completed and sent to kitchen');
-
-        // Save receipt data for receipt.html
+  console.log('[Payment][Proceed] Order written to Firestore:', orderData);
         sessionStorage.setItem('paymentReceipt', JSON.stringify(orderData));
-        // sessionStorage.removeItem('posOrder'); // <-- Do not clear here, only clear on Back
-        // Redirect to receipt.html
         window.location.href = '/html/receipt.html';
       } catch (error) {
         console.error('Error saving order:', error);

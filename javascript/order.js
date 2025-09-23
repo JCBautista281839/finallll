@@ -106,9 +106,10 @@ function sanitizeOrderData(orderData) {
     try {
         return {
             ...orderData,
-            id: orderData.id || orderData.orderNumberFormatted || '',
-            orderNumber: parseInt(orderData.orderNumber) || 0,
-            orderNumberFormatted: orderData.orderNumberFormatted || String(orderData.orderNumber || '0').padStart(4, '0'),
+            id: orderData.id || orderData.orderNumberFormatted || orderData.orderNumber || '',
+            orderNumber: (/^\d+$/.test(orderData.orderNumber)) ? parseInt(orderData.orderNumber) : orderData.orderNumber,
+            orderNumberFormatted: orderData.orderNumberFormatted ||
+                ((/^\d+$/.test(orderData.orderNumber)) ? String(orderData.orderNumber).padStart(4, '0') : String(orderData.orderNumber || '')),
             status: orderData.status || 'Processing',
             items: Array.isArray(orderData.items) ? orderData.items.map(item => ({
                 id: item.id || generateUniqueId(),
@@ -123,7 +124,7 @@ function sanitizeOrderData(orderData) {
             })) : [],
             orderType: orderData.orderType || 'Dine in',
             tableNumber: orderData.tableNumber || '',
-            paxNumber: orderData.paxNumber || '',
+            paxNumber: orderData.paxNumber || orderData.pax || '',
             subtotal: parseFloat(orderData.subtotal) || 0,
             tax: parseFloat(orderData.tax) || 0,
             discount: parseFloat(orderData.discount) || 0,
@@ -501,15 +502,12 @@ function createOrderRow(orderData) {
         timeStr = '';
     }
 
-    const subtotal = parseFloat(orderData.subtotal) || 0;
-    const tax = parseFloat(orderData.tax) || 0;
-    const discount = parseFloat(orderData.discount) || 0;
-    // Always compute total as subtotal + tax - discount
-    const total = subtotal + tax - discount;
+    // Use the saved total from orderData for consistency
+    const total = parseFloat(orderData.total) || 0;
 
     row.innerHTML = 
         '<td class="align-middle text-center text-primary">' +
-            '<div class="fw-bold">#' + (orderData.orderNumberFormatted || (orderData.orderNumber ? orderData.orderNumber.toString().padStart(4, '0') : 'N/A')) + '</div>' +
+            '<div class="fw-bold">#' + (orderData.orderNumberFormatted || (typeof orderData.orderNumber === 'string' && /^T\d+$/.test(orderData.orderNumber) ? orderData.orderNumber : (orderData.orderNumber ? orderData.orderNumber.toString().padStart(4, '0') : 'N/A'))) + '</div>' +
             '<small class="text-muted">' + dateStr + ' ' + timeStr + '</small>' +
         '</td>' +
         '<td class="align-middle text-center">' +
@@ -519,9 +517,10 @@ function createOrderRow(orderData) {
             (orderData.orderType === 'Dine in' ? (orderData.tableNumber || 'N/A') : '-') +
         '</td>' +
         '<td class="align-middle text-center">' +
-            (orderData.orderType === 'Dine in' ? (orderData.paxNumber || 'N/A') : '-') +
+            (orderData.orderType === 'Dine in' ? (orderData.paxNumber || orderData.pax || 'N/A') : '-') +
         '</td>' +
         '<td class="align-middle">' + formatOrderItems(orderData.items) + '</td>' +
+        // Always use the saved total for display
         '<td class="align-middle text-center">₱' + total.toFixed(2) + '</td>' +
         '<td class="align-middle text-center status-cell">' +
             (orderData.status === 'Pending Payment' ? 
@@ -906,9 +905,18 @@ function viewOrderDetails(orderNumber) {
                 id: doc.id,
                 ...rawOrderData
             };
+            // Ensure discountType and discountPercent are present if available in raw data
+            if (rawOrderData.discountType) orderWithId.discountType = rawOrderData.discountType;
+            if (rawOrderData.discountPercent) orderWithId.discountPercent = rawOrderData.discountPercent;
             
             // Sanitize the order data for consistency
             const orderData = sanitizeOrderData(orderWithId);
+            // Debug: log discount fields to verify presence
+            console.log('[Order Modal] Discount fields:', {
+                discount: orderData.discount,
+                discountType: orderData.discountType,
+                discountPercent: orderData.discountPercent
+            });
             
             // Format timestamp - try multiple date fields
             let dateTimeStr = 'N/A';
@@ -1009,7 +1017,8 @@ function viewOrderDetails(orderNumber) {
             // Use orderData.tax and orderData.discount if present, else 0
             const computedTax = parseFloat(orderData.tax || 0);
             const computedDiscount = parseFloat(orderData.discount || 0);
-            const computedTotal = computedSubtotal + computedTax - computedDiscount;
+            // Always use the saved total for display
+            const savedTotal = parseFloat(orderData.total) || (computedSubtotal + computedTax - computedDiscount);
             // Create the modal using DOM methods instead of template literals to avoid syntax issues
             // First, create a container to hold the modal HTML
             const modalContainer = document.createElement('div');
@@ -1035,7 +1044,7 @@ function viewOrderDetails(orderNumber) {
                                     '</div>' +
                                     '<div class="col-md-6">' +
                                         '<p><strong>Table:</strong> ' + (orderData.tableNumber || 'N/A') + '</p>' +
-                                        '<p><strong>Pax:</strong> ' + (orderData.paxNumber || 'N/A') + '</p>' +
+                                        '<p><strong>Pax:</strong> ' + (orderData.paxNumber || orderData.pax || 'N/A') + '</p>' +
                                         '<p><strong>Order #:</strong> ' + (orderData.orderNumberFormatted || orderData.orderNumber || 'N/A') + '</p>' +
                                         (orderData.specialInstructions ? 
                                             '<p><strong>Special Instructions:</strong><br>' + 
@@ -1064,14 +1073,21 @@ function viewOrderDetails(orderNumber) {
                                                 '<td colspan="3" class="text-end"><strong>Tax:</strong></td>' +
                                                 '<td class="text-end">₱' + computedTax.toFixed(2) + '</td>' +
                                             '</tr>' +
-                                            (computedDiscount > 0 ?
-                                                ('<tr>' +
+                                            ((computedDiscount > 0 || (orderData.discountType && orderData.discountPercent)) ? (
+                                                '<tr>' +
                                                     '<td colspan="3" class="text-end"><strong>Discount:</strong></td>' +
-                                                    '<td class="text-end">₱' + computedDiscount.toFixed(2) + '</td>' +
-                                                '</tr>') : '') +
+                                                    '<td class="text-end">' +
+                                                        (
+                                                            (orderData.discountType && orderData.discountPercent)
+                                                                ? (orderData.discountType + ' ' + orderData.discountPercent + '%')
+                                                                : (orderData.discountType ? orderData.discountType : ('₱' + computedDiscount.toFixed(2)))
+                                                        ) +
+                                                    '</td>' +
+                                                '</tr>'
+                                            ) : '') +
                                             '<tr>' +
                                                 '<td colspan="3" class="text-end"><strong>Total:</strong></td>' +
-                                                '<td class="text-end"><strong>₱' + computedTotal.toFixed(2) + '</strong></td>' +
+                                                '<td class="text-end"><strong>₱' + savedTotal.toFixed(2) + '</strong></td>' +
                                             '</tr>' +
                                         '</tfoot>' +
                                     '</table>' +

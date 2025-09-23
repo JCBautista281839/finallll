@@ -13,8 +13,10 @@ function clearOrderAndSummary() {
     const discountIDEl = document.getElementById('discount-id-summary');
     if (discountIDEl) discountIDEl.textContent = '';
     const idInput = document.getElementById('discount-id-input');
-    if (idInput) idInput.value = '';
-    idInput.style.display = 'none';
+    if (idInput) {
+        idInput.value = '';
+        idInput.style.display = 'none';
+    }
     const discountInputContainer = document.querySelector('.discount-input');
     if (discountInputContainer) discountInputContainer.style.display = 'none';
     const discountDropdown = document.querySelector('.discount-dropdown');
@@ -157,9 +159,36 @@ async function startPOSSystem() {
         sessionStorage.removeItem('editingOrder');
         sessionStorage.removeItem('originalOrderId');
         sessionStorage.removeItem('isEditMode');
+        // Always ensure a pendingOrderId is set for a new order session
+        if (!sessionStorage.getItem('pendingOrderId')) {
+            let nextOrderId = await getNextOrderId();
+            sessionStorage.setItem('pendingOrderId', nextOrderId);
+        }
         
         // Initialize order number
-        let currentOrderNumber = 0;
+    // Assign a new unique order number for every new order, but only finalize on payment
+        let currentOrderNumber = null;
+        let currentOrderNumberFormatted = null;
+        // Helper to get next orderId from Firestore counter, fallback to timestamp
+        async function getNextOrderId() {
+            try {
+                const db = firebase.firestore();
+                const counterDoc = db.collection('counters').doc('orders');
+                const result = await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(counterDoc);
+                    const newNumber = (doc.exists ? doc.data().current : 0) + 1;
+                    transaction.set(counterDoc, {
+                        current: newNumber,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    return newNumber;
+                });
+                return result;
+            } catch (error) {
+                console.error('OrderId counter failed, using timestamp fallback:', error);
+                return 'T' + Date.now();
+            }
+        }
 
         // Function to get the last order number from Firestore
         async function getLastOrderNumber() {
@@ -203,67 +232,19 @@ async function startPOSSystem() {
 
         // Function to update the order number display
         async function updateOrderNumber() {
-            // Check if we're editing an existing order
-            const isEditMode = sessionStorage.getItem('isEditMode') === 'true';
-            const editingOrder = sessionStorage.getItem('editingOrder');
-            
-            if (isEditMode && editingOrder) {
-                try {
-                    // Parse the editing order to get its number
-                    const orderData = JSON.parse(editingOrder);
-                    if (orderData.orderNumber) {
-                        currentOrderNumber = orderData.orderNumber;
-                        console.log('Using existing order number for edit:', currentOrderNumber);
-                        
-                        // Format the order number to 4 digits
-                        const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
-                        const orderNumberElement = document.querySelector('.order-number');
-                        if (orderNumberElement) {
-                            // Only update if not already set to "Editing Order"
-                            if (!orderNumberElement.textContent.includes('Editing')) {
-                                orderNumberElement.textContent = `Order No. ${orderNumberFormatted}`;
-                            }
-                        }
-                        return; // Don't get a new number
-                    }
-                } catch (error) {
-                    console.warn('Error parsing editing order:', error);
-                    // Continue with getting new number
-                }
+            // Only assign a new orderId if not already assigned for this session/order
+            const orderNumberElement = document.querySelector('.order-number');
+            let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+            if (!pendingOrderId) {
+                pendingOrderId = await getNextOrderId();
+                sessionStorage.setItem('pendingOrderId', pendingOrderId);
             }
-            
-            // Check if we already have a reserved order number for this session
-            const reservedOrderNumber = sessionStorage.getItem('reservedOrderNumber');
-            if (reservedOrderNumber && !isEditMode) {
-                currentOrderNumber = parseInt(reservedOrderNumber);
-                const orderNumberElement = document.querySelector('.order-number');
-                const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
-                if (orderNumberElement) {
-                    orderNumberElement.textContent = `Order No. ${orderNumberFormatted}`;
-                }
-                console.log('Using reserved order number:', currentOrderNumber);
-                return;
-            }
-            
-            // For new orders, get the next number only if we don't have one reserved
-            if (!reservedOrderNumber) {
-                const nextNumber = await getNextOrderNumber();
-                if (nextNumber !== null) {
-                    currentOrderNumber = nextNumber;
-                    
-                    // Reserve this number in session storage
-                    sessionStorage.setItem('reservedOrderNumber', nextNumber.toString());
-                    
-                    const orderNumberElement = document.querySelector('.order-number');
-                    
-                    // Format the order number to 4 digits
-                    const orderNumberFormatted = String(nextNumber).padStart(4, '0');
-                    if (orderNumberElement) {
-                        orderNumberElement.textContent = `Order No. ${orderNumberFormatted}`;
-                    }
-                    
-                    console.log('Generated and reserved new order number:', currentOrderNumber);
-                }
+            currentOrderNumber = pendingOrderId;
+            currentOrderNumberFormatted = typeof pendingOrderId === 'number' || /^\d+$/.test(pendingOrderId)
+                ? String(pendingOrderId).padStart(4, '0')
+                : String(pendingOrderId);
+            if (orderNumberElement) {
+                orderNumberElement.textContent = `Order No. ${currentOrderNumberFormatted}`;
             }
         }
 
@@ -281,11 +262,17 @@ async function startPOSSystem() {
 
     // Replace initial order number logic
     const orderNumberElement = document.querySelector('.order-number');
+    let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+    if (!pendingOrderId) {
+        pendingOrderId = await getNextOrderId();
+        sessionStorage.setItem('pendingOrderId', pendingOrderId);
+    }
+    currentOrderNumber = pendingOrderId;
+    currentOrderNumberFormatted = typeof pendingOrderId === 'number' || /^\d+$/.test(pendingOrderId)
+        ? String(pendingOrderId).padStart(4, '0')
+        : String(pendingOrderId);
     if (orderNumberElement) {
-        const nextOrderNumber = await getNextOrderNumberFromOrdersCollection();
-        const formattedNumber = String(nextOrderNumber).padStart(4, '0');
-        orderNumberElement.textContent = `Order No. ${formattedNumber}`;
-        currentOrderNumber = nextOrderNumber;
+        orderNumberElement.textContent = `Order No. ${currentOrderNumberFormatted}`;
     }
 
     // Load menu items
@@ -364,44 +351,8 @@ async function startPOSSystem() {
                 const itemName = this.querySelector('.item-name').textContent;
                 const itemPrice = this.querySelector('.item-price').textContent;
                 const itemImage = this.querySelector('.item-image img').src;
-                // Ingredient deduction logic
-                if (window.menuItemsData && window.menuItemsData[itemName] && window.menuItemsData[itemName].ingredients) {
-                    const product = window.menuItemsData[itemName];
-                    const db = (window.firebase && firebase.firestore) ? firebase.firestore() : null;
-                    let insufficient = [];
-                    for (const ingredient of product.ingredients) {
-                        const { name, quantity } = ingredient;
-                        if (!name || !quantity) continue;
-                        // Check inventory stock
-                        try {
-                            const query = await db.collection('inventory').where('name', '==', name).limit(1).get();
-                            if (!query.empty) {
-                                const doc = query.docs[0];
-                                const data = doc.data();
-                                if ((data.quantity || 0) < quantity) {
-                                    insufficient.push({ name, required: quantity, available: data.quantity || 0 });
-                                }
-                            } else {
-                                insufficient.push({ name, required: quantity, available: 0 });
-                            }
-                        } catch (err) {
-                            insufficient.push({ name, required: quantity, available: 0 });
-                        }
-                    }
-                    if (insufficient.length > 0) {
-                        let msg = 'Insufficient stock for:\n';
-                        insufficient.forEach(i => {
-                            msg += `- ${i.name}: need ${i.required}, available ${i.available}\n`;
-                        });
-                        alert(msg);
-                        return; // Prevent adding item
-                    }
-                    // Deduct ingredients
-                    if (window.deductIngredientsForProduct) {
-                        await window.deductIngredientsForProduct(product);
-                    }
-                }
-                // Add item to order
+                // Ingredient deduction and inventory checks are now handled in Kitchen on 'Order Ready'.
+                // Only add item to order here.
                 addItemToOrder(itemName, itemPrice, itemImage);
             });
             menuGrid.appendChild(card);
@@ -662,84 +613,43 @@ async function startPOSSystem() {
     const proceedBtn = document.querySelector('.proceed-btn');
     if (proceedBtn) {
         proceedBtn.addEventListener('click', async function() {
+            // Always ensure pendingOrderId is set before proceeding
+            let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+            if (!pendingOrderId) {
+                pendingOrderId = await getNextOrderId();
+                sessionStorage.setItem('pendingOrderId', pendingOrderId);
+            }
+            // Remove pendingOrderId from sessionStorage on finalize (will be handled in payment.js after order is finalized)
             // Set hasProceeded flag so order can be restored after payment/back
             sessionStorage.setItem('hasProceeded', 'true');
-            // Only show alert if there are truly no visible order items
+            // Only validate that there are visible order items
             const orderItemsContainer = document.querySelector('.order-items');
             const orderItems = orderItemsContainer ? Array.from(orderItemsContainer.children).filter(el => el.classList.contains('order-item') && el.offsetParent !== null) : [];
             if (!orderItems || orderItems.length === 0) {
                 alert('Please add items from the menu first.');
                 return;
             }
-            // Get table number
-            const tableNumber = document.querySelector('.table-number input')?.value;
-            const paxNumber = document.querySelector('.pax-number input')?.value;
-
-            if (!tableNumber && document.querySelector('.order-type span').textContent === 'Dine in') {
-                alert('Please enter a table number for dine-in orders.');
-                return;
-            }
-
-            if (!paxNumber && document.querySelector('.order-type span').textContent === 'Dine in') {
-                alert('Please enter the number of guests (pax) for dine-in orders.');
-                return;
-            }
-            const subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
-            const tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
-            const discountInput = document.querySelector('.discount-input input');
-            const discount = discountInput && discountInput.value ? parseFloat(discountInput.value) : 0;
-            const total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
-
-            // Check if we're editing an existing order
-            const isEditing = sessionStorage.getItem('editingOrder') !== null;
-            const originalOrderId = sessionStorage.getItem('originalOrderId');
-
-            // Always use system's current date/time for new order
-            const now = new Date();
-
-            // --- FIX: Ensure posOrder is defined ---
+            // --- Build and save full order object for Payment page (no orderId yet) ---
             let posOrder = {};
             try {
                 posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
             } catch (e) { posOrder = {}; }
-            // --- END FIX ---
-
-            const orderData = {
-                orderNumber: currentOrderNumber,
-                orderNumberFormatted: String(currentOrderNumber).padStart(4, '0'),
-                orderType: document.querySelector('.order-type span').textContent,
-                tableNumber: tableNumber || null,
-                // Always save paxNumber for Dine In, null for others
-                paxNumber: (document.querySelector('.order-type span').textContent === 'Dine in') ? (paxNumber || null) : null,
-                items: Array.from(orderItems).map(item => ({
-                    name: item.getAttribute('data-item-name'),
-                    quantity: parseInt(item.querySelector('.quantity').textContent),
-                    unitPrice: parseFloat(item.getAttribute('data-unit-price')),
-                    price: parseFloat(item.getAttribute('data-unit-price')),
-                    lineTotal: parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''))
-                })),
-                subtotal: subtotal,
-                tax: tax,
-                discountType: posOrder.discountType || '',
-                discountPercent: posOrder.discountPercent || 0,
-                discountAmount: posOrder.discountAmount || 0,
-                discountName: posOrder.discountName || '',
-                discountID: posOrder.discountID || '',
-                // Always compute total as subtotal + tax - discount
-                total: (subtotal + tax - (posOrder.discountAmount || 0)),
-                status: 'Processing',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                createdAt: now.toISOString(),
-                dateCreated: now.toISOString()
-            };
-
-            try {
-                // Check if Firebase is available
-                if (typeof firebase === 'undefined' || !firebase.apps || firebase.apps.length === 0) {
-                    console.error('Firebase not initialized');
-                    alert('System not ready. Please refresh the page and try again.');
+            // Order type
+            const orderTypeEl = document.querySelector('.order-type span');
+            posOrder.orderType = orderTypeEl ? orderTypeEl.textContent : '';
+            // Table and pax
+            const tableNumberInput = document.querySelector('.table-number input');
+            const paxNumberInput = document.querySelector('.pax-number input');
+            const tableNumberValue = tableNumberInput ? tableNumberInput.value.trim() : '';
+            const paxValue = paxNumberInput ? paxNumberInput.value.trim() : '';
+            // Only require table number and pax for Dine in
+            const orderType = orderTypeEl ? orderTypeEl.textContent.trim() : '';
+            if (orderType === 'Dine in') {
+                if (!tableNumberValue || !paxValue) {
+                    alert('Please enter both Table Number and Pax before proceeding.');
                     return;
                 }
+<<<<<<< Updated upstream
 
                 const db = firebase.firestore();
                 const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
@@ -904,7 +814,33 @@ async function startPOSSystem() {
                     stack: error.stack
                 });
                 alert(`There was an error processing your order: ${error.message}. Please try again.`);
+=======
+                posOrder.tableNumber = tableNumberValue;
+                posOrder.pax = paxValue;
+            } else {
+                posOrder.tableNumber = '';
+                posOrder.pax = '';
+>>>>>>> Stashed changes
             }
+            // Items
+            posOrder.items = orderItems.map(item => ({
+                name: item.getAttribute('data-item-name'),
+                quantity: parseInt(item.querySelector('.quantity').textContent),
+                price: parseFloat(item.getAttribute('data-unit-price')),
+                total: parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''))
+            }));
+            // Subtotal, tax, discount, total
+            posOrder.subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
+            posOrder.tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
+            posOrder.discount = typeof posOrder.discountAmount !== 'undefined' ? posOrder.discountAmount : 0;
+            posOrder.total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
+            // Status and createdAt
+            posOrder.status = 'pending payment';
+            posOrder.createdAt = new Date().toISOString();
+            // Save to sessionStorage
+            sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+            // Navigate to payment page
+            window.location.href = '/html/payment.html';
         });
     }
 
