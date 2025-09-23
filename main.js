@@ -15,7 +15,14 @@ function initializeFirebase() {
         // Prevent multiple initializations
         if (window.firebaseInitialized) {
             console.log('Firebase already initialized, skipping...');
-            return;
+            return firebase.app();
+        }
+        
+        // Check if Firebase is already initialized
+        if (firebase.apps.length > 0) {
+            console.log('Firebase app already exists, using existing app');
+            window.firebaseInitialized = true;
+            return firebase.app();
         }
         
         if (!firebase.apps.length) {
