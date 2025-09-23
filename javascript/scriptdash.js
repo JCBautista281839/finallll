@@ -991,6 +991,16 @@ function updateSalesSummary(total, thisMonth, today, growthPercentage) {
     }
     growthElement.textContent = `${Math.abs(growthPercentage).toFixed(1)}% from last day`;
   }
+
+  // Update Sales Overview mini-cards (trend-revenue and trend-orders)
+  const trendRevenue = document.querySelector('.trend-revenue');
+  const trendOrders = document.querySelector('.trend-orders');
+  if (trendRevenue) {
+    trendRevenue.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> ${Math.abs(growthPercentage).toFixed(1)}% from last day`;
+  }
+  if (trendOrders) {
+    trendOrders.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> ${Math.abs(growthPercentage).toFixed(1)}% from last day`;
+  }
 }
 
 // Load top products data
