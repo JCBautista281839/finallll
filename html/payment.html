@@ -6,8 +6,8 @@
     <title>Payment</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/nav.css">
-    <link rel="stylesheet" href="css/stylePayment.css">
+    <link rel="stylesheet" href="../css/nav.css">
+    <link rel="stylesheet" href="../css/stylePayment.css">
 </head>
 <body>
     <div class="dashboard-container d-flex">
@@ -16,67 +16,67 @@
         <i class="bi bi-list"></i>
       </button>
       <div class="brand mb-1">
-        <img src="src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
+        <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
       </div>
       <nav class="nav flex-column w-100 text-center">
-        <a href="html/Dashboard.html" class="nav-link text-white" title="Home">
-          <img src="src/Icons/home.png" alt="Home" class="nav-icon">
+        <a href="../html/Dashboard.html" class="nav-link text-white" title="Home">
+          <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
           <div class="nav-text">Home</div>
         </a>
                 
         <a  class="nav-link text-white" title="Notifications" style="position:relative;">
-          <img src="src/Icons/bell.png" alt="Notifications" class="nav-icon" >
+          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon" >
           <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
           <div class="nav-text">Notifications</div>
         </a>
                 
-        <a href="html/Order.html" class="nav-link text-white" title="Orders">
-          <img src="src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
+        <a href="../html/Order.html" class="nav-link text-white" title="Orders">
+          <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
           <div class="nav-text">Orders</div>
         </a>
-        <a href="html/pos.html" class="nav-link text-white" title="POS">
-          <img src="src/Icons/cashier-machine.png" alt="POS" class="nav-icon">
+        <a href="../html/pos.html" class="nav-link text-white" title="POS">
+          <img src="../src/Icons/cashier-machine.png" alt="POS" class="nav-icon">
           <div class="nav-text">POS</div>
         </a>
-        <a href="html/menu.html" class="nav-link text-white" title="Menu">
-          <img src="src/Icons/menu (1).png" alt="Menu" class="nav-icon">
+        <a href="../html/menu.html" class="nav-link text-white" title="Menu">
+          <img src="../src/Icons/menu (1).png" alt="Menu" class="nav-icon">
           <div class="nav-text">Menu</div>
         </a>
-        <a href="html/Inventory.html" class="nav-link text-white" title="Inventory">
-          <img src="src/Icons/inventory.png" alt="Inventory" class="nav-icon">
+        <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
+          <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
           <div class="nav-text">Inventory</div>
         </a>
-        <a href="html/analytics.html" class="nav-link text-white" title="Reports">
-          <img src="src/Icons/bars.png" alt="reports" class="nav-icon">
+        <a href="../html/analytics.html" class="nav-link text-white" title="Reports">
+          <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
           <div class="nav-text">Reports</div>
         </a>
-        <a href="html/user.html" class="nav-link text-white" title="Users">
-          <img src="src/Icons/user.png" alt="user" class="nav-icon">
+        <a href="../html/user.html" class="nav-link text-white" title="Users">
+          <img src="../src/Icons/user.png" alt="user" class="nav-icon">
           <div class="nav-text">Users</div>
         </a>
         <br>
-        <a href="html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
-          <img src="src/Icons/setting.png" alt="Settings" class="nav-icon">
+        <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+          <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
           <div class="nav-text">Settings</div>
         </a>
         <a href="#" class="nav-link text-white" title="Logout">
-          <img src="src/Icons/log-out.png" alt="Logout" class="nav-icon">
+          <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
           <div class="nav-text">Logout</div>
         </a>
       </nav>
      <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
       <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
           <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
-              <img src="src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+              <img src="../src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
               <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
-              <img src="src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+              <img src="../src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
           </div>
           <div class="dropdown-body p-2" id="dropdownNotificationsList">
               <!-- Notifications will be loaded here dynamically -->
               <div class="text-center text-muted py-3">No notifications</div>
           </div>
           <div class="dropdown-footer p-2 text-center border-top">
-              <a href="html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+              <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
           </div>
       </div>
         </aside>
@@ -85,7 +85,7 @@
             
             <div class="top-bar d-flex justify-content-between align-items-center mb-4">
                 <div class="back-button d-flex align-items-center" role="button" style="cursor: pointer;">
-                    <img src="src/Icons/left-arrow.png" alt="Back" class="me-2" style="width: 40px; height: 40px;">
+                    <img src="../src/Icons/left-arrow.png" alt="Back" class="me-2" style="width: 40px; height: 40px;">
                     <span class="back-text">Back</span>
                 </div>
                 
@@ -141,15 +141,15 @@
                         
                         <div class="payment-methods-grid">
                             <button class="payment-method-btn ">
-                                <img src="src/Icons/peso.png" alt="Cash" style="width: 50px; height: 50px;">
+                                <img src="../src/Icons/peso.png" alt="Cash" style="width: 50px; height: 50px;">
                                 <span>Cash</span>
                             </button>
                             <button class="payment-method-btn">
-                                <img src="src/Icons/Gcash.png" alt="Cash" style="width: 50px; height: 50px;">
+                                <img src="../src/Icons/Gcash.png" alt="Cash" style="width: 50px; height: 50px;">
                                 <span>GCash</span>
                             </button>
                             <button class="payment-method-btn">
-                                <img src="src/Icons/credit-card.png" alt="Cash" style="width: 50px; height: 50px;">
+                                <img src="../src/Icons/credit-card.png" alt="Cash" style="width: 50px; height: 50px;">
                                 <span>Card</span>
                             </button>
                         </div>
@@ -221,11 +221,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     
-    <script src="main.js"></script>
-<script src="javascript/navnotifi.js"></script>
+    <script src="../main.js"></script>
+<script src="../javascript/navnotifi.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="javascript/payment.js"></script>
-<script src="javascript/restoreInventory.js"></script>
+    <script src="../javascript/payment.js"></script>
+<script src="../javascript/restoreInventory.js"></script>
 
     
         <script>
