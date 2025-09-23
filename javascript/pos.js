@@ -895,7 +895,7 @@ async function startPOSSystem() {
                 await updateOrderNumber();
                 
                 // Navigate to payment page
-                window.location.href = '/html/payment.html';
+                window.location.href = '../html/payment.html';
             } catch (error) {
                 console.error('Error saving order:', error);
                 console.error('Error details:', {
