@@ -51,18 +51,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Test Firebase connection first
-    testFirebaseConnection()
-        .then(success => {
-            if (success) {
-                // Initialize Firebase and start listening for orders
-                initializeOrdersListener();
-            }
-        })
-        .catch(err => {
-            console.error('Error in initialization:', err);
-            showError('Initialization failed', err.message);
-        });
+    // Initialize Firebase first (from main.js)
+    if (typeof initializeFirebase === 'function') {
+        try {
+            initializeFirebase();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+        }
+    }
+    
+    // Add a small delay to ensure Firebase is fully initialized
+    setTimeout(() => {
+        // Test Firebase connection first
+        testFirebaseConnection()
+            .then(success => {
+                if (success) {
+                    // Initialize Firebase and start listening for orders
+                    initializeOrdersListener();
+                }
+            })
+            .catch(err => {
+                console.error('Error in initialization:', err);
+                showError('Initialization failed', err.message);
+            });
+    }, 100);
     
     // Setup search functionality
     const searchInput = document.querySelector('.search-input');
@@ -131,6 +144,11 @@ async function testFirebaseConnection() {
             throw new Error('Firebase is not loaded');
         }
         
+        // Check if Firebase is properly initialized
+        if (!firebase.apps || firebase.apps.length === 0) {
+            throw new Error('Firebase app not initialized');
+        }
+        
         if (!firebase.firestore) {
             throw new Error('Firestore is not initialized');
         }
@@ -146,18 +164,26 @@ async function testFirebaseConnection() {
     } catch (error) {
         console.error('❌ Firebase connection failed:', error);
         
+        // Handle specific Firebase errors
+        let errorMessage = error.message;
+        if (error.message.includes('Target ID already exists')) {
+            errorMessage = 'Firebase already initialized. Please refresh the page.';
+        } else if (error.message.includes('Missing or insufficient permissions')) {
+            errorMessage = 'Firebase permissions issue. Check your domain authorization.';
+        }
+        
         // Show error in table
         const tableBody = document.querySelector('table tbody');
         if (tableBody) {
             tableBody.innerHTML = 
                 '<tr>' +
-                    '<td colspan="7" class="text-center py-4 text-warning">' +
+                    '<td colspan="8" class="text-center py-4 text-warning">' +
                         '<i class="fa fa-wifi fa-2x mb-2 d-block"></i>' +
                         '<div>Firebase Connection Failed</div>' +
-                        '<small class="text-muted">' + error.message + '</small>' +
+                        '<small class="text-muted">' + errorMessage + '</small>' +
                         '<br>' +
-                        '<button class="btn btn-sm btn-outline-primary mt-2" onclick="testFirebaseConnection().then(() => initializeOrdersListener())">' +
-                            'Retry Connection' +
+                        '<button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">' +
+                            'Refresh Page' +
                         '</button>' +
                     '</td>' +
                 '</tr>';
