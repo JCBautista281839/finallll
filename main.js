@@ -19,13 +19,24 @@ function initializeFirebase() {
         }
         
         // Check if Firebase is already initialized
-        if (firebase.apps.length > 0) {
+        if (firebase.apps && firebase.apps.length > 0) {
             console.log('Firebase app already exists, using existing app');
             window.firebaseInitialized = true;
             return firebase.app();
         }
         
-        if (!firebase.apps.length) {
+        // Additional check to prevent "Target ID already exists" error
+        try {
+            firebase.app(); // Try to get existing app
+            console.log('Firebase app already exists (caught by try-catch)');
+            window.firebaseInitialized = true;
+            return firebase.app();
+        } catch (e) {
+            // App doesn't exist, safe to initialize
+            console.log('No existing Firebase app found, initializing...');
+        }
+        
+        if (!firebase.apps || firebase.apps.length === 0) {
             console.log('Initializing Firebase with config:', JSON.stringify({
                 projectId: firebaseConfig.projectId,
                 authDomain: firebaseConfig.authDomain
@@ -46,22 +57,24 @@ function initializeFirebase() {
             const currentDomain = window.location.hostname;
             if (currentDomain !== 'localhost' && currentDomain !== '127.0.0.1' && 
                 firebaseConfig.authDomain && !firebaseConfig.authDomain.includes(currentDomain)) {
-                console.warn(`⚠️ Authentication domain warning: Your current domain (${currentDomain}) ` +
-                    `is not authorized in Firebase.`);
-                console.warn(`🔧 To fix this:`);
-                console.warn(`1. Go to Firebase Console: https://console.firebase.google.com/`);
-                console.warn(`2. Select your project: victoria-s-bistro`);
-                console.warn(`3. Go to Authentication -> Settings -> Authorized domains`);
-                console.warn(`4. Add your domain: ${currentDomain}`);
-                console.warn(`5. Save the changes`);
                 
-                // Set a flag to prevent auto-refresh loops
-                window.firebaseDomainWarningShown = true;
-                
-                // Show warning but don't block the app - only show once per session
+                // Only show warning once per session
                 if (!window.firebaseDomainWarningShown) {
-                    console.warn('⚠️ App will continue but authentication may not work properly');
+                    console.warn(`⚠️ Authentication domain warning: Your current domain (${currentDomain}) ` +
+                        `is not authorized in Firebase.`);
+                    console.warn(`🔧 To fix this:`);
+                    console.warn(`1. Go to Firebase Console: https://console.firebase.google.com/`);
+                    console.warn(`2. Select your project: victoria-s-bistro`);
+                    console.warn(`3. Go to Authentication -> Settings -> Authorized domains`);
+                    console.warn(`4. Add your domain: ${currentDomain}`);
+                    console.warn(`5. Save the changes`);
+                    
+                    // Set a flag to prevent auto-refresh loops
+                    window.firebaseDomainWarningShown = true;
                 }
+                
+                // Continue with initialization despite domain warning
+                console.log('⚠️ Continuing with Firebase initialization despite domain warning...');
                 
                 // Test Firebase connection to verify domain authorization
                 testFirebaseConnection();

@@ -56,11 +56,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Firebase first (from main.js)
     if (typeof initializeFirebase === 'function') {
         try {
-            initializeFirebase();
-            console.log('Firebase initialized successfully');
+            const firebaseApp = initializeFirebase();
+            console.log('Firebase initialized successfully:', firebaseApp.name);
         } catch (error) {
             console.error('Firebase initialization error:', error);
+            // Don't block the app if Firebase fails to initialize
+            console.log('Continuing without Firebase initialization...');
         }
+    } else {
+        console.warn('initializeFirebase function not found in main.js');
     }
     
     // Add a small delay to ensure Firebase is fully initialized
@@ -225,6 +229,18 @@ async function testFirebaseConnection() {
         return true;
     } catch (error) {
         console.error('❌ Firebase connection failed:', error);
+        
+        // Handle specific Firebase errors
+        if (error.message.includes('Target ID already exists')) {
+            console.log('🔄 Target ID already exists - Firebase already initialized, retrying...');
+            // Wait a bit and try again
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return await testFirebaseConnection();
+        }
+        
+        if (error.message.includes('Missing or insufficient permissions')) {
+            console.warn('⚠️ Firebase permissions issue - domain may not be authorized');
+        }
         
         // Just return false - error handling is done by autoRetryFirebaseConnection
         return false;
