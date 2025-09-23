@@ -827,7 +827,7 @@ async function startPOSSystem() {
                         sessionStorage.setItem('posOrder', JSON.stringify(orderData));
                         
                         // Navigate to payment page with absolute path
-                        window.location.href = window.location.origin + '/payment.html';
+                        window.location.href = window.location.origin + '../html/payment.html';
                         return;
                     }
                 }
