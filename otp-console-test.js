@@ -1,13 +1,13 @@
 // OTP Endpoint Console Test
 // Run this in your browser console to test the OTP endpoint
 
-const BASE_URL = 'https://viktoriasbistro.restaurant';
+const BASE_URL = 'https://viktoriasbistro.restaurant/api';
 
 // Test functions
 async function testHealthCheck() {
     console.log('🏥 Testing Health Check...');
     try {
-        const response = await fetch(`${BASE_URL}/`);
+        const response = await fetch(`${BASE_URL}/health`);
         const data = await response.json();
         
         if (response.ok) {

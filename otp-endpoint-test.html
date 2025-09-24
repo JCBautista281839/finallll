@@ -276,8 +276,8 @@
             <div class="test-section">
                 <h3>🔗 Endpoint Information</h3>
                 <div class="endpoint-info">
-                    <strong>Base URL:</strong> https://viktoriasbistro.restaurant<br>
-                    <strong>Health Check:</strong> GET /<br>
+                    <strong>Base URL:</strong> https://viktoriasbistro.restaurant/api<br>
+                    <strong>Health Check:</strong> GET /health<br>
                     <strong>Send OTP:</strong> POST /send-otp<br>
                     <strong>Test SMTP:</strong> POST /test-smtp<br>
                     <strong>Space Mail:</strong> support@viktoriasbistro.restaurant
@@ -293,7 +293,7 @@
     </div>
 
     <script>
-        const BASE_URL = 'https://viktoriasbistro.restaurant';
+        const BASE_URL = 'https://viktoriasbistro.restaurant/api';
 
         function showLoading() {
             document.getElementById('loading').style.display = 'block';
@@ -313,7 +313,7 @@
         async function healthCheck() {
             showLoading();
             try {
-                const response = await fetch(`${BASE_URL}/`);
+                const response = await fetch(`${BASE_URL}/health`);
                 const data = await response.json();
                 
                 if (response.ok) {
