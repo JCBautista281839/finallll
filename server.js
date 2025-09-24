@@ -10,7 +10,7 @@ require('dotenv').config(); // Load environment variables
 
 // Configure SendGrid
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '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';
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'christianbautista265853@gmail.com'; // Change this to your verified email
+const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant'; // Change this to your verified email
 const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Viktoria\'s Bistro';
 
 // Check if SendGrid is properly configured
