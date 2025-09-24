@@ -1,5 +1,5 @@
 // LALAMOVE TO MGA TANGA
-const backendURL = "http://localhost:3000"; // Your backend server
+const backendURL = window.location.origin; // Use same domain as frontend
 
 document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
   e.preventDefault();
