@@ -191,16 +191,12 @@ function loadNotifications() {
             querySnapshot.forEach(function (doc) {
                 notifCount++;
                 var data = doc.data();
-                var typeIcon = '';
                 var typeText = '';
                 if (data.type === 'empty') {
-                    typeIcon = '<i class="bi bi-exclamation-circle text-danger"></i>';
                     typeText = 'Empty';
                 } else if (data.type === 'restock') {
-                    typeIcon = '<i class="bi bi-exclamation-triangle text-warning"></i>';
                     typeText = 'Restock';
                 } else {
-                    typeIcon = '<i class="bi bi-bell text-info"></i>';
                     typeText = data.type || 'Other';
                 }
                 var time = data.timestamp && data.timestamp.toDate ? timeAgo(data.timestamp.toDate()) : '';
@@ -208,7 +204,7 @@ function loadNotifications() {
                     unseenCount++;
                     batch.update(doc.ref, { seen: true });
                 }
-                rows += `<tr><td>${typeIcon} <span style='font-weight:600;'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
+                rows += `<tr><td><span style='font-weight:600;'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
             });
             notificationStatus.innerHTML = rows;
             updateNotificationBadge(unseenCount);

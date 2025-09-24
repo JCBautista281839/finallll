@@ -81,6 +81,25 @@
     vertical-align: middle;
 }
 
+/* Remove any user/person icons from notifications */
+.inventory-table td::before,
+.inventory-table td::after {
+    display: none !important;
+}
+
+.inventory-table td img[alt*="user"],
+.inventory-table td img[alt*="person"],
+.inventory-table td img[alt*="avatar"] {
+    display: none !important;
+}
+
+/* Hide any Font Awesome user icons */
+.inventory-table td .fa-user,
+.inventory-table td .fa-user-circle,
+.inventory-table td .fa-user-o {
+    display: none !important;
+}
+
 @media (max-width: 1200px) {
     .header-action-row {
         flex-direction: column;

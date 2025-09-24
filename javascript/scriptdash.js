@@ -781,24 +781,41 @@ async function loadSalesData() {
       }
       // Check if order is from today
       if (orderDate && orderDate >= startOfDay && orderDate < endOfDay) {
-        // Use payment.total if present, else fallback to order.total
+        // Use payment.total if present (from payment.html), else fallback to order.total
         let paidTotal = 0;
         if (order.payment && typeof order.payment.total === 'number') {
           paidTotal = order.payment.total;
         } else if (order.payment && typeof order.payment.total === 'string') {
           paidTotal = parseFloat(order.payment.total) || 0;
+        } else if (order.total && typeof order.total === 'number') {
+          paidTotal = order.total;
+        } else if (order.total && typeof order.total === 'string') {
+          paidTotal = parseFloat(order.total) || 0;
         } else {
-          paidTotal = order.total || 0;
+          // Calculate from items if no total is available
+          if (order.items && Array.isArray(order.items)) {
+            paidTotal = order.items.reduce((sum, item) => {
+              const price = parseFloat(item.unitPrice || item.price) || 0;
+              const qty = parseInt(item.quantity) || 1;
+              return sum + (price * qty);
+            }, 0);
+          }
         }
         totalRevenue += paidTotal;
         totalOrders++;
+        
+        // Log payment method and source
+        const paymentMethod = order.payment?.method || 'Unknown';
+        const paymentSource = order.payment ? 'Payment System' : 'POS System';
+        console.log(`Order ${doc.id}: ₱${paidTotal} (${paymentMethod} - ${paymentSource}) on ${orderDate.toLocaleString()}`);
+        
         // Add pax count from this order - only count if pax was actually entered
         if (order.paxNumber && parseInt(order.paxNumber) > 0) {
           const paxCount = parseInt(order.paxNumber);
           totalPax += paxCount;
-          console.log(`Order ${doc.id}: ${paidTotal} on ${orderDate.toLocaleString()}, Pax entered: ${paxCount}`);
+          console.log(`  → Pax: ${paxCount}`);
         } else {
-          console.log(`Order ${doc.id}: ${paidTotal} on ${orderDate.toLocaleString()}, No pax entered`);
+          console.log(`  → No pax entered`);
         }
         // Use order number or table number as unique customer identifier
         const customerId = order.customerId || order.orderNumberFormatted || order.tableNumber;
@@ -821,7 +838,37 @@ async function loadSalesData() {
     updateSalesCard('orders', 0);
     updateSalesCard('customers', 0);
   }
+  
+  // Ensure revenue is updated even if no orders found
+  setTimeout(() => {
+    const revenueElement = document.querySelector('.sales-card-top .fs-5');
+    if (revenueElement && revenueElement.textContent === '₱2500.00') {
+      console.log('Updating hardcoded revenue value...');
+      updateSalesCard('revenue', 0);
+    }
+  }, 1000);
 }
+
+// Set up real-time listener for sales data updates
+function setupSalesDataListener() {
+  try {
+    const db = firebase.firestore();
+    
+    // Listen for new orders (especially from payment system)
+    db.collection('orders')
+      .where('timestamp', '>=', new Date(new Date().setHours(0, 0, 0, 0)))
+      .onSnapshot((snapshot) => {
+        console.log('📊 Sales data updated - refreshing dashboard...');
+        loadSalesData();
+      }, (error) => {
+        console.error('Error setting up sales data listener:', error);
+      });
+      
+  } catch (error) {
+    console.error('Error initializing sales data listener:', error);
+  }
+}
+
 // Update sales cards
 function updateSalesCard(type, value) {
   const cards = {
@@ -1119,8 +1166,14 @@ document.addEventListener('DOMContentLoaded', function() {
   updateTime();
   setInterval(updateTime, 1000 * 60);
   
+  // Load dashboard data immediately
+  loadDashboardData();
+  
   // Initialize Firebase authentication
   initializeFirebaseAuth();
+  
+  // Set up real-time updates for sales data
+  setupSalesDataListener();
   
   // Load sales summary data
   loadSalesSummaryData();

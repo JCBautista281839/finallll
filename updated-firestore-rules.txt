@@ -12,9 +12,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // Menu collection: allow authenticated users to manage menu items
+    // Menu collection: allow public read access for customer menu, authenticated write for admin
     match /menu/{docId} {
-      allow read, write: if request.auth != null;
+      allow read: if true; // Allow public read access for customer menu
+      allow write: if request.auth != null; // Require authentication for admin operations
     }
 
     // Orders collection: allow authenticated users to manage orders
@@ -71,6 +72,11 @@ service cloud.firestore {
     // OMR Analytics collection: allow authenticated users to read OMR analytics data
     match /omr_analytics/{analyticsId} {
       allow read, write: if request.auth != null;
+    }
+
+    // Reviews collection: allow public read/write access for customer reviews
+    match /reviews/{docId} {
+      allow read, write: if true; // Allow public access for customer reviews
     }
 
     // Deny access to everything else by default
