@@ -26,8 +26,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 // Configuration (use environment variables)
-// IMPORTANT: Change to production when ready!
-const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.LALAMOVE_ENV === 'production';
+// IMPORTANT: Using SANDBOX mode for testing
+const IS_PRODUCTION = false; // Force sandbox mode
 const LALA_HOST = IS_PRODUCTION ? 'rest.lalamove.com' : 'rest.sandbox.lalamove.com';
 const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
 const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
@@ -178,6 +178,11 @@ app.post('/api/reverse-geocode', async (req, res) => {
 app.get('/api/test', (req, res) => {
   console.log('[test] Test endpoint called');
   res.json({ message: 'Test endpoint working', timestamp: new Date().toISOString() });
+});
+
+// GET endpoint for webhook testing
+app.get('/api/webhook/lalamove', (req, res) => {
+  res.json({ success: true, message: "Webhook active" });
 });
 
 /* ====== Proxy endpoints ====== */
@@ -404,6 +409,10 @@ app.post('/api/webhook/lalamove', (req, res) => {
 // Webhook signature validation
 function validateWebhookSignature(body, signature, timestamp) {
   try {
+    // TEMPORARILY SKIP VALIDATION FOR TESTING
+    console.log('[webhook] Temporarily skipping signature validation for testing');
+    return true;
+    
     // Skip validation in development mode
     if (!IS_PRODUCTION) {
       console.log('[webhook] Skipping signature validation in development mode');

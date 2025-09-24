@@ -2564,11 +2564,11 @@ async function processOMRFile(file) {
         const formData = new FormData();
         formData.append('file', file);
         
-        console.log('📤 Sending file to Python scanner at http://localhost:5000/upload');
+        console.log('📤 Sending file to Python scanner at /upload');
         showToast('🐍 Running Python OMR detection...', 'info');
         
         // Send to OMR scanner backend
-        const response = await fetch('http://localhost:5000/upload', {
+        const response = await fetch('/upload', {
             method: 'POST',
             body: formData
         });

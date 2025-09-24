@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       console.log('[shipping.js] Sending order request:', orderBody);
 
-      const response = await fetch('http://localhost:5001/api/place-order', {
+      const response = await fetch('/api/place-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderBody)

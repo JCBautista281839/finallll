@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
   async function geocodeAddress(address) {
     console.log('[details.js] Geocoding address:', address);
     try {
-      const response = await fetch('http://localhost:5001/api/geocode', {
+      const response = await fetch('/api/geocode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address })
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Call Lalamove quotation API
       console.log('[details.js] Calling Lalamove quotation API...');
-      const response = await fetch('http://localhost:5001/api/quotation', {
+      const response = await fetch('/api/quotation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyObj)
