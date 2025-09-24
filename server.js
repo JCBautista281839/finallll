@@ -42,7 +42,7 @@ const smtpConfig = {
 };
 
 // Create transporter for OTP emails
-const transporter = nodemailer.createTransporter(smtpConfig);
+const transporter = nodemailer.createTransport(smtpConfig);
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
