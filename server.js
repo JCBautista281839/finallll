@@ -13,7 +13,20 @@ const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || 'SG.bjxn7X5HSLmvefYnLfB
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant'; // Change this to your verified email
 const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Viktoria\'s Bistro';
 
-sgMail.setApiKey(SENDGRID_API_KEY);
+// Check if SendGrid is properly configured
+const SENDGRID_CONFIGURED = SENDGRID_API_KEY && 
+    SENDGRID_API_KEY !== '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' &&
+    FROM_EMAIL && 
+    FROM_EMAIL !== 'support@viktoriasbistro.restaurant';
+
+if (SENDGRID_CONFIGURED) {
+    sgMail.setApiKey(SENDGRID_API_KEY);
+    console.log('✅ SendGrid API key configured');
+} else {
+    console.log('⚠️ SendGrid not configured - OTP emails will use Firebase fallback');
+    console.log('   - API Key:', SENDGRID_API_KEY ? 'Present' : 'Missing');
+    console.log('   - From Email:', FROM_EMAIL);
+}
 
 const { spawn, exec } = require('child_process');
 
@@ -998,6 +1011,20 @@ app.post('/api/send-otp', async (req, res) => {
         
         console.log(`[sendgrid-otp] Sending OTP to ${email} for user ${userName}`);
         
+        // Check if SendGrid is properly configured
+        if (!SENDGRID_CONFIGURED) {
+            console.log(`[sendgrid-otp] SendGrid not configured - returning OTP for frontend display`);
+            
+            return res.json({
+                success: false,
+                error: 'SendGrid not configured',
+                message: 'OTP generated but email service not available',
+                otp: otp, // Return OTP for frontend display
+                email: email,
+                expiry: expiryTime
+            });
+        }
+        
         // Send email via SendGrid
         await sgMail.send(emailContent);
         
@@ -1018,10 +1045,14 @@ app.post('/api/send-otp', async (req, res) => {
             const { status, body } = error.response;
             console.error('[sendgrid-otp] SendGrid API Error:', status, body);
             
-            return res.status(500).json({
+            // If SendGrid fails, return OTP for frontend display
+            return res.json({
                 success: false,
-                error: 'Failed to send verification email',
-                details: 'Email service temporarily unavailable'
+                error: 'SendGrid API Error',
+                message: 'Email service failed - OTP generated for display',
+                otp: otp, // Return OTP for frontend display
+                email: email,
+                expiry: expiryTime
             });
         }
         

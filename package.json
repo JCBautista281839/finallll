@@ -1,7 +1,7 @@
 {
   "name": "viktoria-bistro-complete",
   "version": "1.0.0",
-  "description": "Viktoria's Bistro Complete System - OMR Scanner + OTP Service",
+  "description": "Viktoria's Bistro Complete System - OMR Scanner + OTP Service +  lalamove",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,7 +9,6 @@
     "server": "node server.js",
     "omr": "node omr-launcher.js",
     "old-start": "node auto-server.js",
-    "otp": "node spaceship-function.js",
     "otp-dev": "nodemon spaceship-function.js"
   },
   "dependencies": {

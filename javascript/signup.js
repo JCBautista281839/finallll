@@ -32,6 +32,26 @@ async function sendEmailOTP(email, userName) {
                 if (result.success) {
                     console.log('✅ Email OTP sent via SendGrid');
                     return true;
+                } else if (result.otp) {
+                    // SendGrid not configured but OTP was generated
+                    console.log('⚠️ SendGrid not configured - displaying OTP:', result.otp);
+                    
+                    // Store OTP locally and display it
+                    localStorage.setItem('emailOTP', result.otp);
+                    localStorage.setItem('emailOTPExpiry', result.expiry);
+                    
+                    // Show OTP prominently in console
+                    console.log('🔐 ===== YOUR OTP CODE =====');
+                    console.log('📧 Email:', email);
+                    console.log('👤 Name:', userName);
+                    console.log('🔢 OTP Code:', result.otp);
+                    console.log('⏰ Expires in: 10 minutes');
+                    console.log('=============================');
+                    
+                    // Also show an alert for immediate visibility
+                    alert(`OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                    
+                    return true;
                 }
             } catch (sendGridError) {
                 console.log('🔄 SendGrid OTP failed:', sendGridError.message);

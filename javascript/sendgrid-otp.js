@@ -29,6 +29,17 @@ class SendGridOTPService {
             const data = await response.json();
 
             if (!response.ok) {
+                // Check if SendGrid is not configured but OTP was generated
+                if (data.error === 'SendGrid not configured' && data.otp) {
+                    console.log('⚠️ [SendGrid] Not configured - OTP generated for display:', data.otp);
+                    return {
+                        success: false,
+                        message: 'SendGrid not configured - OTP generated for display',
+                        otp: data.otp,
+                        email: data.email,
+                        expiry: data.expiry
+                    };
+                }
                 throw new Error(data.error || 'Failed to send OTP');
             }
 
