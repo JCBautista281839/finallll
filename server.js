@@ -9,13 +9,13 @@ const sgMail = require('@sendgrid/mail');
 require('dotenv').config(); // Load environment variables
 
 // Configure SendGrid
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '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';
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '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';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant'; // Change this to your verified email
 const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Viktoria\'s Bistro';
 
 // Check if SendGrid is properly configured
 const SENDGRID_CONFIGURED = SENDGRID_API_KEY && 
-    SENDGRID_API_KEY !== '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' &&
+    SENDGRID_API_KEY !== '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' &&
     FROM_EMAIL && 
     FROM_EMAIL !== 'support@viktoriasbistro.restaurant';
 
