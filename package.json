@@ -36,3 +36,29 @@
     "start": "start-omr-system.bat"
   }
 }
+{
+  "name": "viktorias-bistro-otp-service",
+  "version": "1.0.0",
+  "description": "OTP email service for Viktoria's Bistro",
+  "main": "spaceship-function.js",
+  "scripts": {
+    "start": "node spaceship-function.js",
+    "dev": "nodemon spaceship-function.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "nodemailer": "^6.9.7",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": [
+    "otp",
+    "email",
+    "spacemail",
+    "viktorias-bistro"
+  ],
+  "author": "Viktoria's Bistro",
+  "license": "MIT"
+}
