@@ -3,6 +3,7 @@ const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 require('dotenv').config(); // Load environment variables
 
@@ -25,6 +26,23 @@ const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUb
 const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
+
+// Space Mail SMTP Configuration for OTP
+const smtpConfig = {
+  host: 'mail.spacemail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: 'support@viktoriasbistro.restaurant',
+    pass: 'Vonnpogi@123',
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+};
+
+// Create transporter for OTP emails
+const transporter = nodemailer.createTransporter(smtpConfig);
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
@@ -859,6 +877,151 @@ app.post('/api/payment', (req, res) => {
   res.json({ success: true, payment, order });
 });
 
+/* ====== OTP Email Service ====== */
+
+// Health check endpoint for OTP service
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Viktoria\'s Bistro OTP Service is running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      sendOTP: '/api/send-otp',
+      testSMTP: '/api/test-smtp'
+    }
+  });
+});
+
+// Send OTP endpoint
+app.post('/api/send-otp', async (req, res) => {
+  try {
+    const { email, otpCode, userName } = req.body;
+
+    // Validate input
+    if (!email || !otpCode || !userName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: email, otpCode, userName'
+      });
+    }
+
+    // Email content
+    const mailOptions = {
+      from: 'support@viktoriasbistro.restaurant',
+      to: email,
+      subject: 'Your OTP Verification Code - Viktoria\'s Bistro',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+              color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 2em;">Viktoria's Bistro</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">OTP Verification Code</p>
+          </div>
+          
+          <div style="padding: 30px; background: #f8f9fa;">
+            <h2 style="color: #333; margin-bottom: 20px;">Hello ${userName}!</h2>
+            
+            <p style="color: #666; font-size: 16px; line-height: 1.6;">
+              Thank you for signing up with Viktoria's Bistro! 
+              To complete your account verification, please use the following OTP code:
+            </p>
+            
+            <div style="background: white; border: 2px dashed #007bff; 
+                border-radius: 10px; padding: 30px; text-align: center; margin: 30px 0;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                Your OTP Code:
+              </div>
+              <div style="font-size: 3em; font-weight: bold; color: #007bff; 
+                  letter-spacing: 10px; font-family: 'Courier New', monospace;">
+                ${otpCode}
+              </div>
+              <div style="color: #666; font-size: 12px; margin-top: 10px;">
+                Expires in 10 minutes
+              </div>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+              <strong>Important:</strong> This code will expire in 10 minutes 
+              for security reasons. If you didn't request this code, 
+              please ignore this email.
+            </p>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #e9ecef; 
+                border-radius: 5px;">
+              <p style="margin: 0; color: #666; font-size: 12px;">
+                This email was sent from Viktoria's Bistro. 
+                Please do not reply to this email.
+              </p>
+            </div>
+          </div>
+        </div>
+      `,
+      text: `
+        Viktoria's Bistro - OTP Verification Code
+        
+        Hello ${userName}!
+        
+        Thank you for signing up with Viktoria's Bistro! 
+        To complete your account verification, please use the following OTP code:
+        
+        OTP Code: ${otpCode}
+        Expires in: 10 minutes
+        
+        Important: This code will expire in 10 minutes for security reasons. 
+        If you didn't request this code, please ignore this email.
+        
+        This email was sent from Viktoria's Bistro. 
+        Please do not reply to this email.
+      `,
+    };
+
+    // Send email
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✅ Email sent successfully:', info.messageId);
+    console.log('📧 To:', email);
+    console.log('🔐 OTP:', otpCode);
+
+    res.json({
+      success: true,
+      messageId: info.messageId,
+      message: 'OTP email sent successfully',
+      email: email,
+      otpCode: otpCode
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending OTP email:', error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Failed to send OTP email',
+    });
+  }
+});
+
+// Test SMTP connection endpoint
+app.post('/api/test-smtp', async (req, res) => {
+  try {
+    await transporter.verify();
+    
+    res.json({
+      success: true,
+      message: 'Space Mail SMTP connection is working',
+      smtp_host: 'mail.spacemail.com',
+      smtp_username: 'support@viktoriasbistro.restaurant'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Space Mail SMTP connection failed'
+    });
+  }
+});
+
 /* ====== Error handlers & 404 ====== */
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -882,5 +1045,10 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n📡 Lalamove Integration:`);
   console.log(`   Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'SANDBOX'}`);
   console.log(`   API Host: ${LALA_HOST}`);
-  console.log(`   Market: ${MARKET}\n`);
+  console.log(`   Market: ${MARKET}`);
+  console.log(`\n📧 OTP Email Service:`);
+  console.log(`   Health Check: ${IS_PRODUCTION ? BASE_URL : `http://localhost:${PORT}`}/api/health`);
+  console.log(`   Send OTP: ${IS_PRODUCTION ? BASE_URL : `http://localhost:${PORT}`}/api/send-otp`);
+  console.log(`   SMTP Host: mail.spacemail.com`);
+  console.log(`   Email: support@viktoriasbistro.restaurant\n`);
 });
