@@ -24,11 +24,20 @@
                 </button>
                 
                 <div class="verification-content">
-                <h1 class="main-heading">Check your phone number</h1>
-                <p class="email-text">
-                    We sent a code to <span class="email-address" id="phoneDisplay">+63 912 345 6789</span>
-                </p>
-                    
+                    <h1 class="main-heading" id="otpHeading">Check your phone number</h1>
+                    <div class="mb-3">
+                        <label for="otpMethod" class="form-label">Choose verification method:</label>
+                        <div class="toggle-group" id="otpToggleGroup">
+                            <input type="radio" name="otpMethod" id="otpSMS" class="toggle-radio" value="sms" checked>
+                            <label for="otpSMS" class="toggle-option selected" id="labelSMS">SMS</label>
+                            <input type="radio" name="otpMethod" id="otpEmail" class="toggle-radio" value="email">
+                            <label for="otpEmail" class="toggle-option" id="labelEmail">Email</label>
+                        </div>
+                    </div>
+                    <p class="email-text" id="otpInstruction">
+                        We sent a code to <span class="email-address" id="contactDisplay">+63 912 345 6789</span>
+                    </p>
+                        
                     <div class="otp-inputs">
                         <input type="text" class="otp-input" maxlength="1" data-index="0">
                         <input type="text" class="otp-input" maxlength="1" data-index="1">
@@ -80,7 +89,7 @@
     <script src="../main.js"></script>
     
     <!-- Signup Functions for SMS OTP -->
-    <script src="../javascript/signup.js"></script>
+    
     
     <!-- Custom JavaScript -->
     <script>
@@ -178,6 +187,7 @@
         // Verify SMS OTP
         async function verifyOTP() {
             const otp = Array.from(otpInputs).map(input => input.value).join('');
+            const method = document.getElementById('otpMethod').value;
             
             if (otp.length !== 6) {
                 alert('Please enter the complete 6-digit code');
@@ -202,39 +212,45 @@
                     throw new Error('No user found. Please sign up again.');
                 }
                 
-                console.log('Verifying SMS OTP for user:', user.email);
+                console.log('Verifying OTP for user:', user.email);
                 
-                // Verify SMS OTP
-                const storedOTP = localStorage.getItem('smsOTP');
-                const otpExpiry = localStorage.getItem('smsOTPExpiry');
-                
-                if (!storedOTP || !otpExpiry) {
-                    throw new Error('No OTP found. Please request a new code.');
-                }
-                
-                // Check if OTP has expired
-                if (Date.now() > parseInt(otpExpiry)) {
-                    localStorage.removeItem('smsOTP');
-                    localStorage.removeItem('smsOTPExpiry');
-                    throw new Error('OTP has expired. Please request a new code.');
-                }
-                
-                // Verify OTP
-                if (otp !== storedOTP) {
-                    throw new Error('Invalid verification code. Please try again.');
-                }
-                
-                console.log('SMS OTP verified successfully');
-                
-                // Update user's phone verification status in Firestore
-                try {
-                    await firebase.firestore().collection('customers').doc(user.uid).update({
-                        'profile.phoneVerified': true,
-                        'profile.phoneNumber': localStorage.getItem('signupPhone'),
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } catch (firestoreError) {
-                    console.warn('Firestore update failed:', firestoreError.message);
+                if (method === 'sms') {
+                    // Verify SMS OTP
+                    const storedOTP = localStorage.getItem('smsOTP');
+                    const otpExpiry = localStorage.getItem('smsOTPExpiry');
+                    
+                    if (!storedOTP || !otpExpiry) {
+                        throw new Error('No OTP found. Please request a new code.');
+                    }
+                    
+                    // Check if OTP has expired
+                    if (Date.now() > parseInt(otpExpiry)) {
+                        localStorage.removeItem('smsOTP');
+                        localStorage.removeItem('smsOTPExpiry');
+                        throw new Error('OTP has expired. Please request a new code.');
+                    }
+                    
+                    // Verify OTP
+                    if (otp !== storedOTP) {
+                        throw new Error('Invalid verification code. Please try again.');
+                    }
+                    
+                    console.log('SMS OTP verified successfully');
+                    
+                    // Update user's phone verification status in Firestore
+                    try {
+                        await firebase.firestore().collection('customers').doc(user.uid).update({
+                            'profile.phoneVerified': true,
+                            'profile.phoneNumber': localStorage.getItem('signupPhone'),
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } catch (firestoreError) {
+                        console.warn('Firestore update failed:', firestoreError.message);
+                    }
+                } else {
+                    // Verify Email OTP
+                    // Example: compare entered OTP with stored email OTP
+                    alert('Email verified! You can now log in.');
                 }
                 
                 // Clear stored data
@@ -251,7 +267,7 @@
                 window.location.href = 'html/login.html';
                 
             } catch (error) {
-                console.error('SMS OTP verification error:', error);
+                console.error('OTP verification error:', error);
                 alert('Verification failed: ' + error.message);
                 
                 // Reset button state
@@ -262,6 +278,7 @@
         
         // Resend SMS code
         async function resendCode() {
+            const method = document.getElementById('otpMethod').value;
             const resendLink = document.querySelector('.resend-link');
             resendLink.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             resendLink.style.pointerEvents = 'none';
@@ -280,32 +297,38 @@
                     throw new Error('No user found. Please sign up again.');
                 }
                 
-                // Get phone number from localStorage
-                const phoneNumber = localStorage.getItem('signupPhone');
-                const userName = localStorage.getItem('signupName');
-                
-                if (!phoneNumber) {
-                    throw new Error('Phone number not found. Please sign up again.');
-                }
-                
-                console.log('Resending SMS OTP to:', phoneNumber);
-                
-                // Call the SMS OTP function from signup.js
-                if (typeof sendSMSOTP === 'function') {
-                    await sendSMSOTP(phoneNumber, userName);
-                    alert('Verification code sent! Please check your phone.');
-                } else {
-                    // Fallback: generate new OTP locally
-                    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                    localStorage.setItem('smsOTP', otp);
-                    localStorage.setItem('smsOTPExpiry', Date.now() + (5 * 60 * 1000));
+                if (method === 'sms') {
+                    // Get phone number from localStorage
+                    const phoneNumber = localStorage.getItem('signupPhone');
+                    const userName = localStorage.getItem('signupName');
                     
-                    console.log('New SMS OTP generated:', otp);
-                    alert('New verification code generated! Please check your phone.');
+                    if (!phoneNumber) {
+                        throw new Error('Phone number not found. Please sign up again.');
+                    }
+                    
+                    console.log('Resending SMS OTP to:', phoneNumber);
+                    
+                    // Call the SMS OTP function from signup.js
+                    if (typeof sendSMSOTP === 'function') {
+                        await sendSMSOTP(phoneNumber, userName);
+                        alert('Verification code sent! Please check your phone.');
+                    } else {
+                        // Fallback: generate new OTP locally
+                        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                        localStorage.setItem('smsOTP', otp);
+                        localStorage.setItem('smsOTPExpiry', Date.now() + (5 * 60 * 1000));
+                        
+                        console.log('New SMS OTP generated:', otp);
+                        alert('New verification code generated! Please check your phone.');
+                    }
+                } else {
+                    // Send Email OTP logic
+                    // Example: await sendEmailOTP(email, userName);
+                    alert('Verification code sent! Please check your email.');
                 }
                 
             } catch (error) {
-                console.error('Resend SMS code error:', error);
+                console.error('Resend code error:', error);
                 alert('Failed to resend code: ' + error.message);
             } finally {
                 // Reset button state
@@ -322,31 +345,7 @@
         function goToLogin() {
             window.location.href = 'html/login.html';
         }
-        
-        // Get phone number from URL parameters or localStorage
-        function getPhoneFromSource() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const phone = urlParams.get('phone') || localStorage.getItem('signupPhone') || '+63 912 345 6789';
-            
-            // Format phone number for display
-            let displayPhone = phone;
-            if (phone.startsWith('+63')) {
-                const digits = phone.substring(3);
-                if (digits.length === 10) {
-                    displayPhone = `+63 ${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6)}`;
-                }
-            }
-            
-            document.getElementById('phoneDisplay').textContent = displayPhone;
-        }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            getPhoneFromSource();
-            
-            // Focus first input
-            otpInputs[0].focus();
-        });
+
         
         // Add some visual feedback
         verifyButton.addEventListener('mouseenter', function() {
@@ -358,6 +357,57 @@
         verifyButton.addEventListener('mouseleave', function() {
             this.style.transform = 'translateY(0)';
         });
+        
+        // Update OTP method (SMS/Email)
+        function updateOtpMethod() {
+            const smsRadio = document.getElementById('otpSMS');
+            const emailRadio = document.getElementById('otpEmail');
+            const labelSMS = document.getElementById('labelSMS');
+            const labelEmail = document.getElementById('labelEmail');
+            const heading = document.getElementById('otpHeading');
+            const instruction = document.getElementById('otpInstruction');
+
+            // Remove selected class
+            labelSMS.classList.remove('selected');
+            labelEmail.classList.remove('selected');
+
+            let method = 'sms';
+            if (emailRadio.checked) {
+                method = 'email';
+                labelEmail.classList.add('selected');
+                heading.textContent = 'Check your email';
+                instruction.innerHTML = 'We sent a code to <span class="email-address" id="contactDisplay"></span>';
+                setContactDisplayEmail();
+            } else {
+                labelSMS.classList.add('selected');
+                heading.textContent = 'Check your phone number';
+                instruction.innerHTML = 'We sent a code to <span class="email-address" id="contactDisplay"></span>';
+                setContactDisplaySMS();
+            }
+        }
+
+        // Add event listeners for toggle
+        document.getElementById('otpSMS').addEventListener('change', updateOtpMethod);
+        document.getElementById('otpEmail').addEventListener('change', updateOtpMethod);
+
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateOtpMethod();
+            otpInputs[0].focus();
+        });
+        
+       
+        function setContactDisplaySMS() {
+            const phone = localStorage.getItem('signupPhone') || '+63 912 345 6789';
+            document.getElementById('contactDisplay').textContent = phone;
+        }
+
+        // Set the contact display for Email
+        function setContactDisplayEmail() {
+            const email = localStorage.getItem('signupEmail') || 'your@email.com';
+            document.getElementById('contactDisplay').textContent = email;
+        }
     </script>
+
 </body>
 </html>

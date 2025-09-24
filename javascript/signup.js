@@ -291,10 +291,10 @@ async function createUserAccount(name, email, phone, password) {
                 redirectPath = '../html/otp.html';
             } else {
                 // Local development - use absolute path
-                redirectPath = '/html/otp.html';
+                redirectPath = '../html/otp.html';
             }
             
-            window.location.href = redirectPath;
+            window.location.href = '../html/otp.html';
         }, 2000);
 
     } catch (error) {
@@ -590,4 +590,21 @@ document.addEventListener('DOMContentLoaded', function() {
             passwordMatch.style.display = 'none';
         });
     }
+});
+
+// Check for missing elements and skip validation if any are not found
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.querySelector('input[placeholder="Name"]');
+    const emailInput = document.querySelector('input[placeholder="Email Address"]');
+    const phoneInput = document.querySelector('input[placeholder="Phone Number"]');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const termsCheckbox = document.getElementById('terms');
+
+    if (!nameInput || !emailInput || !phoneInput || !passwordInput || !confirmPasswordInput || !termsCheckbox) {
+        // One or more elements are missing, don't run validation
+        return;
+    }
+
+    // Existing validation code here...
 });
