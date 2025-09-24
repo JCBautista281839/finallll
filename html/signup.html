@@ -191,7 +191,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../main.js"></script>
     <script src="../javascript/firebase-otp.js"></script>
-    <script src="../javascript/spacemail-otp.js"></script>
+    <script src="../javascript/sendgrid-otp.js"></script>
+    <!-- Space Mail OTP service removed -->
     <script src="../javascript/signup.js"></script>
     
     <!-- Wait for Firebase to load before running signup.js -->
@@ -212,20 +213,12 @@
         
         // Load signup.js after Firebase is ready
         waitForFirebase().then(() => {
-            // Wait a bit more for OTP services to load
-            setTimeout(() => {
-                // Configure Space Mail automatically
-                if (window.configureSpaceMail) {
-                    window.configureSpaceMail('support@viktoriasbistro.restaurant', 'Vonnpogi@123');
-                    console.log('✅ Space Mail configured automatically');
-                } else {
-                    console.log('⚠️ Space Mail configuration function not available yet');
-                }
-                
-                // Check if OTP services are loaded
-                console.log('🔍 Checking OTP services...');
-                console.log('Space Mail Service:', !!window.spaceMailOTPService);
-                console.log('Firebase OTP Service:', !!window.firebaseOTPService);
+                // Wait a bit more for OTP services to load
+                setTimeout(() => {
+                    // Check if OTP services are loaded
+                    console.log('🔍 Checking OTP services...');
+                    console.log('SendGrid OTP Service:', !!window.sendGridOTPService);
+                    console.log('Firebase OTP Service:', !!window.firebaseOTPService);
                 
                 const script = document.createElement('script');
                 script.src = '../javascript/signup.js';

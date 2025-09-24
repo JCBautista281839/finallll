@@ -18,32 +18,29 @@ function showSuccess(message) {
 }
 
 
-// Send Email OTP function using Space Mail or Firebase
+// Send Email OTP function using SendGrid, Firebase, or local generation
 async function sendEmailOTP(email, userName) {
     try {
         console.log('📧 Starting OTP send process...');
         
-        // Ensure Space Mail is configured
-        if (window.spaceMailOTPService && !window.spaceMailOTPService.getStatus().configured) {
-            console.log('🔧 Configuring Space Mail automatically...');
-            window.configureSpaceMail('support@viktoriasbistro.restaurant', 'Vonnpogi@123');
-        }
-        
-        // Try Space Mail OTP first (if available)
-        if (window.spaceMailOTPService) {
+        // Try SendGrid OTP Service first
+        if (window.sendGridOTPService) {
             try {
-                console.log('🚀 Attempting Space Mail OTP...');
-                await window.spaceMailOTPService.sendOTP(email, userName);
-                console.log('✅ Email OTP sent via Space Mail');
-                return true;
-            } catch (spaceMailError) {
-                console.log('🔄 Space Mail failed, trying Firebase:', spaceMailError.message);
+                console.log('📬 Attempting SendGrid OTP...');
+                const result = await window.sendGridOTPService.sendEmailOTP(email, userName);
+                
+                if (result.success) {
+                    console.log('✅ Email OTP sent via SendGrid');
+                    return true;
+                }
+            } catch (sendGridError) {
+                console.log('🔄 SendGrid OTP failed:', sendGridError.message);
             }
         } else {
-            console.log('⚠️ Space Mail OTP service not available');
+            console.log('⚠️ SendGrid OTP service not available');
         }
-
-        // Fallback to Firebase OTP Service
+        
+        // Try Firebase OTP Service as fallback
         if (window.firebaseOTPService) {
             try {
                 console.log('🔥 Attempting Firebase OTP...');
@@ -60,14 +57,15 @@ async function sendEmailOTP(email, userName) {
             console.log('⚠️ Firebase OTP service not available');
         }
         
-        // If we reach here, both services failed
-        throw new Error('Both Space Mail and Firebase OTP services failed');
+        // Final fallback to local OTP generation
+        console.log('🔄 Falling back to local Email OTP generation');
+        return await sendLocalEmailOTP(email, userName);
         
     } catch (error) {
-        console.error('❌ All OTP services failed:', error);
+        console.error('❌ OTP services failed:', error);
         
-        // Fallback to local OTP generation for demo purposes
-        console.log('🔄 Falling back to local Email OTP generation');
+        // Final fallback to local OTP generation
+        console.log('🔄 Using local Email OTP generation');
         return await sendLocalEmailOTP(email, userName);
     }
 }

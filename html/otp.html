@@ -83,8 +83,14 @@
     <!-- Firebase OTP Service -->
     <script src="../javascript/firebase-otp.js"></script>
     
+    <!-- SendGrid OTP Service -->
+    <script src="../javascript/sendgrid-otp.js"></script>
+    
+    <!-- OTP Verification Functions -->
+    <script src="../javascript/otp.js"></script>
+    
     <!-- Space Mail OTP Service -->
-    <script src="../javascript/spacemail-otp.js"></script>
+    <!-- Space Mail OTP service removed -->
     
     <!-- Signup Functions for SMS OTP -->
     
@@ -307,52 +313,46 @@
                 
                 console.log('Verifying Email OTP for user:', user.email);
                 
-                // Verify Email OTP using Firebase or Space Mail
+                // Verify Email OTP using SendGrid, Firebase, or fallback
                 const email = localStorage.getItem('signupEmail');
+                let verificationSuccess = false;
                 
-                // Try Space Mail OTP verification first
-                if (window.spaceMailOTPService && window.spaceMailOTPService.getStatus().configured) {
+                // Try SendGrid OTP verification first
+                if (window.sendGridOTPService) {
                     try {
-                        await window.spaceMailOTPService.verifyOTP(email, otp);
-                        console.log('✅ Space Mail OTP verified successfully');
+                        console.log('📬 Attempting SendGrid OTP verification...');
+                        const result = await window.sendGridOTPService.verifyOTP(email, otp);
                         
-                        // Update user's email verification status in Firestore
-                        await firebase.firestore().collection('customers').doc(user.uid).update({
-                            isEmailVerified: true,
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        // Clear stored data and redirect
-                        localStorage.removeItem('signupEmail');
-                        localStorage.removeItem('signupName');
-                        alert('Email verified successfully via Space Mail! You can now log in.');
-                        window.location.href = 'html/login.html';
-                        return;
-                        
-                    } catch (spaceMailError) {
-                        console.log('🔄 Space Mail OTP verification failed, trying Firebase:', spaceMailError.message);
+                        if (result.success) {
+                            console.log('✅ SendGrid Email OTP verified successfully');
+                            verificationSuccess = true;
+                        }
+                    } catch (sendGridError) {
+                        console.log('🔄 SendGrid OTP verification failed:', sendGridError.message);
                     }
                 }
                 
                 // Fallback to Firebase OTP verification
-                if (window.firebaseOTPService) {
+                if (!verificationSuccess && window.firebaseOTPService) {
                     try {
+                        console.log('🔥 Attempting Firebase OTP verification...');
                         await window.firebaseOTPService.verifyEmailOTP(email, otp);
                         console.log('✅ Firebase Email OTP verified successfully');
-                        
-                        // Update user's email verification status in Firestore
-                        await firebase.firestore().collection('customers').doc(user.uid).update({
-                            isEmailVerified: true,
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
+                        verificationSuccess = true;
                     } catch (firebaseError) {
                         console.log('🔄 Firebase Email OTP verification failed:', firebaseError.message);
-                        throw firebaseError;
                     }
-                } else {
-                    throw new Error('No OTP service available');
                 }
+                
+                if (!verificationSuccess) {
+                    throw new Error('OTP verification failed. Please check your code and try again.');
+                }
+                
+                // Update user's email verification status in Firestore
+                await firebase.firestore().collection('customers').doc(user.uid).update({
+                    isEmailVerified: true,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
                 
                 // Clear stored data
                 localStorage.removeItem('signupEmail');
@@ -406,23 +406,38 @@
                 
                 console.log('Resending Email OTP to:', email);
                 
-                // Try Space Mail OTP first
-                if (window.spaceMailOTPService && window.spaceMailOTPService.getStatus().configured) {
+                let resendSuccess = false;
+                
+                // Try SendGrid OTP resend first
+                if (window.sendGridOTPService) {
                     try {
-                        await window.spaceMailOTPService.sendOTP(email, userName);
-                        alert('Verification code sent via Space Mail! Please check your email.');
-                        return;
-                    } catch (spaceMailError) {
-                        console.log('🔄 Space Mail failed, trying Firebase:', spaceMailError.message);
+                        console.log('📬 Attempting SendGrid OTP resend...');
+                        const result = await window.sendGridOTPService.resendOTP(email, userName);
+                        
+                        if (result.success) {
+                            console.log('✅ SendGrid OTP resent successfully');
+                            alert('New verification code sent! Please check your email.');
+                            resendSuccess = true;
+                        }
+                    } catch (sendGridError) {
+                        console.log('🔄 SendGrid OTP resend failed:', sendGridError.message);
                     }
                 }
                 
                 // Fallback to Firebase OTP
-                if (typeof sendEmailOTP === 'function') {
-                    await sendEmailOTP(email, userName);
-                    alert('Verification code sent! Please check your email.');
-                } else {
-                    throw new Error('Email OTP service not available');
+                if (!resendSuccess && typeof sendEmailOTP === 'function') {
+                    try {
+                        console.log('🔥 Attempting Firebase OTP resend...');
+                        await sendEmailOTP(email, userName);
+                        alert('Verification code sent! Please check your email.');
+                        resendSuccess = true;
+                    } catch (firebaseError) {
+                        console.log('🔄 Firebase OTP resend failed:', firebaseError.message);
+                    }
+                }
+                
+                if (!resendSuccess) {
+                    throw new Error('Failed to resend verification code. Please try again.');
                 }
                 
             } catch (error) {
