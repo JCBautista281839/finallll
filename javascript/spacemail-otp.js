@@ -296,7 +296,7 @@ class SpaceMailOTPService {
                 const userName = nameMatch ? nameMatch[1] : 'Valued Customer';
                 
                 // Replace 'your-app.spaceship.com' with your actual Spaceship URL
-                const response = await fetch('https://your-app.spaceship.com/send-otp', {
+                const response = await fetch('https://viktoriasbistro.restaurant/send-otp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Endpoint Test - Viktoria's Bistro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .test-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .test-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .status-unknown {
+            background: #ffc107;
+        }
+
+        .endpoint-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quick-test {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .quick-test h3 {
+            margin-bottom: 15px;
+        }
+
+        .quick-test p {
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 OTP Endpoint Test</h1>
+            <p>Test your Viktoria's Bistro OTP service</p>
+        </div>
+
+        <div class="content">
+            <!-- Quick Test Section -->
+            <div class="quick-test">
+                <h3>⚡ Quick Test</h3>
+                <p>Test the OTP endpoint with your email address</p>
+                <div class="form-group">
+                    <input type="email" id="quickEmail" placeholder="Enter your email address" value="christianbautista265853@gmail.com">
+                </div>
+                <button class="btn btn-success" onclick="quickTest()">🚀 Send Test OTP</button>
+            </div>
+
+            <!-- Health Check Section -->
+            <div class="test-section">
+                <h3>🏥 Health Check</h3>
+                <p>Check if the OTP service is running</p>
+                <button class="btn" onclick="healthCheck()">Check Service Status</button>
+                <div id="healthResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- SMTP Test Section -->
+            <div class="test-section">
+                <h3>📧 SMTP Connection Test</h3>
+                <p>Test Space Mail SMTP connection</p>
+                <button class="btn btn-warning" onclick="testSMTP()">Test SMTP Connection</button>
+                <div id="smtpResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Send OTP Section -->
+            <div class="test-section">
+                <h3>📨 Send OTP Test</h3>
+                <div class="form-group">
+                    <label for="testEmail">Email Address:</label>
+                    <input type="email" id="testEmail" placeholder="Enter email address" value="christianbautista265853@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label for="testOTP">OTP Code:</label>
+                    <input type="text" id="testOTP" placeholder="Enter 6-digit OTP" value="123456">
+                </div>
+                <div class="form-group">
+                    <label for="testName">User Name:</label>
+                    <input type="text" id="testName" placeholder="Enter user name" value="Christian Bautista">
+                </div>
+                <button class="btn" onclick="sendOTPTest()">Send OTP Email</button>
+                <div id="otpResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Endpoint Information -->
+            <div class="test-section">
+                <h3>🔗 Endpoint Information</h3>
+                <div class="endpoint-info">
+                    <strong>Base URL:</strong> https://viktoriasbistro.restaurant<br>
+                    <strong>Health Check:</strong> GET /<br>
+                    <strong>Send OTP:</strong> POST /send-otp<br>
+                    <strong>Test SMTP:</strong> POST /test-smtp<br>
+                    <strong>Space Mail:</strong> support@viktoriasbistro.restaurant
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Processing request...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://viktoriasbistro.restaurant';
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = content;
+        }
+
+        async function healthCheck() {
+            showLoading();
+            try {
+                const response = await fetch(`${BASE_URL}/`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('healthResult', 
+                        `✅ Service Status: ONLINE\n` +
+                        `📊 Response: ${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('healthResult', 
+                        `❌ Service Status: ERROR\n` +
+                        `📊 Response: ${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('healthResult', 
+                    `❌ Service Status: OFFLINE\n` +
+                    `🚫 Error: ${error.message}\n` +
+                    `🔍 Check if the service is running on ${BASE_URL}`, 
+                    'error'
+                );
+            }
+            hideLoading();
+        }
+
+        async function testSMTP() {
+            showLoading();
+            try {
+                const response = await fetch(`${BASE_URL}/test-smtp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('smtpResult', 
+                        `✅ SMTP Connection: SUCCESS\n` +
+                        `📧 Host: ${data.smtp_host}\n` +
+                        `👤 Username: ${data.smtp_username}\n` +
+                        `📊 Response: ${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('smtpResult', 
+                        `❌ SMTP Connection: FAILED\n` +
+                        `📊 Response: ${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('smtpResult', 
+                    `❌ SMTP Test: ERROR\n` +
+                    `🚫 Error: ${error.message}`, 
+                    'error'
+                );
+            }
+            hideLoading();
+        }
+
+        async function sendOTPTest() {
+            const email = document.getElementById('testEmail').value;
+            const otpCode = document.getElementById('testOTP').value;
+            const userName = document.getElementById('testName').value;
+
+            if (!email || !otpCode || !userName) {
+                showResult('otpResult', 
+                    `❌ Missing required fields\n` +
+                    `📧 Email: ${email || 'MISSING'}\n` +
+                    `🔢 OTP: ${otpCode || 'MISSING'}\n` +
+                    `👤 Name: ${userName || 'MISSING'}`, 
+                    'error'
+                );
+                return;
+            }
+
+            showLoading();
+            try {
+                const response = await fetch(`${BASE_URL}/send-otp`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        otpCode: otpCode,
+                        userName: userName
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('otpResult', 
+                        `✅ OTP Email Sent: SUCCESS\n` +
+                        `📧 To: ${data.email}\n` +
+                        `🔢 OTP: ${data.otpCode}\n` +
+                        `📨 Message ID: ${data.messageId}\n` +
+                        `📊 Response: ${JSON.stringify(data, null, 2)}`, 
+                        'success'
+                    );
+                } else {
+                    showResult('otpResult', 
+                        `❌ OTP Email: FAILED\n` +
+                        `📊 Response: ${JSON.stringify(data, null, 2)}`, 
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult('otpResult', 
+                    `❌ OTP Send: ERROR\n` +
+                    `🚫 Error: ${error.message}`, 
+                    'error'
+                );
+            }
+            hideLoading();
+        }
+
+        async function quickTest() {
+            const email = document.getElementById('quickEmail').value;
+            
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+
+            // Generate random 6-digit OTP
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Update the form fields
+            document.getElementById('testEmail').value = email;
+            document.getElementById('testOTP').value = otpCode;
+            document.getElementById('testName').value = 'Test User';
+            
+            // Send the OTP
+            await sendOTPTest();
+        }
+
+        // Auto-run health check on page load
+        window.addEventListener('load', () => {
+            setTimeout(healthCheck, 1000);
+        });
+    </script>
+</body>
+</html>
