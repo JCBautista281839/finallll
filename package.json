@@ -1,14 +1,16 @@
 {
-  "name": "viktoria-bistro-omr",
+  "name": "viktoria-bistro-complete",
   "version": "1.0.0",
-  "description": "Viktoria's Bistro OMR Scanner with Auto Python Server",
+  "description": "Viktoria's Bistro Complete System - OMR Scanner + OTP Service",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "server": "node server.js",
     "omr": "node omr-launcher.js",
-    "old-start": "node auto-server.js"
+    "old-start": "node auto-server.js",
+    "otp": "node spaceship-function.js",
+    "otp-dev": "nodemon spaceship-function.js"
   },
   "dependencies": {
     "axios": "^1.12.2",
@@ -17,10 +19,14 @@
     "express": "^4.21.2",
     "firebase": "^12.1.0",
     "firebase-admin": "^13.4.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "nodemailer": "^6.9.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "keywords": [
     "omr",
@@ -28,37 +34,15 @@
     "pos",
     "restaurant",
     "python",
-    "opencv"
-  ],
-  "author": "Viktoria's Bistro",
-  "license": "MIT",
-  "windows": {
-    "start": "start-omr-system.bat"
-  }
-}
-{
-  "name": "viktorias-bistro-otp-service",
-  "version": "1.0.0",
-  "description": "OTP email service for Viktoria's Bistro",
-  "main": "spaceship-function.js",
-  "scripts": {
-    "start": "node spaceship-function.js",
-    "dev": "nodemon spaceship-function.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "nodemailer": "^6.9.7",
-    "cors": "^2.8.5"
-  },
-  "engines": {
-    "node": "18.x"
-  },
-  "keywords": [
+    "opencv",
     "otp",
     "email",
     "spacemail",
     "viktorias-bistro"
   ],
   "author": "Viktoria's Bistro",
-  "license": "MIT"
+  "license": "MIT",
+  "windows": {
+    "start": "start-omr-system.bat"
+  }
 }
