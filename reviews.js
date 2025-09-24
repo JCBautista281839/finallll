@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
       initializeReviewsSystem();
     } else {
       console.log('Firebase not ready yet, waiting...');
-      setTimeout(waitForFirebase, 100);
+      setTimeout(waitForFirebase, 200);
     }
   }
   
@@ -21,27 +21,32 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function loadReviewsFromFirebase() {
     console.log('Loading reviews from Firebase...');
-    const db = firebase.firestore();
     
-    // Get reviews from Firebase
-    db.collection('reviews')
-      .orderBy('createdAt', 'desc')
-      .limit(3) // Show only the 3 most recent reviews
-      .onSnapshot((querySnapshot) => {
-        console.log('Reviews loaded from Firebase:', querySnapshot.size);
-        
-        if (querySnapshot.empty) {
-          console.log('No reviews found, showing default reviews');
-          return;
-        }
-        
-        // Update the reviews display
-        updateReviewsDisplay(querySnapshot.docs);
-        
-      }, (error) => {
-        console.error('Error loading reviews:', error);
-        // Keep default reviews if Firebase fails
-      });
+    try {
+      const db = firebase.firestore();
+      
+      // Get reviews from Firebase
+      db.collection('reviews')
+        .orderBy('createdAt', 'desc')
+        .limit(3) // Show only the 3 most recent reviews
+        .onSnapshot((querySnapshot) => {
+          console.log('Reviews loaded from Firebase:', querySnapshot.size);
+          
+          if (querySnapshot.empty) {
+            console.log('No reviews found, showing default reviews');
+            return;
+          }
+          
+          // Update the reviews display
+          updateReviewsDisplay(querySnapshot.docs);
+          
+        }, (error) => {
+          console.error('Error loading reviews:', error);
+          // Keep default reviews if Firebase fails
+        });
+    } catch (error) {
+      console.error('Error accessing Firebase:', error);
+    }
   }
   
   function updateReviewsDisplay(reviewDocs) {
@@ -229,27 +234,33 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function submitReview(reviewData) {
     console.log('Submitting review:', reviewData);
-    const db = firebase.firestore();
     
-    // Add timestamp
-    reviewData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-    
-    // Submit to Firebase
-    db.collection('reviews').add(reviewData)
-      .then((docRef) => {
-        console.log('Review submitted successfully:', docRef.id);
-        
-        // Show success message
-        showSuccessMessage();
-        
-        // Reset form
-        resetReviewForm();
-        
-      })
-      .catch((error) => {
-        console.error('Error submitting review:', error);
-        alert('Sorry, there was an error submitting your review. Please try again.');
-      });
+    try {
+      const db = firebase.firestore();
+      
+      // Add timestamp
+      reviewData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      
+      // Submit to Firebase
+      db.collection('reviews').add(reviewData)
+        .then((docRef) => {
+          console.log('Review submitted successfully:', docRef.id);
+          
+          // Show success message
+          showSuccessMessage();
+          
+          // Reset form
+          resetReviewForm();
+          
+        })
+        .catch((error) => {
+          console.error('Error submitting review:', error);
+          alert('Sorry, there was an error submitting your review. Please try again.');
+        });
+    } catch (error) {
+      console.error('Error accessing Firebase:', error);
+      alert('Sorry, there was an error accessing the database. Please try again.');
+    }
   }
   
   function showSuccessMessage() {

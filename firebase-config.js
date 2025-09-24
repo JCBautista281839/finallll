@@ -23,10 +23,15 @@ function initializeFirebase() {
         console.log('Initializing Firebase...');
         const app = firebase.initializeApp(firebaseConfig);
         console.log('Firebase initialized successfully');
+        
+        // Set global flag that Firebase is ready
+        window.firebaseReady = true;
+        
         return app;
         
     } catch (error) {
         console.error('Error initializing Firebase:', error);
+        window.firebaseReady = false;
         return null;
     }
 }
@@ -36,7 +41,8 @@ window.isFirebaseReady = function() {
     return typeof firebase !== 'undefined' && 
            firebase.apps && 
            firebase.apps.length > 0 && 
-           firebase.firestore;
+           firebase.firestore &&
+           window.firebaseReady === true;
 };
 
 // Auto-initialize Firebase when the page loads
