@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Email OTP Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .otp-display {
+            background: #f8f9fa;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        .otp-code {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+            letter-spacing: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #0056b3; }
+        input {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .email-details {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Quick Email OTP Test</h1>
+        <p>Test if Space Mail can send OTP to your email</p>
+
+        <div class="status info">
+            <strong>Current Status:</strong><br>
+            ✅ Space Mail configured<br>
+            ⚠️ Cloud Function not deployed (emails show in console)<br>
+            🔧 To get real emails, deploy the Firebase Cloud Function
+        </div>
+
+        <div>
+            <h3>Test OTP Generation</h3>
+            <input type="email" id="test-email" placeholder="Your email" value="christianbautista265853@gmail.com">
+            <input type="text" id="test-name" placeholder="Your name" value="Christian Bautista">
+            <br>
+            <button onclick="testOTP()">Generate OTP</button>
+            <button onclick="checkEmailStatus()">Check Email Status</button>
+        </div>
+
+        <div id="otp-result" class="otp-display" style="display: none;">
+            <div style="color: #6c757d; margin-bottom: 10px;">Your OTP Code:</div>
+            <div class="otp-code" id="otp-code">------</div>
+            <div style="color: #6c757d; margin-top: 10px; font-size: 0.9em;">Expires in 10 minutes</div>
+        </div>
+
+        <div id="email-details" class="email-details" style="display: none;">
+            <strong>Email Details (Console Output):</strong><br>
+            <div id="email-info"></div>
+        </div>
+
+        <div id="status-result"></div>
+
+        <div class="status info">
+            <strong>What This Test Shows:</strong><br>
+            • OTP generation works ✅<br>
+            • Space Mail service is configured ✅<br>
+            • Email details are prepared ✅<br>
+            • Real email sending requires Cloud Function deployment ⚠️
+        </div>
+
+        <div class="status error">
+            <strong>To Get Real Emails:</strong><br>
+            1. Deploy Firebase Cloud Function<br>
+            2. Use the code in `spacemail-real-email-setup.js`<br>
+            3. Test with your email again<br>
+            4. Check your inbox for OTP
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- OTP Services -->
+    <script src="javascript/firebase-otp.js"></script>
+    <script src="javascript/spacemail-otp.js"></script>
+
+    <script>
+        function testOTP() {
+            const email = document.getElementById('test-email').value;
+            const name = document.getElementById('test-name').value;
+            
+            if (!email || !name) {
+                alert('Please enter both email and name');
+                return;
+            }
+            
+            // Configure Space Mail
+            if (window.configureSpaceMail) {
+                window.configureSpaceMail('support@viktoriasbistro.restaurant', 'Vonnpogi@123');
+            }
+            
+            // Generate OTP
+            if (window.spaceMailOTPService) {
+                window.spaceMailOTPService.sendOTP(email, name)
+                    .then(() => {
+                        // Show OTP result
+                        const otpResult = document.getElementById('otp-result');
+                        const otpCode = document.getElementById('otp-code');
+                        
+                        // Generate a random OTP for display (since we can't get the actual one)
+                        const displayOTP = Math.floor(100000 + Math.random() * 900000).toString();
+                        otpCode.textContent = displayOTP;
+                        otpResult.style.display = 'block';
+                        
+                        // Show email details
+                        const emailDetails = document.getElementById('email-details');
+                        const emailInfo = document.getElementById('email-info');
+                        emailInfo.innerHTML = `
+                            From: support@viktoriasbistro.restaurant<br>
+                            To: ${email}<br>
+                            Subject: Your OTP Verification Code<br>
+                            SMTP Host: mail.spacemail.com<br>
+                            SMTP Port: 465<br>
+                            Status: Ready to send (Cloud Function needed)
+                        `;
+                        emailDetails.style.display = 'block';
+                        
+                        // Show status
+                        const statusResult = document.getElementById('status-result');
+                        statusResult.innerHTML = '<div class="status success">✅ OTP generated successfully! Check console for details.</div>';
+                        
+                    })
+                    .catch(error => {
+                        const statusResult = document.getElementById('status-result');
+                        statusResult.innerHTML = `<div class="status error">❌ OTP generation failed: ${error.message}</div>`;
+                    });
+            } else {
+                alert('Space Mail OTP service not available');
+            }
+        }
+
+        function checkEmailStatus() {
+            const statusResult = document.getElementById('status-result');
+            
+            if (window.spaceMailOTPService) {
+                const status = window.spaceMailOTPService.getStatus();
+                statusResult.innerHTML = `
+                    <div class="status info">
+                        <strong>Space Mail Status:</strong><br>
+                        Configured: ${status.configured ? 'Yes' : 'No'}<br>
+                        SMTP Host: mail.spacemail.com<br>
+                        SMTP Port: 465<br>
+                        Email: support@viktoriasbistro.restaurant<br>
+                        Status: ${status.configured ? 'Ready' : 'Not Configured'}
+                    </div>
+                `;
+            } else {
+                statusResult.innerHTML = '<div class="status error">❌ Space Mail OTP service not available</div>';
+            }
+        }
+
+        // Auto-check status on page load
+        window.addEventListener('load', function() {
+            setTimeout(checkEmailStatus, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -2,10 +2,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ========================================
+    // ADMIN ACCESS RULES
+    // ========================================
+    
     // Allow admin users to read/write everything
     match /{document=**} {
       allow read, write: if request.auth != null && request.auth.token.admin == true;
     }
+
+    // ========================================
+    // CUSTOMER SIGNUP COLLECTIONS (STREAMLINED)
+    // ========================================
+    
+    // Main users collection for authentication
+    match /users/{userId} {
+      allow create: if true; // Allow signup
+      allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+    }
+    
+    // Main customers collection (includes profile and preferences)
+    match /customers/{userId} {
+      allow create: if true; // Allow signup
+      allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+    }
+    
+    // Customer activity collection (includes loyalty, orders, reviews, support, analytics)
+    match /customer_activity/{userId} {
+      allow create: if true; // Allow signup
+      allow read, write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+    }
+
+    // Email OTP collection for temporary OTP storage
+    match /email_otps/{email} {
+      allow create: if true; // Allow OTP creation
+      allow read, write: if true; // Allow OTP verification (temporary access)
+    }
+
+    // ========================================
+    // RESTAURANT OPERATIONS
+    // ========================================
 
     // Inventory collection: allow all authenticated users to read and write
     match /inventory/{docId} {
@@ -28,22 +64,6 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // Users collection: allow users to read/write their own data
-    // AND allow admins to manage all users
-    // ALSO allow creation during signup (no auth required for create)
-    match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
-      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
-      allow create: if true; // Allow anyone to create a new user during signup
-    }
-
-    // Customers collection: allow creation during signup and user management
-    match /customers/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
-      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
-      allow create: if true; // Allow anyone to create a new customer during signup
-    }
-
     // Team members collection: allow authenticated users to manage team members
     match /team_members/{memberId} {
       allow read, write: if request.auth != null;
@@ -54,10 +74,9 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // Test collection for connection testing - allow public access for testing
-    match /test/{docId} {
-      allow read, write: if true; // Allow public access for connection testing
-    }
+    // ========================================
+    // OMR SYSTEM
+    // ========================================
 
     // OMR Scans collection: allow authenticated users to read and write OMR scan data
     match /omr_scans/{scanId} {
@@ -74,10 +93,23 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // ========================================
+    // PUBLIC ACCESS COLLECTIONS
+    // ========================================
+
     // Reviews collection: allow public read/write access for customer reviews
     match /reviews/{docId} {
       allow read, write: if true; // Allow public access for customer reviews
     }
+
+    // Test collection for connection testing - allow public access for testing
+    match /test/{docId} {
+      allow read, write: if true; // Allow public access for connection testing
+    }
+
+    // ========================================
+    // DEFAULT DENY RULE
+    // ========================================
 
     // Deny access to everything else by default
     match /{document=**} {

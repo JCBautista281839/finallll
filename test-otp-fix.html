@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OTP Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover { background: #0056b3; }
+        input {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test OTP Fix</h1>
+        <p>This page tests if the OTP services are working correctly.</p>
+
+        <div class="status info">
+            <strong>Instructions:</strong><br>
+            1. Click "Test OTP Services" to check if services are loaded<br>
+            2. Click "Test OTP Generation" to generate an OTP<br>
+            3. Check the browser console (F12) for detailed logs
+        </div>
+
+        <div>
+            <button onclick="testOTPServices()">Test OTP Services</button>
+            <button onclick="testOTPGeneration()">Test OTP Generation</button>
+        </div>
+
+        <div id="results"></div>
+
+        <div class="status info">
+            <strong>Expected Results:</strong><br>
+            ✅ Space Mail Service: Available<br>
+            ✅ Firebase OTP Service: Available<br>
+            ✅ OTP Generation: Working<br>
+            🔐 OTP Code: Displayed in console and alert
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    
+    <!-- Your Firebase Config -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- OTP Services -->
+    <script src="javascript/firebase-otp.js"></script>
+    <script src="javascript/spacemail-otp.js"></script>
+
+    <script>
+        function testOTPServices() {
+            const resultsDiv = document.getElementById('results');
+            let results = '<h3>🔍 Service Status Check:</h3>';
+            
+            // Check Firebase
+            if (typeof firebase !== 'undefined') {
+                results += '<div class="status success">✅ Firebase: Loaded</div>';
+            } else {
+                results += '<div class="status error">❌ Firebase: Not loaded</div>';
+            }
+            
+            // Check Firebase OTP Service
+            if (window.firebaseOTPService) {
+                results += '<div class="status success">✅ Firebase OTP Service: Loaded</div>';
+            } else {
+                results += '<div class="status error">❌ Firebase OTP Service: Not loaded</div>';
+            }
+            
+            // Check Space Mail OTP Service
+            if (window.spaceMailOTPService) {
+                const status = window.spaceMailOTPService.getStatus();
+                results += `<div class="status success">✅ Space Mail OTP Service: Loaded (${status.configured ? 'Configured' : 'Not Configured'})</div>`;
+            } else {
+                results += '<div class="status error">❌ Space Mail OTP Service: Not loaded</div>';
+            }
+            
+            // Check configureSpaceMail function
+            if (window.configureSpaceMail) {
+                results += '<div class="status success">✅ Configure Space Mail Function: Available</div>';
+            } else {
+                results += '<div class="status error">❌ Configure Space Mail Function: Not available</div>';
+            }
+            
+            resultsDiv.innerHTML = results;
+        }
+
+        async function testOTPGeneration() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="status info">🔄 Testing OTP generation...</div>';
+            
+            try {
+                // Configure Space Mail first
+                if (window.configureSpaceMail) {
+                    window.configureSpaceMail('support@viktoriasbistro.restaurant', 'Vonnpogi@123');
+                    console.log('✅ Space Mail configured for test');
+                }
+                
+                // Test OTP generation
+                if (window.spaceMailOTPService) {
+                    await window.spaceMailOTPService.sendOTP('test@example.com', 'Test User');
+                    resultsDiv.innerHTML = '<div class="status success">✅ OTP generation test successful! Check console for OTP code.</div>';
+                } else {
+                    throw new Error('Space Mail OTP service not available');
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="status error">❌ OTP generation test failed: ${error.message}</div>`;
+                console.error('OTP test error:', error);
+            }
+        }
+
+        // Auto-run service check on page load
+        window.addEventListener('load', function() {
+            setTimeout(testOTPServices, 1000);
+        });
+    </script>
+</body>
+</html>

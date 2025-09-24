@@ -17,28 +17,81 @@ function showSuccess(message) {
     showMessageModal('Success', message, 'success');
 }
 
-// Send SMS OTP function
-async function sendSMSOTP(phoneNumber, userName) {
+
+// Send Email OTP function using Space Mail or Firebase
+async function sendEmailOTP(email, userName) {
     try {
-        // Format phone number (ensure it starts with +63 for Philippines)
-        let formattedPhone = phoneNumber.replace(/\D/g, ''); // Remove all non-digits
-        if (formattedPhone.startsWith('0')) {
-            formattedPhone = '+63' + formattedPhone.substring(1);
-        } else if (formattedPhone.startsWith('63')) {
-            formattedPhone = '+' + formattedPhone;
-        } else if (!formattedPhone.startsWith('+')) {
-            formattedPhone = '+63' + formattedPhone;
+        console.log('📧 Starting OTP send process...');
+        
+        // Ensure Space Mail is configured
+        if (window.spaceMailOTPService && !window.spaceMailOTPService.getStatus().configured) {
+            console.log('🔧 Configuring Space Mail automatically...');
+            window.configureSpaceMail('support@viktoriasbistro.restaurant', 'Vonnpogi@123');
         }
         
+        // Try Space Mail OTP first (if available)
+        if (window.spaceMailOTPService) {
+            try {
+                console.log('🚀 Attempting Space Mail OTP...');
+                await window.spaceMailOTPService.sendOTP(email, userName);
+                console.log('✅ Email OTP sent via Space Mail');
+                return true;
+            } catch (spaceMailError) {
+                console.log('🔄 Space Mail failed, trying Firebase:', spaceMailError.message);
+            }
+        } else {
+            console.log('⚠️ Space Mail OTP service not available');
+        }
+
+        // Fallback to Firebase OTP Service
+        if (window.firebaseOTPService) {
+            try {
+                console.log('🔥 Attempting Firebase OTP...');
+                const success = await window.firebaseOTPService.sendEmailOTP(email, userName);
+                
+                if (success) {
+                    console.log('✅ Email OTP sent via Firebase');
+                    return true;
+                }
+            } catch (firebaseError) {
+                console.log('🔄 Firebase OTP failed:', firebaseError.message);
+            }
+        } else {
+            console.log('⚠️ Firebase OTP service not available');
+        }
+        
+        // If we reach here, both services failed
+        throw new Error('Both Space Mail and Firebase OTP services failed');
+        
+    } catch (error) {
+        console.error('❌ All OTP services failed:', error);
+        
+        // Fallback to local OTP generation for demo purposes
+        console.log('🔄 Falling back to local Email OTP generation');
+        return await sendLocalEmailOTP(email, userName);
+    }
+}
+
+// Fallback local Email OTP function (for demo/development)
+async function sendLocalEmailOTP(email, userName) {
+    try {
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         
         // Store OTP in localStorage for verification
-        localStorage.setItem('smsOTP', otp);
-        localStorage.setItem('smsOTPExpiry', Date.now() + (5 * 60 * 1000)); // 5 minutes expiry
+        localStorage.setItem('emailOTP', otp);
+        localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000)); // 10 minutes expiry
         
-        // For demo purposes, log the OTP to console
-        console.log('SMS OTP:', otp, 'for phone:', formattedPhone);
+        // Show OTP prominently in console
+        console.log('🔐 ===== YOUR OTP CODE =====');
+        console.log('📧 Email:', email);
+        console.log('👤 Name:', userName);
+        console.log('🔢 OTP Code:', otp);
+        console.log('⏰ Expires in: 10 minutes');
+        console.log('=============================');
+        
+        // Also show an alert for immediate visibility
+        alert(`OTP Code: ${otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
         
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -46,8 +99,8 @@ async function sendSMSOTP(phoneNumber, userName) {
         return true;
         
     } catch (error) {
-        console.error('Error sending SMS OTP:', error);
-        throw new Error('Failed to send SMS verification code. Please try again.');
+        console.error('Error sending local Email OTP:', error);
+        throw new Error('Failed to send email verification code. Please try again.');
     }
 }
 
@@ -100,9 +153,9 @@ async function createUserAccount(name, email, phone, password) {
             displayName: name
         });
 
-        // Save customer data to multiple collections for better organization
+        // Save customer data to streamlined collections
         try {
-            // 1. Main Customer Collection
+            // 1. Main Customer Collection (Combines basic info, profile, and preferences)
             await firebase.firestore().collection('customers').doc(user.uid).set({
                 // Basic Information
                 customerId: user.uid,
@@ -110,36 +163,10 @@ async function createUserAccount(name, email, phone, password) {
                 email: email,
                 phone: phone,
                 
-                // User Status
-                role: 'customer',
-                userType: 'customer',
-                isActive: true,
-                isEmailVerified: false,
-                isPhoneVerified: false,
-                
-                // Timestamps
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                
-                // Account Status
-                accountStatus: 'pending_verification',
-                verificationMethod: 'sms',
-                
-                // Referral System
-                referralCode: generateReferralCode(name),
-                referredBy: null,
-                referralCount: 0
-            });
-
-            // 2. Customer Profile Collection
-            await firebase.firestore().collection('customer_profiles').doc(user.uid).set({
-                customerId: user.uid,
+                // Profile Information
                 displayName: name,
                 firstName: name.split(' ')[0] || name,
                 lastName: name.split(' ').slice(1).join(' ') || '',
-                phoneNumber: phone,
-                emailAddress: email,
                 profilePicture: null,
                 dateOfBirth: null,
                 gender: null,
@@ -153,100 +180,123 @@ async function createUserAccount(name, email, phone, password) {
                     country: 'Philippines',
                     isDefault: true
                 },
+                // User Status
+                role: 'customer',
+                userType: 'customer',
+                isActive: true,
+                isEmailVerified: false,
+                isPhoneVerified: false,
+                accountStatus: 'pending_verification',
+                verificationMethod: 'sms',
                 
-                // Emergency Contact
-                emergencyContact: {
-                    name: '',
-                    phone: '',
-                    relationship: ''
+                // Preferences
+                preferences: {
+                    notifications: {
+                        email: true,
+                        sms: true,
+                        push: true,
+                        marketing: false,
+                        orderUpdates: true,
+                        promotions: false
+                    },
+                    dietaryRestrictions: [],
+                    allergies: [],
+                    favoriteCuisines: [],
+                    favoriteItems: [],
+                    preferredDeliveryTime: '',
+                    deliveryInstructions: '',
+                    language: 'en',
+                    currency: 'PHP',
+                    timezone: 'Asia/Manila',
+                    theme: 'light'
                 },
                 
                 // Profile Completion
                 profileCompletion: 25, // 25% complete after basic signup
-                lastProfileUpdate: firebase.firestore.FieldValue.serverTimestamp()
+                
+                // Timestamps
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // 3. Customer Preferences Collection
-            await firebase.firestore().collection('customer_preferences').doc(user.uid).set({
+            // 2. Customer Activity Collection (Combines loyalty, orders, reviews, support, and analytics)
+            await firebase.firestore().collection('customer_activity').doc(user.uid).set({
                 customerId: user.uid,
                 
-                // Notification Preferences
-                notifications: {
-                    email: true,
-                    sms: true,
-                    push: true,
-                    marketing: false,
-                    orderUpdates: true,
-                    promotions: false
+                // Loyalty System
+                loyalty: {
+                    loyaltyPoints: 0,
+                    totalPointsEarned: 0,
+                    totalPointsRedeemed: 0,
+                    membershipLevel: 'Bronze',
+                    membershipTier: 'New Member',
+                    membershipStartDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    availableRewards: [],
+                    redeemedRewards: [],
+                    referralCode: generateReferralCode(name),
+                    referrals: [],
+                    referralRewards: 0
                 },
                 
-                // Dietary Preferences
-                dietaryRestrictions: [],
-                allergies: [],
-                favoriteCuisines: [],
-                
-                // Order Preferences
-                favoriteItems: [],
-                preferredDeliveryTime: '',
-                deliveryInstructions: '',
-                
-                // App Preferences
-                language: 'en',
-                currency: 'PHP',
-                timezone: 'Asia/Manila',
-                theme: 'light',
-                
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // 4. Customer Loyalty Collection
-            await firebase.firestore().collection('customer_loyalty').doc(user.uid).set({
-                customerId: user.uid,
-                
-                // Loyalty Points
-                loyaltyPoints: 0,
-                totalPointsEarned: 0,
-                totalPointsRedeemed: 0,
-                
-                // Membership
-                membershipLevel: 'Bronze',
-                membershipTier: 'New Member',
-                membershipStartDate: firebase.firestore.FieldValue.serverTimestamp(),
-                
-                // Rewards
-                availableRewards: [],
-                redeemedRewards: [],
-                
-                // Referral Program
-                referralCode: generateReferralCode(name),
-                referrals: [],
-                referralRewards: 0,
-                
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // 5. Customer Orders Summary Collection
-            await firebase.firestore().collection('customer_orders_summary').doc(user.uid).set({
-                customerId: user.uid,
-                
                 // Order Statistics
-                totalOrders: 0,
-                totalSpent: 0,
-                averageOrderValue: 0,
+                orders: {
+                    totalOrders: 0,
+                    totalSpent: 0,
+                    averageOrderValue: 0,
+                    orderHistory: [],
+                    favoriteRestaurants: [],
+                    totalDeliveries: 0,
+                    averageDeliveryTime: 0,
+                    savedPaymentMethods: [],
+                    defaultPaymentMethod: null,
+                    lastOrderDate: null
+                },
                 
-                // Order History
-                orderHistory: [],
-                favoriteRestaurants: [],
+                // Reviews
+                reviews: {
+                    totalReviews: 0,
+                    averageRating: 0,
+                    reviewHistory: [],
+                    reviewPreferences: {
+                        autoReview: false,
+                        reviewReminders: true,
+                        shareReviews: false
+                    },
+                    lastReviewDate: null
+                },
                 
-                // Delivery Statistics
-                totalDeliveries: 0,
-                averageDeliveryTime: 0,
+                // Support
+                support: {
+                    totalTickets: 0,
+                    openTickets: 0,
+                    resolvedTickets: 0,
+                    supportTickets: [],
+                    supportPreferences: {
+                        preferredContactMethod: 'email',
+                        autoEscalation: false,
+                        priorityLevel: 'normal'
+                    },
+                    lastSupportContact: null
+                },
                 
-                // Payment Methods
-                savedPaymentMethods: [],
-                defaultPaymentMethod: null,
+                // Analytics
+                analytics: {
+                    loginFrequency: 0,
+                    averageSessionDuration: 0,
+                    lastActiveDate: firebase.firestore.FieldValue.serverTimestamp(),
+                    totalAppOpens: 0,
+                    totalMenuViews: 0,
+                    totalCartAdditions: 0,
+                    deviceInfo: {
+                        platform: 'unknown',
+                        browser: 'unknown',
+                        lastDeviceUpdate: firebase.firestore.FieldValue.serverTimestamp()
+                    },
+                    marketingCampaigns: [],
+                    referralSources: []
+                },
                 
-                lastOrderDate: null,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             });
 
@@ -269,31 +319,18 @@ async function createUserAccount(name, email, phone, password) {
             // Continue with the process even if Firestore fails
         }
 
-        // Send SMS OTP verification
-        await sendSMSOTP(phone, name);
+        // Send Email OTP verification
+        await sendEmailOTP(email, name);
 
-        // Store phone and user info in localStorage for OTP page
-        localStorage.setItem('signupPhone', phone);
+        // Store user info in localStorage for OTP page
         localStorage.setItem('signupEmail', email);
         localStorage.setItem('signupName', name);
 
         // Show success message
-        showSuccess('Account created successfully! Please check your phone for SMS verification code.');
+        showSuccess('Account created successfully! Please check your email for verification code.');
 
         // Redirect to OTP page after a short delay
         setTimeout(() => {
-            // Smart path resolution based on current server
-            const currentUrl = window.location.href;
-            let redirectPath;
-            
-            if (currentUrl.includes('viktoriasbistro.restaurant')) {
-                // Live server - use relative path
-                redirectPath = '../html/otp.html';
-            } else {
-                // Local development - use absolute path
-                redirectPath = '../html/otp.html';
-            }
-            
             window.location.href = '../html/otp.html';
         }, 2000);
 

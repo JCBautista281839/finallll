@@ -24,35 +24,27 @@
                 </button>
                 
                 <div class="verification-content">
-                    <h1 class="main-heading" id="otpHeading">Check your phone number</h1>
-                    <div class="mb-3">
-                        <label for="otpMethod" class="form-label">Choose verification method:</label>
-                        <div class="toggle-group" id="otpToggleGroup">
-                            <input type="radio" name="otpMethod" id="otpSMS" class="toggle-radio" value="sms" checked>
-                            <label for="otpSMS" class="toggle-option selected" id="labelSMS">SMS</label>
-                            <input type="radio" name="otpMethod" id="otpEmail" class="toggle-radio" value="email">
-                            <label for="otpEmail" class="toggle-option" id="labelEmail">Email</label>
-                        </div>
-                    </div>
-                    <p class="email-text" id="otpInstruction">
-                        We sent a code to <span class="email-address" id="contactDisplay">+63 912 345 6789</span>
-                    </p>
-                        
-                    <div class="otp-inputs">
-                        <input type="text" class="otp-input" maxlength="1" data-index="0">
-                        <input type="text" class="otp-input" maxlength="1" data-index="1">
-                        <input type="text" class="otp-input" maxlength="1" data-index="2">
-                        <input type="text" class="otp-input" maxlength="1" data-index="3">
-                        <input type="text" class="otp-input" maxlength="1" data-index="4">
-                        <input type="text" class="otp-input" maxlength="1" data-index="5">
-                    </div>
+                <h1 class="main-heading" id="otpHeading">Check your email</h1>
+                <p class="email-text" id="otpInstruction">
+                    We sent a verification code to <span class="email-address" id="contactDisplay">your@email.com</span>
+                </p>
+                
+                <div class="otp-inputs">
+                    <input type="text" class="otp-input" maxlength="1" data-index="0">
+                    <input type="text" class="otp-input" maxlength="1" data-index="1">
+                    <input type="text" class="otp-input" maxlength="1" data-index="2">
+                    <input type="text" class="otp-input" maxlength="1" data-index="3">
+                    <input type="text" class="otp-input" maxlength="1" data-index="4">
+                    <input type="text" class="otp-input" maxlength="1" data-index="5">
+                </div>
                     
                     <p class="resend-text">
-                        Didn't get a code? <span class="resend-link" onclick="resendCode()">Click to resend.</span>
+                        Didn't get the email? <span class="resend-link" onclick="resendCode()">Click to resend.</span>
                     </p>
                     
-                    <button class="signup-button" id="verifyButton" onclick="verifyOTP()" disabled>
-                        Sign Up
+                    
+                    <button class="signup-button" id="verifyButton" onclick="verifyOTP()">
+                        Verify Email
                     </button>
                     
                     <p class="login-text">
@@ -88,9 +80,111 @@
     <!-- Main Firebase Config -->
     <script src="../main.js"></script>
     
+    <!-- Firebase OTP Service -->
+    <script src="../javascript/firebase-otp.js"></script>
+    
+    <!-- Space Mail OTP Service -->
+    <script src="../javascript/spacemail-otp.js"></script>
+    
     <!-- Signup Functions for SMS OTP -->
     
     
+    <!-- Custom CSS for Email Verification -->
+    <style>
+        .verification-info {
+            margin: 20px 0;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .info-box i {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        .info-box h3 {
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        .info-box p {
+            color: #666;
+            margin: 0;
+        }
+        
+        .verification-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+        
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .step-text {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .otp-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .otp-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        .otp-input.filled {
+            background-color: #f0f0f0;
+            border-color: #007bff;
+        }
+    </style>
+
     <!-- Custom JavaScript -->
     <script>
         // Wait for Firebase to be ready
@@ -184,10 +278,9 @@
             verifyButton.disabled = !allFilled;
         }
         
-        // Verify SMS OTP
+        // Verify Email OTP Code
         async function verifyOTP() {
             const otp = Array.from(otpInputs).map(input => input.value).join('');
-            const method = document.getElementById('otpMethod').value;
             
             if (otp.length !== 6) {
                 alert('Please enter the complete 6-digit code');
@@ -212,56 +305,61 @@
                     throw new Error('No user found. Please sign up again.');
                 }
                 
-                console.log('Verifying OTP for user:', user.email);
+                console.log('Verifying Email OTP for user:', user.email);
                 
-                if (method === 'sms') {
-                    // Verify SMS OTP
-                    const storedOTP = localStorage.getItem('smsOTP');
-                    const otpExpiry = localStorage.getItem('smsOTPExpiry');
-                    
-                    if (!storedOTP || !otpExpiry) {
-                        throw new Error('No OTP found. Please request a new code.');
-                    }
-                    
-                    // Check if OTP has expired
-                    if (Date.now() > parseInt(otpExpiry)) {
-                        localStorage.removeItem('smsOTP');
-                        localStorage.removeItem('smsOTPExpiry');
-                        throw new Error('OTP has expired. Please request a new code.');
-                    }
-                    
-                    // Verify OTP
-                    if (otp !== storedOTP) {
-                        throw new Error('Invalid verification code. Please try again.');
-                    }
-                    
-                    console.log('SMS OTP verified successfully');
-                    
-                    // Update user's phone verification status in Firestore
+                // Verify Email OTP using Firebase or Space Mail
+                const email = localStorage.getItem('signupEmail');
+                
+                // Try Space Mail OTP verification first
+                if (window.spaceMailOTPService && window.spaceMailOTPService.getStatus().configured) {
                     try {
+                        await window.spaceMailOTPService.verifyOTP(email, otp);
+                        console.log('✅ Space Mail OTP verified successfully');
+                        
+                        // Update user's email verification status in Firestore
                         await firebase.firestore().collection('customers').doc(user.uid).update({
-                            'profile.phoneVerified': true,
-                            'profile.phoneNumber': localStorage.getItem('signupPhone'),
+                            isEmailVerified: true,
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                    } catch (firestoreError) {
-                        console.warn('Firestore update failed:', firestoreError.message);
+                        
+                        // Clear stored data and redirect
+                        localStorage.removeItem('signupEmail');
+                        localStorage.removeItem('signupName');
+                        alert('Email verified successfully via Space Mail! You can now log in.');
+                        window.location.href = 'html/login.html';
+                        return;
+                        
+                    } catch (spaceMailError) {
+                        console.log('🔄 Space Mail OTP verification failed, trying Firebase:', spaceMailError.message);
+                    }
+                }
+                
+                // Fallback to Firebase OTP verification
+                if (window.firebaseOTPService) {
+                    try {
+                        await window.firebaseOTPService.verifyEmailOTP(email, otp);
+                        console.log('✅ Firebase Email OTP verified successfully');
+                        
+                        // Update user's email verification status in Firestore
+                        await firebase.firestore().collection('customers').doc(user.uid).update({
+                            isEmailVerified: true,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                    } catch (firebaseError) {
+                        console.log('🔄 Firebase Email OTP verification failed:', firebaseError.message);
+                        throw firebaseError;
                     }
                 } else {
-                    // Verify Email OTP
-                    // Example: compare entered OTP with stored email OTP
-                    alert('Email verified! You can now log in.');
+                    throw new Error('No OTP service available');
                 }
                 
                 // Clear stored data
-                localStorage.removeItem('smsOTP');
-                localStorage.removeItem('smsOTPExpiry');
-                localStorage.removeItem('signupPhone');
                 localStorage.removeItem('signupEmail');
                 localStorage.removeItem('signupName');
                 
                 // Show success message
-                alert('Phone number verified successfully! You can now log in.');
+                alert('Email verified successfully! You can now log in.');
                 
                 // Redirect to login page
                 window.location.href = 'html/login.html';
@@ -271,14 +369,15 @@
                 alert('Verification failed: ' + error.message);
                 
                 // Reset button state
-                verifyButton.innerHTML = 'Sign Up';
+                verifyButton.innerHTML = 'Verify Email';
                 verifyButton.disabled = false;
             }
         }
+
+
         
-        // Resend SMS code
+        // Resend Email OTP Code
         async function resendCode() {
-            const method = document.getElementById('otpMethod').value;
             const resendLink = document.querySelector('.resend-link');
             resendLink.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             resendLink.style.pointerEvents = 'none';
@@ -297,38 +396,37 @@
                     throw new Error('No user found. Please sign up again.');
                 }
                 
-                if (method === 'sms') {
-                    // Get phone number from localStorage
-                    const phoneNumber = localStorage.getItem('signupPhone');
-                    const userName = localStorage.getItem('signupName');
-                    
-                    if (!phoneNumber) {
-                        throw new Error('Phone number not found. Please sign up again.');
+                // Send Email OTP
+                const email = localStorage.getItem('signupEmail');
+                const userName = localStorage.getItem('signupName');
+                
+                if (!email) {
+                    throw new Error('Email not found. Please sign up again.');
+                }
+                
+                console.log('Resending Email OTP to:', email);
+                
+                // Try Space Mail OTP first
+                if (window.spaceMailOTPService && window.spaceMailOTPService.getStatus().configured) {
+                    try {
+                        await window.spaceMailOTPService.sendOTP(email, userName);
+                        alert('Verification code sent via Space Mail! Please check your email.');
+                        return;
+                    } catch (spaceMailError) {
+                        console.log('🔄 Space Mail failed, trying Firebase:', spaceMailError.message);
                     }
-                    
-                    console.log('Resending SMS OTP to:', phoneNumber);
-                    
-                    // Call the SMS OTP function from signup.js
-                    if (typeof sendSMSOTP === 'function') {
-                        await sendSMSOTP(phoneNumber, userName);
-                        alert('Verification code sent! Please check your phone.');
-                    } else {
-                        // Fallback: generate new OTP locally
-                        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-                        localStorage.setItem('smsOTP', otp);
-                        localStorage.setItem('smsOTPExpiry', Date.now() + (5 * 60 * 1000));
-                        
-                        console.log('New SMS OTP generated:', otp);
-                        alert('New verification code generated! Please check your phone.');
-                    }
-                } else {
-                    // Send Email OTP logic
-                    // Example: await sendEmailOTP(email, userName);
+                }
+                
+                // Fallback to Firebase OTP
+                if (typeof sendEmailOTP === 'function') {
+                    await sendEmailOTP(email, userName);
                     alert('Verification code sent! Please check your email.');
+                } else {
+                    throw new Error('Email OTP service not available');
                 }
                 
             } catch (error) {
-                console.error('Resend code error:', error);
+                console.error('Resend OTP error:', error);
                 alert('Failed to resend code: ' + error.message);
             } finally {
                 // Reset button state
@@ -358,55 +456,18 @@
             this.style.transform = 'translateY(0)';
         });
         
-        // Update OTP method (SMS/Email)
-        function updateOtpMethod() {
-            const smsRadio = document.getElementById('otpSMS');
-            const emailRadio = document.getElementById('otpEmail');
-            const labelSMS = document.getElementById('labelSMS');
-            const labelEmail = document.getElementById('labelEmail');
-            const heading = document.getElementById('otpHeading');
-            const instruction = document.getElementById('otpInstruction');
-
-            // Remove selected class
-            labelSMS.classList.remove('selected');
-            labelEmail.classList.remove('selected');
-
-            let method = 'sms';
-            if (emailRadio.checked) {
-                method = 'email';
-                labelEmail.classList.add('selected');
-                heading.textContent = 'Check your email';
-                instruction.innerHTML = 'We sent a code to <span class="email-address" id="contactDisplay"></span>';
-                setContactDisplayEmail();
-            } else {
-                labelSMS.classList.add('selected');
-                heading.textContent = 'Check your phone number';
-                instruction.innerHTML = 'We sent a code to <span class="email-address" id="contactDisplay"></span>';
-                setContactDisplaySMS();
-            }
-        }
-
-        // Add event listeners for toggle
-        document.getElementById('otpSMS').addEventListener('change', updateOtpMethod);
-        document.getElementById('otpEmail').addEventListener('change', updateOtpMethod);
-
-        // Call on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            updateOtpMethod();
-            otpInputs[0].focus();
-        });
-        
-       
-        function setContactDisplaySMS() {
-            const phone = localStorage.getItem('signupPhone') || '+63 912 345 6789';
-            document.getElementById('contactDisplay').textContent = phone;
-        }
-
         // Set the contact display for Email
         function setContactDisplayEmail() {
             const email = localStorage.getItem('signupEmail') || 'your@email.com';
             document.getElementById('contactDisplay').textContent = email;
         }
+
+
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setContactDisplayEmail();
+            otpInputs[0].focus();
+        });
     </script>
 
 </body>
