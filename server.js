@@ -3,7 +3,13 @@ const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+let nodemailer;
+try {
+  nodemailer = require('nodemailer');
+} catch (error) {
+  console.log('⚠️ nodemailer not installed. OTP service will be disabled.');
+  nodemailer = null;
+}
 
 require('dotenv').config(); // Load environment variables
 
@@ -42,7 +48,16 @@ const smtpConfig = {
 };
 
 // Create transporter for OTP emails
-const transporter = nodemailer.createTransport(smtpConfig);
+let transporter = null;
+if (nodemailer) {
+  try {
+    transporter = nodemailer.createTransport(smtpConfig);
+    console.log('✅ Nodemailer transporter created successfully');
+  } catch (error) {
+    console.log('❌ Failed to create nodemailer transporter:', error.message);
+    transporter = null;
+  }
+}
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
@@ -885,6 +900,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     message: 'Viktoria\'s Bistro OTP Service is running',
     timestamp: new Date().toISOString(),
+    nodemailer: transporter ? 'Available' : 'Not Available',
     endpoints: {
       health: '/api/health',
       sendOTP: '/api/send-otp',
@@ -903,6 +919,15 @@ app.post('/api/send-otp', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: email, otpCode, userName'
+      });
+    }
+
+    // Check if transporter is available
+    if (!transporter) {
+      return res.status(503).json({
+        success: false,
+        error: 'Email service not available. Please install nodemailer.',
+        message: 'Run: npm install nodemailer'
       });
     }
 
@@ -1005,6 +1030,14 @@ app.post('/api/send-otp', async (req, res) => {
 // Test SMTP connection endpoint
 app.post('/api/test-smtp', async (req, res) => {
   try {
+    if (!transporter) {
+      return res.status(503).json({
+        success: false,
+        error: 'Email service not available. Please install nodemailer.',
+        message: 'Run: npm install nodemailer'
+      });
+    }
+
     await transporter.verify();
     
     res.json({
