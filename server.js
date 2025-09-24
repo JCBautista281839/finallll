@@ -202,6 +202,11 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Test endpoint working', timestamp: new Date().toISOString() });
 });
 
+// GET endpoint for webhook testing
+app.get('/api/webhook/lalamove', (req, res) => {
+  res.json({ success: true, message: "Webhook active" });
+});
+
 /* ====== Proxy endpoints ====== */
 
 app.post('/api/quotation', async (req, res) => {
