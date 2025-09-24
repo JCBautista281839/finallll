@@ -705,6 +705,8 @@ body {
   align-items: center;
   width: 100%;
   justify-content: space-between;
+  margin-bottom: 8px;
+  min-height: 24px;
 }
 
 .review-name {
@@ -717,9 +719,13 @@ body {
 }
 
 .review-stars {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   font-size: 1.3rem;
   letter-spacing: 2px;
   margin-bottom: 0;
+  min-width: 120px;
 }
 
 .star-filled {
@@ -730,12 +736,58 @@ body {
   color: #bbb;
 }
 
+/* PNG star styling for reviews */
+.review-stars .star-filled,
+.review-stars .star-empty {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+
+.review-stars .star-filled {
+  background-image: url('src/Icons/star (1).png');
+}
+
+.review-stars .star-empty {
+  background-image: url('src/Icons/star.png');
+}
+
+/* Ensure consistent star alignment */
+.review-stars .star-filled:last-child,
+.review-stars .star-empty:last-child {
+  margin-right: 0;
+}
+
 .review-text {
   font-family: 'PoppinsLight', sans-serif;
   color: #444;
   margin: 0.2em 0 0 0;
   text-align: justify;
   font-size: 13px;
+}
+
+/* Review categories styling */
+.review-categories {
+  margin: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.review-category-tag {
+  background: #96392d;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: 'PoppinsRegular', sans-serif;
+  font-weight: 500;
+  display: inline-block;
 }
 
 .rating-form {
@@ -820,8 +872,15 @@ body {
 
 .rating-category-btn.active,
 .rating-category-btn:hover {
-  background: #96392d;
-  color: #fff;
+  background: #96392d !important;
+  color: #fff !important;
+}
+
+/* Ensure active state is clearly visible */
+.rating-category-btn.active {
+  background: #96392d !important;
+  color: #fff !important;
+  border: 2px solid #96392d !important;
 }
 
 .rating-textarea {
