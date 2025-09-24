@@ -24,6 +24,7 @@ const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d17337
 const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
 const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
@@ -778,7 +779,11 @@ app.post('/api/webhook/test', (req, res) => {
   
   // Call our own webhook endpoint
   const axios = require('axios');
-  axios.post('http://localhost:5000/api/webhook/lalamove', testWebhook)
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? process.env.BASE_URL || 'https://viktoriasbistro.restaurant' 
+    : `http://localhost:${PORT}`;
+  
+  axios.post(`${baseUrl}/api/webhook/lalamove`, testWebhook)
     .then(response => {
       res.json({
         success: true,
@@ -864,9 +869,18 @@ app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'index.html'
 /* ====== Start server (single listen) ====== */
 const PORT = process.env.PORT || 5001; // Changed from 5000 to avoid conflicts
 
-app.listen(PORT, () => {
-  console.log(`Proxy/server listening on http://localhost:${PORT}`);
-  console.log(`POS: http://localhost:${PORT}/pos`);
-  console.log(`Menu: http://localhost:${PORT}/menu`);
-  console.log(`Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+app.listen(PORT, '0.0.0.0', () => {
+  const environment = IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT';
+  console.log(`\n🚀 Viktoria's Bistro Server [${environment}]`);
+  console.log(`   Server: http://localhost:${PORT}`);
+  if (IS_PRODUCTION) {
+    console.log(`   Public: ${BASE_URL}`);
+    console.log(`   Webhook: ${BASE_URL}/api/webhook/lalamove`);
+  }
+  console.log(`   POS: ${IS_PRODUCTION ? BASE_URL : `http://localhost:${PORT}`}/pos`);
+  console.log(`   Menu: ${IS_PRODUCTION ? BASE_URL : `http://localhost:${PORT}`}/menu`);
+  console.log(`\n📡 Lalamove Integration:`);
+  console.log(`   Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'SANDBOX'}`);
+  console.log(`   API Host: ${LALA_HOST}`);
+  console.log(`   Market: ${MARKET}\n`);
 });
