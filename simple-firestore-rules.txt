@@ -55,6 +55,17 @@ service cloud.firestore {
     // RESTAURANT OPERATIONS
     // ========================================
     
+    // Menu collection: allow public read access for customer menu
+    match /menu/{docId} {
+      allow read: if true; // Allow public read access for customer menu
+      allow write: if request.auth != null; // Require authentication for admin operations
+    }
+
+    // Reviews collection: allow public read/write access for customer reviews
+    match /reviews/{docId} {
+      allow read, write: if true; // Allow public access for customer reviews
+    }
+    
     // Allow authenticated users to access other collections
     match /{document=**} {
       allow read, write: if request.auth != null;
