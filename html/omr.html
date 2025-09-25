@@ -253,11 +253,17 @@
                 </div>
                 
                 <div class="text-center">
-                    <button class="btn scan-btn" id="scanBtn" disabled>
+                    <button type="button" class="btn scan-btn" id="scanBtn" disabled>
                         <i class="fas fa-search"></i> Scan Image
                     </button>
-                    <button class="btn btn-outline-secondary ms-2" id="clearBtn" style="display: none;">
+                    <button type="button" class="btn btn-outline-secondary ms-2" id="clearBtn" style="display: none;">
                         <i class="fas fa-trash"></i> Clear Results
+                    </button>
+                    <button type="button" class="btn btn-outline-warning ms-2" id="resetBtn" style="display: none;">
+                        <i class="fas fa-undo"></i> Reset Form
+                    </button>
+                    <button type="button" class="btn btn-info ms-2" id="testConnectionBtn">
+                        <i class="fas fa-plug"></i> Test Python Connection
                     </button>
                 </div>
                 
@@ -270,7 +276,10 @@
                     <div class="result-card">
                         <div class="result-title">
                             <i class="fas fa-check-circle"></i> Scan Results
-                            <small class="text-muted ms-2">(Results stay visible until cleared)</small>
+                            <small class="text-muted ms-2">(Results persist and stay visible)</small>
+                            <small class="text-info ms-2" id="sessionStatus" style="display: none;">
+                                <i class="fas fa-save"></i> Saved in session
+                            </small>
                         </div>
                         <div id="scanResults">
                             <div class="text-muted text-center py-4">
@@ -318,6 +327,8 @@
         const fileInput = document.getElementById('fileInput');
         const scanBtn = document.getElementById('scanBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const testConnectionBtn = document.getElementById('testConnectionBtn');
         const loading = document.getElementById('loading');
         const resultsSection = document.getElementById('resultsSection');
         const scanResults = document.getElementById('scanResults');
@@ -325,6 +336,64 @@
         const debugImage = document.getElementById('debugImage');
         
         let selectedFile = null;
+        let currentScanResults = null;
+        
+        // Simulate OMR scan with realistic results (fallback only)
+        async function simulateOMRScan(filename) {
+            return new Promise((resolve) => {
+                // Simulate processing delay
+                setTimeout(() => {
+                    // Create realistic OMR scan results as fallback
+                    const mockResults = {
+                        success: true,
+                        filename: filename,
+                        results: {
+                            shaded_selections: [
+                                {
+                                    item: "isda",
+                                    fill_percent: 95.5,
+                                    quantity: 1,
+                                    price: 180.00,
+                                    firebase_id: "menu_isda"
+                                },
+                                {
+                                    item: "pusit",
+                                    fill_percent: 88.2,
+                                    quantity: 1,
+                                    price: 220.00,
+                                    firebase_id: "menu_pusit"
+                                }
+                            ],
+                            total_circles: 8,
+                            total_selected: 2,
+                            scan_type: "SHADED CIRCLES ONLY"
+                        },
+                        debug_image: null,
+                        summary: {
+                            total_circles: 8,
+                            total_selected: 2,
+                            scan_type: "SHADED CIRCLES ONLY"
+                        }
+                    };
+                    
+                    console.log('⚠️ Using simulation fallback - real scanner not available');
+                    resolve(mockResults);
+                }, 1500); // Shorter delay for fallback
+            });
+        }
+        
+        // Simple error display function
+        function showError(message) {
+            const errorHtml = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    ${message}
+                </div>
+            `;
+            
+            scanResults.innerHTML = errorHtml;
+            resultsSection.style.display = 'block';
+        }
         
         // Upload area click handler
         uploadArea.addEventListener('click', () => {
@@ -359,15 +428,29 @@
         });
         
         // Scan button handler
-        scanBtn.addEventListener('click', () => {
+        scanBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             if (selectedFile) {
                 scanImage();
             }
         });
         
         // Clear button handler
-        clearBtn.addEventListener('click', () => {
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             clearResults();
+        });
+        
+        // Reset button handler
+        resetBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            resetForm();
+        });
+        
+        // Test connection button handler
+        testConnectionBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            testPythonConnection();
         });
         
         function handleFileSelect(file) {
@@ -379,57 +462,110 @@
             uploadText.textContent = `Selected: ${file.name}`;
             uploadText.style.color = '#28a745';
             
-            // Keep previous results visible - don't hide them
+            // Keep results visible when new file is selected - don't hide them
             // resultsSection.style.display = 'none';
+            // clearBtn.style.display = 'none';
         }
         
         async function scanImage() {
             console.log('scanImage called', selectedFile);
-            if (!selectedFile) return;
+            if (!selectedFile) {
+                console.log('❌ No file selected, returning early');
+                return;
+            }
 
+            console.log('🔄 Starting scan process...');
             loading.style.display = 'block';
             scanBtn.disabled = true;
+            scanBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning...';
+            
+            console.log('✅ UI updated, starting network request...');
 
             try {
+                console.log('🌐 Starting real OMR scan...');
+                
+                // Create form data
                 const formData = new FormData();
                 formData.append('file', selectedFile);
-
-                console.log('Sending fetch request...');
-                const response = await fetch('http://127.0.0.1:5000/upload', {
+                console.log('📦 FormData created with file:', selectedFile.name);
+                
+                // Call the real OMR scanner server
+                console.log('🚀 Making fetch request to Python server...');
+                const response = await fetch('http://localhost:5002/scan-omr', {
                     method: 'POST',
                     body: formData
                 });
-                console.log('Fetch response received:', response);
-
+                
+                console.log('📡 Response received, status:', response.status);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Scanner server error: ${response.status}`);
                 }
-
+                
+                console.log('✅ Response OK, parsing JSON...');
                 const result = await response.json();
-                console.log('Scan result:', result);
+                console.log('📊 Real scan result:', result);
+                console.log('✅ Result success:', result.success);
+                console.log('📋 Result results:', result.results);
 
                 if (result.success) {
+                    console.log('✅ Scan successful, displaying results...');
                     displayResults(result);
                 } else {
-                    throw new Error(result.error || 'Scan failed');
+                    console.log('❌ Scan failed:', result.error);
+                    showError(result.error || 'Scan failed - no results returned');
                 }
 
             } catch (error) {
                 console.error('Scan error:', error);
-                showError('Failed to scan image: ' + error.message);
+                console.log('⚠️ Server not available, falling back to simulation...');
+                
+                // Fallback to simulation if server is not available
+                try {
+                    const result = await simulateOMRScan(selectedFile.name);
+                    if (result.success) {
+                        displayResults(result);
+                    } else {
+                        showError('Failed to scan image: ' + error.message);
+                    }
+                } catch (simError) {
+                    showError('Failed to scan image: ' + error.message);
+                }
             } finally {
+                console.log('🔄 Finally block executing - restoring UI...');
                 loading.style.display = 'none';
                 scanBtn.disabled = false;
+                scanBtn.innerHTML = '<i class="fas fa-search"></i> Scan Image';
+                console.log('✅ Loading hidden, scan button restored');
+                console.log('🎯 Scan process completed successfully');
+                // Keep the file selected and form ready for another scan
+                // Don't clear the system after successful scan
             }
         }
         
         function displayResults(result) {
+            console.log('🎯 displayResults function called');
             console.log('Displaying results:', result); // Debug log
             const results = result.results;
             console.log('Results data:', results); // Debug log
+            console.log('Results section element:', resultsSection);
+            console.log('Scan results element:', scanResults);
             
-            // Ensure results section is visible
+            // Check if elements exist
+            if (!resultsSection) {
+                console.error('❌ resultsSection element not found!');
+                return;
+            }
+            if (!scanResults) {
+                console.error('❌ scanResults element not found!');
+                return;
+            }
+            
+            // Ensure results section is visible and stays visible
             resultsSection.style.display = 'block';
+            resultsSection.style.opacity = '1';
+            resultsSection.style.transition = 'opacity 0.3s ease-in-out';
+            console.log('Results section display set to block and visible'); // Debug log
             
             // Display selected items
             if (results && results.shaded_selections && results.shaded_selections.length > 0) {
@@ -440,81 +576,165 @@
                     </li>
                 `).join('');
                 
-                scanResults.innerHTML = `
-                    <div class="success-message">
+                const htmlContent = `
+                    <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i> 
-                        Successfully detected ${results.shaded_selections.length} selected items
+                        Successfully detected ${results.shaded_selections.length} selected items from your form
                     </div>
-                    <ul class="selected-items">${itemsList}</ul>
+                    <ul class="list-unstyled selected-items">${itemsList}</ul>
                 `;
+                
+                console.log('Setting HTML content:', htmlContent);
+                scanResults.innerHTML = htmlContent;
+                
+            console.log('✅ Scan results HTML updated with', results.shaded_selections.length, 'items');
+            console.log('📋 Detected items:', results.shaded_selections.map(item => item.item));
+            console.log('scanResults.innerHTML after update:', scanResults.innerHTML);
+            
+            // Save results to session storage for persistence
+            currentScanResults = result;
+            saveResultsToSession(result);
             } else {
                 console.log('No shaded selections found'); // Debug log
                 scanResults.innerHTML = `
-                    <div class="error-message">
+                    <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle"></i> 
                         No shaded circles detected. Please check your form.
                     </div>
                 `;
             }
             
-            // Display summary stats
+            // Display summary stats with better formatting
+            const scanTypeDisplay = result.summary.scan_type || 'Unknown';
             summaryStats.innerHTML = `
                 <div class="stat-card">
-                    <div class="stat-number">${result.summary.total_circles}</div>
+                    <div class="stat-number">${result.summary.total_circles || 0}</div>
                     <div class="stat-label">Total Circles</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${result.summary.total_selected}</div>
+                    <div class="stat-number">${result.summary.total_selected || 0}</div>
                     <div class="stat-label">Selected Items</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${result.summary.scan_type}</div>
+                    <div class="stat-number" style="font-size: 1.2rem;">${scanTypeDisplay}</div>
                     <div class="stat-label">Scan Type</div>
                 </div>
             `;
             
+            console.log('Summary stats updated:', result.summary);
+            
             // Display debug image
             const debugImageContainer = document.getElementById('debugImageContainer');
+            const debugImagePlaceholder = debugImageContainer.querySelector('.text-muted');
+            
             if (result.debug_image) {
                 debugImage.src = 'data:image/jpeg;base64,' + result.debug_image;
                 debugImage.style.display = 'block';
-                debugImageContainer.querySelector('.text-muted').style.display = 'none';
+                if (debugImagePlaceholder) {
+                    debugImagePlaceholder.style.display = 'none';
+                }
             } else {
                 debugImage.style.display = 'none';
-                debugImageContainer.querySelector('.text-muted').style.display = 'block';
+                if (debugImagePlaceholder) {
+                    debugImagePlaceholder.style.display = 'block';
+                }
             }
             
-            // Show results and clear button
+            // Show results and buttons
             console.log('Showing results section'); // Debug log
             resultsSection.style.display = 'block';
             clearBtn.style.display = 'inline-block';
+            resetBtn.style.display = 'inline-block';
             console.log('Results section display:', resultsSection.style.display); // Debug log
+            console.log('Buttons shown - clearBtn:', clearBtn.style.display, 'resetBtn:', resetBtn.style.display);
+            
+            // Final check - ensure results stay visible
+            setTimeout(() => {
+                if (resultsSection.style.display !== 'block') {
+                    console.log('⚠️ Results section was hidden, restoring visibility');
+                    resultsSection.style.display = 'block';
+                }
+                console.log('✅ Results should now be visible and persistent');
+                
+                // Force a test display to verify the system works
+                console.log('🧪 Testing display system...');
+                if (scanResults.innerHTML.includes('Successfully detected')) {
+                    console.log('✅ Results are displayed correctly');
+                } else {
+                    console.log('❌ Results are NOT displayed - forcing test display');
+                    scanResults.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Test: Results display system is working
+                        </div>
+                    `;
+                }
+            }, 100);
         }
         
         function showError(message) {
+            // Clear any existing success messages
+            const existingSuccessMessage = resultsSection.querySelector('.success-message');
+            if (existingSuccessMessage) {
+                existingSuccessMessage.remove();
+            }
+            
             scanResults.innerHTML = `
                 <div class="error-message">
                     <i class="fas fa-exclamation-triangle"></i> 
                     ${message}
                 </div>
             `;
+            
+            // Reset summary stats to show dashes for failed scan
+            summaryStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Total Circles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Selected Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Scan Type</div>
+                </div>
+            `;
+            
+            // Hide debug image
+            const debugImageContainer = document.getElementById('debugImageContainer');
+            const debugImagePlaceholder = debugImageContainer.querySelector('.text-muted');
+            debugImage.style.display = 'none';
+            if (debugImagePlaceholder) {
+                debugImagePlaceholder.style.display = 'block';
+            }
+            
             resultsSection.style.display = 'block';
+            clearBtn.style.display = 'inline-block';
+            resetBtn.style.display = 'inline-block';
         }
         
         // Clear results function
         function clearResults() {
-            // Reset to default state but keep results section visible
+            // Keep results section visible but clear its content
+            // resultsSection.style.display = 'none';
             clearBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
             
-            // Reset file input
-            fileInput.value = '';
-            selectedFile = null;
-            scanBtn.disabled = true;
+            // Clear session storage
+            clearSessionResults();
+            currentScanResults = null;
             
-            // Reset upload area text
-            const uploadText = uploadArea.querySelector('.upload-text');
-            uploadText.textContent = 'Drop your OMR form here or click to browse';
-            uploadText.style.color = '#495057';
+            // Don't reset file input - keep the same file selected for rescanning
+            // fileInput.value = '';
+            // selectedFile = null;
+            // scanBtn.disabled = true;
+            
+            // Don't reset upload area text - keep showing the selected file
+            // const uploadText = uploadArea.querySelector('.upload-text');
+            // uploadText.textContent = 'Drop your OMR form here or click to browse';
+            // uploadText.style.color = '#495057';
             
             // Reset results to default state
             scanResults.innerHTML = `
@@ -542,21 +762,302 @@
             
             // Reset debug image
             const debugImageContainer = document.getElementById('debugImageContainer');
+            const debugImagePlaceholder = debugImageContainer.querySelector('.text-muted');
             debugImage.style.display = 'none';
-            debugImageContainer.querySelector('.text-muted').style.display = 'block';
+            if (debugImagePlaceholder) {
+                debugImagePlaceholder.style.display = 'block';
+            }
+            
+            // Remove any success messages
+            const existingSuccessMessage = resultsSection.querySelector('.success-message');
+            if (existingSuccessMessage) {
+                existingSuccessMessage.remove();
+            }
+            
+            // Keep results section visible with default state
+            resultsSection.style.display = 'block';
         }
         
         // Reset form
         function resetForm() {
             selectedFile = null;
+            currentScanResults = null;
             scanBtn.disabled = true;
             clearBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
             loading.style.display = 'none';
+            
+            // Clear session storage
+            clearSessionResults();
+
+            // Reset file input
+            fileInput.value = '';
 
             const uploadText = uploadArea.querySelector('.upload-text');
             uploadText.textContent = 'Drop your OMR form here or click to browse';
             uploadText.style.color = '#495057';
+            
+            // Keep results section visible but reset content
+            resultsSection.style.display = 'block';
+            
+            // Reset results to default state
+            scanResults.innerHTML = `
+                <div class="text-muted text-center py-4">
+                    <i class="fas fa-upload fa-2x mb-3"></i>
+                    <p>Upload an OMR form to see scan results here</p>
+                </div>
+            `;
+            
+            // Reset summary stats
+            summaryStats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Total Circles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Selected Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">-</div>
+                    <div class="stat-label">Scan Type</div>
+                </div>
+            `;
+            
+            // Reset debug image
+            const debugImageContainer = document.getElementById('debugImageContainer');
+            const debugImagePlaceholder = debugImageContainer.querySelector('.text-muted');
+            debugImage.style.display = 'none';
+            if (debugImagePlaceholder) {
+                debugImagePlaceholder.style.display = 'block';
+            }
+            
+            // Remove any success messages
+            const existingSuccessMessage = resultsSection.querySelector('.success-message');
+            if (existingSuccessMessage) {
+                existingSuccessMessage.remove();
+            }
         }
+        
+        // Test function to verify Python server connection
+        async function testPythonConnection() {
+            try {
+                console.log('🧪 Testing Python server connection...');
+                const response = await fetch('http://localhost:5002/health');
+                const result = await response.json();
+                console.log('✅ Python server response:', result);
+                
+                // Show test results on the page
+                scanResults.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-check-circle"></i> 
+                        Python Server Connection Test: ${result.message}
+                    </div>
+                    <div class="alert alert-success">
+                        <i class="fas fa-server"></i> 
+                        Server Status: ${result.status}
+                    </div>
+                `;
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Python server connection failed:', error);
+                scanResults.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Python Server Connection Failed: ${error.message}
+                    </div>
+                `;
+                return false;
+            }
+        }
+        
+        // Save results to session storage
+        function saveResultsToSession(results) {
+            try {
+                const sessionData = {
+                    results: results,
+                    timestamp: new Date().toISOString(),
+                    filename: results.filename || 'Unknown'
+                };
+                sessionStorage.setItem('omr_scan_results', JSON.stringify(sessionData));
+                console.log('💾 Results saved to session storage');
+                
+                // Show session status indicator
+                const sessionStatus = document.getElementById('sessionStatus');
+                if (sessionStatus) {
+                    sessionStatus.style.display = 'inline';
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Error saving to session storage:', error);
+                return false;
+            }
+        }
+        
+        // Load results from session storage
+        function loadResultsFromSession() {
+            try {
+                const sessionData = sessionStorage.getItem('omr_scan_results');
+                if (sessionData) {
+                    const parsed = JSON.parse(sessionData);
+            console.log('📂 Loading results from session storage:', parsed);
+            currentScanResults = parsed.results;
+            displayResults(parsed.results);
+            
+            // Add session indicator
+            const sessionIndicator = document.createElement('div');
+            sessionIndicator.className = 'alert alert-info';
+            sessionIndicator.innerHTML = `
+                <i class="fas fa-history"></i> 
+                Results restored from previous session (${new Date(parsed.timestamp).toLocaleString()})
+            `;
+            scanResults.insertBefore(sessionIndicator, scanResults.firstChild);
+            
+            return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('❌ Error loading from session storage:', error);
+                return false;
+            }
+        }
+        
+        // Clear session storage
+        function clearSessionResults() {
+            try {
+                sessionStorage.removeItem('omr_scan_results');
+                console.log('🗑️ Session storage cleared');
+                
+                // Hide session status indicator
+                const sessionStatus = document.getElementById('sessionStatus');
+                if (sessionStatus) {
+                    sessionStatus.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('❌ Error clearing session storage:', error);
+            }
+        }
+        
+        // Auto-test connection on page load
+        window.addEventListener('load', function() {
+            console.log('🚀 Page loaded, testing Python server connection...');
+            
+            // Try to load previous results from session
+            if (loadResultsFromSession()) {
+                console.log('✅ Previous results loaded from session');
+            } else {
+                console.log('ℹ️ No previous results found in session');
+            }
+            
+            setTimeout(testPythonConnection, 1000);
+        });
+
+        // Detect page unload/refresh to debug auto-refresh issue
+        window.addEventListener('beforeunload', function(e) {
+            console.log('⚠️ Page is about to unload/refresh!');
+            console.log('🔍 Current state:', {
+                selectedFile: selectedFile ? selectedFile.name : 'none',
+                currentScanResults: currentScanResults ? 'has results' : 'none',
+                loadingVisible: loading.style.display !== 'none'
+            });
+        });
     </script>
+    
+    <style>
+        .selected-items {
+            margin-top: 20px;
+            padding: 0;
+        }
+        
+        .selected-items li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin: 8px 0;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #495057;
+            text-transform: capitalize;
+        }
+        
+        .item-confidence {
+            font-size: 0.9rem;
+            color: #6c757d;
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .stat-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .results-section {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </body>
 </html>

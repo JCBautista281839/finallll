@@ -37,11 +37,11 @@ class OMRCircleScanner:
             thresh,
             cv2.HOUGH_GRADIENT,
             dp=1,
-            minDist=40,  # Increased to avoid duplicate detections
-            param1=80,   # Higher threshold for edge detection
-            param2=25,   # Lower accumulator threshold for better detection
-            minRadius=15, # Adjusted based on your image
-            maxRadius=60  # Adjusted based on your image
+            minDist=30,  # Reduced for better detection
+            param1=50,   # Lower threshold for edge detection
+            param2=30,   # Higher accumulator threshold for better quality
+            minRadius=10, # Smaller minimum radius
+            maxRadius=80  # Larger maximum radius
         )
         
         circle_data = []
@@ -125,6 +125,10 @@ class OMRCircleScanner:
         
         for i, circle in enumerate(circles):
             item_name = self.menu_items[i] if i < len(self.menu_items) else f"Item_{i+1}"
+            center = circle['center']
+            radius = circle['radius']
+            
+            print(f"🔍 Analyzing circle {i+1}: {item_name} at ({center[0]}, {center[1]}) radius {radius}")
             
             is_shaded, fill_percent = self.check_circle_fill(gray, circle)
             

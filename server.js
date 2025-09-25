@@ -72,25 +72,59 @@ async function sendOTPEmail(email, userName, otp) {
         const subject = `Your Viktoria's Bistro Verification Code - ${otp}`;
         
         const htmlContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background-color: #8B2E20; color: white; padding: 20px; text-align: center;">
-                    <h1>🍽️ Viktoria's Bistro</h1>
-                </div>
-                <div style="padding: 30px; background-color: #f9f9f9;">
-                    <h2>Hello ${userName}!</h2>
-                    <p>Thank you for signing up with Viktoria's Bistro. Please use the verification code below to complete your registration:</p>
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                <!-- Header with Logo and Background -->
+                <div style="background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%); color: white; padding: 30px 20px; text-align: center; position: relative; overflow: hidden;">
+                    <!-- Background Pattern -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"food\" patternUnits=\"userSpaceOnUse\" width=\"20\" height=\"20\"><circle cx=\"10\" cy=\"10\" r=\"2\" fill=\"white\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23food)\"/></svg>');"></div>
                     
-                    <div style="background-color: #8B2E20; color: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
-                        <h1 style="margin: 0; font-size: 36px; letter-spacing: 5px;">${otp}</h1>
-                    </div>
-                    
-                    <p><strong>This code will expire in 10 minutes.</strong></p>
-                    <p>If you didn't request this code, please ignore this email.</p>
-                    
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666;">
-                        <p>Best regards,<br>The Viktoria's Bistro Team</p>
+                    <!-- Logo -->
+                    <div style="position: relative; z-index: 1;">
+                        <div style="display: inline-block; background: rgba(255,255,255,0.2); border-radius: 50%; padding: 15px; margin-bottom: 15px; backdrop-filter: blur(10px);">
+                            <img src="http://localhost:5001/src/IMG/Logo.png" alt="Viktoria's Bistro Logo" style="width: 60px; height: 60px; border-radius: 50%;">
+                        </div>
+                        <h1 style="margin: 0; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🍽️ Viktoria's Bistro</h1>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Fine Dining Experience</p>
                     </div>
                 </div>
+                
+                <!-- Main Content -->
+                <div style="padding: 40px 30px; background: white; margin: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                    <!-- Welcome Message -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #8B2E20; margin: 0 0 10px 0; font-size: 24px;">Hello ${userName}!</h2>
+                        <p style="color: #666; margin: 0; font-size: 16px; line-height: 1.5;">Thank you for signing up with Viktoria's Bistro. Please use the verification code below to complete your registration:</p>
+                    </div>
+                    
+                    <!-- OTP Code Box -->
+                    <div style="background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%); color: white; padding: 30px; text-align: center; margin: 30px 0; border-radius: 15px; box-shadow: 0 5px 15px rgba(139, 46, 32, 0.3); position: relative; overflow: hidden;">
+                        <!-- Background Pattern -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"dots\" patternUnits=\"userSpaceOnUse\" width=\"10\" height=\"10\"><circle cx=\"5\" cy=\"5\" r=\"1\" fill=\"white\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23dots)\"/></svg>');"></div>
+                        
+                        <div style="position: relative; z-index: 1;">
+                            <p style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Your Verification Code</p>
+                            <h1 style="margin: 0; font-size: 48px; letter-spacing: 8px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${otp}</h1>
+                        </div>
+                    </div>
+                    
+                    <!-- Important Information -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #8B2E20;">
+                        <p style="margin: 0 0 10px 0; color: #8B2E20; font-weight: bold; font-size: 16px;">⏰ This code will expire in 10 minutes.</p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #f0f0f0; text-align: center;">
+                        <p style="color: #8B2E20; font-weight: bold; margin: 0 0 5px 0;">Best regards,<br>The Viktoria's Bistro Team</p>
+                        <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">
+                            📍 123 Restaurant Street, City, Country<br>
+                            📞 +1 (555) 123-4567 | 📧 info@viktoriasbistro.com
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Bottom Background -->
+                <div style="height: 30px; background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%);"></div>
             </div>
         `;
 
