@@ -231,36 +231,41 @@ class OTPVerificationManager {
             let verificationSuccess = false;
             let verificationMethod = '';
 
-            // Check local OTP first (for testing - no email sending)
-            const localOTP = localStorage.getItem('emailOTP');
-            const localOTPExpiry = localStorage.getItem('emailOTPExpiry');
-            
-            if (localOTP && localOTPExpiry && Date.now() < parseInt(localOTPExpiry)) {
-                if (localOTP === otp) {
-                    console.log('✅ Local OTP verified successfully');
-                    verificationSuccess = true;
-                    verificationMethod = 'Local';
-                    // Clear local OTP after successful verification
-                    localStorage.removeItem('emailOTP');
-                    localStorage.removeItem('emailOTPExpiry');
-                } else {
-                    throw new Error('Invalid OTP. Please check your code and try again.');
-                }
-            } else {
-                // Fallback to Firebase OTP verification if local OTP not found or expired
-                if (window.firebaseOTPService) {
-                    try {
-                        console.log('🔥 Attempting Firebase OTP verification...');
-                        await window.firebaseOTPService.verifyEmailOTP(email, otp);
-                        console.log('✅ Firebase OTP verified successfully');
+            // Try SendGrid OTP verification first
+            if (window.sendGridOTPService) {
+                try {
+                    console.log('📧 Attempting SendGrid OTP verification...');
+                    const result = await window.sendGridOTPService.verifyEmailOTP(email, otp);
+                    
+                    if (result.success) {
+                        console.log('✅ SendGrid OTP verified successfully');
                         verificationSuccess = true;
-                        verificationMethod = 'Firebase';
-                    } catch (firebaseError) {
-                        console.log('🔄 Firebase OTP verification failed:', firebaseError.message);
+                        verificationMethod = 'SendGrid';
+                    } else {
+                        throw new Error(result.message || 'SendGrid OTP verification failed');
                     }
+                } catch (sendGridError) {
+                    console.log('🔄 SendGrid OTP verification failed:', sendGridError.message);
                 }
+            }
 
-                if (!verificationSuccess) {
+            // Fallback to local OTP verification if SendGrid fails
+            if (!verificationSuccess) {
+                const localOTP = localStorage.getItem('emailOTP');
+                const localOTPExpiry = localStorage.getItem('emailOTPExpiry');
+                
+                if (localOTP && localOTPExpiry && Date.now() < parseInt(localOTPExpiry)) {
+                    if (localOTP === otp) {
+                        console.log('✅ Local OTP verified successfully');
+                        verificationSuccess = true;
+                        verificationMethod = 'Local';
+                        // Clear local OTP after successful verification
+                        localStorage.removeItem('emailOTP');
+                        localStorage.removeItem('emailOTPExpiry');
+                    } else {
+                        throw new Error('Invalid OTP. Please check your code and try again.');
+                    }
+                } else {
                     this.attempts++;
                     throw new Error('OTP verification failed. Please check your code and try again.');
                 }
@@ -296,10 +301,35 @@ class OTPVerificationManager {
                 throw new Error('Firebase not loaded. Please refresh the page and try again.');
             }
 
-            // Generate new local OTP for testing (no email sending)
+            // Try SendGrid OTP resend first
+            if (window.sendGridOTPService) {
+                try {
+                    console.log('📧 Attempting SendGrid OTP resend...');
+                    const result = await window.sendGridOTPService.resendOTP(email, userName);
+                    
+                    if (result.success) {
+                        console.log('✅ SendGrid OTP resent successfully');
+                        
+                        // Show OTP if email failed to send
+                        if (!result.emailSent && result.otp) {
+                            alert(`New OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                        }
+                        
+                        return { success: true, method: 'SendGrid' };
+                    }
+                } catch (sendGridError) {
+                    console.log('🔄 SendGrid OTP resend failed:', sendGridError.message);
+                }
+            }
+
+            // Fallback to local OTP generation
+            console.log('🔄 Falling back to local OTP generation...');
             const newOTP = Math.floor(100000 + Math.random() * 900000).toString();
             localStorage.setItem('emailOTP', newOTP);
             localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000));
+            
+            // Show OTP in alert
+            alert(`New OTP Code: ${newOTP}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
             
             console.log('✅ Local OTP resent successfully');
             return { success: true, method: 'Local' };

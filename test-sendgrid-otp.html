@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SendGrid OTP Test - Viktoria's Bistro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B2E20;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="email"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #8B2E20;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #6d2318;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .sendgrid-btn {
+            background-color: #1A73E8;
+        }
+        .sendgrid-btn:hover {
+            background-color: #1557B0;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .otp-display {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 18px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .status-info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #0066cc;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 SendGrid OTP Test Interface</h1>
+        
+        <div class="status-info">
+            <strong>SendGrid Status:</strong> <span id="sendgridStatus">✅ Configured</span><br>
+            <strong>Server Status:</strong> <span id="serverStatus">Checking...</span>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email Address:</label>
+            <input type="email" id="email" placeholder="Enter email address" value="christianbautista265853@gmail.com">
+        </div>
+        
+        <div class="form-group">
+            <label for="userName">User Name:</label>
+            <input type="text" id="userName" placeholder="Enter user name" value="Test User">
+        </div>
+        
+        <div class="form-group">
+            <label for="otp">OTP Code (6 digits):</label>
+            <input type="text" id="otp" placeholder="Enter OTP code" maxlength="6">
+        </div>
+        
+        <div>
+            <h3>📧 SendGrid OTP Methods</h3>
+            <button class="sendgrid-btn" onclick="sendgridSendOTP()">📧 SendGrid Send OTP</button>
+            <button class="sendgrid-btn" onclick="sendgridVerifyOTP()">📧 SendGrid Verify OTP</button>
+            <button class="sendgrid-btn" onclick="sendgridResendOTP()">📧 SendGrid Resend OTP</button>
+        </div>
+        
+        <div>
+            <h3>🔄 Regular OTP Methods</h3>
+            <button onclick="regularSendOTP()">🔄 Regular Send OTP</button>
+            <button onclick="regularVerifyOTP()">🔄 Regular Verify OTP</button>
+            <button onclick="regularResendOTP()">🔄 Regular Resend OTP</button>
+        </div>
+        
+        <div>
+            <h3>🧪 Test Methods</h3>
+            <button onclick="testServerConnection()">🔍 Test Server Connection</button>
+            <button onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+        
+        <div id="result" class="result"></div>
+        <div id="otpDisplay" class="otp-display" style="display: none;"></div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5001';
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+        
+        function showOTP(otp) {
+            const otpDiv = document.getElementById('otpDisplay');
+            otpDiv.innerHTML = `Generated OTP: <strong>${otp}</strong>`;
+            otpDiv.style.display = 'block';
+        }
+        
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('otpDisplay').style.display = 'none';
+        }
+        
+        function updateStatus() {
+            // Check server status
+            const serverStatus = document.getElementById('serverStatus');
+            serverStatus.textContent = '✅ Connected';
+            serverStatus.style.color = 'green';
+        }
+        
+        // SendGrid OTP Methods
+        async function sendgridSendOTP() {
+            const email = document.getElementById('email').value;
+            const userName = document.getElementById('userName').value;
+            
+            if (!email || !userName) {
+                showResult('Please enter both email and user name', 'error');
+                return;
+            }
+            
+            try {
+                showResult('📧 Sending SendGrid OTP...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/sendgrid-send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, userName })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(`📧 SendGrid OTP sent successfully!<br>OTP: ${result.otp}<br>Email Sent: ${result.emailSent ? 'Yes' : 'No'}`, 'success');
+                    if (result.otp) {
+                        showOTP(result.otp);
+                    }
+                } else {
+                    showResult(`❌ SendGrid OTP failed: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ SendGrid OTP error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function sendgridVerifyOTP() {
+            const email = document.getElementById('email').value;
+            const otp = document.getElementById('otp').value;
+            
+            if (!email || !otp) {
+                showResult('Please enter both email and OTP code', 'error');
+                return;
+            }
+            
+            try {
+                showResult('📧 Verifying SendGrid OTP...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/sendgrid-verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('📧 SendGrid OTP verified successfully!', 'success');
+                } else {
+                    showResult(`❌ SendGrid verification failed: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ SendGrid verification error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function sendgridResendOTP() {
+            const email = document.getElementById('email').value;
+            const userName = document.getElementById('userName').value;
+            
+            if (!email || !userName) {
+                showResult('Please enter both email and user name', 'error');
+                return;
+            }
+            
+            try {
+                showResult('📧 Resending SendGrid OTP...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/sendgrid-resend-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, userName })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(`📧 SendGrid OTP resent successfully!<br>OTP: ${result.otp}<br>Email Sent: ${result.emailSent ? 'Yes' : 'No'}`, 'success');
+                    if (result.otp) {
+                        showOTP(result.otp);
+                    }
+                } else {
+                    showResult(`❌ SendGrid OTP resend failed: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ SendGrid OTP resend error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Regular OTP Methods
+        async function regularSendOTP() {
+            const email = document.getElementById('email').value;
+            const userName = document.getElementById('userName').value;
+            
+            if (!email || !userName) {
+                showResult('Please enter both email and user name', 'error');
+                return;
+            }
+            
+            try {
+                showResult('🔄 Sending Regular OTP...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, userName })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(`🔄 Regular OTP sent successfully!<br>OTP: ${result.otp}`, 'success');
+                    if (result.otp) {
+                        showOTP(result.otp);
+                    }
+                } else {
+                    showResult(`❌ Regular OTP failed: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Regular OTP error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function regularVerifyOTP() {
+            const email = document.getElementById('email').value;
+            const otp = document.getElementById('otp').value;
+            
+            if (!email || !otp) {
+                showResult('Please enter both email and OTP code', 'error');
+                return;
+            }
+            
+            try {
+                showResult('🔄 Verifying Regular OTP...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('🔄 Regular OTP verified successfully!', 'success');
+                } else {
+                    showResult(`❌ Regular verification failed: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Regular verification error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function regularResendOTP() {
+            const email = document.getElementById('email').value;
+            const userName = document.getElementById('userName').value;
+            
+            if (!email || !userName) {
+                showResult('Please enter both email and user name', 'error');
+                return;
+            }
+            
+            try {
+                showResult('🔄 Resending Regular OTP...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/resend-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, userName })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult(`🔄 Regular OTP resent successfully!<br>OTP: ${result.otp}`, 'success');
+                    if (result.otp) {
+                        showOTP(result.otp);
+                    }
+                } else {
+                    showResult(`❌ Regular OTP resend failed: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Regular OTP resend error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testServerConnection() {
+            try {
+                showResult('🔍 Testing server connection...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test@example.com', userName: 'Test' })
+                });
+                
+                if (response.ok) {
+                    showResult('✅ Server connection successful!', 'success');
+                } else {
+                    showResult(`❌ Server connection failed: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                showResult(`❌ Server connection error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus();
+            document.getElementById('email').focus();
+        });
+    </script>
+</body>
+</html>

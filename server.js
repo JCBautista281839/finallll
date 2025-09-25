@@ -13,7 +13,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname)));
 
 // Configuration (use environment variables)
 // IMPORTANT: Using SANDBOX mode for testing
@@ -25,9 +24,25 @@ const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
 
-// Simple OTP Configuration (No Email Sending)
+
+// OTP Configuration
 const OTP_EXPIRY_MINUTES = 10;
 const MAX_OTP_ATTEMPTS = 5;
+
+// SendGrid Email Configuration
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant';
+const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || "Viktoria's Bistro";
+
+// Validate SendGrid configuration
+if (!SENDGRID_API_KEY) {
+    console.warn('⚠️  WARNING: SENDGRID_API_KEY not found in environment variables');
+    console.warn('📝 Please create a .env file with your SendGrid API key');
+    console.warn('📖 See SETUP_INSTRUCTIONS.md for details');
+}
+
+// OTP Storage (in-memory for development, replace with database in production)
+const otpStorage = new Map(); // email -> { otp, expiry, attempts }
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
@@ -35,9 +50,210 @@ function makeSignature(secret, timestamp, method, path, body) {
   return crypto.createHmac('sha256', secret).update(raw).digest('hex');
 }
 
-// Simple OTP Functions
+// OTP Functions
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// SendGrid Email Functions
+async function sendOTPEmail(email, userName, otp) {
+    try {
+        // Check if SendGrid is configured
+        if (!SENDGRID_API_KEY) {
+            console.log('⚠️ SendGrid API key not configured, skipping email send');
+            return { 
+                success: false, 
+                message: 'SendGrid API key not configured. Please set SENDGRID_API_KEY in environment variables.' 
+            };
+        }
+        
+        console.log(`📧 Sending OTP email to ${email} via SendGrid`);
+        
+        const subject = `Your Viktoria's Bistro Verification Code - ${otp}`;
+        
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #8B2E20; color: white; padding: 20px; text-align: center;">
+                    <h1>🍽️ Viktoria's Bistro</h1>
+                </div>
+                <div style="padding: 30px; background-color: #f9f9f9;">
+                    <h2>Hello ${userName}!</h2>
+                    <p>Thank you for signing up with Viktoria's Bistro. Please use the verification code below to complete your registration:</p>
+                    
+                    <div style="background-color: #8B2E20; color: white; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+                        <h1 style="margin: 0; font-size: 36px; letter-spacing: 5px;">${otp}</h1>
+                    </div>
+                    
+                    <p><strong>This code will expire in 10 minutes.</strong></p>
+                    <p>If you didn't request this code, please ignore this email.</p>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666;">
+                        <p>Best regards,<br>The Viktoria's Bistro Team</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const textContent = `
+            Hello ${userName}!
+            
+            Thank you for signing up with Viktoria's Bistro. Please use the verification code below to complete your registration:
+            
+            VERIFICATION CODE: ${otp}
+            
+            This code will expire in 10 minutes.
+            
+            If you didn't request this code, please ignore this email.
+            
+            Best regards,
+            The Viktoria's Bistro Team
+        `;
+
+        const emailData = {
+            personalizations: [{
+                to: [{ email: email, name: userName }],
+                subject: subject
+            }],
+            from: {
+                email: SENDGRID_FROM_EMAIL,
+                name: SENDGRID_FROM_NAME
+            },
+            content: [
+                {
+                    type: 'text/plain',
+                    value: textContent
+                },
+                {
+                    type: 'text/html',
+                    value: htmlContent
+                }
+            ]
+        };
+
+        const response = await axios.post('https://api.sendgrid.com/v3/mail/send', emailData, {
+            headers: {
+                'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log(`📧 SendGrid email sent successfully to ${email}`);
+        return { success: true, messageId: response.headers['x-message-id'] };
+
+    } catch (error) {
+        console.error('📧 SendGrid email sending error:', error.message);
+        return { success: false, message: error.message };
+    }
+}
+
+// SendGrid OTP Functions
+async function sendEmailOTP(email, userName) {
+    try {
+        console.log(`[OTP] Generating SendGrid OTP for: ${email}`);
+        
+        // Generate 6-digit OTP
+        const otp = generateOTP();
+        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+        
+        // Store OTP
+        otpStorage.set(email, {
+            otp: otp,
+            expiry: expiry,
+            attempts: 0,
+            createdAt: Date.now()
+        });
+        
+        // Send email via SendGrid
+        const emailResult = await sendOTPEmail(email, userName, otp);
+        
+        if (emailResult.success) {
+            console.log(`[OTP] SendGrid OTP sent successfully: ${otp} for ${email}`);
+            return { 
+                success: true, 
+                otp: otp,
+                expiry: expiry,
+                message: 'SendGrid OTP sent successfully',
+                emailSent: true
+            };
+        } else {
+            console.log(`[OTP] SendGrid email failed: ${emailResult.message}`);
+            return { 
+                success: true, 
+                otp: otp,
+                expiry: expiry,
+                message: 'OTP generated successfully (email failed to send)',
+                emailSent: false,
+                emailError: emailResult.message
+            };
+        }
+        
+    } catch (error) {
+        console.error('[OTP] Error generating SendGrid OTP:', error.message);
+        
+        // Fallback to local generation
+        console.log('[OTP] Falling back to local OTP generation');
+        const otp = generateOTP();
+        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+        
+        otpStorage.set(email, {
+            otp: otp,
+            expiry: expiry,
+            attempts: 0,
+            createdAt: Date.now()
+        });
+        
+        return { 
+            success: true, 
+            otp: otp,
+            expiry: expiry,
+            message: 'Local OTP generated (SendGrid unavailable)' 
+        };
+    }
+}
+
+async function verifyEmailOTP(email, otp) {
+    try {
+        console.log(`[OTP] Verifying SendGrid OTP for: ${email}`);
+        
+        if (!otpStorage.has(email)) {
+            return { success: false, message: 'No OTP found for this email' };
+        }
+        
+        const storedData = otpStorage.get(email);
+        
+        // Check if OTP has expired
+        if (Date.now() > storedData.expiry) {
+            otpStorage.delete(email);
+            return { success: false, message: 'OTP has expired' };
+        }
+        
+        // Check attempt limit
+        if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+            otpStorage.delete(email);
+            return { success: false, message: 'Too many failed attempts' };
+        }
+        
+        // Verify OTP
+        if (storedData.otp === otp) {
+            otpStorage.delete(email); // Remove OTP after successful verification
+            console.log(`[OTP] SendGrid OTP verified successfully for: ${email}`);
+            return { success: true, message: 'SendGrid OTP verified successfully' };
+        } else {
+            // Increment attempt count
+            storedData.attempts++;
+            otpStorage.set(email, storedData);
+            
+            const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+            return { 
+                success: false, 
+                message: `Invalid OTP. ${remainingAttempts} attempts remaining.` 
+            };
+        }
+        
+    } catch (error) {
+        console.error('[OTP] Error verifying SendGrid OTP:', error.message);
+        return { success: false, message: 'Verification failed' };
+    }
 }
 
 /* ====== Geocoding API ====== */
@@ -175,6 +391,13 @@ app.post('/api/reverse-geocode', async (req, res) => {
 app.get('/api/test', (req, res) => {
   console.log('[test] Test endpoint called');
   res.json({ message: 'Test endpoint working', timestamp: new Date().toISOString() });
+});
+
+// Test POST endpoint
+app.post('/api/test', (req, res) => {
+  console.log('[test] Test POST endpoint called');
+  console.log('[test] Request body:', req.body);
+  res.json({ message: 'Test POST endpoint working', receivedData: req.body, timestamp: new Date().toISOString() });
 });
 
 // GET endpoint for webhook testing
@@ -818,7 +1041,293 @@ app.post('/api/webhook/test', (req, res) => {
     });
 });
 
+/* ====== OTP API Endpoints ====== */
+
+// Send OTP endpoint
+app.post('/api/send-otp', async (req, res) => {
+    console.log('[API] Send OTP endpoint hit - Method:', req.method);
+    console.log('[API] Request headers:', req.headers);
+    console.log('[API] Request body:', req.body);
+    
+    try {
+        const { email, userName } = req.body;
+        
+        if (!email || !userName) {
+            console.log('[API] Missing email or userName');
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and user name are required' 
+            });
+        }
+        
+        console.log(`[API] Send OTP request for: ${email}`);
+        const result = await sendEmailOTP(email, userName);
+        
+        console.log('[API] Sending response:', result);
+        res.json(result);
+        
+    } catch (error) {
+        console.error('[API] Send OTP error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to send OTP' 
+        });
+    }
+});
+
+// Verify OTP endpoint
+app.post('/api/verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        if (!email || !otp) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and OTP are required' 
+            });
+        }
+        
+        console.log(`[API] Verify OTP request for: ${email}`);
+        const result = await verifyEmailOTP(email, otp);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('[API] Verify OTP error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to verify OTP' 
+        });
+    }
+});
+
+// Resend OTP endpoint
+app.post('/api/resend-otp', async (req, res) => {
+    try {
+        const { email, userName } = req.body;
+        
+        if (!email || !userName) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and user name are required' 
+            });
+        }
+        
+        console.log(`[API] Resend OTP request for: ${email}`);
+        const result = await sendEmailOTP(email, userName);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('[API] Resend OTP error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to resend OTP' 
+        });
+    }
+});
+
+/* ====== SendGrid OTP API Endpoints ====== */
+
+// SendGrid Send OTP endpoint
+app.post('/api/sendgrid-send-otp', async (req, res) => {
+    try {
+        const { email, userName } = req.body;
+        
+        if (!email || !userName) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and user name are required' 
+            });
+        }
+        
+        console.log(`[SendGrid API] Send OTP request for: ${email}`);
+        
+        // Generate 6-digit OTP
+        const otp = generateOTP();
+        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+        
+        // Store OTP locally
+        otpStorage.set(email, {
+            otp: otp,
+            expiry: expiry,
+            attempts: 0,
+            createdAt: Date.now(),
+            source: 'sendgrid'
+        });
+        
+        console.log(`[SendGrid API] OTP generated: ${otp} for ${email}`);
+        
+        // Try to send email via SendGrid
+        const emailResult = await sendOTPEmail(email, userName, otp);
+        
+        if (emailResult.success) {
+            console.log(`📧 SendGrid email sent successfully to ${email}`);
+            res.json({ 
+                success: true, 
+                otp: otp,
+                expiry: expiry,
+                message: 'SendGrid OTP generated and email sent successfully',
+                emailSent: true
+            });
+        } else {
+            console.log(`📧 SendGrid email failed to send: ${emailResult.message}`);
+            res.json({ 
+                success: true, 
+                otp: otp,
+                expiry: expiry,
+                message: 'SendGrid OTP generated successfully (email failed to send)',
+                emailSent: false,
+                emailError: emailResult.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('[SendGrid API] Send OTP error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to generate SendGrid OTP' 
+        });
+    }
+});
+
+// SendGrid Verify OTP endpoint
+app.post('/api/sendgrid-verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        if (!email || !otp) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and OTP are required' 
+            });
+        }
+        
+        console.log(`[SendGrid API] Verify OTP request for: ${email}`);
+        
+        // Check local storage for SendGrid OTP
+        if (!otpStorage.has(email)) {
+            return res.json({ 
+                success: false, 
+                message: 'No OTP found for this email' 
+            });
+        }
+        
+        const storedData = otpStorage.get(email);
+        
+        // Check if OTP has expired
+        if (Date.now() > storedData.expiry) {
+            otpStorage.delete(email);
+            return res.json({ 
+                success: false, 
+                message: 'OTP has expired' 
+            });
+        }
+        
+        // Check attempt limit
+        if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+            otpStorage.delete(email);
+            return res.json({ 
+                success: false, 
+                message: 'Too many failed attempts' 
+            });
+        }
+        
+        // Verify OTP
+        if (storedData.otp === otp) {
+            otpStorage.delete(email); // Remove OTP after successful verification
+            console.log(`[SendGrid API] OTP verified successfully for: ${email}`);
+            return res.json({ 
+                success: true, 
+                message: 'SendGrid OTP verified successfully' 
+            });
+        } else {
+            // Increment attempt count
+            storedData.attempts++;
+            otpStorage.set(email, storedData);
+            
+            const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+            return res.json({ 
+                success: false, 
+                message: `Invalid OTP. ${remainingAttempts} attempts remaining.` 
+            });
+        }
+        
+    } catch (error) {
+        console.error('[SendGrid API] Verify OTP error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to verify SendGrid OTP' 
+        });
+    }
+});
+
+// SendGrid Resend OTP endpoint
+app.post('/api/sendgrid-resend-otp', async (req, res) => {
+    try {
+        const { email, userName } = req.body;
+        
+        if (!email || !userName) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and user name are required' 
+            });
+        }
+        
+        console.log(`[SendGrid API] Resend OTP request for: ${email}`);
+        
+        // Generate new OTP
+        const otp = generateOTP();
+        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+        
+        // Store new OTP
+        otpStorage.set(email, {
+            otp: otp,
+            expiry: expiry,
+            attempts: 0,
+            createdAt: Date.now(),
+            source: 'sendgrid'
+        });
+        
+        console.log(`[SendGrid API] New OTP generated: ${otp} for ${email}`);
+        
+        // Try to send email via SendGrid
+        const emailResult = await sendOTPEmail(email, userName, otp);
+        
+        if (emailResult.success) {
+            console.log(`📧 SendGrid email resent successfully to ${email}`);
+            res.json({ 
+                success: true, 
+                otp: otp,
+                expiry: expiry,
+                message: 'SendGrid OTP resent successfully',
+                emailSent: true
+            });
+        } else {
+            console.log(`📧 SendGrid email resend failed: ${emailResult.message}`);
+            res.json({ 
+                success: true, 
+                otp: otp,
+                expiry: expiry,
+                message: 'SendGrid OTP resent successfully (email failed to send)',
+                emailSent: false,
+                emailError: emailResult.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('[SendGrid API] Resend OTP error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to resend SendGrid OTP' 
+        });
+    }
+});
+
 /* ====== Simple OTP System (No Email Sending) ====== */
+
+/* ====== Static file serving (must be after API routes) ====== */
+app.use(express.static(path.join(__dirname)));
 
 /* ====== Local app routes (static pages) ====== */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
@@ -828,6 +1337,9 @@ app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'html', 'D
 app.get('/menu', (req, res) => res.sendFile(path.join(__dirname, 'html', 'menu.html')));
 app.get('/inventory', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Inventory.html')));
 app.get('/order', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Order.html')));
+app.get('/test-otp', (req, res) => res.sendFile(path.join(__dirname, 'test-otp.html')));
+app.get('/simple-test', (req, res) => res.sendFile(path.join(__dirname, 'simple-test.html')));
+app.get('/test-firebase-otp', (req, res) => res.sendFile(path.join(__dirname, 'test-firebase-otp.html')));
 
 /* ====== Simple in-memory orders API (keeps existing behavior) ====== */
 let orders = [];
@@ -907,4 +1419,23 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'SANDBOX'}`);
   console.log(`   API Host: ${LALA_HOST}`);
   console.log(`   Market: ${MARKET}`);
+  console.log(`\n🔐 OTP System:`);
+  console.log(`   Type: SendGrid Email OTP with Local Fallback`);
+  console.log(`   Expiry: ${OTP_EXPIRY_MINUTES} minutes`);
+  console.log(`   Max Attempts: ${MAX_OTP_ATTEMPTS}`);
+  console.log(`\n🔐 OTP Endpoints:`);
+  console.log(`   Send OTP: POST /api/send-otp`);
+  console.log(`   Verify OTP: POST /api/verify-otp`);
+  console.log(`   Resend OTP: POST /api/resend-otp`);
+  console.log(`\n📧 SendGrid OTP Endpoints:`);
+  console.log(`   Send SendGrid OTP: POST /api/sendgrid-send-otp`);
+  console.log(`   Verify SendGrid OTP: POST /api/sendgrid-verify-otp`);
+  console.log(`   Resend SendGrid OTP: POST /api/sendgrid-resend-otp`);
+  console.log(`\n📧 SendGrid Email Service:`);
+  console.log(`   API Key: ${SENDGRID_API_KEY ? '✅ Configured' : '❌ Not Found'}`);
+  console.log(`   From Email: ${SENDGRID_FROM_EMAIL}`);
+  console.log(`   From Name: ${SENDGRID_FROM_NAME}`);
+  if (!SENDGRID_API_KEY) {
+    console.log(`   ⚠️  Create .env file with SENDGRID_API_KEY for email functionality`);
+  }
 });

@@ -80,8 +80,8 @@
     <!-- Main Firebase Config -->
     <script src="../main.js"></script>
     
-    <!-- Firebase OTP Service -->
-    <script src="../javascript/firebase-otp.js"></script>
+    <!-- SendGrid OTP Service -->
+    <script src="../javascript/sendgrid-otp.js"></script>
     
     <!-- OTP Verification Functions -->
     <script src="../javascript/otp.js"></script>
@@ -307,39 +307,85 @@
                 
                 console.log('Verifying Email OTP for user:', user.email);
                 
-                // Verify Email OTP using SendGrid, Firebase, or fallback
+                // Verify Email OTP using Firebase
                 const email = localStorage.getItem('signupEmail');
                 let verificationSuccess = false;
                 
-                // Try SendGrid OTP verification first
-                if (window.sendGridOTPService) {
-                    try {
-                        console.log('📬 Attempting SendGrid OTP verification...');
-                        const result = await window.sendGridOTPService.verifyOTP(email, otp);
-                        
-                        if (result.success) {
-                            console.log('✅ SendGrid Email OTP verified successfully');
-                            verificationSuccess = true;
-                        }
-                    } catch (sendGridError) {
-                        console.log('🔄 SendGrid OTP verification failed:', sendGridError.message);
-                    }
-                }
-                
-                // Fallback to Firebase OTP verification
-                if (!verificationSuccess && window.firebaseOTPService) {
+                // Try Firebase OTP verification first
+                if (window.firebaseOTPService) {
                     try {
                         console.log('🔥 Attempting Firebase OTP verification...');
-                        await window.firebaseOTPService.verifyEmailOTP(email, otp);
-                        console.log('✅ Firebase Email OTP verified successfully');
-                        verificationSuccess = true;
+                        const firebaseResult = await window.firebaseOTPService.verifyEmailOTP(email, otp);
+                        
+                        if (firebaseResult.success) {
+                            console.log('✅ Firebase OTP verified successfully');
+                            verificationSuccess = true;
+                        } else {
+                            console.log('❌ Firebase OTP verification failed:', firebaseResult.message);
+                            alert(firebaseResult.message);
+                            return;
+                        }
                     } catch (firebaseError) {
-                        console.log('🔄 Firebase Email OTP verification failed:', firebaseError.message);
+                        console.log('🔄 Firebase verification failed:', firebaseError.message);
+                        // Continue to fallback methods
                     }
                 }
                 
+                // Fallback to server API verification
                 if (!verificationSuccess) {
-                    throw new Error('OTP verification failed. Please check your code and try again.');
+                    try {
+                        console.log('🔄 Attempting server OTP verification...');
+                        
+                        const response = await fetch('/api/verify-otp', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ email, otp })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            console.log('✅ Server OTP verified successfully');
+                            verificationSuccess = true;
+                        } else {
+                            console.log('❌ Server OTP verification failed:', result.message);
+                            alert(result.message);
+                            return;
+                        }
+                    } catch (serverError) {
+                        console.log('🔄 Server verification failed, trying local fallback...');
+                        
+                        // Fallback to local OTP verification
+                        try {
+                            const storedOTP = localStorage.getItem('emailOTP');
+                            const storedExpiry = localStorage.getItem('emailOTPExpiry');
+                            
+                            if (!storedOTP) {
+                                throw new Error('No OTP found. Please request a new verification code.');
+                            }
+                            
+                            if (Date.now() > parseInt(storedExpiry)) {
+                                localStorage.removeItem('emailOTP');
+                                localStorage.removeItem('emailOTPExpiry');
+                                throw new Error('OTP has expired. Please request a new verification code.');
+                            }
+                            
+                            if (storedOTP === otp) {
+                                localStorage.removeItem('emailOTP');
+                                localStorage.removeItem('emailOTPExpiry');
+                                console.log('✅ Local OTP verified successfully');
+                                verificationSuccess = true;
+                            } else {
+                                throw new Error('Invalid OTP code. Please check and try again.');
+                            }
+                        } catch (localError) {
+                            console.log('❌ Local OTP verification failed:', localError.message);
+                            alert(localError.message);
+                            return;
+                        }
+                    }
                 }
                 
                 // Update user's email verification status in Firestore
@@ -390,7 +436,7 @@
                     throw new Error('No user found. Please sign up again.');
                 }
                 
-                // Send Email OTP
+                // Resend Email OTP via Firebase
                 const email = localStorage.getItem('signupEmail');
                 const userName = localStorage.getItem('signupName');
                 
@@ -402,31 +448,65 @@
                 
                 let resendSuccess = false;
                 
-                // Try SendGrid OTP resend first
-                if (window.sendGridOTPService) {
+                // Try Firebase OTP resend first
+                if (window.firebaseOTPService) {
                     try {
-                        console.log('📬 Attempting SendGrid OTP resend...');
-                        const result = await window.sendGridOTPService.resendOTP(email, userName);
+                        console.log('🔥 Attempting Firebase OTP resend...');
+                        const firebaseResult = await window.firebaseOTPService.resendOTP(email, userName);
                         
-                        if (result.success) {
-                            console.log('✅ SendGrid OTP resent successfully');
-                            alert('New verification code sent! Please check your email.');
+                        if (firebaseResult.success && firebaseResult.otp) {
+                            console.log('✅ Firebase OTP resent successfully:', firebaseResult.otp);
+                            localStorage.setItem('emailOTP', firebaseResult.otp);
+                            localStorage.setItem('emailOTPExpiry', firebaseResult.expiry);
+                            
+                            alert(`New OTP Code: ${firebaseResult.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
                             resendSuccess = true;
                         }
-                    } catch (sendGridError) {
-                        console.log('🔄 SendGrid OTP resend failed:', sendGridError.message);
+                    } catch (firebaseError) {
+                        console.log('🔄 Firebase resend failed:', firebaseError.message);
                     }
                 }
                 
-                // Fallback to Firebase OTP
-                if (!resendSuccess && typeof sendEmailOTP === 'function') {
+                // Fallback to server API resend
+                if (!resendSuccess) {
                     try {
-                        console.log('🔥 Attempting Firebase OTP resend...');
-                        await sendEmailOTP(email, userName);
-                        alert('Verification code sent! Please check your email.');
+                        console.log('🔄 Attempting server OTP resend...');
+                        
+                        const response = await fetch('/api/resend-otp', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ email, userName })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success && result.otp) {
+                            console.log('✅ Server OTP resent successfully:', result.otp);
+                            localStorage.setItem('emailOTP', result.otp);
+                            localStorage.setItem('emailOTPExpiry', result.expiry);
+                            
+                            alert(`New OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                            resendSuccess = true;
+                        }
+                    } catch (serverError) {
+                        console.log('🔄 Server resend failed:', serverError.message);
+                    }
+                }
+                
+                // Final fallback to local OTP generation
+                if (!resendSuccess) {
+                    try {
+                        console.log('🔄 Generating local fallback OTP...');
+                        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                        localStorage.setItem('emailOTP', otp);
+                        localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000));
+                        
+                        alert(`New OTP Code: ${otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
                         resendSuccess = true;
-                    } catch (firebaseError) {
-                        console.log('🔄 Firebase OTP resend failed:', firebaseError.message);
+                    } catch (localError) {
+                        console.log('🔄 Local OTP generation failed:', localError.message);
                     }
                 }
                 
