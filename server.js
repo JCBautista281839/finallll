@@ -7,6 +7,7 @@ const sgMail = require('@sendgrid/mail');
 require('dotenv').config(); // Load environment variables
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // Configure SendGrid
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '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';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant'; // Change this to your verified email
@@ -27,6 +28,8 @@ if (SENDGRID_CONFIGURED) {
     console.log('   - From Email:', FROM_EMAIL);
 }
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 const { spawn, exec } = require('child_process');
