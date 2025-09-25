@@ -384,35 +384,36 @@
         }
         
         async function scanImage() {
+            console.log('scanImage called', selectedFile);
             if (!selectedFile) return;
-            
-            // Show loading
+
             loading.style.display = 'block';
             scanBtn.disabled = true;
-            // Don't hide results section - keep previous results visible
-            
+
             try {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
-                
+
+                console.log('Sending fetch request...');
                 const response = await fetch('http://127.0.0.1:5000/upload', {
                     method: 'POST',
                     body: formData
                 });
-                
+                console.log('Fetch response received:', response);
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const result = await response.json();
-                console.log('Scan result:', result); // Debug log
-                
+                console.log('Scan result:', result);
+
                 if (result.success) {
                     displayResults(result);
                 } else {
                     throw new Error(result.error || 'Scan failed');
                 }
-                
+
             } catch (error) {
                 console.error('Scan error:', error);
                 showError('Failed to scan image: ' + error.message);
@@ -549,10 +550,9 @@
         function resetForm() {
             selectedFile = null;
             scanBtn.disabled = true;
-            resultsSection.style.display = 'none';
             clearBtn.style.display = 'none';
             loading.style.display = 'none';
-            
+
             const uploadText = uploadArea.querySelector('.upload-text');
             uploadText.textContent = 'Drop your OMR form here or click to browse';
             uploadText.style.color = '#495057';

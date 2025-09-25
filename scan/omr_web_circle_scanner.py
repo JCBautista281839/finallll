@@ -18,7 +18,7 @@ import base64
 from omr_circle_scanner import OMRCircleScanner
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -413,7 +413,7 @@ def upload_file():
             # Ensure response is JSON serializable
             try:
                 # Test JSON serialization before sending
-                json.dumps(response_data, default=str)
+                json.dumps(response_data, default=str);
                 return jsonify(response_data)
             except Exception as json_error:
                 print(f"❌ JSON serialization error: {json_error}")
