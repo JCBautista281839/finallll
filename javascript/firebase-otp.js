@@ -1,284 +1,258 @@
 // Firebase OTP Service for Viktoria's Bistro
-// Handles both SMS and Email OTP verification
+// Handles email OTP generation and verification using Firebase
 
 class FirebaseOTPService {
     constructor() {
-        this.auth = null;
-        this.recaptchaVerifier = null;
-        this.confirmationResult = null;
-        this.init();
+        this.isConfigured = false;
+        this.otpStorage = new Map(); // In-memory storage for development
+        
+        console.log('🔥 Firebase OTP Service initialized');
+        this.checkConfiguration();
     }
 
-    async init() {
+    // Check if Firebase is properly configured
+    async checkConfiguration() {
         try {
-            // Wait for Firebase to be ready
-            await this.waitForFirebase();
-            this.auth = firebase.auth();
-            console.log('✅ Firebase OTP Service initialized');
+            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                this.isConfigured = true;
+                console.log('🔥 Firebase configuration status: ✅ Configured');
+            } else {
+                this.isConfigured = false;
+                console.log('🔥 Firebase configuration status: ⚠️ Not configured');
+            }
         } catch (error) {
-            console.error('❌ Firebase OTP Service initialization failed:', error);
-            throw error;
+            console.log('🔥 Firebase status check failed:', error.message);
+            this.isConfigured = false;
         }
     }
 
-    waitForFirebase() {
-        return new Promise((resolve) => {
-            const checkFirebase = () => {
-                if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-                    resolve();
-                } else {
-                    setTimeout(checkFirebase, 100);
-                }
-            };
-            checkFirebase();
-        });
-    }
-
-
-    // ========================================
-    // EMAIL OTP METHODS
-    // ========================================
-
-    /**
-     * Send Email OTP using Firebase Cloud Functions or Email Service
-     * @param {string} email - User's email address
-     * @param {string} userName - User's name for personalization
-     * @returns {Promise<boolean>} - Success status
-     */
-    async sendEmailOTP(email, userName = '') {
-        try {
-            console.log('📧 Sending Email OTP to:', email);
-
-            // Generate 6-digit OTP
-            const otpCode = this.generateOTPCode();
-            
-            // Store OTP in Firestore with expiry
-            await this.storeEmailOTP(email, otpCode);
-
-            // Send OTP via Firebase Cloud Functions or Email Service
-            await this.sendOTPEmail(email, otpCode, userName);
-
-            console.log('✅ Email OTP sent via Firebase');
-            return true;
-
-        } catch (error) {
-            console.error('❌ Email OTP send failed:', error);
-            throw this.handleEmailError(error);
-        }
-    }
-
-    /**
-     * Verify Email OTP Code
-     * @param {string} email - User's email
-     * @param {string} otpCode - 6-digit OTP code
-     * @returns {Promise<boolean>} - Verification status
-     */
-    async verifyEmailOTP(email, otpCode) {
-        try {
-            console.log('🔐 Verifying Email OTP for:', email);
-
-            if (!otpCode || otpCode.length !== 6) {
-                throw new Error('Please enter a valid 6-digit code.');
-            }
-
-            // Get stored OTP from Firestore
-            const storedOTP = await this.getStoredEmailOTP(email);
-            
-            if (!storedOTP) {
-                throw new Error('No OTP found for this email. Please request a new code.');
-            }
-
-            // Check if OTP has expired
-            if (Date.now() > storedOTP.expiresAt) {
-                await this.deleteStoredEmailOTP(email);
-                throw new Error('OTP has expired. Please request a new code.');
-            }
-
-            // Verify OTP
-            if (otpCode !== storedOTP.code) {
-                throw new Error('Invalid verification code. Please try again.');
-            }
-
-            // Clear stored OTP
-            await this.deleteStoredEmailOTP(email);
-
-            console.log('✅ Email OTP verified successfully');
-            return true;
-
-        } catch (error) {
-            console.error('❌ Email OTP verification failed:', error);
-            throw this.handleEmailError(error);
-        }
-    }
-
-    // ========================================
-    // HELPER METHODS
-    // ========================================
-
-
-    /**
-     * Generate 6-digit OTP code
-     * @returns {string} - 6-digit OTP
-     */
-    generateOTPCode() {
+    // Generate a 6-digit OTP
+    generateOTP() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    /**
-     * Store Email OTP in Firestore with expiry
-     * @param {string} email - User's email
-     * @param {string} otpCode - Generated OTP code
-     */
-    async storeEmailOTP(email, otpCode) {
-        try {
-            const otpData = {
-                code: otpCode,
-                email: email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                expiresAt: Date.now() + (10 * 60 * 1000) // 10 minutes expiry
-            };
+    // Store OTP with expiry (10 minutes)
+    storeOTP(email, otp) {
+        const expiry = Date.now() + (10 * 60 * 1000); // 10 minutes
+        this.otpStorage.set(email, {
+            otp: otp,
+            expiry: expiry,
+            attempts: 0,
+            maxAttempts: 5
+        });
+        
+        // Clean up expired OTPs
+        setTimeout(() => {
+            this.otpStorage.delete(email);
+        }, 10 * 60 * 1000);
+    }
 
-            await firebase.firestore()
-                .collection('email_otps')
-                .doc(email)
-                .set(otpData);
+    // Verify OTP
+    verifyOTP(email, inputOTP) {
+        const stored = this.otpStorage.get(email);
+        if (!stored) {
+            return { success: false, message: 'OTP not found or expired' };
+        }
 
-            console.log('✅ Email OTP stored in Firestore');
-        } catch (error) {
-            console.error('❌ Failed to store Email OTP:', error);
-            throw error;
+        if (Date.now() > stored.expiry) {
+            this.otpStorage.delete(email);
+            return { success: false, message: 'OTP has expired' };
+        }
+
+        if (stored.attempts >= stored.maxAttempts) {
+            this.otpStorage.delete(email);
+            return { success: false, message: 'Too many failed attempts' };
+        }
+
+        if (stored.otp === inputOTP) {
+            this.otpStorage.delete(email);
+            return { success: true, message: 'OTP verified successfully' };
+        } else {
+            stored.attempts++;
+            return { success: false, message: 'Invalid OTP' };
         }
     }
 
-    /**
-     * Get stored Email OTP from Firestore
-     * @param {string} email - User's email
-     * @returns {Object|null} - Stored OTP data
-     */
-    async getStoredEmailOTP(email) {
+    // Send OTP via Firebase (simulated email sending)
+    async sendEmailOTP(email, userName) {
         try {
-            const doc = await firebase.firestore()
-                .collection('email_otps')
-                .doc(email)
-                .get();
-
-            if (doc.exists) {
-                return doc.data();
-            }
-            return null;
-        } catch (error) {
-            console.error('❌ Failed to get stored Email OTP:', error);
-            return null;
-        }
-    }
-
-    /**
-     * Delete stored Email OTP from Firestore
-     * @param {string} email - User's email
-     */
-    async deleteStoredEmailOTP(email) {
-        try {
-            await firebase.firestore()
-                .collection('email_otps')
-                .doc(email)
-                .delete();
-
-            console.log('✅ Email OTP deleted from Firestore');
-        } catch (error) {
-            console.error('❌ Failed to delete Email OTP:', error);
-        }
-    }
-
-    /**
-     * Send OTP email via Firebase Cloud Functions or Email Service
-     * @param {string} email - Recipient email
-     * @param {string} otpCode - OTP code
-     * @param {string} userName - User's name
-     */
-    async sendOTPEmail(email, otpCode, userName) {
-        try {
-            // Try Firebase Cloud Functions first (if available)
-            if (typeof firebase.functions !== 'undefined') {
-                const sendOTP = firebase.functions().httpsCallable('sendOTPEmail');
-                await sendOTP({
-                    email: email,
-                    otpCode: otpCode,
-                    userName: userName
-                });
-                console.log('✅ OTP sent via Firebase Cloud Functions');
-                return;
-            }
-
-            // Fallback: Use Firebase Auth to send custom email
-            // This is a workaround since Firebase Auth doesn't support custom OTP emails
-            // In production, you should use Firebase Cloud Functions with an email service
+            console.log('🔥 Sending OTP via Firebase to:', email);
             
-            // For now, we'll simulate the email sending
-            console.log(`📧 OTP Email would be sent to ${email}:`);
-            console.log(`Subject: Your Viktoria's Bistro Verification Code`);
-            console.log(`Code: ${otpCode}`);
-            console.log(`Expires in: 10 minutes`);
+            // Generate OTP
+            const otp = this.generateOTP();
+            
+            // Store OTP locally for verification
+            this.storeOTP(email, otp);
+            
+            // Simulate email sending (in real implementation, you'd use Firebase Functions)
+            console.log('🔥 Simulating email send via Firebase...');
+            
+            // Store OTP in Firebase Firestore for verification
+            if (this.isConfigured && typeof firebase !== 'undefined') {
+                try {
+                    await firebase.firestore().collection('otp_codes').doc(email).set({
+                        otp: otp,
+                        email: email,
+                        userName: userName,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        expiresAt: firebase.firestore.Timestamp.fromDate(new Date(Date.now() + (10 * 60 * 1000))),
+                        attempts: 0,
+                        maxAttempts: 5,
+                        verified: false
+                    });
+                    
+                    console.log('✅ OTP stored in Firebase Firestore');
+                } catch (firestoreError) {
+                    console.log('⚠️ Firebase Firestore storage failed:', firestoreError.message);
+                }
+            }
             
             // Simulate API call delay
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // In production, implement this with Firebase Cloud Functions:
-            /*
-            const functions = firebase.functions();
-            const sendOTP = functions.httpsCallable('sendOTPEmail');
-            
-            await sendOTP({
-                to: email,
-                subject: "Your Viktoria's Bistro Verification Code",
-                otpCode: otpCode,
-                userName: userName,
-                template: 'otp-verification'
-            });
-            */
+            console.log('✅ Firebase OTP generated and stored');
+            return { success: true, message: 'OTP generated successfully' };
             
         } catch (error) {
-            console.error('❌ Failed to send OTP email:', error);
-            throw new Error('Failed to send verification email. Please try again.');
+            console.error('🔥 Firebase OTP send error:', error);
+            throw new Error('Failed to send OTP via Firebase');
         }
     }
 
-
-
-    // ========================================
-    // ERROR HANDLING
-    // ========================================
-
-
-    handleEmailError(error) {
-        switch (error.code) {
-            case 'auth/invalid-email':
-                return new Error('Please enter a valid email address.');
-            case 'auth/too-many-requests':
-                return new Error('Too many attempts. Please try again later.');
-            case 'auth/user-not-found':
-                return new Error('Email address not found.');
-            default:
-                return new Error(error.message || 'Failed to send email verification. Please try again.');
+    // Verify OTP via Firebase
+    async verifyEmailOTP(email, otp) {
+        try {
+            console.log('🔥 Verifying OTP via Firebase for:', email);
+            
+            // First check local storage
+            const localResult = this.verifyOTP(email, otp);
+            if (localResult.success) {
+                console.log('✅ Firebase OTP verified locally');
+                return { success: true, message: 'OTP verified successfully' };
+            }
+            
+            // If Firebase is configured, check Firestore
+            if (this.isConfigured && typeof firebase !== 'undefined') {
+                try {
+                    const otpDoc = await firebase.firestore().collection('otp_codes').doc(email).get();
+                    
+                    if (otpDoc.exists) {
+                        const otpData = otpDoc.data();
+                        
+                        // Check if OTP is expired
+                        if (otpData.expiresAt.toDate() < new Date()) {
+                            await firebase.firestore().collection('otp_codes').doc(email).delete();
+                            throw new Error('OTP has expired');
+                        }
+                        
+                        // Check attempts
+                        if (otpData.attempts >= otpData.maxAttempts) {
+                            await firebase.firestore().collection('otp_codes').doc(email).delete();
+                            throw new Error('Too many failed attempts');
+                        }
+                        
+                        // Verify OTP
+                        if (otpData.otp === otp) {
+                            // Mark as verified and delete
+                            await firebase.firestore().collection('otp_codes').doc(email).update({
+                                verified: true,
+                                verifiedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            // Delete after successful verification
+                            setTimeout(() => {
+                                firebase.firestore().collection('otp_codes').doc(email).delete();
+                            }, 5000);
+                            
+                            console.log('✅ Firebase OTP verified in Firestore');
+                            return { success: true, message: 'OTP verified successfully' };
+                        } else {
+                            // Increment attempts
+                            await firebase.firestore().collection('otp_codes').doc(email).update({
+                                attempts: firebase.firestore.FieldValue.increment(1)
+                            });
+                            
+                            throw new Error('Invalid OTP');
+                        }
+                    } else {
+                        throw new Error('OTP not found');
+                    }
+                } catch (firestoreError) {
+                    console.log('⚠️ Firebase Firestore verification failed:', firestoreError.message);
+                    throw firestoreError;
+                }
+            }
+            
+            // Fallback to local verification
+            return localResult;
+            
+        } catch (error) {
+            console.error('🔥 Firebase OTP verification error:', error);
+            throw error;
         }
     }
 
-    // ========================================
-    // CLEANUP METHODS
-    // ========================================
+    // Resend OTP via Firebase
+    async resendOTP(email, userName) {
+        try {
+            console.log('🔥 Resending OTP via Firebase to:', email);
+            
+            // Generate new OTP
+            const otp = this.generateOTP();
+            
+            // Store new OTP locally
+            this.storeOTP(email, otp);
+            
+            // Store in Firebase Firestore
+            if (this.isConfigured && typeof firebase !== 'undefined') {
+                try {
+                    await firebase.firestore().collection('otp_codes').doc(email).set({
+                        otp: otp,
+                        email: email,
+                        userName: userName,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        expiresAt: firebase.firestore.Timestamp.fromDate(new Date(Date.now() + (10 * 60 * 1000))),
+                        attempts: 0,
+                        maxAttempts: 5,
+                        verified: false
+                    });
+                    
+                    console.log('✅ New OTP stored in Firebase Firestore');
+                } catch (firestoreError) {
+                    console.log('⚠️ Firebase Firestore storage failed:', firestoreError.message);
+                }
+            }
+            
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            console.log('✅ Firebase OTP resent successfully');
+            return { success: true, message: 'OTP resent successfully' };
+            
+        } catch (error) {
+            console.error('🔥 Firebase OTP resend error:', error);
+            throw new Error('Failed to resend OTP via Firebase');
+        }
+    }
 
-    /**
-     * Clean up resources
-     */
-    cleanup() {
-        // Clean up any resources if needed
-        console.log('✅ Firebase OTP Service cleaned up');
+    // Get OTP status
+    async getOTPStatus(email) {
+        const stored = this.otpStorage.get(email);
+        if (!stored) {
+            return { exists: false };
+        }
+
+        return {
+            exists: true,
+            expiry: stored.expiry,
+            attempts: stored.attempts,
+            maxAttempts: stored.maxAttempts,
+            timeRemaining: Math.max(0, stored.expiry - Date.now())
+        };
     }
 }
 
-// Create global instance
+// Initialize Firebase OTP Service
 window.firebaseOTPService = new FirebaseOTPService();
 
-// Export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FirebaseOTPService;
-}
+console.log('🔥 Firebase OTP Service loaded and ready');

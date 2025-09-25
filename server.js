@@ -3,11 +3,10 @@ const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
-// SendGrid Email Service
 const sgMail = require('@sendgrid/mail');
-
 require('dotenv').config(); // Load environment variables
 
+<<<<<<< Updated upstream
 // Configure SendGrid
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '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';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant'; // Change this to your verified email
@@ -28,6 +27,8 @@ if (SENDGRID_CONFIGURED) {
     console.log('   - From Email:', FROM_EMAIL);
 }
 
+=======
+>>>>>>> Stashed changes
 const { spawn, exec } = require('child_process');
 
 const app = express();
@@ -48,7 +49,21 @@ const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
 
-// Email configuration removed
+// SendGrid configuration
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant';
+const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || "Viktoria's Bistro";
+
+// Initialize SendGrid
+if (SENDGRID_API_KEY) {
+    sgMail.setApiKey(SENDGRID_API_KEY);
+    console.log('📬 SendGrid initialized successfully');
+} else {
+    console.log('⚠️ SendGrid API key not found - OTP emails will use fallback mode');
+}
+
+// In-memory OTP storage (for development)
+const otpStorage = new Map();
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
@@ -191,6 +206,458 @@ app.post('/api/reverse-geocode', async (req, res) => {
 app.get('/api/test', (req, res) => {
   console.log('[test] Test endpoint called');
   res.json({ message: 'Test endpoint working', timestamp: new Date().toISOString() });
+});
+
+/* ====== SendGrid OTP API Endpoints ====== */
+
+// Check OTP service status
+app.get('/api/otp/status', (req, res) => {
+  res.json({
+    configured: !!SENDGRID_API_KEY,
+    service: 'SendGrid',
+    fromEmail: SENDGRID_FROM_EMAIL,
+    fromName: SENDGRID_FROM_NAME
+  });
+});
+
+// Generate and store OTP
+function generateAndStoreOTP(email) {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiry = Date.now() + (10 * 60 * 1000); // 10 minutes
+  
+  otpStorage.set(email, {
+    otp: otp,
+    expiry: expiry,
+    attempts: 0,
+    maxAttempts: 5,
+    createdAt: new Date().toISOString()
+  });
+  
+  // Clean up expired OTPs
+  setTimeout(() => {
+    otpStorage.delete(email);
+  }, 10 * 60 * 1000);
+  
+  return otp;
+}
+
+// Create beautiful HTML email template
+function createOTPEmailTemplate(userName, otp) {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email Verification - Viktoria's Bistro</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f8f9fa;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+            }
+            .header h1 {
+                margin: 0;
+                font-size: 28px;
+                font-weight: bold;
+            }
+            .header p {
+                margin: 10px 0 0 0;
+                font-size: 16px;
+                opacity: 0.9;
+            }
+            .content {
+                padding: 40px 30px;
+                text-align: center;
+            }
+            .greeting {
+                font-size: 18px;
+                color: #333;
+                margin-bottom: 20px;
+            }
+            .otp-container {
+                background-color: #f8f9fa;
+                border: 2px dashed #8B2E20;
+                border-radius: 10px;
+                padding: 30px;
+                margin: 30px 0;
+            }
+            .otp-code {
+                font-size: 36px;
+                font-weight: bold;
+                color: #8B2E20;
+                letter-spacing: 8px;
+                margin: 0;
+                font-family: 'Courier New', monospace;
+            }
+            .instructions {
+                color: #666;
+                font-size: 16px;
+                line-height: 1.6;
+                margin: 20px 0;
+            }
+            .warning {
+                background-color: #fff3cd;
+                border: 1px solid #ffeaa7;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 30px 0;
+                text-align: left;
+            }
+            .warning h3 {
+                color: #856404;
+                margin: 0 0 10px 0;
+                font-size: 16px;
+            }
+            .warning ul {
+                color: #856404;
+                margin: 0;
+                padding-left: 20px;
+            }
+            .warning li {
+                margin: 5px 0;
+            }
+            .footer {
+                background-color: #f8f9fa;
+                padding: 20px 30px;
+                text-align: center;
+                color: #666;
+                font-size: 14px;
+            }
+            .logo {
+                width: 60px;
+                height: 60px;
+                margin: 0 auto 20px;
+                background-color: #8B2E20;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 24px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">V</div>
+                <h1>Viktoria's Bistro</h1>
+                <p>Email Verification</p>
+            </div>
+            
+            <div class="content">
+                <div class="greeting">
+                    Hello ${userName}! 👋
+                </div>
+                
+                <p class="instructions">
+                    Thank you for signing up with Viktoria's Bistro! To complete your account verification, 
+                    please use the following verification code:
+                </p>
+                
+                <div class="otp-container">
+                    <p class="otp-code">${otp}</p>
+                </div>
+                
+                <p class="instructions">
+                    Enter this code in the verification page to activate your account.
+                </p>
+                
+                <div class="warning">
+                    <h3>⚠️ Important Security Information:</h3>
+                    <ul>
+                        <li>This code will expire in <strong>10 minutes</strong></li>
+                        <li>Do not share this code with anyone</li>
+                        <li>If you didn't request this code, please ignore this email</li>
+                        <li>Our team will never ask for your verification code</li>
+                    </ul>
+                </div>
+                
+                <p class="instructions">
+                    Welcome to the Viktoria's Bistro family! We're excited to serve you delicious meals. 🍽️
+                </p>
+            </div>
+            
+            <div class="footer">
+                <p>© 2024 Viktoria's Bistro. All rights reserved.</p>
+                <p>This is an automated message. Please do not reply to this email.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+}
+
+// Send OTP via SendGrid
+app.post('/api/otp/send', async (req, res) => {
+  console.log('[otp] Send OTP request received');
+  
+  try {
+    const { email, userName, otp } = req.body;
+    
+    if (!email || !userName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email and userName are required' 
+      });
+    }
+    
+    // Generate OTP if not provided
+    const otpCode = otp || generateAndStoreOTP(email);
+    
+    // If SendGrid is configured, send email
+    if (SENDGRID_API_KEY) {
+      try {
+        const msg = {
+          to: email,
+          from: {
+            email: SENDGRID_FROM_EMAIL,
+            name: SENDGRID_FROM_NAME
+          },
+          subject: 'Email Verification - Viktoria\'s Bistro',
+          html: createOTPEmailTemplate(userName, otpCode),
+          text: `Hello ${userName}!\n\nYour verification code is: ${otpCode}\n\nThis code will expire in 10 minutes.\n\nWelcome to Viktoria's Bistro!`
+        };
+        
+        await sgMail.send(msg);
+        console.log(`✅ OTP email sent via SendGrid to ${email}`);
+        
+        res.json({
+          success: true,
+          message: 'OTP sent successfully',
+          email: email,
+          method: 'SendGrid'
+        });
+        
+      } catch (sendGridError) {
+        console.error('📬 SendGrid error:', sendGridError.message);
+        
+        // Fallback: return OTP for development
+        res.json({
+          success: false,
+          message: 'SendGrid failed - using fallback',
+          otp: otpCode,
+          email: email,
+          method: 'fallback'
+        });
+      }
+    } else {
+      // SendGrid not configured - return OTP for development
+      console.log('⚠️ SendGrid not configured - returning OTP for development');
+      
+      res.json({
+        success: false,
+        message: 'SendGrid not configured - using fallback',
+        otp: otpCode,
+        email: email,
+        method: 'fallback'
+      });
+    }
+    
+  } catch (error) {
+    console.error('[otp] Send OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Verify OTP
+app.post('/api/otp/verify', async (req, res) => {
+  console.log('[otp] Verify OTP request received');
+  
+  try {
+    const { email, otp } = req.body;
+    
+    if (!email || !otp) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email and OTP are required' 
+      });
+    }
+    
+    const stored = otpStorage.get(email);
+    
+    if (!stored) {
+      return res.status(404).json({
+        success: false,
+        error: 'OTP not found or expired'
+      });
+    }
+    
+    if (Date.now() > stored.expiry) {
+      otpStorage.delete(email);
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired'
+      });
+    }
+    
+    if (stored.attempts >= stored.maxAttempts) {
+      otpStorage.delete(email);
+      return res.status(400).json({
+        success: false,
+        error: 'Too many failed attempts'
+      });
+    }
+    
+    if (stored.otp === otp) {
+      otpStorage.delete(email);
+      console.log(`✅ OTP verified successfully for ${email}`);
+      
+      res.json({
+        success: true,
+        message: 'OTP verified successfully',
+        email: email
+      });
+    } else {
+      stored.attempts++;
+      console.log(`❌ Invalid OTP attempt for ${email} (${stored.attempts}/${stored.maxAttempts})`);
+      
+      res.status(400).json({
+        success: false,
+        error: 'Invalid OTP',
+        attempts: stored.attempts,
+        maxAttempts: stored.maxAttempts
+      });
+    }
+    
+  } catch (error) {
+    console.error('[otp] Verify OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Resend OTP
+app.post('/api/otp/resend', async (req, res) => {
+  console.log('[otp] Resend OTP request received');
+  
+  try {
+    const { email, userName } = req.body;
+    
+    if (!email || !userName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email and userName are required' 
+      });
+    }
+    
+    // Generate new OTP
+    const otpCode = generateAndStoreOTP(email);
+    
+    // If SendGrid is configured, send email
+    if (SENDGRID_API_KEY) {
+      try {
+        const msg = {
+          to: email,
+          from: {
+            email: SENDGRID_FROM_EMAIL,
+            name: SENDGRID_FROM_NAME
+          },
+          subject: 'Email Verification Code - Viktoria\'s Bistro',
+          html: createOTPEmailTemplate(userName, otpCode),
+          text: `Hello ${userName}!\n\nYour new verification code is: ${otpCode}\n\nThis code will expire in 10 minutes.\n\nWelcome to Viktoria's Bistro!`
+        };
+        
+        await sgMail.send(msg);
+        console.log(`✅ OTP email resent via SendGrid to ${email}`);
+        
+        res.json({
+          success: true,
+          message: 'OTP resent successfully',
+          email: email,
+          method: 'SendGrid'
+        });
+        
+      } catch (sendGridError) {
+        console.error('📬 SendGrid resend error:', sendGridError.message);
+        
+        // Fallback: return OTP for development
+        res.json({
+          success: false,
+          message: 'SendGrid failed - using fallback',
+          otp: otpCode,
+          email: email,
+          method: 'fallback'
+        });
+      }
+    } else {
+      // SendGrid not configured - return OTP for development
+      console.log('⚠️ SendGrid not configured - returning OTP for development');
+      
+      res.json({
+        success: false,
+        message: 'SendGrid not configured - using fallback',
+        otp: otpCode,
+        email: email,
+        method: 'fallback'
+      });
+    }
+    
+  } catch (error) {
+    console.error('[otp] Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Get OTP status
+app.get('/api/otp/status/:email', (req, res) => {
+  try {
+    const email = req.params.email;
+    const stored = otpStorage.get(email);
+    
+    if (!stored) {
+      return res.json({
+        exists: false,
+        email: email
+      });
+    }
+    
+    res.json({
+      exists: true,
+      email: email,
+      expiry: stored.expiry,
+      attempts: stored.attempts,
+      maxAttempts: stored.maxAttempts,
+      timeRemaining: Math.max(0, stored.expiry - Date.now()),
+      createdAt: stored.createdAt
+    });
+    
+  } catch (error) {
+    console.error('[otp] Get status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
 });
 
 // GET endpoint for webhook testing
@@ -892,254 +1359,8 @@ app.post('/api/payment', (req, res) => {
   res.json({ success: true, payment, order });
 });
 
-/* ====== SendGrid OTP Service ====== */
 
-// In-memory OTP storage (in production, use Redis or database)
-const otpStorage = new Map();
 
-// Generate 6-digit OTP
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Send OTP via SendGrid
-app.post('/api/send-otp', async (req, res) => {
-    try {
-        const { email, userName } = req.body;
-        
-        if (!email || !userName) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Email and userName are required' 
-            });
-        }
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Invalid email format' 
-            });
-        }
-        
-        // Generate OTP
-        const otp = generateOTP();
-        const expiryTime = Date.now() + (10 * 60 * 1000); // 10 minutes
-        
-        // Store OTP with expiry
-        otpStorage.set(email, {
-            otp: otp,
-            expiry: expiryTime,
-            userName: userName,
-            attempts: 0,
-            createdAt: Date.now()
-        });
-        
-        // Create email content
-        const emailContent = {
-            to: email,
-            from: {
-                email: FROM_EMAIL,
-                name: FROM_NAME
-            },
-            subject: 'Email Verification Code - Viktoria\'s Bistro',
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Email Verification</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #8B2E20; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-                        .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-                        .otp-code { background-color: #8B2E20; color: white; font-size: 32px; font-weight: bold; text-align: center; padding: 20px; margin: 20px 0; border-radius: 8px; letter-spacing: 5px; }
-                        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
-                        .warning { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h1>🍽️ Viktoria's Bistro</h1>
-                            <h2>Email Verification</h2>
-                        </div>
-                        <div class="content">
-                            <h3>Hello ${userName}!</h3>
-                            <p>Thank you for signing up with Viktoria's Bistro. To complete your account verification, please use the following verification code:</p>
-                            
-                            <div class="otp-code">${otp}</div>
-                            
-                            <div class="warning">
-                                <strong>⚠️ Important:</strong>
-                                <ul>
-                                    <li>This code will expire in 10 minutes</li>
-                                    <li>Do not share this code with anyone</li>
-                                    <li>If you didn't request this code, please ignore this email</li>
-                                </ul>
-                            </div>
-                            
-                            <p>If you have any questions or need assistance, please contact our support team.</p>
-                            
-                            <p>Welcome to Viktoria's Bistro family!</p>
-                        </div>
-                        <div class="footer">
-                            <p>© 2024 Viktoria's Bistro. All rights reserved.</p>
-                            <p>This is an automated message, please do not reply.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `,
-            text: `
-                Viktoria's Bistro - Email Verification
-                
-                Hello ${userName}!
-                
-                Your verification code is: ${otp}
-                
-                This code will expire in 10 minutes.
-                
-                If you didn't request this code, please ignore this email.
-                
-                Welcome to Viktoria's Bistro!
-            `
-        };
-        
-        console.log(`[sendgrid-otp] Sending OTP to ${email} for user ${userName}`);
-        
-        // Check if SendGrid is properly configured
-        if (!SENDGRID_CONFIGURED) {
-            console.log(`[sendgrid-otp] SendGrid not configured - returning OTP for frontend display`);
-            
-            return res.json({
-                success: false,
-                error: 'SendGrid not configured',
-                message: 'OTP generated but email service not available',
-                otp: otp, // Return OTP for frontend display
-                email: email,
-                expiry: expiryTime
-            });
-        }
-        
-        // Send email via SendGrid
-        await sgMail.send(emailContent);
-        
-        console.log(`[sendgrid-otp] OTP sent successfully to ${email}`);
-        
-        res.json({
-            success: true,
-            message: 'OTP sent successfully',
-            email: email,
-            expiry: expiryTime
-        });
-        
-    } catch (error) {
-        console.error('[sendgrid-otp] Error sending OTP:', error);
-        
-        // Handle SendGrid specific errors
-        if (error.response) {
-            const { status, body } = error.response;
-            console.error('[sendgrid-otp] SendGrid API Error:', status, body);
-            
-            // If SendGrid fails, return OTP for frontend display
-            return res.json({
-                success: false,
-                error: 'SendGrid API Error',
-                message: 'Email service failed - OTP generated for display',
-                otp: otp, // Return OTP for frontend display
-                email: email,
-                expiry: expiryTime
-            });
-        }
-        
-        res.status(500).json({
-            success: false,
-            error: 'Failed to send verification email',
-            details: error.message
-        });
-    }
-});
-
-// Verify OTP
-app.post('/api/verify-otp', async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        
-        if (!email || !otp) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Email and OTP are required' 
-            });
-        }
-        
-        // Get stored OTP data
-        const storedData = otpStorage.get(email);
-        
-        if (!storedData) {
-            return res.status(400).json({
-                success: false,
-                error: 'No OTP found for this email. Please request a new OTP.'
-            });
-        }
-        
-        // Check if OTP has expired
-        if (Date.now() > storedData.expiry) {
-            otpStorage.delete(email);
-            return res.status(400).json({
-                success: false,
-                error: 'OTP has expired. Please request a new OTP.'
-            });
-        }
-        
-        // Check attempt limit (max 5 attempts)
-        if (storedData.attempts >= 5) {
-            otpStorage.delete(email);
-            return res.status(400).json({
-                success: false,
-                error: 'Too many failed attempts. Please request a new OTP.'
-            });
-        }
-        
-        // Verify OTP
-        if (storedData.otp === otp) {
-            // OTP is correct, remove it from storage
-            otpStorage.delete(email);
-            
-            console.log(`[sendgrid-otp] OTP verified successfully for ${email}`);
-            
-            res.json({
-                success: true,
-                message: 'OTP verified successfully',
-                email: email,
-                userName: storedData.userName
-            });
-        } else {
-            // Increment attempt counter
-            storedData.attempts++;
-            otpStorage.set(email, storedData);
-            
-            console.log(`[sendgrid-otp] Invalid OTP attempt for ${email}. Attempts: ${storedData.attempts}`);
-            
-            res.status(400).json({
-                success: false,
-                error: 'Invalid OTP code',
-                attemptsLeft: 5 - storedData.attempts
-            });
-        }
-        
-    } catch (error) {
-        console.error('[sendgrid-otp] Error verifying OTP:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to verify OTP',
-            details: error.message
-        });
-    }
-});
 
 /* ====== Error handlers & 404 ====== */
 app.use((err, req, res, next) => {
@@ -1165,5 +1386,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'SANDBOX'}`);
   console.log(`   API Host: ${LALA_HOST}`);
   console.log(`   Market: ${MARKET}`);
-  // SendGrid email service removed
 });
