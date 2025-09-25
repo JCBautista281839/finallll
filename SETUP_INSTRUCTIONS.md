@@ -10,7 +10,7 @@ Create a file named `.env` in the same directory as your `server.js` file with t
 
 ```bash
 # SendGrid Configuration
-SENDGRID_API_KEY=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
+SENDGRID_API_KEY=your_sendgrid_api_key_here
 SENDGRID_FROM_EMAIL=support@viktoriasbistro.restaurant
 SENDGRID_FROM_NAME=Viktoria's Bistro
 
@@ -18,6 +18,8 @@ SENDGRID_FROM_NAME=Viktoria's Bistro
 PORT=5001
 NODE_ENV=development
 ```
+
+**Important:** Replace `your_sendgrid_api_key_here` with your actual SendGrid API key from your SendGrid dashboard.
 
 ### 2. Verify `.gitignore` is updated
 
