@@ -337,8 +337,13 @@ async function createUserAccount(name, email, phone, password) {
             // Continue with the process even if Firestore fails
         }
 
-        // Send Email OTP verification
-        await sendEmailOTP(email, name);
+        // Generate OTP locally (no email sending)
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        localStorage.setItem('emailOTP', otp);
+        localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000));
+        
+        // Show OTP in alert
+        alert(`OTP Code: ${otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
 
         // Store user info in localStorage for OTP page
         localStorage.setItem('signupEmail', email);
