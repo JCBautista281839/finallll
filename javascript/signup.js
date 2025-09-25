@@ -18,40 +18,51 @@ function showSuccess(message) {
 }
 
 
-// Send Email OTP function using SendGrid, Firebase, or local generation
+// Send Email OTP function using SendGrid (primary) or local generation (fallback)
 async function sendEmailOTP(email, userName) {
     try {
-        console.log('📧 Starting OTP send process...');
+        console.log('📧 Starting SendGrid OTP send process...');
         
-        // Try SendGrid OTP Service first
+        // Try SendGrid OTP Service first (primary method)
         if (window.sendGridOTPService) {
             try {
                 console.log('📬 Attempting SendGrid OTP...');
                 const result = await window.sendGridOTPService.sendEmailOTP(email, userName);
                 
                 if (result.success) {
-                    console.log('✅ Email OTP sent via SendGrid');
-                    return true;
-                } else if (result.otp) {
-                    // SendGrid not configured but OTP was generated
-                    console.log('⚠️ SendGrid not configured - displaying OTP:', result.otp);
-                    
-                    // Store OTP locally and display it
-                    localStorage.setItem('emailOTP', result.otp);
-                    localStorage.setItem('emailOTPExpiry', result.expiry);
-                    
-                    // Show OTP prominently in console
-                    console.log('🔐 ===== YOUR OTP CODE =====');
-                    console.log('📧 Email:', email);
-                    console.log('👤 Name:', userName);
-                    console.log('🔢 OTP Code:', result.otp);
-                    console.log('⏰ Expires in: 10 minutes');
-                    console.log('=============================');
-                    
-                    // Also show an alert for immediate visibility
-                    alert(`OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
-                    
-                    return true;
+                    if (result.emailSent) {
+                        console.log('✅ Email OTP sent successfully via SendGrid');
+                        return {
+                            success: true,
+                            message: 'Verification code sent to your email!',
+                            otp: result.otp,
+                            emailSent: true
+                        };
+                    } else {
+                        console.log('⚠️ SendGrid OTP generated but email failed to send:', result.otp);
+                        
+                        // Store OTP locally and display it
+                        localStorage.setItem('emailOTP', result.otp);
+                        localStorage.setItem('emailOTPExpiry', result.expiry);
+                        
+                        // Show OTP prominently in console
+                        console.log('🔐 ===== YOUR OTP CODE =====');
+                        console.log('📧 Email:', email);
+                        console.log('👤 Name:', userName);
+                        console.log('🔢 OTP Code:', result.otp);
+                        console.log('⏰ Expires in: 10 minutes');
+                        console.log('=============================');
+                        
+                        // Also show an alert for immediate visibility
+                        alert(`OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                        
+                        return {
+                            success: true,
+                            message: 'Verification code generated (email delivery failed)',
+                            otp: result.otp,
+                            emailSent: false
+                        };
+                    }
                 }
             } catch (sendGridError) {
                 console.log('🔄 SendGrid OTP failed:', sendGridError.message);
@@ -60,29 +71,12 @@ async function sendEmailOTP(email, userName) {
             console.log('⚠️ SendGrid OTP service not available');
         }
         
-        // Try Firebase OTP Service as fallback
-        if (window.firebaseOTPService) {
-            try {
-                console.log('🔥 Attempting Firebase OTP...');
-                const success = await window.firebaseOTPService.sendEmailOTP(email, userName);
-                
-                if (success) {
-                    console.log('✅ Email OTP sent via Firebase');
-                    return true;
-                }
-            } catch (firebaseError) {
-                console.log('🔄 Firebase OTP failed:', firebaseError.message);
-            }
-        } else {
-            console.log('⚠️ Firebase OTP service not available');
-        }
-        
         // Final fallback to local OTP generation
         console.log('🔄 Falling back to local Email OTP generation');
         return await sendLocalEmailOTP(email, userName);
         
     } catch (error) {
-        console.error('❌ OTP services failed:', error);
+        console.error('❌ SendGrid OTP service failed:', error);
         
         // Final fallback to local OTP generation
         console.log('🔄 Using local Email OTP generation');
@@ -95,10 +89,11 @@ async function sendLocalEmailOTP(email, userName) {
     try {
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = Date.now() + (10 * 60 * 1000); // 10 minutes expiry
         
         // Store OTP in localStorage for verification
         localStorage.setItem('emailOTP', otp);
-        localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000)); // 10 minutes expiry
+        localStorage.setItem('emailOTPExpiry', expiry);
         
         // Show OTP prominently in console
         console.log('🔐 ===== YOUR OTP CODE =====');
@@ -114,11 +109,21 @@ async function sendLocalEmailOTP(email, userName) {
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        return true;
+        return {
+            success: true,
+            message: 'Verification code generated locally',
+            otp: otp,
+            expiry: expiry,
+            emailSent: false
+        };
         
     } catch (error) {
         console.error('Error sending local Email OTP:', error);
-        throw new Error('Failed to send email verification code. Please try again.');
+        return {
+            success: false,
+            message: 'Failed to generate verification code',
+            emailSent: false
+        };
     }
 }
 
@@ -337,20 +342,32 @@ async function createUserAccount(name, email, phone, password) {
             // Continue with the process even if Firestore fails
         }
 
-        // Generate OTP locally (no email sending)
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        localStorage.setItem('emailOTP', otp);
-        localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000));
-        
-        // Show OTP in alert
-        alert(`OTP Code: ${otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
-
         // Store user info in localStorage for OTP page
         localStorage.setItem('signupEmail', email);
         localStorage.setItem('signupName', name);
 
-        // Show success message
-        showSuccess('Account created successfully! Please check your email for verification code.');
+        // Generate OTP via SendGrid
+        try {
+            console.log('📧 Generating OTP via SendGrid...');
+            
+            const otpResult = await sendEmailOTP(email, name);
+            
+            if (otpResult.success) {
+                console.log('✅ OTP generated successfully:', otpResult.otp);
+                
+                if (otpResult.emailSent) {
+                    showSuccess('Account created successfully! Please check your email for the verification code.');
+                } else {
+                    showSuccess('Account created successfully! Please use the verification code shown above.');
+                }
+            } else {
+                console.log('❌ OTP generation failed:', otpResult.message);
+                showError('Account created but failed to generate verification code. Please try again.');
+            }
+        } catch (error) {
+            console.error('❌ Error generating OTP:', error);
+            showError('Account created but failed to generate verification code. Please try again.');
+        }
 
         // Redirect to OTP page after a short delay
         setTimeout(() => {
