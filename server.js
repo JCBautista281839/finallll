@@ -6,17 +6,14 @@ const cors = require('cors');
 const sgMail = require('@sendgrid/mail');
 require('dotenv').config(); // Load environment variables
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 // Configure SendGrid
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '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';
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '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';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant'; // Change this to your verified email
 const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Viktoria\'s Bistro';
 
 // Check if SendGrid is properly configured
 const SENDGRID_CONFIGURED = SENDGRID_API_KEY && 
-    SENDGRID_API_KEY !== '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' &&
+    SENDGRID_API_KEY !== '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' &&
     FROM_EMAIL && 
     FROM_EMAIL !== 'support@viktoriasbistro.restaurant';
 
@@ -29,12 +26,6 @@ if (SENDGRID_CONFIGURED) {
     console.log('   - From Email:', FROM_EMAIL);
 }
 
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 const { spawn, exec } = require('child_process');
 
 const app = express();
@@ -55,18 +46,9 @@ const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
 
-// SendGrid configuration
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+// SendGrid configuration (already declared above)
 const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoriasbistro.restaurant';
 const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || "Viktoria's Bistro";
-
-// Initialize SendGrid
-if (SENDGRID_API_KEY) {
-    sgMail.setApiKey(SENDGRID_API_KEY);
-    console.log('📬 SendGrid initialized successfully');
-} else {
-    console.log('⚠️ SendGrid API key not found - OTP emails will use fallback mode');
-}
 
 // In-memory OTP storage (for development)
 const otpStorage = new Map();

@@ -154,13 +154,39 @@ class SendGridOTPService {
                 console.log('⚠️ SendGrid verification failed:', error.message);
                 
                 // Fallback to local verification
-                return this.verifyOTP(email, otp);
+                return this.verifyOTPLocal(email, otp);
             }
         } catch (error) {
             console.error('📬 SendGrid OTP verification error:', error);
             
             // Fallback to local verification
-            return this.verifyOTP(email, otp);
+            return this.verifyOTPLocal(email, otp);
+        }
+    }
+
+    // Local OTP verification (non-recursive)
+    verifyOTPLocal(email, inputOTP) {
+        const stored = this.otpStorage.get(email);
+        if (!stored) {
+            return { success: false, message: 'OTP not found or expired' };
+        }
+
+        if (Date.now() > stored.expiry) {
+            this.otpStorage.delete(email);
+            return { success: false, message: 'OTP has expired' };
+        }
+
+        if (stored.attempts >= stored.maxAttempts) {
+            this.otpStorage.delete(email);
+            return { success: false, message: 'Too many failed attempts' };
+        }
+
+        if (stored.otp === inputOTP) {
+            this.otpStorage.delete(email);
+            return { success: true, message: 'OTP verified successfully' };
+        } else {
+            stored.attempts++;
+            return { success: false, message: 'Invalid OTP' };
         }
     }
 

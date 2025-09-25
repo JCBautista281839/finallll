@@ -125,7 +125,7 @@ class FirebaseOTPService {
             console.log('🔥 Verifying OTP via Firebase for:', email);
             
             // First check local storage
-            const localResult = this.verifyOTP(email, otp);
+            const localResult = this.verifyOTPLocal(email, otp);
             if (localResult.success) {
                 console.log('✅ Firebase OTP verified locally');
                 return { success: true, message: 'OTP verified successfully' };
@@ -189,6 +189,32 @@ class FirebaseOTPService {
         } catch (error) {
             console.error('🔥 Firebase OTP verification error:', error);
             throw error;
+        }
+    }
+
+    // Local OTP verification (non-recursive)
+    verifyOTPLocal(email, inputOTP) {
+        const stored = this.otpStorage.get(email);
+        if (!stored) {
+            return { success: false, message: 'OTP not found or expired' };
+        }
+
+        if (Date.now() > stored.expiry) {
+            this.otpStorage.delete(email);
+            return { success: false, message: 'OTP has expired' };
+        }
+
+        if (stored.attempts >= stored.maxAttempts) {
+            this.otpStorage.delete(email);
+            return { success: false, message: 'Too many failed attempts' };
+        }
+
+        if (stored.otp === inputOTP) {
+            this.otpStorage.delete(email);
+            return { success: true, message: 'OTP verified successfully' };
+        } else {
+            stored.attempts++;
+            return { success: false, message: 'Invalid OTP' };
         }
     }
 
