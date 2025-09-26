@@ -1,10 +1,36 @@
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
 
-/* styleNotification.css - Matches Inventory page styles for full consistency */
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsExtraLight';
+  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
 
 .main-content {
     background: #ffffff;
     min-height: calc(100vh - 40px);
-    border-radius: 40px;
+    border-radius: 60px;
+    font-family: 'PoppinsRegular', sans-serif;
     margin: 30px;
 }
 
@@ -21,8 +47,7 @@
 }
 
 .inventory-title {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 12px !important;
     color: #333;
     margin-bottom: 0.5rem;
 }

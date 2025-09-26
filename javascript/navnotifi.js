@@ -34,17 +34,18 @@ function loadDropdownNotifications() {
                 return;
             }
             let html = '';
+            // Detect dark mode
+            const isDark = document.body.classList.contains('dark-mode');
+            const nameColor = isDark ? '#ffc9b3' : '#760000';
+            const messageColor = isDark ? '#f1f1f1' : '#222';
             querySnapshot.forEach(function (doc) {
                 const data = doc.data();
                 html += `<div class="dropdown-item d-flex align-items-center py-2 px-2">
-                    <div class="avatar rounded-circle bg-light me-2" style="width:44px;height:44px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
-                        <img src="${data.photoUrl || '../src/Icons/user.png'}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-                    </div>
                     <div class="flex-grow-1">
-                        <div style="font-weight:600;color:#4361EE;">${data.name || 'System'}</div>
-                        <div style="font-size:0.97rem;color:#222;">${data.message || ''}</div>
+                        <div style="color:${nameColor};margin-top:-5px">${data.name || 'System'}</div>
+                        <div style="font-size:12px;color:${messageColor};">${data.message || ''}</div>
                     </div>
-                    <div style="font-size:0.85rem;color:#888;min-width:70px;text-align:right;">${data.timestamp && data.timestamp.toDate ? timeAgo(data.timestamp.toDate()) : ''}</div>
+                    <div style="font-size:12px;color:#888;min-width:70px;text-align:right;">${data.timestamp && data.timestamp.toDate ? timeAgo(data.timestamp.toDate()) : ''}</div>
                 </div>`;
             });
             list.innerHTML = html;

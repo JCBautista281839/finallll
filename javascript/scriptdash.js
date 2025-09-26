@@ -154,9 +154,6 @@ async function loadChartsData() {
 
 function showFallbackChartsData() {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // Create sample data for demonstration
-  const sampleOrders = [12, 15, 18, 22, 25, 28, 30, 27, 24, 20, 16, 14];
-  const sampleProfit = [1200, 1500, 1800, 2200, 2500, 2800, 3000, 2700, 2400, 2000, 1600, 1400];
   createFullYearCharts(months, sampleOrders, sampleProfit);
 }
 
@@ -495,6 +492,7 @@ function updateChartLabels() {
     const monthName = monthNames[parseInt(selectedMonth)];
     if (ordersHeader) ordersHeader.textContent = `Daily Orders - ${monthName}`;
     if (revenueHeader) revenueHeader.textContent = `Daily Revenue - ${monthName}`;
+
   }
 }
 

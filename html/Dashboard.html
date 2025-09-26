@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Viktoria's Bistro</title>
   
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;500&display=swap" rel="stylesheet">
@@ -175,7 +176,6 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5 class="mb-0">Orders & Revenue Overview</h5>
               <div class="d-flex align-items-center gap-2">
-                <small class="text-muted">Filter Data:</small>
                 <select class="form-select form-select-sm w-auto" id="monthSelect">
                   <option value="all" selected>All Months</option>
                   <option value="0">January</option>
@@ -314,11 +314,11 @@
   
   <!-- Notification Dropdown UI -->
 <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
-    <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
-        <span class="bi bi-bell" style="font-size:1.3rem;color:#4361EE;"></span>
-        <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
-        <span class="bi bi-x-lg" id="closeDropdown" style="cursor:pointer;font-size:1.1rem;color:#888;"></span>
-    </div>
+  <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+    <!-- Bell icon removed -->
+    <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+    <span class="bi bi-x-lg" id="closeDropdown" style="cursor:pointer;font-size:1.1rem;color:#888;"></span>
+  </div>
     <div class="dropdown-body p-2" id="dropdownNotificationsList">
         <!-- Notifications will be loaded here dynamically -->
         <div class="text-center text-muted py-3">No notifications</div>
