@@ -11,7 +11,7 @@
   <div class="profile-settings-wrapper">
     <div class="profile-left">
       <div class="profile-header">
-        <i class="fa-solid fa-arrow-left"></i>
+        <i class="fa-solid fa-arrow-left" onclick="goBackToIndex()" style="cursor: pointer;"></i>
         <span>PROFILE SETTINGS</span>
         <button class="edit-profile-btn" type="button" aria-label="Edit Profile">
           Edit Profile <i class="fa-regular fa-pen-to-square"></i>
@@ -59,6 +59,47 @@
       <!-- Order history content goes here -->
     </div>
   </div>
+  
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+  
+  <!-- Firebase Configuration -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAXFKAt6OGLlUfQBnNmEhek6uqNQm4634Y",
+      authDomain: "victoria-s-bistro.firebaseapp.com",
+      databaseURL: "https://victoria-s-bistro-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "victoria-s-bistro",
+      storageBucket: "victoria-s-bistro.firebasestorage.app",
+      messagingSenderId: "672219366880",
+      appId: "1:672219366880:web:220df1e01d0b9ab72d9785",
+      measurementId: "G-H9G17QXSMV"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    
+    // Check authentication on page load
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        console.log('✅ User authenticated:', user.email);
+        // User is logged in, allow access to account settings
+      } else {
+        console.log('❌ User not authenticated, redirecting to login');
+        // User is not logged in, redirect to login
+        window.location.href = '../../html/login.html';
+      }
+    });
+    
+    // Function to go back to index.html
+    function goBackToIndex() {
+      console.log('🔄 Going back to index.html');
+      window.location.href = '../../index.html';
+    }
+  </script>
+  
   <script src="../javascript/profilesettings.js"></script>
 </body>
 </html>

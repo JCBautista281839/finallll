@@ -73,3 +73,36 @@ document.addEventListener('DOMContentLoaded', function() {
         testFirebaseConnection();
     }, 1000);
 });
+
+// Handle user profile icon click
+function handleUserProfileClick(event) {
+    event.preventDefault();
+    
+    try {
+        // Check if Firebase is initialized
+        if (typeof firebase === 'undefined') {
+            console.log('Firebase not loaded, redirecting to login');
+            window.location.href = 'html/login.html';
+            return;
+        }
+        
+        // Check if user is authenticated
+        const user = firebase.auth().currentUser;
+        
+        if (user) {
+            // User is logged in - redirect to account page
+            console.log('User is logged in:', user.email);
+            console.log('Redirecting to account page...');
+            window.location.href = 'customer/html/account.html';
+        } else {
+            // User is not logged in - redirect to login
+            console.log('User is not logged in, redirecting to login');
+            window.location.href = 'html/login.html';
+        }
+        
+    } catch (error) {
+        console.error('Error checking user authentication:', error);
+        // Fallback to login page
+        window.location.href = 'html/login.html';
+    }
+}

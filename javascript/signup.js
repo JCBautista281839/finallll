@@ -170,11 +170,16 @@ async function createUserAccount(name, email, phone, password) {
         // Create user with Firebase Auth
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
+        
+        console.log('✅ User created and automatically logged in:', user.email);
+        console.log('✅ User UID:', user.uid);
 
         // Update user profile with display name
         await user.updateProfile({
             displayName: name
         });
+        
+        console.log('✅ User profile updated with display name:', name);
 
         // Save customer data to streamlined collections
         try {
@@ -371,6 +376,8 @@ async function createUserAccount(name, email, phone, password) {
 
         // Redirect to OTP page after a short delay
         setTimeout(() => {
+            console.log('🔄 Redirecting to OTP verification page...');
+            console.log('Current user before redirect:', firebase.auth().currentUser);
             window.location.href = '../html/otp.html';
         }, 2000);
 

@@ -388,10 +388,24 @@ async function verifyOTP() {
         localStorage.removeItem('signupName');
         
         // Show success message
-        alert('Email verified successfully! You can now log in.');
+        alert('Email verified successfully! You are now logged in and will be redirected to the home page.');
         
-        // Redirect to login page
-        window.location.href = 'html/login.html';
+        // Wait a moment for Firebase to sync, then redirect
+        setTimeout(() => {
+            // Check if user is still authenticated
+            const currentUser = firebase.auth().currentUser;
+            console.log('🔍 Checking authentication state for redirect...');
+            console.log('Current user:', currentUser);
+            
+            if (currentUser) {
+                console.log('✅ User is authenticated:', currentUser.email);
+                console.log('🚀 Redirecting authenticated user to index.html');
+                window.location.href = '../index.html';
+            } else {
+                console.log('❌ User not authenticated, redirecting to login');
+                window.location.href = 'html/login.html';
+            }
+        }, 1000);
         
     } catch (error) {
         console.error('OTP verification error:', error);

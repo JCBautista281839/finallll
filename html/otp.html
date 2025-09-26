@@ -306,7 +306,9 @@
         
         // Verify Email OTP Code
         async function verifyOTP() {
+            console.log('🔍 Starting OTP verification process...');
             const otp = Array.from(otpInputs).map(input => input.value).join('');
+            console.log('OTP entered:', otp);
             
             if (otp.length !== 6) {
                 alert('Please enter the complete 6-digit code');
@@ -331,6 +333,10 @@
                     throw new Error('No user found. Please sign up again.');
                 }
                 
+                // Ensure user is properly authenticated
+                console.log('🔐 Current user:', user.email);
+                console.log('🔐 User UID:', user.uid);
+                console.log('🔐 Email verified:', user.emailVerified);
                 console.log('Verifying Email OTP for user:', user.email);
                 
                 // Verify Email OTP using Firebase
@@ -420,15 +426,34 @@
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
+                // Ensure user is properly authenticated and logged in
+                console.log('✅ User authenticated:', user.email);
+                console.log('✅ User UID:', user.uid);
+                console.log('✅ User is automatically logged in after OTP verification');
+                
                 // Clear stored data
                 localStorage.removeItem('signupEmail');
                 localStorage.removeItem('signupName');
                 
                 // Show success message
-                alert('Email verified successfully! Welcome to Viktoria\'s Bistro!');
+                alert('Email verified successfully! You are now logged in and will be redirected to the home page.');
                 
-                // Redirect to home page
-                window.location.href = '/index.html';
+                // Wait a moment for Firebase to sync, then redirect
+                setTimeout(() => {
+                    // Check if user is still authenticated
+                    const currentUser = firebase.auth().currentUser;
+                    console.log('🔍 Checking authentication state for redirect...');
+                    console.log('Current user:', currentUser);
+                    
+                    if (currentUser) {
+                        console.log('✅ User is authenticated:', currentUser.email);
+                        console.log('🚀 Redirecting authenticated user to index.html');
+                        window.location.href = '../index.html';
+                    } else {
+                        console.log('❌ User not authenticated, redirecting to login');
+                        window.location.href = 'login.html';
+                    }
+                }, 1000);
                 
             } catch (error) {
                 console.error('OTP verification error:', error);
@@ -556,7 +581,7 @@
         }
         
         function goToLogin() {
-            window.location.href = 'html/login.html';
+            window.location.href = 'login.html';
         }
 
         
