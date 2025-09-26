@@ -462,9 +462,9 @@ function togglePassword(inputId) {
 
 // Real-time validation and button state management
 document.addEventListener('DOMContentLoaded', function() {
-    const nameInput = document.querySelector('input[placeholder="Name"]');
-    const emailInput = document.querySelector('input[placeholder="Email Address"]');
-    const phoneInput = document.querySelector('input[placeholder="Phone Number"]');
+    const nameInput = document.getElementById('nameInput');
+    const emailInput = document.getElementById('emailInput');
+    const phoneInput = document.getElementById('phoneInput');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
     const termsCheckbox = document.getElementById('terms');
@@ -671,9 +671,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Check for missing elements and skip validation if any are not found
 document.addEventListener('DOMContentLoaded', function() {
-    const nameInput = document.querySelector('input[placeholder="Name"]');
-    const emailInput = document.querySelector('input[placeholder="Email Address"]');
-    const phoneInput = document.querySelector('input[placeholder="Phone Number"]');
+    const nameInput = document.getElementById('nameInput');
+    const emailInput = document.getElementById('emailInput');
+    const phoneInput = document.getElementById('phoneInput');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
     const termsCheckbox = document.getElementById('terms');
