@@ -75,3 +75,5 @@ jspm_packages/
 # API Keys and sensitive data
 config/secrets.js
 secrets.json
+config.env
+config.env.secure

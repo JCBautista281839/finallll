@@ -3,7 +3,7 @@ const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
-require('dotenv').config(); // Load environment variables
+require('dotenv').config(); // Load environment variables from .env file
 
 const { spawn, exec } = require('child_process');
 
@@ -13,9 +13,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Load environment variables from config file
-require('dotenv').config({ path: './config.env' });
 
 // Configuration (use environment variables)
 // IMPORTANT: Using SANDBOX mode for testing
