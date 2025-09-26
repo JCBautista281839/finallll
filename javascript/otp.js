@@ -222,20 +222,37 @@ class OTPVerificationManager {
                 throw new Error('Firebase not loaded. Please refresh the page and try again.');
             }
 
-            // Get current user
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                throw new Error('No user found. Please sign up again.');
-            }
-
             let verificationSuccess = false;
             let verificationMethod = '';
 
-            // Try SendGrid OTP verification first
-            if (window.sendGridOTPService) {
+            // Try local OTP verification first (fastest)
+            try {
+                console.log('🔄 Attempting local OTP verification first...');
+                const localResult = window.sendGridOTPService.verifyLocalOTP(email, otp);
+                
+                if (localResult.success) {
+                    console.log('✅ Local OTP verified successfully');
+                    verificationSuccess = true;
+                    verificationMethod = 'Local';
+                } else {
+                    console.log('❌ Local OTP verification failed:', localResult.message);
+                }
+            } catch (localError) {
+                console.log('❌ Local OTP verification error:', localError.message);
+            }
+
+            // Try SendGrid OTP verification only if local verification failed
+            if (!verificationSuccess && window.sendGridOTPService) {
                 try {
                     console.log('📧 Attempting SendGrid OTP verification...');
-                    const result = await window.sendGridOTPService.verifyEmailOTP(email, otp);
+                    
+                    // Add timeout to SendGrid request
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('SendGrid request timeout')), 5000)
+                    );
+                    
+                    const sendGridPromise = window.sendGridOTPService.verifyEmailOTP(email, otp);
+                    const result = await Promise.race([sendGridPromise, timeoutPromise]);
                     
                     if (result.success) {
                         console.log('✅ SendGrid OTP verified successfully');
@@ -249,90 +266,15 @@ class OTPVerificationManager {
                 }
             }
 
-            // Fallback to local OTP verification if SendGrid fails
             if (!verificationSuccess) {
-                const localOTP = localStorage.getItem('emailOTP');
-                const localOTPExpiry = localStorage.getItem('emailOTPExpiry');
-                
-                if (localOTP && localOTPExpiry && Date.now() < parseInt(localOTPExpiry)) {
-                    if (localOTP === otp) {
-                        console.log('✅ Local OTP verified successfully');
-                        verificationSuccess = true;
-                        verificationMethod = 'Local';
-                        // Clear local OTP after successful verification
-                        localStorage.removeItem('emailOTP');
-                        localStorage.removeItem('emailOTPExpiry');
-                    } else {
-                        throw new Error('Invalid OTP. Please check your code and try again.');
-                    }
-                } else {
-                    this.attempts++;
-                    throw new Error('OTP verification failed. Please check your code and try again.');
-                }
+                this.attempts++;
+                throw new Error('OTP verification failed. Please check your code and try again.');
             }
 
-            // Ensure user document exists in customers collection
-            const customerRef = firebase.firestore().collection('customers').doc(user.uid);
-            const customerDoc = await customerRef.get();
-            
-            if (!customerDoc.exists) {
-                // Create customer document if it doesn't exist
-                const userName = localStorage.getItem('signupName') || user.displayName || 'User';
-                await customerRef.set({
-                    email: user.email,
-                    name: userName,
-                    role: 'customer',
-                    userType: 'customer',
-                    isEmailVerified: true,
-                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    verificationMethod: verificationMethod,
-                    isActive: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                console.log('✅ Customer document created');
-            } else {
-                // Update existing customer document
-                await customerRef.update({
-                    isEmailVerified: true,
-                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    verificationMethod: verificationMethod,
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                console.log('✅ Customer document updated');
-            }
-
-            // Also ensure user document exists in users collection for consistency
-            const userRef = firebase.firestore().collection('users').doc(user.uid);
-            const userDoc = await userRef.get();
-            
-            if (!userDoc.exists) {
-                const userName = localStorage.getItem('signupName') || user.displayName || 'User';
-                await userRef.set({
-                    email: user.email,
-                    name: userName,
-                    role: 'customer',
-                    userType: 'customer',
-                    isEmailVerified: true,
-                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    verificationMethod: verificationMethod,
-                    isActive: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                console.log('✅ User document created');
-            } else {
-                await userRef.update({
-                    isEmailVerified: true,
-                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    verificationMethod: verificationMethod,
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                console.log('✅ User document updated');
+            // Only create Firebase user account AFTER successful OTP verification
+            if (verificationSuccess) {
+                console.log('🔐 Creating Firebase user account after OTP verification...');
+                await this.createFirebaseUserAccount(email, verificationMethod);
             }
 
             console.log(`✅ Email verification completed via ${verificationMethod}`);
@@ -344,6 +286,247 @@ class OTPVerificationManager {
         } finally {
             this.isVerifying = false;
         }
+    }
+
+    async createFirebaseUserAccount(email, verificationMethod) {
+        try {
+            console.log('🔐 Creating Firebase user account...');
+            
+            // Get stored signup data
+            const name = localStorage.getItem('signupName');
+            const phone = localStorage.getItem('signupPhone');
+            const password = localStorage.getItem('signupPassword');
+            
+            if (!name || !phone || !password) {
+                throw new Error('Signup data not found. Please sign up again.');
+            }
+
+            // Create user with Firebase Auth
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            console.log('✅ User created and automatically logged in:', user.email);
+            console.log('✅ User UID:', user.uid);
+
+            // Update user profile with display name
+            await user.updateProfile({
+                displayName: name
+            });
+            
+            console.log('✅ User profile updated with display name:', name);
+
+            // Save customer data to streamlined collections
+            try {
+                // 1. Main Customer Collection (Combines basic info, profile, and preferences)
+                await firebase.firestore().collection('customers').doc(user.uid).set({
+                    // Basic Information
+                    customerId: user.uid,
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    
+                    // Profile Information
+                    displayName: name,
+                    firstName: name.split(' ')[0] || name,
+                    lastName: name.split(' ').slice(1).join(' ') || '',
+                    profilePicture: null,
+                    dateOfBirth: null,
+                    gender: null,
+                    
+                    // Address Information
+                    address: {
+                        street: '',
+                        city: '',
+                        state: '',
+                        zipCode: '',
+                        country: 'Philippines',
+                        isDefault: true
+                    },
+                    // User Status
+                    role: 'customer',
+                    userType: 'customer',
+                    isActive: true,
+                    isEmailVerified: true,
+                    isPhoneVerified: false,
+                    accountStatus: 'verified',
+                    verificationMethod: verificationMethod,
+                    
+                    // Preferences
+                    preferences: {
+                        notifications: {
+                            email: true,
+                            sms: true,
+                            push: true,
+                            marketing: false,
+                            orderUpdates: true,
+                            promotions: false
+                        },
+                        dietaryRestrictions: [],
+                        allergies: [],
+                        favoriteCuisines: [],
+                        favoriteItems: [],
+                        preferredDeliveryTime: '',
+                        deliveryInstructions: '',
+                        language: 'en',
+                        currency: 'PHP',
+                        timezone: 'Asia/Manila',
+                        theme: 'light'
+                    },
+                    
+                    // Profile Completion
+                    profileCompletion: 25, // 25% complete after basic signup
+                    
+                    // Timestamps
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // 2. Customer Activity Collection (Combines loyalty, orders, reviews, support, and analytics)
+                await firebase.firestore().collection('customer_activity').doc(user.uid).set({
+                    customerId: user.uid,
+                    
+                    // Loyalty System
+                    loyalty: {
+                        loyaltyPoints: 0,
+                        totalPointsEarned: 0,
+                        totalPointsRedeemed: 0,
+                        membershipLevel: 'Bronze',
+                        membershipTier: 'New Member',
+                        membershipStartDate: firebase.firestore.FieldValue.serverTimestamp(),
+                        availableRewards: [],
+                        redeemedRewards: [],
+                        referralCode: this.generateReferralCode(name),
+                        referrals: [],
+                        referralRewards: 0
+                    },
+                    
+                    // Order Statistics
+                    orders: {
+                        totalOrders: 0,
+                        totalSpent: 0,
+                        averageOrderValue: 0,
+                        orderHistory: [],
+                        favoriteRestaurants: [],
+                        totalDeliveries: 0,
+                        averageDeliveryTime: 0,
+                        savedPaymentMethods: [],
+                        defaultPaymentMethod: null,
+                        lastOrderDate: null
+                    },
+                    
+                    // Reviews
+                    reviews: {
+                        totalReviews: 0,
+                        averageRating: 0,
+                        reviewHistory: [],
+                        reviewPreferences: {
+                            autoReview: false,
+                            reviewReminders: true,
+                            shareReviews: false
+                        },
+                        lastReviewDate: null
+                    },
+                    
+                    // Support
+                    support: {
+                        totalTickets: 0,
+                        openTickets: 0,
+                        resolvedTickets: 0,
+                        supportTickets: [],
+                        supportPreferences: {
+                            preferredContactMethod: 'email',
+                            autoEscalation: false,
+                            priorityLevel: 'normal'
+                        },
+                        lastSupportContact: null
+                    },
+                    
+                    // Analytics
+                    analytics: {
+                        loginFrequency: 0,
+                        averageSessionDuration: 0,
+                        lastActiveDate: firebase.firestore.FieldValue.serverTimestamp(),
+                        totalAppOpens: 0,
+                        totalMenuViews: 0,
+                        totalCartAdditions: 0,
+                        deviceInfo: {
+                            platform: 'unknown',
+                            browser: 'unknown',
+                            lastDeviceUpdate: firebase.firestore.FieldValue.serverTimestamp()
+                        },
+                        marketingCampaigns: [],
+                        referralSources: []
+                    },
+                    
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Also create a backup record in the main users collection for authentication
+                await firebase.firestore().collection('users').doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    role: 'customer',
+                    userType: 'customer',
+                    isEmailVerified: true,
+                    verificationMethod: verificationMethod,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    isActive: true
+                });
+                
+                console.log('✅ User data saved to Firestore successfully');
+                
+            } catch (firestoreError) {
+                console.warn('Firestore save failed:', firestoreError.message);
+                // Continue with the process even if Firestore fails
+            }
+
+            // Clear stored signup data
+            localStorage.removeItem('signupEmail');
+            localStorage.removeItem('signupName');
+            localStorage.removeItem('signupPhone');
+            localStorage.removeItem('signupPassword');
+
+            console.log('✅ Firebase user account created successfully');
+            return user;
+
+        } catch (error) {
+            console.error('❌ Error creating Firebase user account:', error);
+            
+            // Handle specific Firebase errors
+            let errorMessage = 'An error occurred while creating your account. Please try again.';
+            
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    errorMessage = 'This email address is already registered. Please use a different email or try logging in.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Please enter a valid email address.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = 'Password is too weak. Please choose a stronger password.';
+                    break;
+                case 'auth/network-request-failed':
+                    errorMessage = 'Network error. Please check your internet connection and try again.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Too many attempts. Please try again later.';
+                    break;
+                default:
+                    errorMessage = error.message || errorMessage;
+            }
+            
+            throw new Error(errorMessage);
+        }
+    }
+
+    generateReferralCode(name) {
+        const namePart = name.replace(/\s+/g, '').toUpperCase().substring(0, 3);
+        const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+        return `${namePart}${randomPart}`;
     }
 
     async resendOTP(email, userName) {
@@ -408,99 +591,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ OTP managers initialized');
 });
 
-// Global OTP functions for backward compatibility
-async function verifyOTP() {
-    const otpInputManager = window.otpInputManager;
-    const otpVerificationManager = window.otpVerificationManager;
-    
-    if (!otpInputManager || !otpVerificationManager) {
-        alert('OTP system not initialized. Please refresh the page.');
-        return;
-    }
-
-    const otp = otpInputManager.getValue();
-    
-    if (otp.length !== 6) {
-        alert('Please enter the complete 6-digit code');
-        return;
-    }
-
-    const verifyButton = document.getElementById('verifyButton');
-    if (verifyButton) {
-        verifyButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-        verifyButton.disabled = true;
-    }
-
-    try {
-        const email = localStorage.getItem('signupEmail');
-        if (!email) {
-            throw new Error('Email not found. Please sign up again.');
-        }
-
-        const result = await otpVerificationManager.verifyOTP(email, otp);
-        
-        // Clear stored data
-        localStorage.removeItem('signupEmail');
-        localStorage.removeItem('signupName');
-        
-        // Show success message
-        alert('Email verified successfully! You are now logged in and will be redirected to the home page.');
-        
-        // Direct redirect to index.html - user is already authenticated
-        console.log('🚀 Redirecting to index.html...');
-        window.location.href = '/index.html';
-        
-    } catch (error) {
-        console.error('OTP verification error:', error);
-        alert('Verification failed: ' + error.message);
-        
-        // Reset button state
-        if (verifyButton) {
-            verifyButton.innerHTML = 'Verify Email';
-            verifyButton.disabled = false;
-        }
-    }
-}
-
-async function resendCode() {
-    const otpVerificationManager = window.otpVerificationManager;
-    
-    if (!otpVerificationManager) {
-        alert('OTP system not initialized. Please refresh the page.');
-        return;
-    }
-
-    const resendLink = document.querySelector('.resend-link');
-    if (resendLink) {
-        resendLink.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-        resendLink.style.pointerEvents = 'none';
-    }
-
-    try {
-        const email = localStorage.getItem('signupEmail');
-        const userName = localStorage.getItem('signupName');
-        
-        if (!email || !userName) {
-            throw new Error('Email or user name not found. Please sign up again.');
-        }
-
-        const result = await otpVerificationManager.resendOTP(email, userName);
-        
-        // Get the new OTP from localStorage and show it
-        const newOTP = localStorage.getItem('emailOTP');
-        alert(`New OTP Code: ${newOTP}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
-        
-    } catch (error) {
-        console.error('Resend OTP error:', error);
-        alert('Failed to resend code: ' + error.message);
-    } finally {
-        // Reset button state
-        if (resendLink) {
-            resendLink.innerHTML = 'Click to resend.';
-            resendLink.style.pointerEvents = 'auto';
-        }
-    }
-}
+// Note: Global functions removed to prevent recursion conflicts
+// OTP verification is now handled directly in the HTML file
 
 // Navigation functions
 function goBack() {
@@ -510,5 +602,25 @@ function goBack() {
 function goToLogin() {
     window.location.href = 'html/login.html';
 }
+
+// Debug function to check OTP status
+function debugOTPStatus() {
+    console.log('🔍 OTP Debug Status:');
+    console.log('  - signupEmail:', localStorage.getItem('signupEmail'));
+    console.log('  - signupName:', localStorage.getItem('signupName'));
+    console.log('  - signupPhone:', localStorage.getItem('signupPhone'));
+    console.log('  - signupPassword:', localStorage.getItem('signupPassword') ? '[HIDDEN]' : 'Not found');
+    console.log('  - emailOTP:', localStorage.getItem('emailOTP'));
+    console.log('  - emailOTPEmail:', localStorage.getItem('emailOTPEmail'));
+    console.log('  - emailOTPExpiry:', localStorage.getItem('emailOTPExpiry'));
+    console.log('  - Current Time:', Date.now());
+    console.log('  - Is OTP Expired:', localStorage.getItem('emailOTPExpiry') ? Date.now() > parseInt(localStorage.getItem('emailOTPExpiry')) : 'No expiry set');
+    console.log('  - Firebase Ready:', typeof firebase !== 'undefined' && firebase.apps.length > 0);
+    console.log('  - SendGrid Service:', !!window.sendGridOTPService);
+    console.log('  - OTP Managers:', !!window.otpInputManager && !!window.otpVerificationManager);
+}
+
+// Make debug function available globally
+window.debugOTPStatus = debugOTPStatus;
 
 console.log('📱 OTP verification functions loaded');

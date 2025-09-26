@@ -93,13 +93,20 @@ class SendGridOTPService {
                 throw new Error('Email and OTP are required');
             }
 
+            // Add timeout to prevent hanging requests
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
             const response = await fetch(`${this.baseUrl}/api/sendgrid-verify-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, otp })
+                body: JSON.stringify({ email, otp }),
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId);
             
             if (!response.ok) {
                 throw new Error(`Server API error: ${response.status}`);
@@ -126,6 +133,11 @@ class SendGridOTPService {
 
         } catch (error) {
             console.error('❌ SendGrid OTP verification error:', error);
+            
+            // Handle timeout specifically
+            if (error.name === 'AbortError') {
+                console.log('⏰ SendGrid request timed out, falling back to local verification');
+            }
             
             // Fallback to local verification
             return this.verifyLocalOTP(email, otp);
