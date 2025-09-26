@@ -53,18 +53,13 @@
                 </div>
             </div>
             
-            <!-- Right Column - Photo Collage -->
+            <!-- Right Column - Photo Section -->
             <div class="col-md-6 right-column">
-                <div class="photo-collage">
-                    <div class="photo-item"></div>
-                    <div class="photo-item"></div>
-                    <div class="photo-item"></div>
-                    <div class="photo-item"></div>
-                    <div class="photo-item"></div>
-                    <div class="photo-item"></div>
+                <div class="photo-section">
+                    <div class="photo-item">
+                        <img src="../src/IMG/piclogin.png" alt="Viktoria's Bistro">
+                    </div>
                 </div>
-                <div class="pink-overlay"></div>
-                <div class="overlay-text">Celebrate! at Viktoria's Bistro</div>
             </div>
         </div>
     </div>
@@ -152,6 +147,37 @@
         .step-text {
             color: #333;
             font-weight: 500;
+        }
+        
+        /* Photo Section Styling */
+        .photo-section {
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #8B2E20 0%, #a94a3a 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-item {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .right-column {
+            padding: 0 !important;
         }
         
         .otp-inputs {
@@ -399,10 +425,10 @@
                 localStorage.removeItem('signupName');
                 
                 // Show success message
-                alert('Email verified successfully! You can now log in.');
+                alert('Email verified successfully! Welcome to Viktoria\'s Bistro!');
                 
-                // Redirect to login page
-                window.location.href = 'html/login.html';
+                // Redirect to home page
+                window.location.href = '/index.html';
                 
             } catch (error) {
                 console.error('OTP verification error:', error);
