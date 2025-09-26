@@ -89,17 +89,26 @@
             updateCloudinaryStatus('success', 'Cloudinary Ready');
 
             try {
-                // Create the upload widget with proper configuration
+                // Create the upload widget with proper configuration for profile pictures
                 uploadWidget = cl.createUploadWidget({
                     cloudName: cloudinaryConfig.cloud_name,
                     uploadPreset: cloudinaryConfig.upload_preset,
-                    apiKey: cloudinaryConfig.api_key, // Make sure API key is included
-                    sources: ['local', 'camera'],
+                    apiKey: cloudinaryConfig.api_key,
+                    sources: ['local', 'camera', 'url'],
                     multiple: false,
-                    maxFiles: 1,
+                    maxFiles: 100,
                     resourceType: 'image',
                     clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
                     maxFileSize: 5000000,
+                    cropping: false,
+                    croppingAspectRatio: 1,
+                    croppingShowDimensions: false,
+                    folder: 'profile-pictures',
+                    publicId: 'profile_' + Date.now(),
+                    transformation: [
+                        { width: 300, height: 300, crop: 'fill', gravity: 'face' },
+                        { quality: 'auto', fetch_format: 'auto' }
+                    ],
                     styles: {
                         palette: {
                             window: "#FFFFFF",
@@ -121,10 +130,24 @@
                     if (!error && result && result.event === "success") {
                         console.log('✅ Upload successful:', result.info);
 
+                        // Handle profile picture updates
+                        const profileImg = document.getElementById('profileImg');
+                        const placeholderIcon = document.getElementById('placeholderIcon');
                         const previewImage = document.getElementById('previewImage');
                         const uploadPlaceholder = document.getElementById('uploadPlaceholder');
                         const changePhotoBtn = document.getElementById('changePhotoBtn');
 
+                        // Update profile picture if elements exist
+                        if (profileImg && placeholderIcon) {
+                            profileImg.src = result.info.secure_url;
+                            profileImg.style.display = 'block';
+                            placeholderIcon.style.display = 'none';
+                            profileImg.setAttribute('data-cloudinary-url', result.info.secure_url);
+                            profileImg.setAttribute('data-public-id', result.info.public_id);
+                            console.log('✅ Profile picture updated successfully');
+                        }
+
+                        // Update preview image if elements exist (for other upload contexts)
                         if (previewImage) {
                             previewImage.src = result.info.secure_url;
                             previewImage.style.display = 'block';
@@ -136,7 +159,7 @@
                         if (changePhotoBtn) changePhotoBtn.style.display = 'block';
 
                         if (typeof window.showMessage === 'function') {
-                            window.showMessage('Photo uploaded successfully to Cloudinary!', 'success');
+                            window.showMessage('Profile picture uploaded successfully!', 'success');
                         }
 
                         // Generate optimized URL
@@ -150,6 +173,11 @@
                                 optimizedUrl: optimizedUrl
                             }
                         }));
+
+                        // Call the profile settings handler if available
+                        if (typeof window.handleCloudinaryUploadResult === 'function') {
+                            window.handleCloudinaryUploadResult(result.info);
+                        }
                     } else if (error) {
                         console.error('❌ Upload error:', error);
                         if (typeof window.showMessage === 'function') {
@@ -295,15 +323,25 @@
                         profileImg.src = result.optimizedUrl || result.url;
                         profileImg.style.display = 'block';
                         placeholderIcon.style.display = 'none';
+                        profileImg.setAttribute('data-cloudinary-url', result.url);
+                        profileImg.setAttribute('data-public-id', result.publicId);
                         
                         // Trigger profile image update event
                         window.dispatchEvent(new CustomEvent('profileImageUpdated', {
                             detail: result
                         }));
                         
+                        // Call the profile settings handler if available
+                        if (typeof window.handleCloudinaryUploadResult === 'function') {
+                            window.handleCloudinaryUploadResult({
+                                secure_url: result.url,
+                                public_id: result.publicId
+                            });
+                        }
+                        
                         console.log('✅ Profile image updated with fallback method');
                         if (typeof window.showMessage === 'function') {
-                            window.showMessage('Photo uploaded successfully!', 'success');
+                            window.showMessage('Profile picture uploaded successfully!', 'success');
                         }
                     }
                 } else {

@@ -271,13 +271,69 @@ class OTPVerificationManager {
                 }
             }
 
-            // Update user's email verification status in Firestore
-            await firebase.firestore().collection('customers').doc(user.uid).update({
-                isEmailVerified: true,
-                emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                verificationMethod: verificationMethod,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // Ensure user document exists in customers collection
+            const customerRef = firebase.firestore().collection('customers').doc(user.uid);
+            const customerDoc = await customerRef.get();
+            
+            if (!customerDoc.exists) {
+                // Create customer document if it doesn't exist
+                const userName = localStorage.getItem('signupName') || user.displayName || 'User';
+                await customerRef.set({
+                    email: user.email,
+                    name: userName,
+                    role: 'customer',
+                    userType: 'customer',
+                    isEmailVerified: true,
+                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    verificationMethod: verificationMethod,
+                    isActive: true,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ Customer document created');
+            } else {
+                // Update existing customer document
+                await customerRef.update({
+                    isEmailVerified: true,
+                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    verificationMethod: verificationMethod,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ Customer document updated');
+            }
+
+            // Also ensure user document exists in users collection for consistency
+            const userRef = firebase.firestore().collection('users').doc(user.uid);
+            const userDoc = await userRef.get();
+            
+            if (!userDoc.exists) {
+                const userName = localStorage.getItem('signupName') || user.displayName || 'User';
+                await userRef.set({
+                    email: user.email,
+                    name: userName,
+                    role: 'customer',
+                    userType: 'customer',
+                    isEmailVerified: true,
+                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    verificationMethod: verificationMethod,
+                    isActive: true,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ User document created');
+            } else {
+                await userRef.update({
+                    isEmailVerified: true,
+                    emailVerifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    verificationMethod: verificationMethod,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('✅ User document updated');
+            }
 
             console.log(`✅ Email verification completed via ${verificationMethod}`);
             return { success: true, method: verificationMethod };
@@ -390,22 +446,9 @@ async function verifyOTP() {
         // Show success message
         alert('Email verified successfully! You are now logged in and will be redirected to the home page.');
         
-        // Wait a moment for Firebase to sync, then redirect
-        setTimeout(() => {
-            // Check if user is still authenticated
-            const currentUser = firebase.auth().currentUser;
-            console.log('🔍 Checking authentication state for redirect...');
-            console.log('Current user:', currentUser);
-            
-            if (currentUser) {
-                console.log('✅ User is authenticated:', currentUser.email);
-                console.log('🚀 Redirecting authenticated user to index.html');
-                window.location.href = '../index.html';
-            } else {
-                console.log('❌ User not authenticated, redirecting to login');
-                window.location.href = 'html/login.html';
-            }
-        }, 1000);
+        // Direct redirect to index.html - user is already authenticated
+        console.log('🚀 Redirecting to index.html...');
+        window.location.href = '/index.html';
         
     } catch (error) {
         console.error('OTP verification error:', error);

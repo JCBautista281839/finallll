@@ -5,11 +5,59 @@
   justify-content: space-between;
   gap: 16px;
   margin-top: 24px;
+  margin-left: 180px;
+  width: 500px;
 }
+
 .profile-btn-row button {
   width: 48%;
   margin: 0;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'PoppinsRegular', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+/* Cancel button styles */
+.btn-cancel {
+  background: #f8f9fa;
+  color: #6c757d;
+  border-color: #dee2e6;
+}
+
+.btn-cancel:hover {
+  background: #e9ecef;
+  color: #495057;
+  border-color: #adb5bd;
+}
+
+.btn-cancel i {
+  color: #6c757d;
+}
+
+/* Save button styles */
+.btn-save {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.btn-save:hover {
+  background: #218838;
+  border-color: #218838;
+  color: white;
+}
+
+.btn-save i {
+  color: white;
 }
 @font-face {
   font-family: 'PoppinsMedium';
@@ -110,11 +158,14 @@ body {
   outline: none;
   margin-left: -230px;
   margin-top: 2px;
-  transition: color 0.2s;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  border-radius: 8px;
 }
 
 .edit-profile-btn:hover {
   color: #760000;
+  background: rgba(118, 0, 0, 0.1);
 }
 
 .edit-profile-btn i {
@@ -125,6 +176,23 @@ body {
 
 .edit-profile-btn:hover i {
   color: #760000;
+}
+
+/* Save mode styles */
+.edit-profile-btn.save-mode {
+  background: #28a745;
+  color: white;
+  border: 2px solid #28a745;
+}
+
+.edit-profile-btn.save-mode:hover {
+  background: #218838;
+  border-color: #218838;
+  color: white;
+}
+
+.edit-profile-btn.save-mode i {
+  color: white;
 }
 
 .profile-fields {
@@ -225,6 +293,33 @@ body {
   margin-bottom: 18px;
   font-size: 2.8rem;
   color: #b4b4b4;
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Profile picture edit state styles */
+.profile-avatar.editable {
+  cursor: pointer;
+  opacity: 1;
+  border: 3px solid #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.profile-avatar.editable:hover {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.profile-avatar:not(.editable) {
+  cursor: default;
+  opacity: 0.7;
+  border: 3px solid transparent;
+}
+
+.profile-avatar:not(.editable):hover {
+  opacity: 0.8;
 }
 
 /* Section titles like 'General', 'Security' */
@@ -249,8 +344,8 @@ body {
 
 /* Input-like fields for profile info */
 .profile-input {
-  background: #ededed;
-  border: none;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
   border-radius: 10px;
   padding: 8px 18px;
   font-size: 1.08rem;
@@ -259,6 +354,21 @@ body {
   width: 100%;
   margin-bottom: 0;
   pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Edit mode input styles */
+.profile-input:not(:disabled) {
+  background: #fff;
+  border-color: #007bff;
+  color: #333;
+  pointer-events: auto;
+}
+
+.profile-input:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .addAddress {

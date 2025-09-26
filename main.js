@@ -74,7 +74,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 1000);
 });
 
-// Handle user profile icon click
+// Global function to check if Firebase is ready
+window.isFirebaseReady = function() {
+    return typeof firebase !== 'undefined' && 
+           firebase.apps && 
+           firebase.apps.length > 0 && 
+           firebase.auth &&
+           firebase.firestore;
+};
+
+// Handle user profile icon click (fallback for pages without custom implementation)
 function handleUserProfileClick(event) {
     event.preventDefault();
     
