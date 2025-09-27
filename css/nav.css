@@ -1,3 +1,13 @@
+/* Dark mode sidebar background */
+.dark-mode .sidebar {
+  background: #232323 !important;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.18);
+}
+
+.dark-mode body {
+    background: #0f1014 !important;
+}
+
 #closeDropdown, .bi-x-lg {
   width: 12px !important;
   height: 12px !important;

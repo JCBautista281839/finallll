@@ -613,244 +613,93 @@ async function startPOSSystem() {
     const proceedBtn = document.querySelector('.proceed-btn');
     if (proceedBtn) {
         proceedBtn.addEventListener('click', async function() {
-            // Always ensure pendingOrderId is set before proceeding
-            let pendingOrderId = sessionStorage.getItem('pendingOrderId');
-            if (!pendingOrderId) {
-                pendingOrderId = await getNextOrderId();
-                sessionStorage.setItem('pendingOrderId', pendingOrderId);
-            }
-            // Remove pendingOrderId from sessionStorage on finalize (will be handled in payment.js after order is finalized)
-            // Set hasProceeded flag so order can be restored after payment/back
-            sessionStorage.setItem('hasProceeded', 'true');
-            // Only validate that there are visible order items
-            const orderItemsContainer = document.querySelector('.order-items');
-            const orderItems = orderItemsContainer ? Array.from(orderItemsContainer.children).filter(el => el.classList.contains('order-item') && el.offsetParent !== null) : [];
-            if (!orderItems || orderItems.length === 0) {
-                alert('Please add items from the menu first.');
-                return;
-            }
-            // --- Build and save full order object for Payment page (no orderId yet) ---
-            let posOrder = {};
-            try {
-                posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
-            } catch (e) { posOrder = {}; }
-            // Order type
-            const orderTypeEl = document.querySelector('.order-type span');
-            posOrder.orderType = orderTypeEl ? orderTypeEl.textContent : '';
-            // Table and pax
-            const tableNumberInput = document.querySelector('.table-number input');
-            const paxNumberInput = document.querySelector('.pax-number input');
-            const tableNumberValue = tableNumberInput ? tableNumberInput.value.trim() : '';
-            const paxValue = paxNumberInput ? paxNumberInput.value.trim() : '';
-            // Only require table number and pax for Dine in
-            const orderType = orderTypeEl ? orderTypeEl.textContent.trim() : '';
-            if (orderType === 'Dine in') {
-                if (!tableNumberValue || !paxValue) {
-                    alert('Please enter both Table Number and Pax before proceeding.');
-                    return;
-                }
-
-                try {
-                    const db = firebase.firestore();
-                const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
-                const isEditMode = sessionStorage.getItem('isEditMode') === 'true';
-                const originalOrderId = sessionStorage.getItem('originalOrderId');
-                
-                console.log('Processing order:', {
-                    orderNumber: orderNumberFormatted,
-                    isEditMode,
-                    originalOrderId,
-                    sessionStorage: {
-                        editingOrder: sessionStorage.getItem('editingOrder'),
-                        isEditMode: sessionStorage.getItem('isEditMode'),
-                        originalOrderId: sessionStorage.getItem('originalOrderId')
-                    }
-                });
-
-                console.log('Firebase auth state:', firebase.auth().currentUser);
-                console.log('Firestore instance:', db);
-                console.log('Order data to save:', orderData);
-
-                // Validate order data before saving
-                if (!orderData.orderNumber || !orderData.orderNumberFormatted || !orderData.items || orderData.items.length === 0) {
-                    console.error('Invalid order data:', orderData);
-                    alert('Invalid order data. Missing required fields. Please try again.');
-                    return;
-                }
-
-                // Validate items structure
-                for (const item of orderData.items) {
-                    if (!item.name || !item.unitPrice || !item.quantity) {
-                        console.error('Invalid item data:', item);
-                        alert('Invalid item data found. Please refresh and try again.');
-                        return;
-                    }
-                }
-                
-                // If we're in edit mode AND have a valid original order ID, update existing order
-                if (isEditMode && originalOrderId) {
-                    console.log('Updating existing order:', originalOrderId);
-                    
-                    // Check if the original order exists before trying to update
-                    const originalOrderRef = db.collection('orders').doc(originalOrderId);
-                    const originalOrderDoc = await originalOrderRef.get();
-                    
-                    if (!originalOrderDoc.exists) {
-                        console.warn('Original order not found, creating new order instead');
-                        // Fall through to create new order
-                    } else {
-                        // Get the original order data to preserve status if not already pending payment
-                        const originalOrderData = originalOrderDoc.data();
-                        const originalStatus = originalOrderData.status || 'Pending Payment';
-                        
-                        // Prepare update data object
-                        const updateData = {
-                            items: orderData.items,
-                            orderType: orderData.orderType,
-                            tableNumber: orderData.tableNumber,
-                            paxNumber: orderData.paxNumber,
-                            subtotal: orderData.subtotal,
-                            tax: orderData.tax,
-                            discount: orderData.discount,
-                            total: orderData.total,
-                            status: originalStatus, // Keep the original status
-                            lastModified: firebase.firestore.FieldValue.serverTimestamp(),
-                            modifiedBy: firebase.auth().currentUser?.email || 'unknown',
-                            isEdited: true,
-                            isEditable: true // Ensure it remains editable
-                        };
-                        
-                        // Preserve kitchenStatus if it exists
-                        if (originalOrderData.kitchenStatus) {
-                            updateData.kitchenStatus = originalOrderData.kitchenStatus;
-                        }
-                        
-                        // Apply the update
-                        await originalOrderRef.update(updateData);
-                        console.log('Order updated successfully:', originalOrderId);
-                        
-                        // Clean up session storage
-                        sessionStorage.removeItem('editingOrder');
-                        sessionStorage.removeItem('originalOrderId');
-                        sessionStorage.removeItem('isEditMode');
-                        sessionStorage.removeItem('shouldRestoreOrder');
-                        sessionStorage.setItem('posOrder', JSON.stringify(orderData));
-                        
-                        // Navigate to payment page with absolute path
-                        window.location.href = window.location.origin + '/payment.html';
-                        return;
-                    }
-                }
-
-                // This is a new order - reduce inventory and create new order
-                console.log('Creating new order:', orderNumberFormatted);
-                    
-                    // Reduce inventory first
-                    try {
-                        await reduceInventoryForOrder(orderData.items);
-                        console.log('Inventory reduced successfully');
-                    } catch (inventoryError) {
-                        console.warn('Inventory reduction failed:', inventoryError);
-                        // Continue with order creation even if inventory reduction fails
-                    }
-
-                    // Create the new order
-                    // Always recalculate total before saving
-                                        // Always recalculate subtotal from items before saving
-                                        let subtotal = 0;
-                                        if (Array.isArray(orderData.items)) {
-                                            subtotal = orderData.items.reduce((sum, item) => {
-                                                const price = parseFloat(item.unitPrice || item.price) || 0;
-                                                const qty = parseInt(item.quantity) || 1;
-                                                return sum + price * qty;
-                                            }, 0);
-                                        }
-                                        const tax = parseFloat(orderData.tax) || 0;
-                                        const discount = parseFloat(orderData.discount) || 0;
-                                        const total = subtotal + tax - discount;
-                                        await db.collection('orders').doc(orderNumberFormatted).set({
-                                                ...orderData,
-                                                subtotal: subtotal,
-                                                total: total,
-                                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                                                createdAt: new Date().toISOString(),
-                                                orderType: document.querySelector('.order-type span').textContent || 'Dine in',
-                                                tableNumber: tableNumber || null,
-                                                paxNumber: paxNumber || null,
-                                                orderNumberFormatted: orderNumberFormatted
-                                        });
-                    
-                    console.log('New order saved successfully:', orderNumberFormatted);
-                    
-                    // Remove OMR scans that were used in this order
-                    await removeLoadedOMRScans();
-
-                // Clean up session storage
-                sessionStorage.removeItem('editingOrder');
-                sessionStorage.removeItem('originalOrderId');
-                sessionStorage.removeItem('isEditMode');
-                sessionStorage.removeItem('reservedOrderNumber'); // Clear reserved order number
-                
-                // Store order data for payment page
-                sessionStorage.setItem('posOrder', JSON.stringify(orderData));
-                
-                // Clear the UI
-                document.querySelector('.order-items').innerHTML = '';
-                updateOrderSummary();
-                
-                const tableInput = document.querySelector('.table-number input');
-                if (tableInput) tableInput.value = '';
-                
-                // Update order number for next transaction
-                await updateOrderNumber();
-                
-                // Navigate to payment page
-                window.location.href = '/payment.html';
-            } catch (error) {
-                console.error('Error saving order:', error);
-                console.error('Error details:', {
-                    code: error.code,
-                    message: error.message,
-                    stack: error.stack
-                });
-                alert(`There was an error processing your order: ${error.message}. Please try again.`);
-            }
-        } else {
-            // For takeout orders, proceed without table validation
-            try {
-                const db = firebase.firestore();
-                const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
-                
-                // Items
-                posOrder.items = orderItems.map(item => ({
-                    name: item.getAttribute('data-item-name'),
-                    quantity: parseInt(item.querySelector('.quantity').textContent),
-                    price: parseFloat(item.getAttribute('data-unit-price')),
-                    total: parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''))
-                }));
-                
-                // Subtotal, tax, discount, total
-                posOrder.subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
-                posOrder.tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
-                posOrder.discount = typeof posOrder.discountAmount !== 'undefined' ? posOrder.discountAmount : 0;
-                posOrder.total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
-                
-                // Status and createdAt
-                posOrder.status = 'pending payment';
-                posOrder.createdAt = new Date().toISOString();
-                
-                // Save to sessionStorage
-                sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
-                
-                // Navigate to payment page
-                window.location.href = '/html/payment.html';
-                
-            } catch (error) {
-                console.error('Error processing takeout order:', error);
-                alert(`There was an error processing your order: ${error.message}. Please try again.`);
-            }
-        }
+            await saveOrder();
         });
+    }
+
+    async function saveOrder() {
+        // Always ensure pendingOrderId is set before proceeding
+        let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+        if (!pendingOrderId) {
+            pendingOrderId = await getNextOrderId();
+            sessionStorage.setItem('pendingOrderId', pendingOrderId);
+        }
+        sessionStorage.setItem('hasProceeded', 'true');
+        const orderItemsContainer = document.querySelector('.order-items');
+        const orderItems = orderItemsContainer ? Array.from(orderItemsContainer.children).filter(el => el.classList.contains('order-item') && el.offsetParent !== null) : [];
+        if (!orderItems || orderItems.length === 0) {
+            alert('Please add items from the menu first.');
+            return;
+        }
+        // Build orderData from DOM
+        const orderTypeEl = document.querySelector('.order-type span');
+        const tableNumberInput = document.querySelector('.table-number input');
+        const paxNumberInput = document.querySelector('.pax-number input');
+        const orderType = orderTypeEl ? orderTypeEl.textContent.trim() : '';
+        const tableNumberValue = tableNumberInput ? tableNumberInput.value.trim() : '';
+        const paxValue = paxNumberInput ? paxNumberInput.value.trim() : '';
+        // Defensive validation
+        if (orderType === 'Dine in' && (!tableNumberValue || !paxValue)) {
+            alert('Please enter both Table Number and Pax before proceeding.');
+            return;
+        }
+        const items = orderItems.map(item => {
+            const quantity = parseInt(item.querySelector('.quantity').textContent);
+            const unitPrice = parseFloat(item.getAttribute('data-unit-price'));
+            const price = unitPrice; // for compatibility
+            const total = parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''));
+            return {
+                name: item.getAttribute('data-item-name'),
+                quantity,
+                unitPrice,
+                price,
+                total
+            };
+        });
+        if (!items.length) {
+            alert('Order must have at least one item.');
+            return;
+        }
+        // Numeric fields
+        const subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
+        const tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
+        const discount = typeof sessionStorage.getItem('discountAmount') !== 'undefined' ? parseFloat(sessionStorage.getItem('discountAmount')) : 0;
+        const total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
+        const orderNumberFormatted = String(window.currentOrderNumber).padStart(4, '0');
+        const status = 'Pending Payment';
+        const createdAt = new Date().toISOString();
+        const orderData = {
+            orderId: orderNumberFormatted,
+            orderNumber: orderNumberFormatted,
+            orderNumberFormatted: orderNumberFormatted,
+            orderType,
+            tableNumber: tableNumberValue,
+            pax: paxValue,
+            items,
+            subtotal,
+            tax,
+            discount,
+            total,
+            status,
+            createdAt,
+            timestamp: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : null
+        };
+        try {
+            const db = firebase.firestore();
+            // Save to Firestore
+            await db.collection('orders').doc(orderNumberFormatted).set(orderData);
+            // Save to sessionStorage for payment page
+            sessionStorage.setItem('posOrder', JSON.stringify(orderData));
+            // UI cleanup
+            document.querySelector('.order-items').innerHTML = '';
+            updateOrderSummary();
+            if (tableNumberInput) tableNumberInput.value = '';
+            await updateOrderNumber();
+            window.location.href = '/html/payment.html';
+        } catch (error) {
+            console.error('Error saving order:', error);
+            alert('There was an error processing your order. Please try again.');
+        }
     }
 
     // Also update order number when clearing the order

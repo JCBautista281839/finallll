@@ -6,14 +6,7 @@ if (burgerBtn) {
   });
 }
 
-// Dark mode toggle
-const darkModeToggle = document.querySelector('.checkbox');
-const body = document.body;
-let isDarkMode = localStorage.getItem('darkMode') === 'true';
-if (isDarkMode) {
-  body.classList.add('dark-mode');
-  if (darkModeToggle) darkModeToggle.checked = true;
-}
+// ...existing code...
 
 // Update time function
 function updateTime() {
@@ -252,75 +245,37 @@ function drawOrdersChart() {
   const chartDiv = document.getElementById('ordersChart');
   if (!chartDiv || !ordersChartData) return;
   
-  const isDarkMode = document.body.classList.contains('dark-mode');
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
-  
   const options = {
     title: '',
     fontName: 'Poppins',
-    titleTextStyle: {
-      color: isDarkMode ? '#ffffff' : '#333333'
-    },
+    titleTextStyle: { color: '#333333' },
     hAxis: {
-      titleTextStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 13,
-        bold: true
-      },
-      textStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 11
-      },
-      gridlines: {
-        color: isDarkMode ? '#555555' : '#e5e7eb',
-        count: isDaily ? -1 : 12
-      },
+      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
+      textStyle: { color: '#666666', fontSize: 11 },
+      gridlines: { color: '#e5e7eb', count: isDaily ? -1 : 12 },
       slantedText: isDaily && selectedMonth !== 'all'
     },
     vAxis: {
-    
-      titleTextStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 13,
-        bold: true
-      },
-      textStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 11
-      },
-      gridlines: {
-        color: isDarkMode ? '#555555' : '#e5e7eb'
-      },
+      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
+      textStyle: { color: '#666666', fontSize: 11 },
+      gridlines: { color: '#e5e7eb' },
       format: 'short',
-      viewWindow: {
-        min: 0
-      }
+      viewWindow: { min: 0 }
     },
-    backgroundColor: isDarkMode ? '#2d2d2d' : '#ffffff',
-    legend: {
-      position: 'none'
-    },
-    colors: ['#ff9292'],
+    backgroundColor: '#ffffff',
+    legend: { position: 'none' },
+    colors: ['#c81f7b'],
     curveType: 'function',
     interpolateNulls: true,
-    chartArea: {
-      left: 30,
-      top: 30,
-      width: '90%',
-      height: '80%'
-    },
+    chartArea: { left: 30, top: 15, width: '90%', height: '80%' },
     lineWidth: 3,
     pointSize: 6,
     focusTarget: 'category',
-    tooltip: {
-      textStyle: {
-        fontSize: 12
-      }
-    }
+    tooltip: { textStyle: { fontSize: 12 } }
   };
-
   ordersChart = new google.visualization.LineChart(chartDiv);
   ordersChart.draw(ordersChartData, options);
 }
@@ -329,101 +284,42 @@ function drawProfitChart() {
   const chartDiv = document.getElementById('profitChart');
   if (!chartDiv || !profitChartData) return;
   
-  const isDarkMode = document.body.classList.contains('dark-mode');
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
-  
   const options = {
     title: '',
     fontName: 'Poppins',
-    titleTextStyle: {
-      color: isDarkMode ? '#ffffff' : '#333333'
-    },
+    titleTextStyle: { color: '#333333' },
     hAxis: {
-      titleTextStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 13,
-        bold: true
-      },
-      textStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 11
-      },
-      gridlines: {
-        color: isDarkMode ? '#555555' : '#e5e7eb',
-        count: isDaily ? -1 : 12
-      },
+      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
+      textStyle: { color: '#666666', fontSize: 11 },
+      gridlines: { color: '#e5e7eb', count: isDaily ? -1 : 12 },
       slantedText: isDaily && selectedMonth !== 'all'
     },
     vAxis: {
-    
-      titleTextStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 13,
-        bold: true
-      },
-      textStyle: {
-        color: isDarkMode ? '#ffffff' : '#666666',
-        fontSize: 11
-      },
-      gridlines: {
-        color: isDarkMode ? '#555555' : '#e5e7eb'
-      },
+      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
+      textStyle: { color: '#666666', fontSize: 11 },
+      gridlines: { color: '#e5e7eb' },
       format: '₱#,###',
-      viewWindow: {
-        min: 0
-      }
+      viewWindow: { min: 0 }
     },
-    backgroundColor: isDarkMode ? '#2d2d2d' : '#ffffff',
-    legend: {
-      position: 'none'
-    },
-    colors: ['#20c997'],
+    backgroundColor: '#ffffff',
+    legend: { position: 'none' },
+    colors: ['#926afa'],
     curveType: 'function',
     interpolateNulls: true,
-    chartArea: {
-      left: 40,
-      top: 30,
-      width: '90%',
-      height: '80%'
-    },
+    chartArea: { left: 40, top: 15, width: '90%', height: '80%' },
     lineWidth: 3,
     pointSize: 6,
     focusTarget: 'category',
-    tooltip: {
-      textStyle: {
-        fontSize: 12
-      }
-    }
+    tooltip: { textStyle: { fontSize: 12 } }
   };
-
   profitChart = new google.visualization.LineChart(chartDiv);
   profitChart.draw(profitChartData, options);
 }
 
-// Update charts for dark mode
-function updateChartColors(isDarkMode) {
-  if (ordersChart && ordersChartData) {
-    drawOrdersChart();
-  }
-  if (profitChart && profitChartData) {
-    drawProfitChart();
-  }
-}
-
-// Dark mode toggle event listener
-if (darkModeToggle) {
-  darkModeToggle.addEventListener('change', () => {
-    body.classList.toggle('dark-mode');
-    isDarkMode = body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode);
-    updateChartColors(isDarkMode);
-  });
-}
-
-// Apply dark mode to chart if already enabled
-if (isDarkMode) updateChartColors(true);
+// ...existing code...
 
 // Update current month display
 function updateCurrentMonthDisplay() {
@@ -479,11 +375,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateChartLabels() {
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
-  
   // Update chart section headers
   const ordersHeader = document.querySelector('.chart-section h6');
   const revenueHeader = document.querySelectorAll('.chart-section h6')[1];
-  
   if (selectedMonth === 'all') {
     if (ordersHeader) ordersHeader.textContent = 'Monthly Orders';
     if (revenueHeader) revenueHeader.textContent = 'Monthly Revenue';
@@ -492,8 +386,13 @@ function updateChartLabels() {
     const monthName = monthNames[parseInt(selectedMonth)];
     if (ordersHeader) ordersHeader.textContent = `Daily Orders - ${monthName}`;
     if (revenueHeader) revenueHeader.textContent = `Daily Revenue - ${monthName}`;
-
   }
+  [ordersHeader, revenueHeader].forEach(header => {
+    if (header) {
+      header.style.setProperty('color', '#333', 'important');
+      header.style.setProperty('margin-top', '10px', 'important');
+    }
+  });
 }
 
 // Inventory status loader
@@ -736,6 +635,7 @@ function updateWelcomeMessage(userData) {
     }
     
     welcomeElement.textContent = `Welcome, ${displayName}!`;
+    welcomeElement.style.setProperty('color', '#96392d', 'important');
     console.log(`✅ Welcome message updated: ${displayName}`);
   }
 }
@@ -1029,10 +929,20 @@ function updateSalesSummary(total, thisMonth, today, growthPercentage) {
   if (growthElement) {
     const icon = growthElement.previousElementSibling;
     growthElement.parentElement.className = 'd-flex align-items-center';
-    growthElement.style.color = '#d7268a';
+    // Set color based on card type
+    let color = '#d7268a'; // default pink
+    // Find which card this is in
+    const parent = growthElement.closest('.mini-card');
+    if (parent && parent.classList.contains('sales-card-top')) {
+      color = '#ff6b9d'; // pink
+    } else if (parent && parent.classList.contains('sales-card-middle')) {
+      color = '#e4c9ffff'; // purple
+    } else if (parent && parent.classList.contains('sales-card-bottom')) {
+      color = '#6ba4ff'; // blue
+    }
+    growthElement.style.color = color;
     if (icon) {
-      icon.className = 'bi bi-graph-up-arrow me-2';
-      icon.style.color = '#d7268a';
+      icon.style.color = color;
     }
     growthElement.textContent = `${Math.abs(growthPercentage).toFixed(1)}% from last day`;
   }
@@ -1041,10 +951,10 @@ function updateSalesSummary(total, thisMonth, today, growthPercentage) {
   const trendRevenue = document.querySelector('.trend-revenue');
   const trendOrders = document.querySelector('.trend-orders');
   if (trendRevenue) {
-    trendRevenue.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> ${Math.abs(growthPercentage).toFixed(1)}% from last day`;
+    trendRevenue.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> <span style="color:#d7268a">${Math.abs(growthPercentage).toFixed(1)}% from last day</span>`;
   }
   if (trendOrders) {
-    trendOrders.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> ${Math.abs(growthPercentage).toFixed(1)}% from last day`;
+    trendOrders.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> <span style="color:#a259c6">${Math.abs(growthPercentage).toFixed(1)}% from last day</span>`;
   }
 }
 

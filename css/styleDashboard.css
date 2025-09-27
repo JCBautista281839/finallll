@@ -56,7 +56,7 @@ body {
   background: #fff;
   border-radius: 15px;
   padding: 27px;
-  height: 200px;
+  height: 390px !important;
 }
 
 .col-12.col-lg-8 h5.mb-0 {
@@ -957,240 +957,6 @@ body {
   }
 }
 
-
-.dark-mode {
-  background: #121212 !important;
-}
-
-.dark-mode .dashboard-container {
-  background: #121212;
-}
-
-.dark-mode .bg-white {
-  background: #2d2d2d !important;
-  color: #ffffff !important;
-}
-
-.dark-mode .bg-light {
-  background: #121212 !important;
-}
-
-.dark-mode .text-primary-emphasis {
-  color: #ffffff !important;
-}
-
-.dark-mode .text-secondary {
-  color: #b0b0b0 !important;
-}
-
-.dark-mode .text-pink {
-  color: #ff6b9d !important;
-}
-
-.dark-mode .text-blue {
-  color: #6ba4ff !important;
-}
-
-.dark-mode .mini-card {
-  background: #2d2d2d !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
-}
-
-.dark-mode .icon {
-  background: #3d3d3d !important;
-}
-
-.dark-mode .table th {
-  color: #b0b0b0 !important;
-}
-
-.dark-mode .table td {
-  color: #ffffff !important;
-}
-
-
-
-
-
-
-
-.dark-mode .sidebar {
-  background: #282828 !important;
-}
-
-.dark-mode .nav-link {
-  color: #ffffff !important;
-}
-
-
-.dark-mode .text-success {
-  color: #4caf50 !important;
-}
-
-.dark-mode .text-danger {
-  color: #f44336 !important;
-}
-
-.dark-mode .text-warning {
-  color: #ff9800 !important;
-}
-
-.dark-mode .text-info {
-  color: #2196f3 !important;
-}
-
-
-.dark-mode .sales-overview-card .p-4.pb-3.rounded-top-4 {
-  background: #2d2d2d !important;
-  color: #ffffff !important;
-}
-
-.dark-mode .sales-title {
-  color: #ffffff !important;
-}
-
-.dark-mode .mini-card .icon.pink {
-  color: #ff6b9d !important;
-}
-
-.dark-mode .mini-card .icon.purple {
-  color: #c084fc !important;
-}
-
-.dark-mode .mini-card .icon.blue {
-  color: #6ba4ff !important;
-}
-
-.dark-mode .mini-card .text-pink {
-  color: #ff6b9d !important;
-}
-
-.dark-mode .mini-card .text-blue {
-  color: #6ba4ff !important;
-}
-
-
-.dark-mode .bg-white.rounded-4.shadow-sm {
-  background: #2d2d2d !important;
-  color: #ffffff !important;
-}
-
-.dark-mode .bg-white.rounded-4.shadow-sm h5 {
-  color: #ffffff !important;
-}
-
-
-.dark-mode .table-container {
-  background: #2d2d2d !important;
-}
-
-.dark-mode .table-container::-webkit-scrollbar-track {
-  background: #3d3d3d !important;
-}
-
-.dark-mode .table-container::-webkit-scrollbar-thumb {
-  background: #555 !important;
-}
-
-
-.dark-mode .form-select option {
-  background: #3d3d3d !important;
-  color: #ffffff !important;
-}
-
-.dark-mode .icon-img{
-  filter: invert(80%) sepia(36%) saturate(3572%) hue-rotate(293deg) brightness(103%) contrast(101%);
-}
-
-.dark-mode .cultery-img{
-  filter: invert(82%) sepia(27%) saturate(3073%) hue-rotate(243deg) brightness(97%) contrast(94%);
-}
-
-.dark-mode .team-img{
-  filter: invert(83%) sepia(12%) saturate(2336%) hue-rotate(191deg) brightness(102%) contrast(97%);
-}
-
-.dark-mode .trend-revenue small{
-  filter: invert(80%) sepia(36%) saturate(3572%) hue-rotate(293deg) brightness(103%) contrast(101%) !important;
-}
-
-.dark-mode .fw-bold.fs-5,
-.dark-mode .value-align-up {
-  color: #ffffff !important;
-}
-
-.dark-mode .fw-semibold.text-secondary.small {
-  color: #b0b0b0 !important;
-}
-
-
-.dark-mode .sales-card-top,
-.dark-mode .sales-card-middle,
-.dark-mode .sales-card-bottom {
-  background: #2d2d2d !important;
-  color: #ffffff !important;
-}
-
-
-.dark-mode .badge {
-  border: 1px solid #555 !important;
-}
-
-
-.dark-mode #timeNow {
-  color: #ffffff !important;
-}
-
-.dark-mode .fw-bold.text-primary-emphasis {
-  color: #ce947d !important;
-}
-
-
-.fw-bold.text-primary-emphasis {
-  color: #96392d !important;
-}
-
-.dark-mode .text-secondary {
-  color: #b0b0b0 !important;
-}
-
-.dark-mode .btn-success {
-  background: #00695c !important;
-  color: #ffffff !important;
-  border-color: #004d40 !important;
-}
-
-.dark-mode .btn-success:hover {
-  background: #004d40 !important;
-}
-
-
-.dark-mode .brand img {
-  border-color: #555 !important;
-}
-
-
-.dark-mode .nav-icon {
-  filter: brightness(0.8);
-}
-
-.dark-mode .nav-link.active .nav-icon {
-  filter: brightness(1);
-}
-
-
-.dark-mode .bg-white.rounded-4.shadow-sm {
-  background: #2d2d2d !important;
-}
-
-
-.dark-mode .sales-overview-card {
-  background: transparent !important;
-}
-
-
-
-
 .table-container {
   max-height: 75px;
   overflow-y: auto;
@@ -1214,9 +980,6 @@ body {
 .table-container::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
-
-
-
 
 .status-item {
     display: flex;
@@ -1324,27 +1087,6 @@ body {
   width: 8px;
 }
 
-
-body.dark-mode #inventoryStatusBody td:first-child {
-  color: #ddd;
-}
-
-body.dark-mode .status-indicator.steady {
-    background: #3dd66b;
-}
-
-body.dark-mode .status-indicator.empty {
-    background: #ff4d4d;
-}
-
-body.dark-mode .status-indicator.restock {
-    background: #ffca2c;
-}
-
-body.dark-mode .status-text {
-    color: #ddd;
-}
-
 .status-text {
     font-size: 0.8rem;
     font-weight: 500;
@@ -1358,11 +1100,7 @@ body.dark-mode .status-text {
   
 }
 
-
-
 .bottom-panel .table-container { flex:1 1 auto; }
-
-
 
 /* Keep base card styling */
 .row .col-12.col-md-4.d-flex > .dashboard-card {
@@ -1418,24 +1156,6 @@ body.dark-mode .status-text {
   border-radius: 20px;
   background:#fff; 
 }
-
-
-.table-container.sticky-header { background:#fff; }
-body.dark-mode .table-container.sticky-header { background:#2d2d2d !important; }
-body.dark-mode .inventory-status-container { background:#2d2d2d !important; }
-
-.inventory-status-table thead th {
-  position: sticky;
-  top: 0;
-  background: #fff;
-  z-index: 2;
-}
-body.dark-mode .inventory-status-table thead th { background:#2d2d2d !important; }
-
-
-.dashboard-card table thead th { background:#fff !important; }
-body.dark-mode .dashboard-card table thead th { background:#2d2d2d !important; }
-
 
 .sticky-header { position: relative; }
 .sticky-header table thead th {
@@ -1498,7 +1218,3 @@ body.dark-mode .sticky-header table thead th { background:#2d2d2d !important; }
   background: #c1c1c1;
   border-radius: 3px;
 }
-body.dark-mode .inventory-status-container::-webkit-scrollbar-thumb { background:#555; }
-
-
-body.dark-mode { background:#121212 !important; }

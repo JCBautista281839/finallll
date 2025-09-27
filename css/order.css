@@ -26,6 +26,15 @@
   font-style: normal;
 }
 
+.dark-mode .dashboard-container {
+  background: #080808 !important;
+}
+
+.dark-mode .body {
+  background: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
 .main-content {
   min-height: calc(100vh - 40px);
   background: #ffffff;
@@ -533,3 +542,78 @@ input[type="date"] {
     width: 100%;
   }
 }
+
+
+/* Dark Mode Overrides */
+.dark-mode .main-content {
+  background: #232323 !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode .container-fluid {
+  background: transparent !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode .table th,
+.dark-mode .table td {
+  color: #e0e0e0 !important;
+  background: transparent !important;
+}
+
+.dark-mode .table thead tr {
+  border-bottom: 1px solid #444 !important;
+}
+
+.dark-mode .table tbody tr + tr td {
+  border-top: 1px solid #333 !important;
+}
+
+.dark-mode .table th {
+  background-color: transparent !important;
+}
+
+.dark-mode .table td {
+  background-color: transparent !important;
+}
+
+.dark-mode .card {
+  background-color: #232323 !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode .badge.bg-success {
+  background-color: #1e8c5a !important;
+  color: #fff !important;
+}
+
+.dark-mode .badge.bg-warning {
+  background-color: #bfa600 !important;
+  color: #232323 !important;
+}
+
+.dark-mode .search-input,
+.dark-mode .date-input,
+.dark-mode .form-control {
+  background-color: #2d2d2d !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+
+.dark-mode .search-input::placeholder {
+  color: #aaa !important;
+}
+
+.dark-mode .calendar-icon,
+.dark-mode .search-icon {
+  filter: invert(80%) sepia(10%) saturate(500%) hue-rotate(180deg) brightness(90%) contrast(90%) !important;
+}
+
+.dark-mode .pending-payment-row {
+  background-color: rgba(13, 110, 253, 0.10) !important;
+}
+
+.dark-mode .pending-payment-row:hover {
+  background-color: rgba(13, 110, 253, 0.18) !important;
+}
+
