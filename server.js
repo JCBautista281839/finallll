@@ -3,7 +3,7 @@ const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
-require('dotenv').config(); // Load environment variables
+require('dotenv').config(); // Load environment variables from .env file
 
 const { spawn, exec } = require('child_process');
 
@@ -13,6 +13,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add permissive CSP headers for development
+app.use((req, res, next) => {
+    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src 'self' *; img-src 'self' data: blob: *;");
+    next();
+});
 
 // Configuration (use environment variables)
 // IMPORTANT: Using SANDBOX mode for testing
@@ -35,14 +41,73 @@ const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'support@viktoria
 const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || "Viktoria's Bistro";
 
 // Validate SendGrid configuration
-if (!SENDGRID_API_KEY) {
+if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
     console.warn('⚠️  WARNING: SENDGRID_API_KEY not found in environment variables');
     console.warn('📝 Please create a .env file with your SendGrid API key');
     console.warn('📖 See SETUP_INSTRUCTIONS.md for details');
 }
 
+// Mask API key for security (only show first 8 and last 4 characters)
+function maskApiKey(apiKey) {
+    if (!apiKey || apiKey.length < 12) return '***';
+    return apiKey.substring(0, 8) + '***' + apiKey.substring(apiKey.length - 4);
+}
+
 // OTP Storage (in-memory for development, replace with database in production)
 const otpStorage = new Map(); // email -> { otp, expiry, attempts }
+
+// Rate limiting storage
+const rateLimitStorage = new Map(); // ip -> { count, resetTime }
+
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per window per IP (increased for testing)
+
+// Rate limiting middleware
+function rateLimitMiddleware(req, res, next) {
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    
+    if (!rateLimitStorage.has(clientIP)) {
+        rateLimitStorage.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return next();
+    }
+    
+    const limitData = rateLimitStorage.get(clientIP);
+    
+    // Reset if window expired
+    if (now > limitData.resetTime) {
+        rateLimitStorage.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return next();
+    }
+    
+    // Check if limit exceeded
+    if (limitData.count >= RATE_LIMIT_MAX_REQUESTS) {
+        return res.status(429).json({
+            success: false,
+            message: 'Too many requests. Please try again later.',
+            retryAfter: Math.ceil((limitData.resetTime - now) / 1000)
+        });
+    }
+    
+    // Increment counter
+    limitData.count++;
+    rateLimitStorage.set(clientIP, limitData);
+    
+    next();
+}
+
+// Clear rate limit for specific IP (for testing)
+function clearRateLimit(clientIP) {
+    rateLimitStorage.delete(clientIP);
+    console.log(`🔄 Rate limit cleared for IP: ${clientIP}`);
+}
+
+// Clear all rate limits (for testing)
+function clearAllRateLimits() {
+    rateLimitStorage.clear();
+    console.log('🔄 All rate limits cleared');
+}
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
@@ -59,11 +124,15 @@ function generateOTP() {
 async function sendOTPEmail(email, userName, otp) {
     try {
         // Check if SendGrid is configured
-        if (!SENDGRID_API_KEY) {
+        if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
             console.log('⚠️ SendGrid API key not configured, skipping email send');
+            console.log('📝 To enable email sending:');
+            console.log('   1. Get API key from: https://app.sendgrid.com/settings/api_keys');
+            console.log('   2. Update SENDGRID_API_KEY in config.env file');
+            console.log('   3. Restart the server');
             return { 
                 success: false, 
-                message: 'SendGrid API key not configured. Please set SENDGRID_API_KEY in environment variables.' 
+                message: 'SendGrid API key not configured. Please set SENDGRID_API_KEY in config.env file.' 
             };
         }
         
@@ -432,6 +501,16 @@ app.post('/api/test', (req, res) => {
   console.log('[test] Test POST endpoint called');
   console.log('[test] Request body:', req.body);
   res.json({ message: 'Test POST endpoint working', receivedData: req.body, timestamp: new Date().toISOString() });
+});
+
+// Clear rate limits endpoint (for testing)
+app.post('/api/clear-rate-limits', (req, res) => {
+  clearAllRateLimits();
+  res.json({ 
+    success: true, 
+    message: 'All rate limits cleared',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // GET endpoint for webhook testing
@@ -1164,7 +1243,7 @@ app.post('/api/resend-otp', async (req, res) => {
 /* ====== SendGrid OTP API Endpoints ====== */
 
 // SendGrid Send OTP endpoint
-app.post('/api/sendgrid-send-otp', async (req, res) => {
+app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
     try {
         const { email, userName } = req.body;
         
@@ -1226,7 +1305,7 @@ app.post('/api/sendgrid-send-otp', async (req, res) => {
 });
 
 // SendGrid Verify OTP endpoint
-app.post('/api/sendgrid-verify-otp', async (req, res) => {
+app.post('/api/sendgrid-verify-otp', rateLimitMiddleware, async (req, res) => {
     try {
         const { email, otp } = req.body;
         
@@ -1297,7 +1376,7 @@ app.post('/api/sendgrid-verify-otp', async (req, res) => {
 });
 
 // SendGrid Resend OTP endpoint
-app.post('/api/sendgrid-resend-otp', async (req, res) => {
+app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
     try {
         const { email, userName } = req.body;
         
@@ -1466,10 +1545,10 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   Verify SendGrid OTP: POST /api/sendgrid-verify-otp`);
   console.log(`   Resend SendGrid OTP: POST /api/sendgrid-resend-otp`);
   console.log(`\n📧 SendGrid Email Service:`);
-  console.log(`   API Key: ${SENDGRID_API_KEY ? '✅ Configured' : '❌ Not Found'}`);
+  console.log(`   API Key: ${SENDGRID_API_KEY ? '✅ Configured (' + maskApiKey(SENDGRID_API_KEY) + ')' : '❌ Not Found'}`);
   console.log(`   From Email: ${SENDGRID_FROM_EMAIL}`);
   console.log(`   From Name: ${SENDGRID_FROM_NAME}`);
-  if (!SENDGRID_API_KEY) {
+  if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
     console.log(`   ⚠️  Create .env file with SENDGRID_API_KEY for email functionality`);
   }
 });

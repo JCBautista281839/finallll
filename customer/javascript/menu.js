@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing customer menu system...');
     loadMenuFromFirebase();
     setupEventListeners();
+    setupAuthStateMonitoring();
   }
   
   function loadMenuFromFirebase() {
@@ -262,10 +263,34 @@ document.addEventListener('DOMContentLoaded', () => {
     let cart = [];
     let cartTotal = 0;
 
+    // Function to check if user is authenticated
+    function checkUserAuthentication() {
+      return new Promise((resolve) => {
+        const user = firebase.auth().currentUser;
+        if (user) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      });
+    }
+
     // Add to cart functionality - using event delegation for dynamically created buttons
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
       if (e.target.classList.contains('add-to-cart-btn')) {
         e.preventDefault();
+        
+        // Check if user is logged in
+        const isAuthenticated = await checkUserAuthentication();
+        
+        if (!isAuthenticated) {
+          // Show elegant notification and redirect to login page
+          showLoginRequiredNotification();
+          setTimeout(() => {
+            window.location.href = '/html/login.html';
+          }, 2000);
+          return;
+        }
         
         // Get the menu item data from the button's data attribute
         const itemData = JSON.parse(e.target.getAttribute('data-item'));
@@ -327,6 +352,132 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize order display
     updateOrderDisplay();
+  }
+
+  function setupAuthStateMonitoring() {
+    // Monitor authentication state changes
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        console.log('User is authenticated:', user.email);
+        // Update UI to show user is logged in
+        updateUserInterface(true);
+      } else {
+        console.log('User is not authenticated');
+        // Update UI to show user is not logged in
+        updateUserInterface(false);
+      }
+    });
+  }
+
+  function updateUserInterface(isAuthenticated) {
+    // Update user icon link based on authentication status
+    const userIconLink = document.querySelector('.header-icons .icon-link');
+    if (userIconLink) {
+      if (isAuthenticated) {
+        // If user is logged in, link to account page
+        userIconLink.href = '/customer/html/account.html';
+        userIconLink.title = 'My Account';
+      } else {
+        // If user is not logged in, link to login page
+        userIconLink.href = '/html/login.html';
+        userIconLink.title = 'Login';
+      }
+    }
+  }
+
+  function showLoginRequiredNotification() {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'login-notification';
+    notification.innerHTML = `
+      <div class="notification-content">
+        <i class="fas fa-user-lock"></i>
+        <span>Please log in to add items to your cart</span>
+        <div class="notification-progress"></div>
+      </div>
+    `;
+    
+    // Add styles
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #e5735a, #ff6b6b);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      z-index: 1000;
+      max-width: 350px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    `;
+    
+    // Add content styles
+    const content = notification.querySelector('.notification-content');
+    content.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    `;
+    
+    // Add progress bar styles
+    const progress = notification.querySelector('.notification-progress');
+    progress.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      width: 100%;
+      border-radius: 0 0 10px 10px;
+      overflow: hidden;
+    `;
+    
+    // Add progress animation
+    const progressBar = document.createElement('div');
+    progressBar.style.cssText = `
+      height: 100%;
+      background: rgba(255,255,255,0.8);
+      width: 100%;
+      animation: progress 2s linear forwards;
+    `;
+    progress.appendChild(progressBar);
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes progress {
+        from { width: 100%; }
+        to { width: 0%; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove notification after 2 seconds
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+        if (style.parentNode) {
+          style.parentNode.removeChild(style);
+        }
+      }, 300);
+    }, 2000);
   }
   
   // Start the Firebase initialization

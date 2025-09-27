@@ -147,8 +147,8 @@ async function handleLogin(email, password) {
                         window.location.replace('../html/Dashboard.html');
                 }
             } else {
-                // Customer login redirect
-                window.location.replace('../customer/html/menu.html');
+                // Customer login redirect to index.html
+                window.location.replace('../index.html');
             }
     } catch (error) {
         console.error('Login error:', error);

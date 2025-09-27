@@ -613,7 +613,284 @@ async function startPOSSystem() {
     const proceedBtn = document.querySelector('.proceed-btn');
     if (proceedBtn) {
         proceedBtn.addEventListener('click', async function() {
+<<<<<<< HEAD
             await saveOrder();
+=======
+            // Always ensure pendingOrderId is set before proceeding
+            let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+            if (!pendingOrderId) {
+                pendingOrderId = await getNextOrderId();
+                sessionStorage.setItem('pendingOrderId', pendingOrderId);
+            }
+            // Remove pendingOrderId from sessionStorage on finalize (will be handled in payment.js after order is finalized)
+            // Set hasProceeded flag so order can be restored after payment/back
+            sessionStorage.setItem('hasProceeded', 'true');
+            // Only validate that there are visible order items
+            const orderItemsContainer = document.querySelector('.order-items');
+            const orderItems = orderItemsContainer ? Array.from(orderItemsContainer.children).filter(el => el.classList.contains('order-item') && el.offsetParent !== null) : [];
+            if (!orderItems || orderItems.length === 0) {
+                alert('Please add items from the menu first.');
+                return;
+            }
+            // --- Build and save full order object for Payment page (no orderId yet) ---
+            let posOrder = {};
+            try {
+                posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+            } catch (e) { posOrder = {}; }
+            // Order type
+            const orderTypeEl = document.querySelector('.order-type span');
+            posOrder.orderType = orderTypeEl ? orderTypeEl.textContent : '';
+            // Table and pax
+            const tableNumberInput = document.querySelector('.table-number input');
+            const paxNumberInput = document.querySelector('.pax-number input');
+            const tableNumberValue = tableNumberInput ? tableNumberInput.value.trim() : '';
+            const paxValue = paxNumberInput ? paxNumberInput.value.trim() : '';
+            // Only require table number and pax for Dine in
+            const orderType = orderTypeEl ? orderTypeEl.textContent.trim() : '';
+            if (orderType === 'Dine in') {
+                if (!tableNumberValue || !paxValue) {
+                    alert('Please enter both Table Number and Pax before proceeding.');
+                    return;
+                }
+                
+                // Add missing properties to posOrder for all order types
+                posOrder.orderNumber = currentOrderNumber;
+                posOrder.orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
+                posOrder.tableNumber = tableNumberValue;
+                posOrder.paxNumber = paxValue;
+                
+                // Get items from the order display
+                const orderItems = document.querySelectorAll('.order-item');
+                posOrder.items = Array.from(orderItems).map(item => {
+                    const name = item.querySelector('.item-name')?.textContent || '';
+                    const price = item.querySelector('.item-price')?.textContent?.replace('₱', '').replace(',', '') || '0';
+                    const quantity = parseInt(item.querySelector('.quantity-controls .quantity')?.textContent || '1');
+                    return {
+                        name: name,
+                        unitPrice: parseFloat(price) || 0,
+                        price: parseFloat(price) || 0,
+                        quantity: quantity
+                    };
+                }).filter(item => item.name && item.quantity > 0);
+                
+                // Get financial data
+                const subtotalEl = document.querySelector('.order-summary .subtotal .value');
+                const taxEl = document.querySelector('.order-summary .tax .value');
+                const discountEl = document.querySelector('.order-summary .discount .value');
+                const totalEl = document.querySelector('.order-summary .total .value');
+                
+                posOrder.subtotal = parseFloat(subtotalEl?.textContent?.replace('₱', '').replace(',', '') || '0');
+                posOrder.tax = parseFloat(taxEl?.textContent?.replace('₱', '').replace(',', '') || '0');
+                posOrder.discount = parseFloat(discountEl?.textContent?.replace('₱', '').replace(',', '') || '0');
+                posOrder.total = parseFloat(totalEl?.textContent?.replace('₱', '').replace(',', '') || '0');
+
+                try {
+                    const db = firebase.firestore();
+                    const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
+                    const isEditMode = sessionStorage.getItem('isEditMode') === 'true';
+                    const originalOrderId = sessionStorage.getItem('originalOrderId');
+                
+                console.log('Processing order:', {
+                    orderNumber: orderNumberFormatted,
+                    isEditMode,
+                    originalOrderId,
+                    sessionStorage: {
+                        editingOrder: sessionStorage.getItem('editingOrder'),
+                        isEditMode: sessionStorage.getItem('isEditMode'),
+                        originalOrderId: sessionStorage.getItem('originalOrderId')
+                    }
+                });
+
+                console.log('Firebase auth state:', firebase.auth().currentUser);
+                console.log('Firestore instance:', db);
+                console.log('Order data to save:', posOrder);
+
+                // Validate order data before saving
+                if (!posOrder.orderNumber || !posOrder.orderNumberFormatted || !posOrder.items || posOrder.items.length === 0) {
+                    console.error('Invalid order data:', posOrder);
+                    alert('Invalid order data. Missing required fields. Please try again.');
+                    return;
+                }
+
+                // Validate items structure
+                for (const item of posOrder.items) {
+                    if (!item.name || !item.unitPrice || !item.quantity) {
+                        console.error('Invalid item data:', item);
+                        alert('Invalid item data found. Please refresh and try again.');
+                        return;
+                    }
+                }
+                
+                // If we're in edit mode AND have a valid original order ID, update existing order
+                if (isEditMode && originalOrderId) {
+                    console.log('Updating existing order:', originalOrderId);
+                    
+                    // Check if the original order exists before trying to update
+                    const originalOrderRef = db.collection('orders').doc(originalOrderId);
+                    const originalOrderDoc = await originalOrderRef.get();
+                    
+                    if (!originalOrderDoc.exists) {
+                        console.warn('Original order not found, creating new order instead');
+                        // Fall through to create new order
+                    } else {
+                        // Get the original order data to preserve status if not already pending payment
+                        const originalOrderData = originalOrderDoc.data();
+                        const originalStatus = originalOrderData.status || 'Pending Payment';
+                        
+                        // Prepare update data object
+                        const updateData = {
+                            items: posOrder.items,
+                            orderType: posOrder.orderType,
+                            tableNumber: posOrder.tableNumber,
+                            paxNumber: posOrder.paxNumber,
+                            subtotal: posOrder.subtotal,
+                            tax: posOrder.tax,
+                            discount: posOrder.discount,
+                            total: posOrder.total,
+                            status: originalStatus, // Keep the original status
+                            lastModified: firebase.firestore.FieldValue.serverTimestamp(),
+                            modifiedBy: firebase.auth().currentUser?.email || 'unknown',
+                            isEdited: true,
+                            isEditable: true // Ensure it remains editable
+                        };
+                        
+                        // Preserve kitchenStatus if it exists
+                        if (originalOrderData.kitchenStatus) {
+                            updateData.kitchenStatus = originalOrderData.kitchenStatus;
+                        }
+                        
+                        // Apply the update
+                        await originalOrderRef.update(updateData);
+                        console.log('Order updated successfully:', originalOrderId);
+                        
+                        // Clean up session storage
+                        sessionStorage.removeItem('editingOrder');
+                        sessionStorage.removeItem('originalOrderId');
+                        sessionStorage.removeItem('isEditMode');
+                        sessionStorage.removeItem('shouldRestoreOrder');
+                        sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+                        
+                        // Navigate to payment page with absolute path
+                        window.location.href = window.location.origin + '/html/payment.html';
+                        return;
+                    }
+                }
+
+                // This is a new order - reduce inventory and create new order
+                console.log('Creating new order:', orderNumberFormatted);
+                    
+                    // Reduce inventory first
+                    try {
+                        await reduceInventoryForOrder(posOrder.items);
+                        console.log('Inventory reduced successfully');
+                    } catch (inventoryError) {
+                        console.warn('Inventory reduction failed:', inventoryError);
+                        // Continue with order creation even if inventory reduction fails
+                    }
+
+                    // Create the new order
+                    // Always recalculate total before saving
+                                        // Always recalculate subtotal from items before saving
+                                        let subtotal = 0;
+                                        if (Array.isArray(posOrder.items)) {
+                                            subtotal = posOrder.items.reduce((sum, item) => {
+                                                const price = parseFloat(item.unitPrice || item.price) || 0;
+                                                const qty = parseInt(item.quantity) || 1;
+                                                return sum + price * qty;
+                                            }, 0);
+                                        }
+                                        const tax = parseFloat(posOrder.tax) || 0;
+                                        const discount = parseFloat(posOrder.discount) || 0;
+                                        const total = subtotal + tax - discount;
+                                        await db.collection('orders').doc(orderNumberFormatted).set({
+                                                ...posOrder,
+                                                subtotal: subtotal,
+                                                total: total,
+                                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                                createdAt: new Date().toISOString(),
+                                                orderType: document.querySelector('.order-type span').textContent || 'Dine in',
+                                                tableNumber: tableNumberValue || null,
+                                                paxNumber: paxValue || null,
+                                                orderNumberFormatted: orderNumberFormatted
+                                        });
+                    
+                    console.log('New order saved successfully:', orderNumberFormatted);
+                    
+                    // Remove OMR scans that were used in this order
+                    await removeLoadedOMRScans();
+
+                // Clean up session storage
+                sessionStorage.removeItem('editingOrder');
+                sessionStorage.removeItem('originalOrderId');
+                sessionStorage.removeItem('isEditMode');
+                sessionStorage.removeItem('reservedOrderNumber'); // Clear reserved order number
+                
+                // Store order data for payment page
+                sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+                
+                // Clear the UI
+                document.querySelector('.order-items').innerHTML = '';
+                updateOrderSummary();
+                
+                const tableInput = document.querySelector('.table-number input');
+                if (tableInput) tableInput.value = '';
+                
+                // Update order number for next transaction
+                await updateOrderNumber();
+                
+                // Navigate to payment page
+                window.location.href = '/html/payment.html';
+            } catch (error) {
+                console.error('Error saving order:', error);
+                console.error('Error details:', {
+                    code: error.code,
+                    message: error.message,
+                    stack: error.stack
+                });
+                alert(`There was an error processing your order: ${error.message}. Please try again.`);
+            }
+        } else {
+            // For takeout orders, proceed without table validation
+            try {
+                const db = firebase.firestore();
+                const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
+                
+                // Add missing properties to posOrder for takeout orders
+                posOrder.orderNumber = currentOrderNumber;
+                posOrder.orderNumberFormatted = orderNumberFormatted;
+                posOrder.tableNumber = tableNumberValue || '';
+                posOrder.paxNumber = paxValue || '';
+                
+                // Items
+                posOrder.items = orderItems.map(item => ({
+                    name: item.getAttribute('data-item-name'),
+                    quantity: parseInt(item.querySelector('.quantity').textContent),
+                    price: parseFloat(item.getAttribute('data-unit-price')),
+                    total: parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''))
+                }));
+                
+                // Subtotal, tax, discount, total
+                posOrder.subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
+                posOrder.tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
+                posOrder.discount = typeof posOrder.discountAmount !== 'undefined' ? posOrder.discountAmount : 0;
+                posOrder.total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
+                
+                // Status and createdAt
+                posOrder.status = 'pending payment';
+                posOrder.createdAt = new Date().toISOString();
+                
+                // Save to sessionStorage
+                sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+                
+                // Navigate to payment page
+                window.location.href = '/html/payment.html';
+                
+            } catch (error) {
+                console.error('Error processing takeout order:', error);
+                alert(`There was an error processing your order: ${error.message}. Please try again.`);
+            }
+        }
+>>>>>>> d6ca9eec541d0e0226e6eddfb59c8e84e96e71cc
         });
     }
 
