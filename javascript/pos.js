@@ -159,36 +159,83 @@ async function startPOSSystem() {
         sessionStorage.removeItem('editingOrder');
         sessionStorage.removeItem('originalOrderId');
         sessionStorage.removeItem('isEditMode');
-        // Always ensure a pendingOrderId is set for a new order session
-        if (!sessionStorage.getItem('pendingOrderId')) {
-            let nextOrderId = await getNextOrderId();
-            sessionStorage.setItem('pendingOrderId', nextOrderId);
-        }
+        // Always clear and generate a new pendingOrderId for each new order session
+        sessionStorage.removeItem('pendingOrderId');
+        let nextOrderId = generateProgressiveOrderId();
+        sessionStorage.setItem('pendingOrderId', nextOrderId);
         
         // Initialize order number
     // Assign a new unique order number for every new order, but only finalize on payment
         let currentOrderNumber = null;
         let currentOrderNumberFormatted = null;
-        // Helper to get next orderId from Firestore counter, fallback to timestamp
-        async function getNextOrderId() {
-            try {
-                const db = firebase.firestore();
-                const counterDoc = db.collection('counters').doc('orders');
-                const result = await db.runTransaction(async (transaction) => {
-                    const doc = await transaction.get(counterDoc);
-                    const newNumber = (doc.exists ? doc.data().current : 0) + 1;
-                    transaction.set(counterDoc, {
-                        current: newNumber,
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    return newNumber;
-                });
-                return result;
-            } catch (error) {
-                console.error('OrderId counter failed, using timestamp fallback:', error);
-                return 'T' + Date.now();
+        // Helper to generate progressive order ID (4 digits, then 5 digits)
+        function generateProgressiveOrderId() {
+            // Get used order IDs from localStorage
+            const usedIds = JSON.parse(localStorage.getItem('usedOrderIds') || '[]');
+            
+            // Check if we need to switch to 5 digits (when 4-digit range is 90% full)
+            const fourDigitMax = 9999;
+            const fourDigitUsed = usedIds.filter(id => id.length === 4 && parseInt(id) <= fourDigitMax).length;
+            const fourDigitCapacity = 9000; // 1000-9999
+            const shouldUseFiveDigits = fourDigitUsed >= (fourDigitCapacity * 0.9);
+            
+            // Debug logging
+            console.log(`Order ID Status: 4-digit used: ${fourDigitUsed}/${fourDigitCapacity}, Using 5-digit: ${shouldUseFiveDigits}`);
+            
+            let newId;
+            let attempts = 0;
+            const maxAttempts = 100;
+            
+            do {
+                if (shouldUseFiveDigits) {
+                    // Generate 5-digit number (10000-99999)
+                    newId = (Math.floor(Math.random() * 90000) + 10000).toString();
+                } else {
+                    // Generate 4-digit number (1000-9999)
+                    newId = (Math.floor(Math.random() * 9000) + 1000).toString();
+                }
+                attempts++;
+            } while (usedIds.includes(newId) && attempts < maxAttempts);
+            
+            // If we couldn't find a unique ID after max attempts, use timestamp fallback
+            if (attempts >= maxAttempts) {
+                newId = 'T' + Date.now();
+                console.warn('Could not generate unique ID after max attempts, using timestamp fallback');
             }
+            
+            // Add the new ID to used IDs and save to localStorage
+            usedIds.push(newId);
+            localStorage.setItem('usedOrderIds', JSON.stringify(usedIds));
+            
+            console.log(`Generated Order ID: ${newId} (${newId.length} digits, attempt ${attempts})`);
+            return newId;
         }
+
+        // Helper function to get order ID statistics
+        function getOrderIdStats() {
+            const usedIds = JSON.parse(localStorage.getItem('usedOrderIds') || '[]');
+            const fourDigitUsed = usedIds.filter(id => id.length === 4 && parseInt(id) <= 9999).length;
+            const fiveDigitUsed = usedIds.filter(id => id.length === 5 && parseInt(id) >= 10000 && parseInt(id) <= 99999).length;
+            const totalUsed = usedIds.length;
+            
+            return {
+                fourDigitUsed,
+                fiveDigitUsed,
+                totalUsed,
+                fourDigitCapacity: 9000,
+                fiveDigitCapacity: 90000
+            };
+        }
+
+        // Make functions globally accessible for debugging
+        window.getOrderIdStats = getOrderIdStats;
+        window.generateProgressiveOrderId = generateProgressiveOrderId;
+        
+        // Add a function to reset order ID tracking (for testing)
+        window.resetOrderIdTracking = function() {
+            localStorage.removeItem('usedOrderIds');
+            console.log('Order ID tracking reset');
+        };
 
         // Function to get the last order number from Firestore
         async function getLastOrderNumber() {
@@ -236,13 +283,11 @@ async function startPOSSystem() {
             const orderNumberElement = document.querySelector('.order-number');
             let pendingOrderId = sessionStorage.getItem('pendingOrderId');
             if (!pendingOrderId) {
-                pendingOrderId = await getNextOrderId();
+                pendingOrderId = generateProgressiveOrderId();
                 sessionStorage.setItem('pendingOrderId', pendingOrderId);
             }
             currentOrderNumber = pendingOrderId;
-            currentOrderNumberFormatted = typeof pendingOrderId === 'number' || /^\d+$/.test(pendingOrderId)
-                ? String(pendingOrderId).padStart(4, '0')
-                : String(pendingOrderId);
+            currentOrderNumberFormatted = String(pendingOrderId);
             if (orderNumberElement) {
                 orderNumberElement.textContent = `Order No. ${currentOrderNumberFormatted}`;
             }
@@ -264,13 +309,11 @@ async function startPOSSystem() {
     const orderNumberElement = document.querySelector('.order-number');
     let pendingOrderId = sessionStorage.getItem('pendingOrderId');
     if (!pendingOrderId) {
-        pendingOrderId = await getNextOrderId();
+        pendingOrderId = generateProgressiveOrderId();
         sessionStorage.setItem('pendingOrderId', pendingOrderId);
     }
     currentOrderNumber = pendingOrderId;
-    currentOrderNumberFormatted = typeof pendingOrderId === 'number' || /^\d+$/.test(pendingOrderId)
-        ? String(pendingOrderId).padStart(4, '0')
-        : String(pendingOrderId);
+    currentOrderNumberFormatted = String(pendingOrderId);
     if (orderNumberElement) {
         orderNumberElement.textContent = `Order No. ${currentOrderNumberFormatted}`;
     }
@@ -498,8 +541,8 @@ async function startPOSSystem() {
                 if (itemNumberEl) itemNumberEl.textContent = quantity;
             });
 
-            // Fixed tax amount
-            const tax = 5.00;
+            // Calculate tax as percentage of subtotal (5% VAT)
+            const tax = subtotal * 0.05;
             let discountPercent = 0;
             let discount = 0;
             let discountType = 'none';
@@ -567,7 +610,10 @@ async function startPOSSystem() {
             if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
             if (taxEl) taxEl.textContent = `₱${tax.toFixed(2)}`;
             if (discountEl) discountEl.textContent = `${discountPercent}%`;
-            if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
+            if (totalEl) {
+                totalEl.textContent = `₱${total.toFixed(2)}`;
+                console.log('Updated total display to:', totalEl.textContent);
+            }
             // Show discount ID in summary if present
             let discountIDEl = document.getElementById('discount-id-summary');
             if ((discountType === 'pwd' || discountType === 'senior') && discountID) {
@@ -621,7 +667,7 @@ async function startPOSSystem() {
         // Always ensure pendingOrderId is set before proceeding
         let pendingOrderId = sessionStorage.getItem('pendingOrderId');
         if (!pendingOrderId) {
-            pendingOrderId = await getNextOrderId();
+            pendingOrderId = generateProgressiveOrderId();
             sessionStorage.setItem('pendingOrderId', pendingOrderId);
         }
         sessionStorage.setItem('hasProceeded', 'true');
@@ -660,12 +706,15 @@ async function startPOSSystem() {
             alert('Order must have at least one item.');
             return;
         }
+        // Ensure order summary is up to date before reading values
+        updateOrderSummary();
+        
         // Numeric fields
         const subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
         const tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
         const discount = typeof sessionStorage.getItem('discountAmount') !== 'undefined' ? parseFloat(sessionStorage.getItem('discountAmount')) : 0;
         const total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
-        const orderNumberFormatted = String(window.currentOrderNumber).padStart(4, '0');
+        const orderNumberFormatted = String(currentOrderNumber);
         const status = 'Pending Payment';
         const createdAt = new Date().toISOString();
         const orderData = {
@@ -684,6 +733,9 @@ async function startPOSSystem() {
             createdAt,
             timestamp: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : null
         };
+        
+        // Debug logging
+        console.log('Saving order with values:', { subtotal, tax, discount, total });
         try {
             const db = firebase.firestore();
             // Save to Firestore
@@ -711,8 +763,14 @@ async function startPOSSystem() {
                 // Clear the reserved order number first
                 sessionStorage.removeItem('reservedOrderNumber');
                 sessionStorage.removeItem('hasProceeded'); // Clear flag on Clear
+                sessionStorage.removeItem('pendingOrderId'); // Clear pending order ID for new order
                 document.querySelector('.order-items').innerHTML = '';
                 updateOrderSummary();
+                
+                // Generate new order ID for the cleared order
+                let newOrderId = generateProgressiveOrderId();
+                sessionStorage.setItem('pendingOrderId', newOrderId);
+                updateOrderNumber();
                 // Reset Table No and Pax fields to null
                 const tableInput = document.querySelector('.table-number input');
                 const paxInput = document.querySelector('.pax-number input');
@@ -799,11 +857,17 @@ async function startPOSSystem() {
         sessionStorage.removeItem('startNewOrder');
         sessionStorage.removeItem('reservedOrderNumber'); // Clear any reserved order number
         sessionStorage.removeItem('hasProceeded'); // Clear flag on New Order
+        sessionStorage.removeItem('pendingOrderId'); // Clear pending order ID for new order
         // Clear order items and reset interface
         const orderItems = document.querySelector('.order-items');
         if (orderItems) {
             orderItems.innerHTML = '';
         }
+        
+        // Generate new order ID for the new order
+        let newOrderId = generateRandomOrderId();
+        sessionStorage.setItem('pendingOrderId', newOrderId);
+        updateOrderNumber();
         // Clear table number
         const tableInput = document.querySelector('.table-number input');
         if (tableInput) {
@@ -837,8 +901,8 @@ async function startPOSSystem() {
         originalOrderId,
         hasProceeded
     });
-    // Only restore if hasProceeded is true and shouldRestoreOrder is set
-    if (hasProceeded && (pendingOrder || editingOrder) && (shouldRestore || isEditMode)) {
+    // Restore if: (hasProceeded and shouldRestoreOrder) OR (shouldRestoreOrder from back button)
+    if ((hasProceeded && shouldRestore) || (shouldRestore && !isEditMode)) {
         try {
             // Parse the order data
             const orderData = JSON.parse(pendingOrder || editingOrder);
@@ -892,7 +956,21 @@ async function startPOSSystem() {
 
             // Update order summary
             updateOrderSummary();
+            
+            // Update order number display if we have order number data
+            if (orderData.orderNumber || orderData.orderNumberFormatted) {
+                const orderNumberElement = document.querySelector('.order-number');
+                if (orderNumberElement) {
+                    const displayNumber = orderData.orderNumberFormatted || orderData.orderNumber;
+                    orderNumberElement.textContent = `Order No. ${displayNumber}`;
+                }
+            }
 
+            // Set hasProceeded flag if it wasn't already set (for back button restoration)
+            if (!hasProceeded) {
+                sessionStorage.setItem('hasProceeded', 'true');
+            }
+            
             // Clean up restoration flags so POS is ready for normal use
             sessionStorage.removeItem('pendingOrder');
             sessionStorage.removeItem('shouldRestoreOrder');

@@ -9,6 +9,49 @@ if (typeof initializeQuantityControls !== 'function') {
     // No-op: implement as needed for Payment page
   }
 }
+
+// Helper to generate progressive order ID (4 digits, then 5 digits)
+function generateProgressiveOrderId() {
+    // Get used order IDs from localStorage
+    const usedIds = JSON.parse(localStorage.getItem('usedOrderIds') || '[]');
+    
+    // Check if we need to switch to 5 digits (when 4-digit range is 90% full)
+    const fourDigitMax = 9999;
+    const fourDigitUsed = usedIds.filter(id => id.length === 4 && parseInt(id) <= fourDigitMax).length;
+    const fourDigitCapacity = 9000; // 1000-9999
+    const shouldUseFiveDigits = fourDigitUsed >= (fourDigitCapacity * 0.9);
+    
+    // Debug logging
+    console.log(`Order ID Status: 4-digit used: ${fourDigitUsed}/${fourDigitCapacity}, Using 5-digit: ${shouldUseFiveDigits}`);
+    
+    let newId;
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    do {
+        if (shouldUseFiveDigits) {
+            // Generate 5-digit number (10000-99999)
+            newId = (Math.floor(Math.random() * 90000) + 10000).toString();
+        } else {
+            // Generate 4-digit number (1000-9999)
+            newId = (Math.floor(Math.random() * 9000) + 1000).toString();
+        }
+        attempts++;
+    } while (usedIds.includes(newId) && attempts < maxAttempts);
+    
+    // If we couldn't find a unique ID after max attempts, use timestamp fallback
+    if (attempts >= maxAttempts) {
+        newId = 'T' + Date.now();
+        console.warn('Could not generate unique ID after max attempts, using timestamp fallback');
+    }
+    
+    // Add the new ID to used IDs and save to localStorage
+    usedIds.push(newId);
+    localStorage.setItem('usedOrderIds', JSON.stringify(usedIds));
+    
+    console.log(`Generated Order ID: ${newId} (${newId.length} digits, attempt ${attempts})`);
+    return newId;
+}
 // --- PATCH: Real updateDateTime function (copied from kitchen.js) ---
 function updateDateTime() {
     const now = new Date();
@@ -28,20 +71,43 @@ function initializeBackButton() {
   const backBtn = document.querySelector('.back-button');
   if (backBtn) {
     backBtn.addEventListener('click', async function() {
-      // Restore inventory for cancelled order
+      // Get the current order data from sessionStorage
       const orderRaw = sessionStorage.getItem('posOrder');
       if (orderRaw) {
         try {
           const order = JSON.parse(orderRaw);
+          
+          // Restore inventory for cancelled order
           if (order.items && order.items.length > 0 && typeof restoreInventoryForOrder === 'function') {
             await restoreInventoryForOrder(order.items);
           }
-        } catch (e) { console.warn('Failed to restore inventory:', e); }
+          
+          // Set flags to restore the order in POS
+          sessionStorage.setItem('shouldRestoreOrder', 'true');
+          sessionStorage.setItem('pendingOrder', orderRaw);
+          sessionStorage.setItem('isEditMode', 'false'); // This is a back navigation, not edit mode
+          
+          // Keep the pendingOrderId so the same order number is maintained
+          // Don't remove pendingOrderId - we want to keep the same order number
+          
+          console.log('Back button: Order data preserved for restoration in POS');
+        } catch (e) { 
+          console.warn('Failed to process order data for restoration:', e);
+          // If there's an error, still try to go back but clear the data
+          sessionStorage.removeItem('posOrder');
+          sessionStorage.removeItem('pendingOrderId');
+        }
+      } else {
+        // No order data to restore, clear everything
+        sessionStorage.removeItem('posOrder');
+        sessionStorage.removeItem('pendingOrderId');
       }
-  sessionStorage.removeItem('posOrder');
-  sessionStorage.removeItem('laterOrder');
-  sessionStorage.removeItem('pendingOrderId'); // Ensure new order number for next order
-  window.location.href = '/html/pos.html';
+      
+      // Clear the laterOrder flag since we're going back, not using "Later"
+      sessionStorage.removeItem('laterOrder');
+      
+      // Navigate back to POS
+      window.location.href = '/html/pos.html';
     });
   }
 }
@@ -58,38 +124,66 @@ function initializeOrderControls() {
         alert('Order data not found');
         return;
       }
+      
+      // Recalculate subtotal, tax, discount, and total before saving
+      let subtotal = 0;
+      if (Array.isArray(orderData.items)) {
+        subtotal = orderData.items.reduce((sum, item) => {
+          const price = parseFloat(item.unitPrice || item.price) || 0;
+          const qty = parseInt(item.quantity) || 1;
+          return sum + price * qty;
+        }, 0);
+      }
+      orderData.subtotal = subtotal;
+      
+      // Calculate tax as 5% of subtotal (same as POS system)
+      const tax = subtotal * 0.05;
+      orderData.tax = tax;
+      
+      // Calculate discount
+      let discount = 0;
+      if (typeof orderData.discountAmount !== 'undefined') {
+        discount = parseFloat(orderData.discountAmount) || 0;
+      } else if (typeof orderData.discount !== 'undefined') {
+        discount = parseFloat(orderData.discount) || 0;
+      }
+      orderData.discount = discount;
+      
+      // Calculate total with tax
+      orderData.total = subtotal + tax - discount;
+      
       // Set status to 'Pending Payment' for Later
       orderData.status = 'Pending Payment';
+      
       // Save to Firestore and redirect
       try {
         const db = firebase.firestore();
         let pendingOrderId = sessionStorage.getItem('pendingOrderId');
         let formatted = '';
         if (!pendingOrderId) {
-          let orderNumber;
-          try {
-            const counterDoc = db.collection('counters').doc('orders');
-            orderNumber = await db.runTransaction(async (transaction) => {
-              const doc = await transaction.get(counterDoc);
-              const newNumber = (doc.exists ? doc.data().current : 0) + 1;
-              transaction.set(counterDoc, {
-                current: newNumber,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-              });
-              return newNumber;
-            });
-          } catch (error) {
-            orderNumber = 'T' + Date.now();
-          }
-          pendingOrderId = orderNumber;
+          // Generate progressive order ID (4 digits, then 5 digits)
+          pendingOrderId = generateProgressiveOrderId();
           sessionStorage.setItem('pendingOrderId', pendingOrderId);
         }
-        formatted = (/^\d+$/.test(pendingOrderId)) ? String(pendingOrderId).padStart(4, '0') : String(pendingOrderId);
+        formatted = String(pendingOrderId);
         orderData.orderNumber = pendingOrderId;
         orderData.orderNumberFormatted = formatted;
         orderData.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+        
+        // Debug log to verify total calculation
+        console.log('Later button - Order data with calculated total:', {
+          subtotal: orderData.subtotal,
+          tax: orderData.tax,
+          discount: orderData.discount,
+          total: orderData.total
+        });
+        
         const orderRef = db.collection('orders').doc(orderData.orderNumberFormatted);
         await orderRef.set(orderData);
+        
+        // Clear pendingOrderId after successful order save to ensure new ID for next order
+        sessionStorage.removeItem('pendingOrderId');
+        
         window.location.href = '/html/Order.html';
       } catch (error) {
         alert('There was an error sending the order. Please try again.');
@@ -110,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let pendingOrderId = sessionStorage.getItem('pendingOrderId');
     let formatted = '';
     if (pendingOrderId) {
-      formatted = (/^\d+$/.test(pendingOrderId)) ? String(pendingOrderId).padStart(4, '0') : String(pendingOrderId);
+      formatted = String(pendingOrderId);
       orderNumberEl.textContent = formatted;
     }
   }
@@ -207,7 +301,7 @@ function loadOrderFromPOS() {
     let pendingOrderId = sessionStorage.getItem('pendingOrderId');
     let formatted = '';
     if (pendingOrderId) {
-      formatted = (/^\d+$/.test(pendingOrderId)) ? String(pendingOrderId).padStart(4, '0') : String(pendingOrderId);
+      formatted = String(pendingOrderId);
       orderNumberEl.textContent = formatted;
       if (order) {
         order.orderNumber = pendingOrderId;
@@ -216,7 +310,7 @@ function loadOrderFromPOS() {
     } else if (order && order.orderNumberFormatted) {
       orderNumberEl.textContent = order.orderNumberFormatted;
     } else if (order && order.orderNumber) {
-      orderNumberEl.textContent = String(order.orderNumber).padStart(4, '0');
+      orderNumberEl.textContent = String(order.orderNumber);
     } else {
       orderNumberEl.textContent = '—';
     }
@@ -269,6 +363,13 @@ function loadOrderFromPOS() {
   if (typeof updateOrderSummary === 'function') {
     updateOrderSummary();
   }
+  
+  // Also update summary after a short delay to ensure DOM is ready
+  setTimeout(() => {
+    if (typeof updateOrderSummary === 'function') {
+      updateOrderSummary();
+    }
+  }, 100);
   // Defensive: forcibly update order-type span again after a short delay in case DOM was not ready
   setTimeout(() => {
     const orderTypeEl2 = document.querySelector('.order-type span');
@@ -443,26 +544,11 @@ function initializeProceedButton() {
       // Finalize orderId/orderNumber using Firestore counter only now
       if (!orderData.orderId || !orderData.orderNumber || !orderData.orderNumberFormatted) {
         try {
-          const db = firebase.firestore();
-          let orderNumber;
-          try {
-            const counterDoc = db.collection('counters').doc('orders');
-            orderNumber = await db.runTransaction(async (transaction) => {
-              const doc = await transaction.get(counterDoc);
-              const newNumber = (doc.exists ? doc.data().current : 0) + 1;
-              transaction.set(counterDoc, {
-                current: newNumber,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-              });
-              return newNumber;
-            });
-          } catch (error) {
-            // Fallback to timestamp-based orderId
-            orderNumber = 'T' + Date.now();
-          }
+          // Generate progressive order ID (4 digits, then 5 digits)
+          const orderNumber = generateProgressiveOrderId();
           orderData.orderId = orderNumber;
           orderData.orderNumber = orderNumber;
-          orderData.orderNumberFormatted = (/^\d+$/.test(String(orderNumber))) ? String(orderNumber).padStart(4, '0') : String(orderNumber);
+          orderData.orderNumberFormatted = orderNumber;
         } catch (error) {
           console.error('Error generating order number:', error);
           alert('There was an error generating the order number. Please try again.');
@@ -524,7 +610,9 @@ function initializeProceedButton() {
         }, 0);
       }
       orderData.subtotal = subtotal;
-      const tax = parseFloat(orderData.tax) || 0;
+      // Calculate tax as 5% of subtotal (same as POS system)
+      const tax = subtotal * 0.05;
+      orderData.tax = tax;
       let discount = 0;
       if (typeof orderData.discountAmount !== 'undefined') {
         discount = parseFloat(orderData.discountAmount) || 0;
@@ -575,10 +663,16 @@ function updateOrderSummary() {
         return sum + (price * qty);
       }, 0);
     }
-    const tax = parseFloat(orderData.tax) || 0;
+    // Calculate tax as 5% of subtotal (same as POS system)
+    const tax = subtotal * 0.05;
     const discountAmount = parseFloat(orderData.discountAmount) || 0;
     // Always recalculate total as subtotal + tax - discountAmount
     const total = subtotal + tax - discountAmount;
+    
+    // Debug logging (can be removed in production)
+    console.log('Payment updateOrderSummary - Order data:', orderData);
+    console.log('Payment updateOrderSummary - Subtotal:', subtotal);
+    console.log('Payment updateOrderSummary - Tax calculated (5%):', tax);
     const discountPercent = parseFloat(orderData.discountPercent) || 0;
     // Update summary fields by DOM position, not by summaryRows index
     // Subtotal
@@ -591,7 +685,8 @@ function updateOrderSummary() {
     // Tax
     const taxEl = document.querySelector('.order-summary .summary-row:nth-child(2) .summary-value');
     if (taxEl) {
-      taxEl.textContent = '₱' + tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const taxDisplay = '₱' + tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      taxEl.textContent = taxDisplay;
       taxEl.style.fontWeight = '400';
       taxEl.style.textAlign = 'right';
     }

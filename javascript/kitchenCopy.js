@@ -273,7 +273,7 @@ function displayAllKitchenOrders(orders) {
     if (order.orderNumberFormatted) {
       orderIdLabel = order.orderNumberFormatted;
     } else if (order.orderNumber && /^\d+$/.test(String(order.orderNumber))) {
-      orderIdLabel = String(order.orderNumber).padStart(4, '0');
+      orderIdLabel = String(order.orderNumber);
     } else if (order.orderNumber) {
       orderIdLabel = String(order.orderNumber);
     } else if (order._docId) {

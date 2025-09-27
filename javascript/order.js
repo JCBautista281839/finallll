@@ -107,9 +107,10 @@ function sanitizeOrderData(orderData) {
         return {
             ...orderData,
             id: orderData.id || orderData.orderNumberFormatted || orderData.orderNumber || '',
-            orderNumber: (/^\d+$/.test(orderData.orderNumber)) ? parseInt(orderData.orderNumber) : orderData.orderNumber,
-            orderNumberFormatted: orderData.orderNumberFormatted ||
-                ((/^\d+$/.test(orderData.orderNumber)) ? String(orderData.orderNumber).padStart(4, '0') : String(orderData.orderNumber || '')),
+            orderNumber: orderData.orderNumber || orderData.id,
+            orderNumberFormatted: orderData.orderNumberFormatted || 
+                (orderData.orderNumber ? String(orderData.orderNumber) : 
+                 (orderData.id ? String(orderData.id) : '')),
             status: orderData.status || 'Processing',
             items: Array.isArray(orderData.items) ? orderData.items.map(item => ({
                 id: item.id || generateUniqueId(),
@@ -507,7 +508,7 @@ function createOrderRow(orderData) {
 
     row.innerHTML = 
         '<td class="align-middle text-center text-primary">' +
-            '<div class="fw-bold">#' + (orderData.orderNumberFormatted || (typeof orderData.orderNumber === 'string' && /^T\d+$/.test(orderData.orderNumber) ? orderData.orderNumber : (orderData.orderNumber ? orderData.orderNumber.toString().padStart(4, '0') : 'N/A'))) + '</div>' +
+            '<div class="fw-bold">#' + (orderData.orderNumberFormatted || orderData.orderNumber || orderData.id || 'N/A') + '</div>' +
             '<small class="text-muted">' + dateStr + ' ' + timeStr + '</small>' +
         '</td>' +
         '<td class="align-middle text-center">' +

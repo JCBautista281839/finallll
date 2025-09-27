@@ -233,6 +233,7 @@ function printReceipt() {
   window.print();
   // After printing, clear sessionStorage and reload POS for new order number
   sessionStorage.removeItem('posOrder');
+  sessionStorage.removeItem('pendingOrderId'); // Clear pending order ID for new order
   window.location.href = '/html/pos.html';
 }
 

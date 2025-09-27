@@ -3,7 +3,7 @@ async function saveOrderToFirebase(orderData) {
         const db = firebase.firestore();
         
         // Format the order number to be 4 digits (e.g., 0001)
-        const orderNumberFormatted = orderData.orderNumber.toString().padStart(4, '0');
+        const orderNumberFormatted = orderData.orderNumber.toString();
         
         // Always recalculate total before saving
         const subtotal = parseFloat(orderData.subtotal) || 0;

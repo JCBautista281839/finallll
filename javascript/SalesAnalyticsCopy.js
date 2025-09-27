@@ -1112,7 +1112,7 @@ function loadFallbackAnalyticsData(timeRange) {
           total: total 
         },
         discount: Math.random() * 50,
-        tax: total * 0.12,
+        tax: total * 0.05,
         paxNumber: Math.floor(Math.random() * 4) + 1
       });
     }
