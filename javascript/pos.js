@@ -649,12 +649,43 @@ async function startPOSSystem() {
                     alert('Please enter both Table Number and Pax before proceeding.');
                     return;
                 }
+                
+                // Add missing properties to posOrder for all order types
+                posOrder.orderNumber = currentOrderNumber;
+                posOrder.orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
+                posOrder.tableNumber = tableNumberValue;
+                posOrder.paxNumber = paxValue;
+                
+                // Get items from the order display
+                const orderItems = document.querySelectorAll('.order-item');
+                posOrder.items = Array.from(orderItems).map(item => {
+                    const name = item.querySelector('.item-name')?.textContent || '';
+                    const price = item.querySelector('.item-price')?.textContent?.replace('₱', '').replace(',', '') || '0';
+                    const quantity = parseInt(item.querySelector('.quantity-controls .quantity')?.textContent || '1');
+                    return {
+                        name: name,
+                        unitPrice: parseFloat(price) || 0,
+                        price: parseFloat(price) || 0,
+                        quantity: quantity
+                    };
+                }).filter(item => item.name && item.quantity > 0);
+                
+                // Get financial data
+                const subtotalEl = document.querySelector('.order-summary .subtotal .value');
+                const taxEl = document.querySelector('.order-summary .tax .value');
+                const discountEl = document.querySelector('.order-summary .discount .value');
+                const totalEl = document.querySelector('.order-summary .total .value');
+                
+                posOrder.subtotal = parseFloat(subtotalEl?.textContent?.replace('₱', '').replace(',', '') || '0');
+                posOrder.tax = parseFloat(taxEl?.textContent?.replace('₱', '').replace(',', '') || '0');
+                posOrder.discount = parseFloat(discountEl?.textContent?.replace('₱', '').replace(',', '') || '0');
+                posOrder.total = parseFloat(totalEl?.textContent?.replace('₱', '').replace(',', '') || '0');
 
                 try {
                     const db = firebase.firestore();
-                const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
-                const isEditMode = sessionStorage.getItem('isEditMode') === 'true';
-                const originalOrderId = sessionStorage.getItem('originalOrderId');
+                    const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
+                    const isEditMode = sessionStorage.getItem('isEditMode') === 'true';
+                    const originalOrderId = sessionStorage.getItem('originalOrderId');
                 
                 console.log('Processing order:', {
                     orderNumber: orderNumberFormatted,
@@ -669,17 +700,17 @@ async function startPOSSystem() {
 
                 console.log('Firebase auth state:', firebase.auth().currentUser);
                 console.log('Firestore instance:', db);
-                console.log('Order data to save:', orderData);
+                console.log('Order data to save:', posOrder);
 
                 // Validate order data before saving
-                if (!orderData.orderNumber || !orderData.orderNumberFormatted || !orderData.items || orderData.items.length === 0) {
-                    console.error('Invalid order data:', orderData);
+                if (!posOrder.orderNumber || !posOrder.orderNumberFormatted || !posOrder.items || posOrder.items.length === 0) {
+                    console.error('Invalid order data:', posOrder);
                     alert('Invalid order data. Missing required fields. Please try again.');
                     return;
                 }
 
                 // Validate items structure
-                for (const item of orderData.items) {
+                for (const item of posOrder.items) {
                     if (!item.name || !item.unitPrice || !item.quantity) {
                         console.error('Invalid item data:', item);
                         alert('Invalid item data found. Please refresh and try again.');
@@ -705,14 +736,14 @@ async function startPOSSystem() {
                         
                         // Prepare update data object
                         const updateData = {
-                            items: orderData.items,
-                            orderType: orderData.orderType,
-                            tableNumber: orderData.tableNumber,
-                            paxNumber: orderData.paxNumber,
-                            subtotal: orderData.subtotal,
-                            tax: orderData.tax,
-                            discount: orderData.discount,
-                            total: orderData.total,
+                            items: posOrder.items,
+                            orderType: posOrder.orderType,
+                            tableNumber: posOrder.tableNumber,
+                            paxNumber: posOrder.paxNumber,
+                            subtotal: posOrder.subtotal,
+                            tax: posOrder.tax,
+                            discount: posOrder.discount,
+                            total: posOrder.total,
                             status: originalStatus, // Keep the original status
                             lastModified: firebase.firestore.FieldValue.serverTimestamp(),
                             modifiedBy: firebase.auth().currentUser?.email || 'unknown',
@@ -734,10 +765,10 @@ async function startPOSSystem() {
                         sessionStorage.removeItem('originalOrderId');
                         sessionStorage.removeItem('isEditMode');
                         sessionStorage.removeItem('shouldRestoreOrder');
-                        sessionStorage.setItem('posOrder', JSON.stringify(orderData));
+                        sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
                         
                         // Navigate to payment page with absolute path
-                        window.location.href = window.location.origin + '/payment.html';
+                        window.location.href = window.location.origin + '/html/payment.html';
                         return;
                     }
                 }
@@ -747,7 +778,7 @@ async function startPOSSystem() {
                     
                     // Reduce inventory first
                     try {
-                        await reduceInventoryForOrder(orderData.items);
+                        await reduceInventoryForOrder(posOrder.items);
                         console.log('Inventory reduced successfully');
                     } catch (inventoryError) {
                         console.warn('Inventory reduction failed:', inventoryError);
@@ -758,25 +789,25 @@ async function startPOSSystem() {
                     // Always recalculate total before saving
                                         // Always recalculate subtotal from items before saving
                                         let subtotal = 0;
-                                        if (Array.isArray(orderData.items)) {
-                                            subtotal = orderData.items.reduce((sum, item) => {
+                                        if (Array.isArray(posOrder.items)) {
+                                            subtotal = posOrder.items.reduce((sum, item) => {
                                                 const price = parseFloat(item.unitPrice || item.price) || 0;
                                                 const qty = parseInt(item.quantity) || 1;
                                                 return sum + price * qty;
                                             }, 0);
                                         }
-                                        const tax = parseFloat(orderData.tax) || 0;
-                                        const discount = parseFloat(orderData.discount) || 0;
+                                        const tax = parseFloat(posOrder.tax) || 0;
+                                        const discount = parseFloat(posOrder.discount) || 0;
                                         const total = subtotal + tax - discount;
                                         await db.collection('orders').doc(orderNumberFormatted).set({
-                                                ...orderData,
+                                                ...posOrder,
                                                 subtotal: subtotal,
                                                 total: total,
                                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                                                 createdAt: new Date().toISOString(),
                                                 orderType: document.querySelector('.order-type span').textContent || 'Dine in',
-                                                tableNumber: tableNumber || null,
-                                                paxNumber: paxNumber || null,
+                                                tableNumber: tableNumberValue || null,
+                                                paxNumber: paxValue || null,
                                                 orderNumberFormatted: orderNumberFormatted
                                         });
                     
@@ -792,7 +823,7 @@ async function startPOSSystem() {
                 sessionStorage.removeItem('reservedOrderNumber'); // Clear reserved order number
                 
                 // Store order data for payment page
-                sessionStorage.setItem('posOrder', JSON.stringify(orderData));
+                sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
                 
                 // Clear the UI
                 document.querySelector('.order-items').innerHTML = '';
@@ -805,7 +836,7 @@ async function startPOSSystem() {
                 await updateOrderNumber();
                 
                 // Navigate to payment page
-                window.location.href = '/payment.html';
+                window.location.href = '/html/payment.html';
             } catch (error) {
                 console.error('Error saving order:', error);
                 console.error('Error details:', {
@@ -820,6 +851,12 @@ async function startPOSSystem() {
             try {
                 const db = firebase.firestore();
                 const orderNumberFormatted = String(currentOrderNumber).padStart(4, '0');
+                
+                // Add missing properties to posOrder for takeout orders
+                posOrder.orderNumber = currentOrderNumber;
+                posOrder.orderNumberFormatted = orderNumberFormatted;
+                posOrder.tableNumber = tableNumberValue || '';
+                posOrder.paxNumber = paxValue || '';
                 
                 // Items
                 posOrder.items = orderItems.map(item => ({

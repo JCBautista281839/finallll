@@ -14,6 +14,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Add permissive CSP headers for development
+app.use((req, res, next) => {
+    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src 'self' *; img-src 'self' data: blob: *;");
+    next();
+});
+
 // Configuration (use environment variables)
 // IMPORTANT: Using SANDBOX mode for testing
 const IS_PRODUCTION = false; // Force sandbox mode
