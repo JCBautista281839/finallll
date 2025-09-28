@@ -27,7 +27,7 @@ function updateTopProductsDisplay(products) {
 
 document.addEventListener('DOMContentLoaded', function() {
   // ...existing code...
-  loadTopProductsData();
+  // loadTopProductsData(); // Function removed - handled by updateTopProductsList instead
 });
 // PDF export dependencies (make sure jsPDF and html2canvas are loaded in your HTML)
 // <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -822,44 +822,10 @@ function updateSummaryCards(orders) {
       dateRange: window.selectedDateRange || "All Time"
     };
     return;
+  }
+
   // --- Top 5 Products ---
   updateTopProductsList(orders);
-// Populate the Top 5 Products list
-function updateTopProductsList(orders) {
-  const topProductsBody = document.getElementById('topProductsBody');
-  if (!topProductsBody) return;
-  const productSales = {};
-  orders.forEach(order => {
-    if (Array.isArray(order.items)) {
-      order.items.forEach(item => {
-        if (!item.name) return;
-        const key = item.name;
-        if (!productSales[key]) productSales[key] = { name: item.name, qty: 0, total: 0 };
-        productSales[key].qty += Number(item.quantity) || 1;
-        productSales[key].total += Number(item.price) * (Number(item.quantity) || 1) || 0;
-      });
-    }
-  });
-  // Convert to array and sort by qty sold, then by total sales
-  const sorted = Object.values(productSales).sort((a, b) => b.qty - a.qty || b.total - a.total).slice(0, 5);
-  if (sorted.length === 0) {
-    topProductsBody.innerHTML = `
-      <tr>
-        <td colspan="2" class="text-center text-muted py-3">
-          No product data available
-        </td>
-      </tr>
-    `;
-    return;
-  }
-  topProductsBody.innerHTML = sorted.map(product => `
-    <tr>
-      <td>${product.name}</td>
-      <td class="text-end fw-medium">${product.qty}</td>
-    </tr>
-  `).join('');
-}
-  }
 
   // Aggregations
   let gross = 0;
@@ -952,6 +918,42 @@ function updateTopProductsList(orders) {
 
 function fmt(n) {
   return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+}
+
+// Populate the Top 5 Products list
+function updateTopProductsList(orders) {
+  const topProductsBody = document.getElementById('topProductsBody');
+  if (!topProductsBody) return;
+  const productSales = {};
+  orders.forEach(order => {
+    if (Array.isArray(order.items)) {
+      order.items.forEach(item => {
+        if (!item.name) return;
+        const key = item.name;
+        if (!productSales[key]) productSales[key] = { name: item.name, qty: 0, total: 0 };
+        productSales[key].qty += Number(item.quantity) || 1;
+        productSales[key].total += Number(item.price) * (Number(item.quantity) || 1) || 0;
+      });
+    }
+  });
+  // Convert to array and sort by qty sold, then by total sales
+  const sorted = Object.values(productSales).sort((a, b) => b.qty - a.qty || b.total - a.total).slice(0, 5);
+  if (sorted.length === 0) {
+    topProductsBody.innerHTML = `
+      <tr>
+        <td colspan="2" class="text-center text-muted py-3">
+          No product data available
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  topProductsBody.innerHTML = sorted.map(product => `
+    <tr>
+      <td>${product.name}</td>
+      <td class="text-end fw-medium">${product.qty}</td>
+    </tr>
+  `).join('');
 }
 
 // NEW: start realtime listener function using onSnapshot

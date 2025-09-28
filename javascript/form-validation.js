@@ -8,9 +8,11 @@ function validateEmail(email) {
 
 // Validate phone number format
 function validatePhone(phone) {
-    // Accept various formats like (123) 456-7890, 123-456-7890, 1234567890
-    const re = /^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
-    return re.test(String(phone));
+    // Accept various international formats including Philippine numbers and US formats
+    // Supports formats like: +63 961 865 4087, 09618654087, +639618654087, (123) 456-7890, etc.
+    const internationalRe = /^(\+\d{1,3}\s?)?(\d{2,4}\s?)?\d{3,4}\s?\d{3,4}\s?\d{3,4}$/;
+    const usRe = /^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
+    return internationalRe.test(String(phone)) || usRe.test(String(phone));
 }
 
 // Add validation to form fields
