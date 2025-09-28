@@ -12,16 +12,21 @@ function clearOrderAndSummary() {
     if (totalEl) totalEl.textContent = '₱0.00';
     const discountIDEl = document.getElementById('discount-id-summary');
     if (discountIDEl) discountIDEl.textContent = '';
-    const idInput = document.getElementById('discount-id-input');
-    if (idInput) {
-        idInput.value = '';
-        idInput.style.display = 'none';
+    const discountIdInput = document.getElementById('discount-id-input');
+    if (discountIdInput) {
+        discountIdInput.value = '';
+        discountIdInput.style.display = 'none';
     }
     const discountInputContainer = document.querySelector('.discount-input');
     if (discountInputContainer) discountInputContainer.style.display = 'none';
+    const customDiscountInputRow = document.getElementById('customDiscountInputRow');
+    if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+    const customDiscountInput = document.getElementById('customDiscountInput');
+    if (customDiscountInput) customDiscountInput.value = '';
     const discountDropdown = document.querySelector('.discount-dropdown');
     if (discountDropdown) discountDropdown.value = 'none';
     sessionStorage.removeItem('activeOrderDiscount');
+    sessionStorage.removeItem('posOrder'); // Clear posOrder to reset discount state
     sessionStorage.removeItem('loadedOMRScans'); // Clear OMR tracking
     window.activeDiscountID = '';
 }
@@ -541,8 +546,8 @@ async function startPOSSystem() {
                 if (itemNumberEl) itemNumberEl.textContent = quantity;
             });
 
-            // Calculate tax as percentage of subtotal (5% VAT)
-            const tax = subtotal * 0.05;
+            // Calculate tax as fixed amount (₱5.00)
+            const tax = 5.00;
             let discountPercent = 0;
             let discount = 0;
             let discountType = 'none';
@@ -550,8 +555,6 @@ async function startPOSSystem() {
             const discountDropdown = document.querySelector('.discount-dropdown');
             const customDiscountInputRow = document.getElementById('customDiscountInputRow');
             const customDiscountInput = document.getElementById('customDiscountInput');
-            const idInputRow = document.getElementById('customerIdInputRow');
-            const idInput = document.getElementById('customerIdInput');
             if (discountDropdown) {
                 // Only count visible order items for the noItems check
                 const visibleOrderItems = Array.from(document.querySelectorAll('.order-item')).filter(item => item.offsetParent !== null);
@@ -562,7 +565,6 @@ async function startPOSSystem() {
                     // For all discount types, just reset fields and return silently if no items
                     discountDropdown.value = 'none';
                     if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
-                    if (idInputRow) idInputRow.style.display = 'none';
                     discountType = 'none';
                     discountPercent = 0;
                     discount = 0;
@@ -573,17 +575,11 @@ async function startPOSSystem() {
                     discountPercent = 0;
                     discount = 0;
                     if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
-                    if (idInputRow) idInputRow.style.display = 'none';
                 } else if (discountDropdown.value === 'pwd' || discountDropdown.value === 'senior') {
                     discountType = discountDropdown.value;
                     discountPercent = 20;
                     discount = subtotal * 0.20;
-                    if (idInputRow) idInputRow.style.display = '';
                     if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
-                    if (idInput) {
-                        discountID = idInput.value;
-                        idInput.oninput = function() { updateOrderSummary(); };
-                    }
                 } else if (discountDropdown.value === 'custom') {
                     discountType = 'custom';
                     if (customDiscountInputRow) {
@@ -597,7 +593,6 @@ async function startPOSSystem() {
                             customDiscountInput.oninput = function() { updateOrderSummary(); };
                         }
                     }
-                    if (idInputRow) idInputRow.style.display = 'none';
                 }
             }
             // Calculate total
@@ -637,11 +632,6 @@ async function startPOSSystem() {
             posOrder.discountType = discountType === 'custom' ? 'Special Discount' : (discountType === 'pwd' ? 'PWD' : (discountType === 'senior' ? 'Senior Citizen' : 'None'));
             posOrder.discountPercent = discountPercent;
             posOrder.discountAmount = discount;
-            // Save name and ID if present (from input fields)
-            const nameInput = document.getElementById('customerNameInput');
-            const idInputField = document.getElementById('customerIdInput');
-            if (nameInput) posOrder.discountName = nameInput.value;
-            if (idInputField) posOrder.discountID = idInputField.value;
             // Also save computed totals for Payment page
             posOrder.subtotal = subtotal;
             posOrder.tax = tax;
@@ -712,11 +702,35 @@ async function startPOSSystem() {
         // Numeric fields
         const subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
         const tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
-        const discount = typeof sessionStorage.getItem('discountAmount') !== 'undefined' ? parseFloat(sessionStorage.getItem('discountAmount')) : 0;
+        
+        // Get discount from posOrder object instead of sessionStorage
+        let discount = 0;
+        try {
+            const posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+            discount = posOrder.discountAmount || 0;
+        } catch (e) {
+            console.log('Error getting discount from posOrder:', e.message);
+        }
+        
         const total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
         const orderNumberFormatted = String(currentOrderNumber);
         const status = 'Pending Payment';
         const createdAt = new Date().toISOString();
+        // Get discount details from posOrder for persistence
+        let discountDetails = {};
+        try {
+            const posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+            discountDetails = {
+                discountType: posOrder.discountType || 'None',
+                discountPercent: posOrder.discountPercent || 0,
+                discountAmount: posOrder.discountAmount || 0,
+                discountID: posOrder.discountID || '',
+                discountName: posOrder.discountName || ''
+            };
+        } catch (e) {
+            console.log('Error getting discount details:', e.message);
+        }
+        
         const orderData = {
             orderId: orderNumberFormatted,
             orderNumber: orderNumberFormatted,
@@ -731,7 +745,13 @@ async function startPOSSystem() {
             total,
             status,
             createdAt,
-            timestamp: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : null
+            timestamp: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : null,
+            // Include discount details for restoration
+            discountType: discountDetails.discountType,
+            discountPercent: discountDetails.discountPercent,
+            discountAmount: discountDetails.discountAmount,
+            discountID: discountDetails.discountID,
+            discountName: discountDetails.discountName
         };
         
         // Debug logging
@@ -949,13 +969,54 @@ async function startPOSSystem() {
                 const paxInput = document.querySelector('.pax-number input');
                 if (paxInput) paxInput.value = orderData.paxNumber;
             }
-            if (orderData.discount) {
-                const discountInput = document.querySelector('.discount-input input');
-                if (discountInput) discountInput.value = orderData.discount.toString();
+            // Restore discount state from posOrder or orderData if available
+            try {
+                let posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+                
+                // If posOrder doesn't have discount info, try to get it from orderData
+                if (!posOrder.discountType && orderData.discountType && orderData.discountType !== 'None') {
+                    posOrder = {
+                        discountType: orderData.discountType,
+                        discountPercent: orderData.discountPercent || 0,
+                        discountAmount: orderData.discountAmount || 0,
+                        discountID: orderData.discountID || '',
+                        discountName: orderData.discountName || ''
+                    };
+                    // Save the restored discount info to posOrder
+                    sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+                }
+                
+                if (posOrder.discountType && posOrder.discountType !== 'None') {
+                    const discountDropdown = document.querySelector('.discount-dropdown');
+                    const customDiscountInputRow = document.getElementById('customDiscountInputRow');
+                    const customDiscountInput = document.getElementById('customDiscountInput');
+                    
+                    if (discountDropdown) {
+                        // Map discount type back to dropdown value
+                        if (posOrder.discountType === 'PWD') {
+                            discountDropdown.value = 'pwd';
+                            if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+                        } else if (posOrder.discountType === 'Senior Citizen') {
+                            discountDropdown.value = 'senior';
+                            if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+                        } else if (posOrder.discountType === 'Special Discount') {
+                            discountDropdown.value = 'custom';
+                            if (customDiscountInputRow) customDiscountInputRow.style.display = '';
+                            if (customDiscountInput && posOrder.discountPercent) {
+                                customDiscountInput.value = posOrder.discountPercent.toString();
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('No discount data to restore:', e.message);
             }
 
             // Update order summary
             updateOrderSummary();
+            
+            // Ensure discount dropdown listener is attached after restoration
+            ensureDiscountDropdownListener();
             
             // Update order number display if we have order number data
             if (orderData.orderNumber || orderData.orderNumberFormatted) {
