@@ -34,12 +34,19 @@ async function initializeFirebase() {
         const app = firebase.initializeApp(window.firebaseConfig);
         console.log('Firebase initialized successfully');
         
-        // Configure authentication persistence to SESSION
+        // Configure authentication persistence to SESSION for automatic logout on tab close
         try {
             await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
-            console.log('Firebase auth persistence set to SESSION');
+            console.log('Firebase auth persistence set to SESSION - user will be logged out when tab closes');
         } catch (persistenceError) {
             console.warn('Could not set auth persistence:', persistenceError);
+            // Try alternative method
+            try {
+                await firebase.auth().setPersistence('session');
+                console.log('Firebase auth persistence set to SESSION (alternative method)');
+            } catch (altError) {
+                console.error('Failed to set auth persistence with both methods:', altError);
+            }
         }
         
         return app;

@@ -358,9 +358,9 @@ if (typeof AuthManager === 'undefined') {
     // Clear local storage
     clearLocalStorage() {
       try {
-        console.log('[AuthManager] Clearing local storage...');
+        console.log('[AuthManager] Clearing all browser storage...');
         
-        // Remove authentication-related items
+        // Remove authentication-related items from localStorage
         const itemsToRemove = [
           'userRole',
           'signupEmail', 
@@ -370,20 +370,101 @@ if (typeof AuthManager === 'undefined') {
           'orderFormData',
           'quotationData',
           'pickupAddress',
-          'deliveryAddress'
+          'deliveryAddress',
+          'userPreferences',
+          'userSettings',
+          'lastLoginTime',
+          'sessionData',
+          'tempData',
+          'formData',
+          'checkoutData',
+          'paymentData',
+          'shippingData',
+          'orderHistory',
+          'favorites',
+          'recentOrders',
+          'userLocation',
+          'notificationSettings',
+          'themeSettings',
+          'languageSettings'
         ];
         
         itemsToRemove.forEach(item => {
           localStorage.removeItem(item);
         });
         
-        // Clear session storage as well
+        // Clear all session storage
         sessionStorage.clear();
         
-        console.log('[AuthManager] Local storage cleared successfully');
+        // Clear IndexedDB if available
+        this.clearIndexedDB();
+        
+        // Clear cookies (if any authentication cookies exist)
+        this.clearAuthCookies();
+        
+        console.log('[AuthManager] All browser storage cleared successfully');
         
       } catch (error) {
-        console.error('[AuthManager] Error clearing local storage:', error);
+        console.error('[AuthManager] Error clearing browser storage:', error);
+      }
+    }
+
+    // Clear IndexedDB
+    clearIndexedDB() {
+      try {
+        if ('indexedDB' in window) {
+          // List of known IndexedDB databases to clear
+          const databasesToClear = [
+            'firebaseLocalStorageDb',
+            'firebase-heartbeat-database',
+            'firebase-messaging-database',
+            'cart-db',
+            'user-data-db',
+            'offline-data-db'
+          ];
+          
+          databasesToClear.forEach(dbName => {
+            try {
+              const deleteRequest = indexedDB.deleteDatabase(dbName);
+              deleteRequest.onsuccess = () => {
+                console.log(`[AuthManager] IndexedDB database ${dbName} cleared`);
+              };
+              deleteRequest.onerror = () => {
+                console.warn(`[AuthManager] Could not clear IndexedDB database ${dbName}`);
+              };
+            } catch (error) {
+              console.warn(`[AuthManager] Error clearing IndexedDB database ${dbName}:`, error);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('[AuthManager] Error clearing IndexedDB:', error);
+      }
+    }
+
+    // Clear authentication cookies
+    clearAuthCookies() {
+      try {
+        // List of authentication-related cookies to clear
+        const cookiesToClear = [
+          'authToken',
+          'sessionToken',
+          'userSession',
+          'firebaseAuth',
+          'userData',
+          'loginState'
+        ];
+        
+        cookiesToClear.forEach(cookieName => {
+          // Clear cookie for current domain
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          // Clear cookie for parent domain
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        });
+        
+        console.log('[AuthManager] Authentication cookies cleared');
+      } catch (error) {
+        console.error('[AuthManager] Error clearing cookies:', error);
       }
     }
 
