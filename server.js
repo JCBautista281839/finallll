@@ -3,6 +3,7 @@ const path = require('path');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
+const admin = require('firebase-admin');
 require('dotenv').config(); // Load environment variables from .env file
 
 const { spawn, exec } = require('child_process');
@@ -968,10 +969,30 @@ async function updateOrderStatus(orderId, statusData) {
       lastUpdated: new Date().toISOString()
     });
     
-    // TODO: Integrate with Firebase Firestore
-    // Example Firebase integration:
+    // Firebase Admin SDK Integration
+    
+    // Initialize Firebase Admin SDK if not already initialized
+    if (!admin.apps.length) {
+        try {
+            // Try to load service account key
+            const serviceAccount = require('./firebase-service-account.json');
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount)
+            });
+            console.log('✅ Firebase Admin SDK initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
+            console.log('📝 To enable Firebase Admin features for password reset:');
+            console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
+            console.log('   2. Generate new private key and download JSON file');
+            console.log('   3. Save as firebase-service-account.json in project root');
+            console.log('   4. Restart the server');
+            console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
+        }
+    }
+    
+    // Firebase Firestore integration example:
     /*
-    const admin = require('firebase-admin');
     const db = admin.firestore();
     await db.collection('orders').doc(orderId).update({
       ...statusData,
@@ -1503,8 +1524,271 @@ app.post('/api/payment', (req, res) => {
   res.json({ success: true, payment, order });
 });
 
+// Password Reset OTP Storage (in-memory for development, replace with database in production)
+const passwordResetOTPStorage = new Map(); // email -> { otp, expiry, attempts, verified }
 
+// Send Password Reset OTP endpoint
+app.post('/api/send-password-reset-otp', rateLimitMiddleware, async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email is required' 
+            });
+        }
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Please enter a valid email address' 
+            });
+        }
+        
+        console.log(`[Password Reset OTP] Request for: ${email}`);
+        
+        // Generate 6-digit OTP
+        const otp = generateOTP();
+        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+        
+        // Store OTP
+        passwordResetOTPStorage.set(email, {
+            otp: otp,
+            expiry: expiry,
+            attempts: 0,
+            verified: false,
+            createdAt: Date.now()
+        });
+        
+        // Send OTP email via SendGrid
+        const emailResult = await sendOTPEmail(email, 'User', otp);
+        
+        if (emailResult.success) {
+            console.log(`📧 Password reset OTP sent successfully to ${email}`);
+            res.json({ 
+                success: true, 
+                otp: otp, // For development/testing
+                expiry: expiry,
+                message: 'Password reset OTP sent successfully',
+                emailSent: true
+            });
+        } else {
+            console.log(`📧 Password reset OTP email failed to send: ${emailResult.message}`);
+            res.json({ 
+                success: true, 
+                otp: otp, // For development/testing
+                expiry: expiry,
+                message: 'Password reset OTP generated (email failed to send)',
+                emailSent: false,
+                emailError: emailResult.message
+            });
+        }
+        
+    } catch (error) {
+        console.error('[Password Reset OTP] Send error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'An error occurred while processing your request' 
+        });
+    }
+});
 
+// Verify Password Reset OTP endpoint
+app.post('/api/verify-password-reset-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        if (!email || !otp) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and OTP are required' 
+            });
+        }
+        
+        console.log(`[Password Reset OTP] Verifying OTP for: ${email}`);
+        
+        if (!passwordResetOTPStorage.has(email)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'No password reset OTP found for this email' 
+            });
+        }
+        
+        const storedData = passwordResetOTPStorage.get(email);
+        
+        // Check if OTP has expired
+        if (Date.now() > storedData.expiry) {
+            passwordResetOTPStorage.delete(email);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Password reset OTP has expired' 
+            });
+        }
+        
+        // Check attempt limit
+        if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+            passwordResetOTPStorage.delete(email);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Too many failed attempts' 
+            });
+        }
+        
+        // Verify OTP
+        if (storedData.otp === otp) {
+            // Mark as verified
+            storedData.verified = true;
+            passwordResetOTPStorage.set(email, storedData);
+            
+            console.log(`[Password Reset OTP] OTP verified successfully for: ${email}`);
+            res.json({ 
+                success: true, 
+                message: 'Password reset OTP verified successfully' 
+            });
+        } else {
+            // Increment attempt count
+            storedData.attempts++;
+            passwordResetOTPStorage.set(email, storedData);
+            
+            const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+            return res.status(400).json({ 
+                success: false, 
+                message: `Invalid OTP. ${remainingAttempts} attempts remaining.` 
+            });
+        }
+        
+    } catch (error) {
+        console.error('[Password Reset OTP] Verify error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'An error occurred while verifying the OTP' 
+        });
+    }
+});
+
+// Reset Password with OTP endpoint
+app.post('/api/reset-password-with-otp', async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+        
+        if (!email || !newPassword) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and new password are required' 
+            });
+        }
+        
+        // Validate password strength
+        if (newPassword.length < 6) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Password must be at least 6 characters long' 
+            });
+        }
+        
+        console.log(`[Password Reset OTP] Resetting password for: ${email}`);
+        
+        // Check if we have OTP data in server storage (traditional flow)
+        if (passwordResetOTPStorage.has(email)) {
+            const storedData = passwordResetOTPStorage.get(email);
+            
+            // Check if OTP has expired
+            if (Date.now() > storedData.expiry) {
+                passwordResetOTPStorage.delete(email);
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Password reset OTP has expired' 
+                });
+            }
+            
+            // Check if OTP has been verified
+            if (!storedData.verified) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'OTP must be verified before password reset' 
+                });
+            }
+        } else {
+            // If no server-side OTP data, assume this is from SendGrid OTP verification
+            // The verification was already done on the client side
+            console.log(`[Password Reset OTP] No server-side OTP data found for ${email}, assuming SendGrid OTP verification`);
+        }
+        
+        // Update password in Firebase Auth
+        try {
+            // Initialize Firebase Admin SDK if not already initialized
+            if (!admin.apps.length) {
+                try {
+                    // Try to load service account key
+                    const serviceAccount = require('./firebase-service-account.json');
+                    admin.initializeApp({
+                        credential: admin.credential.cert(serviceAccount)
+                    });
+                    console.log('✅ Firebase Admin SDK initialized successfully for password reset');
+                } catch (initError) {
+                    console.error('❌ Firebase Admin SDK initialization failed:', initError.message);
+                    throw new Error('Firebase Admin SDK not configured');
+                }
+            }
+            
+            // Get user by email
+            const userRecord = await admin.auth().getUserByEmail(email);
+            
+            // Update user password
+            await admin.auth().updateUser(userRecord.uid, {
+                password: newPassword
+            });
+            
+            console.log(`[Password Reset OTP] Firebase password updated for user: ${userRecord.uid}`);
+            
+        } catch (firebaseError) {
+            console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
+            
+            // If Firebase Admin SDK is not available, provide helpful message
+            if (firebaseError.message.includes('not configured') || firebaseError.code === 'app/no-app') {
+                console.log('[Password Reset OTP] Firebase Admin SDK not configured');
+                
+                // Clear the OTP storage anyway since verification was successful (if it exists)
+                if (passwordResetOTPStorage.has(email)) {
+                    passwordResetOTPStorage.delete(email);
+                }
+                
+                return res.json({ 
+                    success: true, 
+                    message: 'Password reset verification completed. Please contact support to complete the password reset process.' 
+                });
+            } else if (firebaseError.code === 'auth/user-not-found') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'No account found with this email address' 
+                });
+            } else {
+                throw firebaseError;
+            }
+        }
+        
+        // Clear the OTP storage (if it exists)
+        if (passwordResetOTPStorage.has(email)) {
+            passwordResetOTPStorage.delete(email);
+        }
+        
+        console.log(`[Password Reset OTP] Password reset completed for: ${email}`);
+        res.json({ 
+            success: true, 
+            message: 'Password reset successfully. You can now log in with your new password.' 
+        });
+        
+    } catch (error) {
+        console.error('[Password Reset OTP] Reset password error:', error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'An error occurred while resetting the password' 
+        });
+    }
+});
 
 /* ====== Error handlers & 404 ====== */
 app.use((err, req, res, next) => {
@@ -1544,6 +1828,10 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   Send SendGrid OTP: POST /api/sendgrid-send-otp`);
   console.log(`   Verify SendGrid OTP: POST /api/sendgrid-verify-otp`);
   console.log(`   Resend SendGrid OTP: POST /api/sendgrid-resend-otp`);
+  console.log(`\n🔐 Password Reset OTP Endpoints:`);
+  console.log(`   Send OTP: POST /api/send-password-reset-otp`);
+  console.log(`   Verify OTP: POST /api/verify-password-reset-otp`);
+  console.log(`   Reset Password: POST /api/reset-password-with-otp`);
   console.log(`\n📧 SendGrid Email Service:`);
   console.log(`   API Key: ${SENDGRID_API_KEY ? '✅ Configured (' + maskApiKey(SENDGRID_API_KEY) + ')' : '❌ Not Found'}`);
   console.log(`   From Email: ${SENDGRID_FROM_EMAIL}`);

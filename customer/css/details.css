@@ -115,6 +115,8 @@ input {
   background: #f9f9f9;
   padding: 20px;
   border-radius: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .order-summary h2 {
@@ -194,4 +196,19 @@ hr {
 #map {
   width: 100%;
   height: 400px; /* or any size you want */
+}
+
+.order-summary .order-menu {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.order-summary .total {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.order-summary .continue-btn {
+  margin-top: 20px;
 }

@@ -259,10 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   function setupEventListeners() {
-    // Cart functionality
-    let cart = [];
-    let cartTotal = 0;
-
     // Function to check if user is authenticated
     function checkUserAuthentication() {
       return new Promise((resolve) => {
@@ -295,63 +291,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Get the menu item data from the button's data attribute
         const itemData = JSON.parse(e.target.getAttribute('data-item'));
         
-        // Check if item already exists in cart
-        const existingItem = cart.find(item => item.id === itemData.id);
-        
-        if (existingItem) {
-          existingItem.quantity += 1;
-          existingItem.total = existingItem.quantity * existingItem.price;
-        } else {
-          cart.push({
+        // Use the global addToCart function
+        if (window.addToCart) {
+          window.addToCart({
             id: itemData.id,
             name: itemData.name,
             price: itemData.price,
-            quantity: 1,
-            total: itemData.price,
             description: itemData.description,
             photoUrl: itemData.photoUrl
           });
+          
+          // Show success feedback
+          showAddToCartSuccess(itemData.name);
         }
-        
-        updateOrderDisplay();
       }
     });
-
-    function updateOrderDisplay() {
-      const orderMenuContainer = document.querySelector('.order-menu');
-      const orderTotalElement = document.querySelector('.order-total-price');
-      
-      if (!orderMenuContainer || !orderTotalElement) return;
-      
-      // Clear existing order items (except the header)
-      const existingItems = orderMenuContainer.querySelectorAll('.order-item');
-      existingItems.forEach(item => item.remove());
-      
-      // Add each cart item to the display
-      cart.forEach(item => {
-        const orderItem = document.createElement('div');
-        orderItem.className = 'order-item';
-        orderItem.innerHTML = `
-          <span>${item.quantity} ${item.name}</span>
-          <span class="order-item-price">₱${item.total.toLocaleString()}</span>
-        `;
-        orderMenuContainer.appendChild(orderItem);
-      });
-      
-      // Update total
-      cartTotal = cart.reduce((sum, item) => sum + item.total, 0);
-      orderTotalElement.textContent = `₱${cartTotal.toLocaleString()}`;
-      
-      // Show/hide order menu based on cart contents
-      if (cart.length === 0) {
-        orderMenuContainer.style.display = 'none';
-      } else {
-        orderMenuContainer.style.display = 'block';
-      }
-    }
-
-    // Initialize order display
-    updateOrderDisplay();
   }
 
   function setupAuthStateMonitoring() {
@@ -478,6 +432,101 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }, 300);
     }, 2000);
+  }
+
+  function showAddToCartSuccess(itemName) {
+    // Create success notification element
+    const notification = document.createElement('div');
+    notification.className = 'add-to-cart-success';
+    notification.innerHTML = `
+      <div class="notification-content">
+        <i class="fas fa-check-circle"></i>
+        <span>Added "${itemName}" to cart!</span>
+        <div class="notification-progress"></div>
+      </div>
+    `;
+    
+    // Add styles
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      z-index: 1000;
+      max-width: 350px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    `;
+    
+    // Add content styles
+    const content = notification.querySelector('.notification-content');
+    content.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    `;
+    
+    // Add progress bar styles
+    const progress = notification.querySelector('.notification-progress');
+    progress.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      width: 100%;
+      border-radius: 0 0 10px 10px;
+      overflow: hidden;
+    `;
+    
+    // Add progress animation
+    const progressBar = document.createElement('div');
+    progressBar.style.cssText = `
+      height: 100%;
+      background: rgba(255,255,255,0.8);
+      width: 100%;
+      animation: progress 1.5s linear forwards;
+    `;
+    progress.appendChild(progressBar);
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes progress {
+        from { width: 100%; }
+        to { width: 0%; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove notification after 1.5 seconds
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+        if (style.parentNode) {
+          style.parentNode.removeChild(style);
+        }
+      }, 300);
+    }, 1500);
   }
   
   // Start the Firebase initialization

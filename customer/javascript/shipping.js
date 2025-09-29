@@ -104,6 +104,118 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Load cart data from sessionStorage
+  function loadCartData() {
+    const cartData = sessionStorage.getItem('cartData');
+    if (cartData) {
+      return JSON.parse(cartData);
+    }
+    return {};
+  }
+
+  // Save order to Firebase
+  async function saveOrderToFirebase(savedData, shippingType) {
+    try {
+      const { formData, quotationData } = savedData;
+      
+      // Get cart data
+      const cartData = loadCartData();
+      const cartItems = Object.values(cartData);
+      
+      // Determine shipping method and cost
+      const isPickup = shippingType === 'pickup';
+      const shippingMethod = isPickup ? 'Pick Up in Store' : 'Lalamove Delivery';
+      const shippingCost = isPickup ? 0 : (quotationData?.data?.priceBreakdown?.total || 0);
+      
+      // Get payment method
+      const paymentMethod = getSelectedPaymentMethod();
+      
+      // Calculate total
+      let total = 0;
+      cartItems.forEach(item => {
+        const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+        total += price * item.quantity;
+      });
+      total += shippingCost;
+      
+      // Create order data for Firebase
+      const orderData = {
+        customerInfo: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          fullName: `${formData.firstName} ${formData.lastName}`
+        },
+        shippingInfo: {
+          address: formData.fullAddress,
+          barangay: formData.barangay,
+          city: formData.city,
+          province: formData.province,
+          postalCode: formData.postalCode,
+          method: shippingMethod,
+          cost: shippingCost
+        },
+        items: cartItems,
+        total: total,
+        shippingCost: shippingCost,
+        paymentMethod: paymentMethod,
+        shippingMethod: shippingMethod
+      };
+
+      // Save to Firebase if createOrder function is available
+      if (typeof window.createOrder === 'function') {
+        const orderId = await window.createOrder(orderData);
+        console.log('[shipping.js] Order saved to Firebase:', orderId);
+        return orderId;
+      } else {
+        console.warn('[shipping.js] Firebase createOrder function not available');
+        return null;
+      }
+    } catch (error) {
+      console.error('[shipping.js] Error saving order to Firebase:', error);
+      throw error;
+    }
+  }
+
+  // Update order form with cart data
+  function updateOrderForm(cartData) {
+    const orderItemsContainer = document.querySelector('.order-item');
+    const totalElement = document.querySelector('.total .price');
+    
+    if (!orderItemsContainer || !totalElement) return;
+    
+    const cartItems = Object.values(cartData);
+    let totalPrice = 0;
+    
+    // Clear existing items
+    orderItemsContainer.innerHTML = '';
+    
+    if (cartItems.length === 0) {
+      orderItemsContainer.innerHTML = '<span>No items in cart</span>';
+      totalElement.textContent = 'Php 0';
+      return;
+    }
+    
+    // Add each cart item
+    cartItems.forEach(item => {
+      const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+      const itemTotal = price * item.quantity;
+      totalPrice += itemTotal;
+      
+      const itemDiv = document.createElement('div');
+      itemDiv.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px;';
+      itemDiv.innerHTML = `
+        <span>${item.quantity} ${item.name}</span>
+        <span class="price">Php ${itemTotal.toFixed(0)}</span>
+      `;
+      orderItemsContainer.appendChild(itemDiv);
+    });
+    
+    // Update total
+    totalElement.textContent = `Php ${totalPrice.toFixed(0)}`;
+  }
+
   // Update the UI with saved data
   function updateUIWithSavedData(savedData) {
     if (!savedData || !savedData.formData) return;
@@ -115,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deliveryInfo = document.getElementById('delivery-info');
     
     const customerInfo = `<b>${formData.firstName} ${formData.lastName}</b><br>${formData.email}<br>${formData.phone}`;
-    const deliveryAddress = `<b>${formData.firstName} ${formData.lastName}</b><br>${formData.fullAddress}<br>${formData.phone}`;
+    const deliveryAddress = `<b>Name:</b> ${formData.firstName} ${formData.lastName}<br><b>Address:</b> ${formData.fullAddress}<br><b>Email:</b> ${formData.email}<br><b>Phone:</b> ${formData.phone}`;
     
     if (contactInfo) {
       contactInfo.innerHTML = customerInfo;
@@ -170,6 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // If pickup is selected, use mock order
       if (selectedShippingOption === 'pickup') {
+        // Save order to Firebase first
+        await saveOrderToFirebase(savedData, 'pickup');
+        
         const mockOrder = createMockPickupOrder(formData);
         showStatus('Order placed successfully (Pickup)!', false);
         return mockOrder;
@@ -223,6 +338,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const orderResult = await response.json();
       console.log('[shipping.js] Order placement successful:', orderResult);
+      
+      // Save order to Firebase
+      await saveOrderToFirebase(savedData, 'lalamove');
+      
       return orderResult;
 
     } catch (error) {
@@ -410,6 +529,10 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       showStatus('Warning: No order data found. Please start from details page.', true);
     }
+    
+    // Load and display cart data
+    const cartData = loadCartData();
+    updateOrderForm(cartData);
 
     // Initialize shipping options
     initShippingOptions();

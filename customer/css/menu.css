@@ -606,3 +606,384 @@ body {
 .menu-item:hover .menu-item-description {
   display: block;
 }
+
+/* Shopping Bag Popup Styles */
+.shopping-bag-popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+.popup-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.popup-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100%;
+  background: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.popup-content .address-section {
+  margin-bottom: 20px;
+}
+
+.popup-content .address-section h5 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.popup-content .address-details {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.popup-content .location-icon {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.popup-content .address-text {
+  flex: 1;
+}
+
+.popup-content .address-name {
+  font-weight: 500;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.popup-content .change-btn {
+  background: #fff;
+  border: 1px solid #e5735a;
+  color: #e5735a;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.popup-content .change-btn:hover {
+  background: #e5735a;
+  color: white;
+}
+
+.popup-content .address-text p {
+  font-size: 12px;
+  color: #666;
+  margin: 5px 0 0 0;
+  line-height: 1.4;
+}
+
+.popup-content .order-menu {
+  margin-bottom: 20px;
+}
+
+.popup-content .order-menu h5 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.popup-content .order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.popup-content .order-item span:first-child {
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.popup-content .order-item-price {
+  color: #e5735a;
+  font-weight: 600;
+}
+
+.popup-content .order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.popup-content .order-total-price {
+  color: #e5735a;
+  font-size: 18px;
+}
+
+.popup-content .proceed-btn {
+  width: 100%;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.popup-content .proceed-btn:hover {
+  background: #45a049;
+}
+
+.popup-content .proceed-btn:active {
+  transform: translateY(1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .popup-content {
+    width: 100%;
+    max-width: 350px;
+  }
+}
+
+/* Shopping Bag Counter Styles */
+.bag-container {
+  position: relative;
+  display: inline-block;
+}
+
+.item-counter {
+  position: absolute;
+  top: -6px;
+  left: 30px;
+  background: #ff3b30;
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  padding: 0;
+  line-height: 1;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.item-counter.hidden {
+  display: none;
+}
+
+/* Animation for counter updates */
+.item-counter {
+  transition: all 0.3s ease;
+}
+
+.item-counter.updated {
+  transform: scale(1.2);
+  animation: pulse 0.3s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Empty cart styles */
+.empty-cart {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.empty-cart p {
+  margin: 0;
+  font-style: italic;
+}
+
+/* Cart Control Styles */
+.popup-content .order-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.popup-content .order-item:last-child {
+  border-bottom: none;
+}
+
+.popup-content .item-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.popup-content .item-name-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.popup-content .quantity-indicator {
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 400;
+  margin-right: 2px;
+}
+
+.popup-content .item-quantity {
+  color: #e5735a;
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+.popup-content .item-name {
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+}
+
+.popup-content .item-price-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.popup-content .item-price {
+  font-size: 14px;
+  color: #e5735a;
+  font-weight: 600;
+  flex: 1;
+}
+
+.popup-content .quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.popup-content .quantity-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #333;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.popup-content .quantity-btn:hover {
+  background: #555;
+}
+
+.popup-content .quantity-btn:active {
+  transform: scale(0.95);
+}
+
+.popup-content .quantity-display {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 20px;
+  text-align: center;
+  color: #e5735a;
+}
+
+.popup-content .delete-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #333;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.popup-content .delete-btn:hover {
+  background: #555;
+}
+
+.popup-content .delete-btn:active {
+  transform: scale(0.95);
+}
