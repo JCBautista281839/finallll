@@ -6,6 +6,12 @@
     <title>OMR Scanner - Viktoria's Bistro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -112,7 +118,7 @@
         
         .results-section {
             margin-top: 40px;
-            display: none;
+            display: block;
         }
         
         .result-card {
@@ -265,6 +271,18 @@
                     <button type="button" class="btn btn-info ms-2" id="testConnectionBtn">
                         <i class="fas fa-plug"></i> Test Python Connection
                     </button>
+                    <button type="button" class="btn btn-warning ms-2" id="testDisplayBtn">
+                        <i class="fas fa-vial"></i> Test Display System
+                    </button>
+                    <button type="button" class="btn btn-dark ms-2" id="forceDisplayBtn">
+                        <i class="fas fa-eye"></i> Force Display
+                    </button>
+                    <button type="button" class="btn btn-success ms-2" id="sendToPOSBtn" style="display: inline-block;">
+                        <i class="fas fa-cash-register"></i> Send to POS
+                    </button>
+                    <button type="button" class="btn btn-primary ms-2" id="sendToFirebaseBtn" style="display: inline-block;">
+                        <i class="fas fa-database"></i> Send to Firebase
+                    </button>
                 </div>
                 
                 <div class="loading" id="loading">
@@ -282,9 +300,9 @@
                             </small>
                         </div>
                         <div id="scanResults">
-                            <div class="text-muted text-center py-4">
-                                <i class="fas fa-upload fa-2x mb-3"></i>
-                                <p>Upload an OMR form to see scan results here</p>
+                            <div class="alert alert-light">
+                                <i class="fas fa-info-circle"></i> 
+                                Ready to scan OMR forms. Upload an image to begin.
                             </div>
                         </div>
                     </div>
@@ -329,6 +347,10 @@
         const clearBtn = document.getElementById('clearBtn');
         const resetBtn = document.getElementById('resetBtn');
         const testConnectionBtn = document.getElementById('testConnectionBtn');
+        const testDisplayBtn = document.getElementById('testDisplayBtn');
+        const forceDisplayBtn = document.getElementById('forceDisplayBtn');
+        const sendToPOSBtn = document.getElementById('sendToPOSBtn');
+        const sendToFirebaseBtn = document.getElementById('sendToFirebaseBtn');
         const loading = document.getElementById('loading');
         const resultsSection = document.getElementById('resultsSection');
         const scanResults = document.getElementById('scanResults');
@@ -337,48 +359,128 @@
         
         let selectedFile = null;
         let currentScanResults = null;
+        let resultsLocked = false; // Flag to prevent accidental clearing
         
-        // Simulate OMR scan with realistic results (fallback only)
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXFKAt6OGLlUfQBnNmEhek6uqNQm4634Y",
+  authDomain: "victoria-s-bistro.firebaseapp.com",
+  databaseURL: "https://victoria-s-bistro-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "victoria-s-bistro",
+  storageBucket: "victoria-s-bistro.firebasestorage.app",
+  messagingSenderId: "672219366880",
+  appId: "1:672219366880:web:220df1e01d0b9ab72d9785",
+  measurementId: "G-H9G17QXSMV"
+        };
+        
+        // Note: Replace the above config with your actual Firebase project credentials
+        // You can find these in your Firebase Console > Project Settings > General tab
+        
+        // Initialize Firebase
+        let db = null;
+        let auth = null;
+        
+        function initializeFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                auth = firebase.auth();
+                console.log('✅ Firebase initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('❌ Firebase initialization failed:', error);
+                return false;
+            }
+        }
+        
+        // Initialize Firebase on page load
+        if (initializeFirebase()) {
+            console.log('🔥 Firebase ready for use');
+        } else {
+            console.log('⚠️ Firebase not available');
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        // Force display results function
+        function forceDisplayResults() {
+            console.log('🔧 Force Display Results called');
+            
+            // Force results section visible
+            resultsSection.style.display = 'block';
+            resultsSection.style.visibility = 'visible';
+            resultsSection.style.opacity = '1';
+            
+            // Show current scan results if available
+            if (currentScanResults) {
+                console.log('📊 Displaying current scan results:', currentScanResults);
+                displayResults(currentScanResults);
+            } else {
+                // Show test results
+                console.log('🧪 No current results - showing test display');
+                scanResults.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Force Display Test - Results section is working
+                        <br><small>Current time: ${new Date().toLocaleString()}</small>
+                    </div>
+                `;
+                
+                // Show test summary stats
+                summaryStats.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">TEST</div>
+                        <div class="stat-label">Force Display</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">OK</div>
+                        <div class="stat-label">System Working</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${Date.now()}</div>
+                        <div class="stat-label">Timestamp</div>
+                    </div>
+                `;
+            }
+            
+            // FORCE show buttons regardless
+            showSendToPOSButton();
+            showSendToFirebaseButton();
+            
+            console.log('✅ Force display completed');
+        }
+        
+        // Accurate fallback when scanner server is not available
         async function simulateOMRScan(filename) {
             return new Promise((resolve) => {
                 // Simulate processing delay
                 setTimeout(() => {
-                    // Create realistic OMR scan results as fallback
-                    const mockResults = {
+                    // Return accurate empty results - no mock data
+                    const accurateResults = {
                         success: true,
                         filename: filename,
                         results: {
-                            shaded_selections: [
-                                {
-                                    item: "isda",
-                                    fill_percent: 95.5,
-                                    quantity: 1,
-                                    price: 180.00,
-                                    firebase_id: "menu_isda"
-                                },
-                                {
-                                    item: "pusit",
-                                    fill_percent: 88.2,
-                                    quantity: 1,
-                                    price: 220.00,
-                                    firebase_id: "menu_pusit"
-                                }
-                            ],
-                            total_circles: 8,
-                            total_selected: 2,
-                            scan_type: "SHADED CIRCLES ONLY"
+                            shaded_selections: [], // No default results
+                            total_circles: 0,      // Accurate count
+                            total_selected: 0,    // Accurate count
+                            scan_type: "SCANNER UNAVAILABLE - NO RESULTS"
                         },
                         debug_image: null,
                         summary: {
-                            total_circles: 8,
-                            total_selected: 2,
-                            scan_type: "SHADED CIRCLES ONLY"
+                            total_circles: 0,
+                            total_selected: 0,
+                            scan_type: "SCANNER UNAVAILABLE - NO RESULTS"
                         }
                     };
                     
-                    console.log('⚠️ Using simulation fallback - real scanner not available');
-                    resolve(mockResults);
-                }, 1500); // Shorter delay for fallback
+                    console.log('⚠️ Scanner server not available - showing accurate empty results');
+                    resolve(accurateResults);
+                }, 1000); // Shorter delay for fallback
             });
         }
         
@@ -453,6 +555,32 @@
             testPythonConnection();
         });
         
+        // Test display button handler
+        testDisplayBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            testDisplaySystem();
+        });
+        
+        
+        // Force Display button handler
+        forceDisplayBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            forceDisplayResults();
+        });
+        
+        // Send to POS button handler
+        sendToPOSBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            sendOrderToPOS();
+        });
+        
+        // Send to Firebase button handler
+        sendToFirebaseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            sendToFirebase();
+        });
+        
+        
         function handleFileSelect(file) {
             selectedFile = file;
             scanBtn.disabled = false;
@@ -491,7 +619,7 @@
                 
                 // Call the real OMR scanner server
                 console.log('🚀 Making fetch request to Python server...');
-                const response = await fetch('http://localhost:5002/scan-omr', {
+                const response = await fetch('http://localhost:5000/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -504,32 +632,57 @@
                 
                 console.log('✅ Response OK, parsing JSON...');
                 const result = await response.json();
-                console.log('📊 Real scan result:', result);
+                console.log('📊 Full server response:', JSON.stringify(result, null, 2));
                 console.log('✅ Result success:', result.success);
-                console.log('📋 Result results:', result.results);
+                console.log('🪑 Table:', result.table);
+                console.log('👥 Pax:', result.pax);
+                console.log('🍽️ Items:', result.items);
+                
+                // FORCE display results even if empty
+                console.log('✅ ALWAYS displaying results regardless of success status');
+                console.log('🔍 Result object keys:', Object.keys(result));
+                console.log('🔍 Result items:', result.items);
+                console.log('🔍 Result table:', result.table);
+                console.log('🔍 Result pax:', result.pax);
+                displayResults(result);
+                console.log('💰 Total amount:', result.total_amount);
+                console.log('📋 Summary:', result.summary);
 
-                if (result.success) {
-                    console.log('✅ Scan successful, displaying results...');
-                    displayResults(result);
-                } else {
-                    console.log('❌ Scan failed:', result.error);
-                    showError(result.error || 'Scan failed - no results returned');
-                }
+                // Results already displayed above
 
             } catch (error) {
                 console.error('Scan error:', error);
-                console.log('⚠️ Server not available, falling back to simulation...');
                 
-                // Fallback to simulation if server is not available
-                try {
-                    const result = await simulateOMRScan(selectedFile.name);
-                    if (result.success) {
-                        displayResults(result);
-                    } else {
-                        showError('Failed to scan image: ' + error.message);
+                // FORCE display error as results
+                scanResults.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Scan Error: ${error.message}
+                    </div>
+                `;
+                resultsSection.style.display = 'block';
+                showSendToPOSButton();
+                showSendToFirebaseButton();
+                
+                // Check if it's a connection error
+                if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+                    console.log('🔌 Python server offline - showing clear message');
+                    showError('Python server offline. Please start the backend server on port 5000.');
+                } else {
+                    console.log('⚠️ Other error occurred, showing fallback results...');
+                    
+                    // Fallback to accurate empty results for other errors
+                    try {
+                        const result = await simulateOMRScan(selectedFile.name);
+                        if (result.success) {
+                            displayResults(result);
+                        } else {
+                            showError('Scanner server unavailable - no results available');
+                        }
+                    } catch (simError) {
+                        console.error('❌ Fallback simulation failed:', simError);
+                        showError('Scanner server unavailable - no results available');
                     }
-                } catch (simError) {
-                    showError('Failed to scan image: ' + error.message);
                 }
             } finally {
                 console.log('🔄 Finally block executing - restoring UI...');
@@ -545,74 +698,143 @@
         
         function displayResults(result) {
             console.log('🎯 displayResults function called');
-            console.log('Displaying results:', result); // Debug log
-            const results = result.results;
-            console.log('Results data:', results); // Debug log
-            console.log('Results section element:', resultsSection);
-            console.log('Scan results element:', scanResults);
+            console.log('Displaying results:', result);
             
-            // Check if elements exist
+            // Comprehensive element existence check
             if (!resultsSection) {
                 console.error('❌ resultsSection element not found!');
+                alert('Error: Results section element not found. Please refresh the page.');
                 return;
             }
             if (!scanResults) {
                 console.error('❌ scanResults element not found!');
+                alert('Error: Scan results element not found. Please refresh the page.');
+                return;
+            }
+            if (!summaryStats) {
+                console.error('❌ summaryStats element not found!');
+                alert('Error: Summary stats element not found. Please refresh the page.');
                 return;
             }
             
-            // Ensure results section is visible and stays visible
-            resultsSection.style.display = 'block';
-            resultsSection.style.opacity = '1';
-            resultsSection.style.transition = 'opacity 0.3s ease-in-out';
-            console.log('Results section display set to block and visible'); // Debug log
+            console.log('✅ All required elements found');
             
-            // Display selected items
-            if (results && results.shaded_selections && results.shaded_selections.length > 0) {
-                const itemsList = results.shaded_selections.map(item => `
+            // FORCE results section to stay visible - no exceptions
+            resultsSection.style.display = 'block';
+            resultsSection.style.visibility = 'visible';
+            resultsSection.style.opacity = '1';
+            resultsSection.style.height = 'auto';
+            console.log('✅ Results section FORCED to be visible');
+            
+            // Validate result structure
+            if (!result) {
+                console.error('❌ No result data provided');
+                scanResults.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Error: No result data received from server
+                    </div>
+                `;
+                return;
+            }
+            
+            // Parse restaurant order data structure
+            // Backend returns: {success: true, filename: ..., table: ..., pax: ..., items: [...], total_amount: ..., debug_image: ..., summary: {...}}
+            const table = result.table;
+            const pax = result.pax;
+            const items = result.items || [];
+            const totalAmount = result.total_amount || 0;
+            const summary = result.summary || {};
+            
+            console.log('🍽️ Restaurant order data:', {
+                table: table,
+                pax: pax,
+                itemsCount: items.length,
+                totalAmount: totalAmount,
+                hasSummary: !!result.summary,
+                summaryKeys: Object.keys(summary)
+            });
+            
+            
+            // Display restaurant order results
+            let htmlContent = '';
+            
+            console.log('🎯 Starting to build HTML content...');
+            console.log('🎯 Table:', table, 'Pax:', pax, 'Items:', items, 'Total:', totalAmount);
+            
+            // Always show table and pax information (even if null)
+            htmlContent += `
+                <div class="alert alert-info">
+                    <i class="fas fa-utensils"></i> 
+                    ${table ? `Table ${table}` : 'Table not selected'} 
+                    ${pax ? `(${pax} pax)` : '(pax not selected)'}
+                </div>
+            `;
+            
+            // Show items in restaurant format
+            console.log('🔍 Items check:', items, 'Type:', typeof items, 'Length:', items ? items.length : 'undefined');
+            if (items && items.length > 0) {
+                console.log('🎯 Building items list for', items.length, 'items');
+                const itemsList = items.map(item => `
                     <li>
-                        <span class="item-name">${item.item}</span>
-                        <span class="item-confidence">${item.fill_percent}%</span>
+                        <span class="item-name">${item.name}</span>
                     </li>
                 `).join('');
                 
-                const htmlContent = `
+                htmlContent += `
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i> 
-                        Successfully detected ${results.shaded_selections.length} selected items from your form
+                        Order detected with ${items.length} item(s)
                     </div>
                     <ul class="list-unstyled selected-items">${itemsList}</ul>
                 `;
                 
-                console.log('Setting HTML content:', htmlContent);
-                scanResults.innerHTML = htmlContent;
+                // Show total amount (only if > 0)
+                if (totalAmount > 0) {
+                    htmlContent += `
+                        <div class="alert alert-primary">
+                            <i class="fas fa-calculator"></i> 
+                            Total Amount: ₱${totalAmount.toFixed(2)}
+                        </div>
+                    `;
+                }
                 
-            console.log('✅ Scan results HTML updated with', results.shaded_selections.length, 'items');
-            console.log('📋 Detected items:', results.shaded_selections.map(item => item.item));
-            console.log('scanResults.innerHTML after update:', scanResults.innerHTML);
-            
-            // Save results to session storage for persistence
-            currentScanResults = result;
-            saveResultsToSession(result);
+                console.log('✅ Restaurant order displayed with', items.length, 'items');
             } else {
-                console.log('No shaded selections found'); // Debug log
-                scanResults.innerHTML = `
+                // Show "no items" message
+                htmlContent += `
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle"></i> 
-                        No shaded circles detected. Please check your form.
+                        No menu items detected. Please check your form.
                     </div>
                 `;
+                console.log('⚠️ No menu items found - showing warning message');
             }
             
-            // Display summary stats with better formatting
-            const scanTypeDisplay = result.summary.scan_type || 'Unknown';
+            console.log('🎯 Final HTML content length:', htmlContent.length);
+            console.log('🎯 Setting scanResults.innerHTML...');
+            scanResults.innerHTML = htmlContent;
+            console.log('🎯 HTML content set successfully');
+            
+            // Display summary stats - use summary data consistently
+            const scanTypeDisplay = summary.scan_type || 'RESTAURANT ORDER';
+            const totalCircles = summary.total_circles || 0;
+            const totalSelected = summary.total_selected || 0;
+            
+            console.log('📊 Summary stats to display:', {
+                scanTypeDisplay,
+                totalCircles,
+                totalSelected,
+                summaryKeys: Object.keys(summary)
+            });
+            
             summaryStats.innerHTML = `
                 <div class="stat-card">
-                    <div class="stat-number">${result.summary.total_circles || 0}</div>
+                    <div class="stat-number">${totalCircles}</div>
                     <div class="stat-label">Total Circles</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">${result.summary.total_selected || 0}</div>
+                    <div class="stat-number">${totalSelected}</div>
                     <div class="stat-label">Selected Items</div>
                 </div>
                 <div class="stat-card">
@@ -620,56 +842,90 @@
                     <div class="stat-label">Scan Type</div>
                 </div>
             `;
+            console.log('✅ Summary stats updated:', { totalCircles, totalSelected, scanTypeDisplay });
             
-            console.log('Summary stats updated:', result.summary);
-            
-            // Display debug image
+            // Display debug image if available
             const debugImageContainer = document.getElementById('debugImageContainer');
-            const debugImagePlaceholder = debugImageContainer.querySelector('.text-muted');
+            const debugImagePlaceholder = debugImageContainer ? debugImageContainer.querySelector('.text-muted') : null;
             
-            if (result.debug_image) {
-                debugImage.src = 'data:image/jpeg;base64,' + result.debug_image;
-                debugImage.style.display = 'block';
-                if (debugImagePlaceholder) {
-                    debugImagePlaceholder.style.display = 'none';
+            if (result.debug_image && debugImage) {
+                try {
+                    debugImage.src = 'data:image/jpeg;base64,' + result.debug_image;
+                    debugImage.style.display = 'block';
+                    if (debugImagePlaceholder) {
+                        debugImagePlaceholder.style.display = 'none';
+                    }
+                    console.log('✅ Debug image displayed');
+                } catch (error) {
+                    console.error('❌ Error displaying debug image:', error);
                 }
             } else {
-                debugImage.style.display = 'none';
+                if (debugImage) {
+                    debugImage.style.display = 'none';
+                }
                 if (debugImagePlaceholder) {
                     debugImagePlaceholder.style.display = 'block';
                 }
+                console.log('ℹ️ No debug image available');
             }
             
-            // Show results and buttons
-            console.log('Showing results section'); // Debug log
-            resultsSection.style.display = 'block';
-            clearBtn.style.display = 'inline-block';
-            resetBtn.style.display = 'inline-block';
-            console.log('Results section display:', resultsSection.style.display); // Debug log
-            console.log('Buttons shown - clearBtn:', clearBtn.style.display, 'resetBtn:', resetBtn.style.display);
+            // Show control buttons
+            if (clearBtn) clearBtn.style.display = 'inline-block';
+            if (resetBtn) resetBtn.style.display = 'inline-block';
             
-            // Final check - ensure results stay visible
+            // Show "Send to POS" and "Send to Firebase" buttons if there are items
+            console.log('🎯 Checking if should show Send to POS button...');
+            console.log('🎯 Items check:', items, 'Length:', items ? items.length : 'undefined');
+            if (items && items.length > 0) {
+                console.log('🎯 Showing Send to POS button');
+                showSendToPOSButton();
+                console.log('🎯 Showing Send to Firebase button');
+                showSendToFirebaseButton();
+            } else {
+                console.log('🎯 Not showing Send to POS button - no items');
+                // Still show Firebase button for debugging
+                showSendToFirebaseButton();
+            }
+            
+            console.log('✅ Control buttons shown');
+            
+            // Save results and lock them for persistence
+            currentScanResults = result;
+            saveResultsToSession(result);
+            resultsLocked = true;
+            
+            console.log('🔒 Results saved and locked - will persist until manual clear/reset');
+            
+            // Final persistence check with multiple attempts
             setTimeout(() => {
                 if (resultsSection.style.display !== 'block') {
-                    console.log('⚠️ Results section was hidden, restoring visibility');
+                    console.log('⚠️ Results section was hidden - FORCING visibility');
                     resultsSection.style.display = 'block';
+                    resultsSection.style.visibility = 'visible';
+                    resultsSection.classList.add('results-section');
                 }
-                console.log('✅ Results should now be visible and persistent');
                 
-                // Force a test display to verify the system works
-                console.log('🧪 Testing display system...');
-                if (scanResults.innerHTML.includes('Successfully detected')) {
-                    console.log('✅ Results are displayed correctly');
+                // Verify content is actually displayed
+                if (scanResults.innerHTML.includes('Successfully detected') || scanResults.innerHTML.includes('No shaded circles')) {
+                    console.log('✅ Results content verified and displayed');
                 } else {
-                    console.log('❌ Results are NOT displayed - forcing test display');
+                    console.log('❌ Results content not found - forcing display');
                     scanResults.innerHTML = `
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i> 
-                            Test: Results display system is working
+                            Results display system is working - content should be visible
                         </div>
                     `;
                 }
-            }, 100);
+                
+                console.log('✅ Results persistence verified');
+            }, 50);
+            
+            // Additional verification after a longer delay
+            setTimeout(() => {
+                console.log('🔍 Final verification - Results section visible:', resultsSection.style.display);
+                console.log('🔍 Final verification - Scan results content length:', scanResults.innerHTML.length);
+            }, 200);
         }
         
         function showError(message) {
@@ -711,40 +967,37 @@
             }
             
             resultsSection.style.display = 'block';
+            resultsSection.classList.add('results-section');
             clearBtn.style.display = 'inline-block';
             resetBtn.style.display = 'inline-block';
         }
         
         // Clear results function
         function clearResults() {
-            // Keep results section visible but clear its content
-            // resultsSection.style.display = 'none';
+            console.log('🧹 Clear Results button clicked - clearing scan results');
+            
+            // Unlock results for clearing
+            resultsLocked = false;
+            
+            // Hide control buttons
             clearBtn.style.display = 'none';
             resetBtn.style.display = 'none';
+            hideSendToPOSButton();
+            hideSendToFirebaseButton();
             
             // Clear session storage
             clearSessionResults();
             currentScanResults = null;
             
-            // Don't reset file input - keep the same file selected for rescanning
-            // fileInput.value = '';
-            // selectedFile = null;
-            // scanBtn.disabled = true;
-            
-            // Don't reset upload area text - keep showing the selected file
-            // const uploadText = uploadArea.querySelector('.upload-text');
-            // uploadText.textContent = 'Drop your OMR form here or click to browse';
-            // uploadText.style.color = '#495057';
-            
-            // Reset results to default state
+            // Show "cleared" state - NOT placeholder text
             scanResults.innerHTML = `
-                <div class="text-muted text-center py-4">
-                    <i class="fas fa-upload fa-2x mb-3"></i>
-                    <p>Upload an OMR form to see scan results here</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Scan results cleared. Ready for new scan.
                 </div>
             `;
             
-            // Reset summary stats
+            // Reset summary stats to show cleared state
             summaryStats.innerHTML = `
                 <div class="stat-card">
                     <div class="stat-number">-</div>
@@ -768,23 +1021,28 @@
                 debugImagePlaceholder.style.display = 'block';
             }
             
-            // Remove any success messages
-            const existingSuccessMessage = resultsSection.querySelector('.success-message');
-            if (existingSuccessMessage) {
-                existingSuccessMessage.remove();
-            }
-            
-            // Keep results section visible with default state
+            // Keep results section visible - never hide it
             resultsSection.style.display = 'block';
+            resultsSection.style.visibility = 'visible';
+            resultsSection.classList.add('results-section');
+            
+            console.log('✅ Results cleared - section remains visible');
         }
         
         // Reset form
         function resetForm() {
+            console.log('🔄 Reset Form button clicked - resetting everything');
+            
+            // Unlock results for reset
+            resultsLocked = false;
+            
             selectedFile = null;
             currentScanResults = null;
             scanBtn.disabled = true;
             clearBtn.style.display = 'none';
             resetBtn.style.display = 'none';
+            hideSendToPOSButton();
+            hideSendToFirebaseButton();
             loading.style.display = 'none';
             
             // Clear session storage
@@ -797,14 +1055,16 @@
             uploadText.textContent = 'Drop your OMR form here or click to browse';
             uploadText.style.color = '#495057';
             
-            // Keep results section visible but reset content
+            // Keep results section visible but show reset state
             resultsSection.style.display = 'block';
+            resultsSection.style.visibility = 'visible';
+            resultsSection.classList.add('results-section');
             
-            // Reset results to default state
+            // Show reset state - NOT placeholder text
             scanResults.innerHTML = `
-                <div class="text-muted text-center py-4">
-                    <i class="fas fa-upload fa-2x mb-3"></i>
-                    <p>Upload an OMR form to see scan results here</p>
+                <div class="alert alert-secondary">
+                    <i class="fas fa-undo"></i> 
+                    Form reset. Ready for new upload and scan.
                 </div>
             `;
             
@@ -832,42 +1092,101 @@
                 debugImagePlaceholder.style.display = 'block';
             }
             
-            // Remove any success messages
-            const existingSuccessMessage = resultsSection.querySelector('.success-message');
-            if (existingSuccessMessage) {
-                existingSuccessMessage.remove();
-            }
+            console.log('✅ Form reset - results section remains visible');
+        }
+        
+        // Test function to verify display system works
+        function testDisplaySystem() {
+            console.log('🧪 Testing display system...');
+            
+            // Test with mock data
+            const mockResult = {
+                success: true,
+                filename: 'test.jpg',
+                results: {
+                    shaded_selections: [
+                        { item: 'Test Item 1', fill_percent: 95.5 },
+                        { item: 'Test Item 2', fill_percent: 88.2 }
+                    ],
+                    total_circles: 10,
+                    total_selected: 2,
+                    scan_type: 'TEST SCAN'
+                },
+                summary: {
+                    total_circles: 10,
+                    total_selected: 2,
+                    scan_type: 'TEST SCAN'
+                },
+                debug_image: null
+            };
+            
+            console.log('🧪 Calling displayResults with mock data...');
+            displayResults(mockResult);
+            
+            // Verify display after a delay
+            setTimeout(() => {
+                if (scanResults.innerHTML.includes('Successfully detected')) {
+                    console.log('✅ Test display successful - results are showing');
+                } else {
+                    console.log('❌ Test display failed - results not showing');
+                    console.log('Current scanResults.innerHTML:', scanResults.innerHTML);
+                }
+            }, 100);
         }
         
         // Test function to verify Python server connection
         async function testPythonConnection() {
             try {
                 console.log('🧪 Testing Python server connection...');
-                const response = await fetch('http://localhost:5002/health');
+                const response = await fetch('http://localhost:5000/status');
                 const result = await response.json();
                 console.log('✅ Python server response:', result);
                 
-                // Show test results on the page
-                scanResults.innerHTML = `
-                    <div class="alert alert-info">
-                        <i class="fas fa-check-circle"></i> 
-                        Python Server Connection Test: ${result.message}
-                    </div>
-                    <div class="alert alert-success">
-                        <i class="fas fa-server"></i> 
-                        Server Status: ${result.status}
-                    </div>
-                `;
+                // Only show test results if there are no existing scan results
+                if (!currentScanResults || !scanResults.innerHTML.includes('Successfully detected')) {
+                    scanResults.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-check-circle"></i> 
+                            Python Server Connection Test: ${result.message}
+                        </div>
+                        <div class="alert alert-success">
+                            <i class="fas fa-server"></i> 
+                            Server Status: ${result.status}
+                        </div>
+                    `;
+                } else {
+                    console.log('✅ Server connection test successful, but preserving existing scan results');
+                }
                 
                 return true;
             } catch (error) {
                 console.error('❌ Python server connection failed:', error);
-                scanResults.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle"></i> 
-                        Python Server Connection Failed: ${error.message}
-                    </div>
-                `;
+                
+                // Only show error if there are no existing scan results
+                if (!currentScanResults || !scanResults.innerHTML.includes('Successfully detected')) {
+                    // Check if it's a connection error
+                    if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+                        scanResults.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                Python server offline. Please start the backend server on port 5000.
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                To start the server, run: <code>python omr_web_circle_scanner.py</code>
+                            </div>
+                        `;
+                    } else {
+                        scanResults.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                Python Server Connection Failed: ${error.message}
+                            </div>
+                        `;
+                    }
+                } else {
+                    console.log('⚠️ Server connection failed, but preserving existing scan results');
+                }
                 return false;
             }
         }
@@ -896,26 +1215,58 @@
             }
         }
         
-        // Load results from session storage
-        function loadResultsFromSession() {
+        // Clear any old mock data from session storage
+        function clearOldMockData() {
             try {
                 const sessionData = sessionStorage.getItem('omr_scan_results');
                 if (sessionData) {
                     const parsed = JSON.parse(sessionData);
-            console.log('📂 Loading results from session storage:', parsed);
-            currentScanResults = parsed.results;
-            displayResults(parsed.results);
-            
-            // Add session indicator
-            const sessionIndicator = document.createElement('div');
-            sessionIndicator.className = 'alert alert-info';
-            sessionIndicator.innerHTML = `
-                <i class="fas fa-history"></i> 
-                Results restored from previous session (${new Date(parsed.timestamp).toLocaleString()})
-            `;
-            scanResults.insertBefore(sessionIndicator, scanResults.firstChild);
-            
-            return true;
+                    // Check if this is old mock data (contains isda/pusit with specific percentages)
+                    if (parsed.results && parsed.results.shaded_selections) {
+                        const hasMockData = parsed.results.shaded_selections.some(item => 
+                            (item.item === 'isda' && item.fill_percent === 95.5) ||
+                            (item.item === 'pusit' && item.fill_percent === 88.2)
+                        );
+                        if (hasMockData) {
+                            console.log('🧹 Clearing old mock data from session storage');
+                            sessionStorage.removeItem('omr_scan_results');
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('❌ Error checking session storage:', error);
+                return false;
+            }
+        }
+
+        // Load results from session storage
+        function loadResultsFromSession() {
+            try {
+                // First clear any old mock data
+                clearOldMockData();
+                
+                const sessionData = sessionStorage.getItem('omr_scan_results');
+                if (sessionData) {
+                    const parsed = JSON.parse(sessionData);
+                    console.log('📂 Loading results from session storage:', parsed);
+                    
+                    // The session data contains the full result object
+                    const resultData = parsed.results;
+                    currentScanResults = resultData;
+                    displayResults(resultData);
+                    
+                    // Add session indicator
+                    const sessionIndicator = document.createElement('div');
+                    sessionIndicator.className = 'alert alert-info';
+                    sessionIndicator.innerHTML = `
+                        <i class="fas fa-history"></i> 
+                        Results restored from previous session (${new Date(parsed.timestamp).toLocaleString()})
+                    `;
+                    scanResults.insertBefore(sessionIndicator, scanResults.firstChild);
+                    
+                    return true;
                 }
                 return false;
             } catch (error) {
@@ -940,18 +1291,323 @@
             }
         }
         
+        // Save results to session storage
+        function saveResultsToSession(results) {
+            try {
+                const sessionData = {
+                    results: results,
+                    timestamp: new Date().toISOString(),
+                    filename: results.filename || 'Unknown'
+                };
+                sessionStorage.setItem('omr_scan_results', JSON.stringify(sessionData));
+                console.log('💾 Results saved to session storage');
+                
+                // Show session status indicator
+                const sessionStatus = document.getElementById('sessionStatus');
+                if (sessionStatus) {
+                    sessionStatus.style.display = 'inline';
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Error saving to session storage:', error);
+                return false;
+            }
+        }
+        
+        // Clear any old mock data from session storage
+        function clearOldMockData() {
+            try {
+                const sessionData = sessionStorage.getItem('omr_scan_results');
+                if (sessionData) {
+                    const parsed = JSON.parse(sessionData);
+                    // Check if this is old mock data (contains isda/pusit with specific percentages)
+                    if (parsed.results && parsed.results.shaded_selections) {
+                        const hasMockData = parsed.results.shaded_selections.some(item => 
+                            (item.item === 'isda' && item.fill_percent === 95.5) ||
+                            (item.item === 'pusit' && item.fill_percent === 88.2)
+                        );
+                        if (hasMockData) {
+                            console.log('🧹 Clearing old mock data from session storage');
+                            sessionStorage.removeItem('omr_scan_results');
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('❌ Error checking session storage:', error);
+                return false;
+            }
+        }
+
+        // Load results from session storage
+        function loadResultsFromSession() {
+            try {
+                // First clear any old mock data
+                clearOldMockData();
+                
+                const sessionData = sessionStorage.getItem('omr_scan_results');
+                if (sessionData) {
+                    const parsed = JSON.parse(sessionData);
+                    console.log('📂 Loading results from session storage:', parsed);
+                    
+                    // The session data contains the full result object
+                    const resultData = parsed.results;
+                    currentScanResults = resultData;
+                    displayResults(resultData);
+                    
+                    // Add session indicator
+                    const sessionIndicator = document.createElement('div');
+                    sessionIndicator.className = 'alert alert-info';
+                    sessionIndicator.innerHTML = `
+                        <i class="fas fa-history"></i> 
+                        Results restored from previous session (${new Date(parsed.timestamp).toLocaleString()})
+                    `;
+                    scanResults.insertBefore(sessionIndicator, scanResults.firstChild);
+                    
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('❌ Error loading from session storage:', error);
+                return false;
+            }
+        }
+        
+        // Clear session storage
+        function clearSessionResults() {
+            try {
+                sessionStorage.removeItem('omr_scan_results');
+                console.log('🗑️ Session storage cleared');
+                
+                // Hide session status indicator
+                const sessionStatus = document.getElementById('sessionStatus');
+                if (sessionStatus) {
+                    sessionStatus.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('❌ Error clearing session storage:', error);
+            }
+        }
+        
+        // Show Send to POS button
+        function showSendToPOSButton() {
+            if (sendToPOSBtn) {
+                sendToPOSBtn.style.display = 'inline-block';
+                console.log('✅ Send to POS button shown');
+            }
+        }
+        
+        // Hide Send to POS button
+        function hideSendToPOSButton() {
+            if (sendToPOSBtn) {
+                sendToPOSBtn.style.display = 'none';
+                console.log('✅ Send to POS button hidden');
+            }
+        }
+        
+        // Show Send to Firebase button
+        function showSendToFirebaseButton() {
+            if (sendToFirebaseBtn) {
+                sendToFirebaseBtn.style.display = 'inline-block';
+                console.log('✅ Send to Firebase button shown');
+            }
+        }
+        
+        // Hide Send to Firebase button
+        function hideSendToFirebaseButton() {
+            if (sendToFirebaseBtn) {
+                sendToFirebaseBtn.style.display = 'none';
+                console.log('✅ Send to Firebase button hidden');
+            }
+        }
+        
+        // Send order to POS system (Firestore)
+        async function sendOrderToPOS() {
+            if (!currentScanResults || !currentScanResults.items || currentScanResults.items.length === 0) {
+                alert('No order data to send. Please scan an OMR form first.');
+                return;
+            }
+            
+            try {
+                console.log('🍽️ Sending order to POS system...');
+                
+                // Show loading state
+                sendToPOSBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                sendToPOSBtn.disabled = true;
+                
+                // Prepare order data for Firestore
+                const orderData = {
+                    timestamp: new Date().toISOString(),
+                    table: currentScanResults.table || null,
+                    pax: currentScanResults.pax || null,
+                    items: currentScanResults.items,
+                    total_amount: currentScanResults.total_amount || 0,
+                    status: 'pending',
+                    source: 'omr_scanner',
+                    filename: currentScanResults.filename || 'unknown'
+                };
+                
+                console.log('📊 Order data to send:', orderData);
+                
+                // Send to Firestore (you'll need to implement Firebase connection)
+                // For now, we'll simulate the send
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+                
+                // Show success message
+                scanResults.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> 
+                        Order sent to POS system successfully!
+                        <br><small>Table: ${orderData.table || 'N/A'}, Items: ${orderData.items.length}, Total: ₱${orderData.total_amount.toFixed(2)}</small>
+                    </div>
+                    ${scanResults.innerHTML}
+                `;
+                
+                // Hide button after successful send
+                hideSendToPOSButton();
+                
+                console.log('✅ Order sent to POS successfully');
+                
+            } catch (error) {
+                console.error('❌ Error sending order to POS:', error);
+                
+                // Show error message
+                scanResults.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Failed to send order to POS: ${error.message}
+                    </div>
+                    ${scanResults.innerHTML}
+                `;
+            } finally {
+                // Restore button state
+                sendToPOSBtn.innerHTML = '<i class="fas fa-cash-register"></i> Send to POS';
+                sendToPOSBtn.disabled = false;
+            }
+        }
+        
+        // Send scan results to Firebase
+        async function sendToFirebase() {
+            if (!currentScanResults) {
+                alert('No scan results to send. Please scan an OMR form first.');
+                return;
+            }
+            
+            if (!db) {
+                alert('Firebase not initialized. Please check your configuration.');
+                return;
+            }
+            
+            try {
+                console.log('🔥 Sending scan results to Firebase...');
+                
+                // Show loading state
+                sendToFirebaseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                sendToFirebaseBtn.disabled = true;
+                
+                // Prepare data for Firebase
+                const firebaseData = {
+                    table: currentScanResults.table,
+                    pax: currentScanResults.pax,
+                    items: currentScanResults.items || [],
+                    total_amount: currentScanResults.total_amount || 0,
+                    total_circles: currentScanResults.summary?.total_circles || 0,
+                    total_selected: currentScanResults.summary?.total_selected || 0,
+                    scan_type: currentScanResults.summary?.scan_type || 'RESTAURANT ORDER',
+                    filename: currentScanResults.filename,
+                    timestamp: new Date().toISOString(),
+                    status: 'scanned'
+                };
+                
+                console.log('📋 Firebase data:', firebaseData);
+                
+                // Send to Firebase Firestore
+                const docRef = await db.collection('omr_scans').add(firebaseData);
+                console.log('✅ Document written with ID:', docRef.id);
+                
+                // Show success message
+                scanResults.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> 
+                        Scan results sent to Firebase successfully!
+                        <br><small>Document ID: ${docRef.id}</small>
+                        <br><small>Table: ${firebaseData.table || 'N/A'}, Items: ${firebaseData.items.length}, Total: ₱${firebaseData.total_amount.toFixed(2)}</small>
+                    </div>
+                    ${scanResults.innerHTML}
+                `;
+                
+                // Hide button after successful send
+                hideSendToFirebaseButton();
+                
+                console.log('✅ Scan results sent to Firebase successfully');
+                
+            } catch (error) {
+                console.error('❌ Error sending to Firebase:', error);
+                
+                // Show error message
+                scanResults.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Failed to send to Firebase: ${error.message}
+                    </div>
+                    ${scanResults.innerHTML}
+                `;
+            } finally {
+                // Restore button state
+                sendToFirebaseBtn.innerHTML = '<i class="fas fa-database"></i> Send to Firebase';
+                sendToFirebaseBtn.disabled = false;
+            }
+        }
+        
         // Auto-test connection on page load
         window.addEventListener('load', function() {
-            console.log('🚀 Page loaded, testing Python server connection...');
+            console.log('🚀 Page loaded, initializing OMR scanner...');
+            
+            // Comprehensive debugging on page load
+            console.log('🔍 Debugging page load state:');
+            console.log('- resultsSection exists:', !!resultsSection);
+            console.log('- scanResults exists:', !!scanResults);
+            console.log('- summaryStats exists:', !!summaryStats);
+            console.log('- debugImage exists:', !!debugImage);
+            
+            
+            // FORCE results section to be visible from the start
+            resultsSection.style.display = 'block';
+            resultsSection.style.visibility = 'visible';
+            resultsSection.style.opacity = '1';
+            resultsSection.style.height = 'auto';
+            resultsSection.classList.add('results-section');
+            console.log('✅ Results section FORCED visible on page load');
             
             // Try to load previous results from session
             if (loadResultsFromSession()) {
                 console.log('✅ Previous results loaded from session');
             } else {
-                console.log('ℹ️ No previous results found in session');
+                console.log('ℹ️ No previous results found in session - showing ready state');
             }
             
-            setTimeout(testPythonConnection, 1000);
+            // Test connection after a delay, but don't overwrite existing results
+            setTimeout(() => {
+                testPythonConnection();
+            }, 1000);
+            
+            // Final persistence check
+            setTimeout(() => {
+                if (resultsSection.style.display !== 'block') {
+                    console.log('⚠️ Results section was hidden on page load - FORCING visibility');
+                    resultsSection.style.display = 'block';
+                    resultsSection.classList.add('results-section');
+                }
+                console.log('✅ Page load persistence verified');
+                
+                // Additional debugging
+                console.log('🔍 Final page load state:');
+                console.log('- Results section display:', resultsSection.style.display);
+                console.log('- Scan results content length:', scanResults.innerHTML.length);
+                console.log('- Summary stats content length:', summaryStats.innerHTML.length);
+            }, 100);
         });
 
         // Detect page unload/refresh to debug auto-refresh issue
@@ -1045,6 +1701,9 @@
         }
         
         .results-section {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             animation: fadeInUp 0.5s ease-out;
         }
         

@@ -44,7 +44,7 @@ def convert_numpy_types(obj):
 def scan_omr():
     """Handle real OMR scanning request"""
     try:
-        print("📤 OMR scan request received")
+        print("OMR scan request received")
         
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
@@ -58,15 +58,15 @@ def scan_omr():
             file.save(tmp_file.name)
             temp_path = tmp_file.name
         
-        print(f"📁 File saved to: {temp_path}")
+        print(f"File saved to: {temp_path}")
         
         # Initialize scanner
         scanner = OMRCircleScanner()
         
         # Scan for shaded circles
-        print("🔍 Starting real OMR scan...")
+        print("Starting real OMR scan...")
         result = scanner.scan_shaded_circles(temp_path)
-        print("✅ OMR scan completed")
+        print("OMR scan completed")
         
         # Handle scan errors
         if 'error' in result:
@@ -105,13 +105,13 @@ def scan_omr():
                     success, buffer = cv2.imencode('.jpg', debug_img)
                     if success:
                         debug_image_b64 = base64.b64encode(buffer).decode('utf-8')
-                        print("✅ Debug image encoded successfully")
+                        print("Debug image encoded successfully")
                     else:
-                        print("⚠️ Failed to encode debug image")
+                        print("Failed to encode debug image")
                         debug_image_b64 = None
                         
             except Exception as e:
-                print(f"⚠️ Error encoding debug image: {e}")
+                print(f"Error encoding debug image: {e}")
                 debug_image_b64 = None
         
         # Remove debug_image from results as it's not JSON serializable
@@ -134,15 +134,15 @@ def scan_omr():
         # Clean up temporary file
         try:
             os.unlink(temp_path)
-            print(f"🗑️ Cleaned up temporary file: {temp_path}")
+            print(f"Cleaned up temporary file: {temp_path}")
         except:
             pass
         
-        print("✅ Response prepared successfully")
+        print("Response prepared successfully")
         return jsonify(response_data)
         
     except Exception as e:
-        print(f"❌ OMR scan error: {e}")
+        print(f"OMR scan error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/health', methods=['GET'])
@@ -151,7 +151,7 @@ def health_check():
     return jsonify({'status': 'OK', 'message': 'OMR Server is running'})
 
 if __name__ == '__main__':
-    print("🚀 Starting OMR Server...")
-    print("📡 Server will be available at: http://localhost:5002")
-    print("🔍 OMR scan endpoint: http://localhost:5002/scan-omr")
+    print("Starting OMR Server...")
+    print("Server will be available at: http://localhost:5002")
+    print("OMR scan endpoint: http://localhost:5002/scan-omr")
     app.run(host='0.0.0.0', port=5002, debug=True)

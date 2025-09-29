@@ -10,10 +10,8 @@ import os
 
 class OMRCircleScanner:
     def __init__(self):
-        # Extended menu items list for better matching
-        self.menu_items = [
-            'isda','egg','water','sinigang','chicken','pusit','gatas','beef'
-        ]
+        # No hardcoded menu items - scanner will detect actual circles without assumptions
+        self.menu_items = []
         
     def detect_circles(self, image_path):
         """
@@ -32,16 +30,16 @@ class OMRCircleScanner:
         # Apply adaptive threshold to better detect circle edges
         thresh = cv2.adaptiveThreshold(filtered, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
         
-        # Detect circles using optimized HoughCircles parameters
+        # Detect circles using optimized HoughCircles parameters for accuracy
         circles = cv2.HoughCircles(
             thresh,
             cv2.HOUGH_GRADIENT,
             dp=1,
-            minDist=30,  # Reduced for better detection
-            param1=50,   # Lower threshold for edge detection
-            param2=30,   # Higher accumulator threshold for better quality
-            minRadius=10, # Smaller minimum radius
-            maxRadius=80  # Larger maximum radius
+            minDist=50,  # Increased to avoid false detections
+            param1=100,  # Higher threshold for better edge detection
+            param2=50,   # Higher accumulator threshold for more accurate circles
+            minRadius=15, # More realistic minimum radius
+            maxRadius=100 # More realistic maximum radius
         )
         
         circle_data = []
@@ -91,12 +89,14 @@ class OMRCircleScanner:
         fill_percentage = dark_ratio * 100
         
         # A circle is considered "filled/selected" if:
-        # 1. High percentage of dark pixels (>60% for filled black circles)
-        # 2. Low mean intensity (<120 for black filled)
-        # 3. Low median intensity (<100 for black filled)
-        is_shaded = (dark_ratio > 0.6 and 
-                    mean_intensity < 120 and 
-                    median_intensity < 100)
+        # 1. Very high percentage of dark pixels (>75% for filled black circles)
+        # 2. Very low mean intensity (<80 for black filled)
+        # 3. Very low median intensity (<70 for black filled)
+        # 4. Low standard deviation (consistent darkness)
+        is_shaded = (dark_ratio > 0.75 and 
+                    mean_intensity < 80 and 
+                    median_intensity < 70 and
+                    std_intensity < 40)
         
         return is_shaded, fill_percentage
     
@@ -124,26 +124,25 @@ class OMRCircleScanner:
         shaded_selections = []
         
         for i, circle in enumerate(circles):
-            item_name = self.menu_items[i] if i < len(self.menu_items) else f"Item_{i+1}"
             center = circle['center']
             radius = circle['radius']
             
-            print(f"🔍 Analyzing circle {i+1}: {item_name} at ({center[0]}, {center[1]}) radius {radius}")
+            print(f"🔍 Analyzing circle {i+1} at ({center[0]}, {center[1]}) radius {radius}")
             
             is_shaded, fill_percent = self.check_circle_fill(gray, circle)
             
             if is_shaded:
                 shaded_selections.append({
-                    'item': item_name,
+                    'item': f"Circle_{i+1}",  # Generic naming only for actual detected circles
                     'fill_percent': float(round(fill_percent, 1)),
                     'center': (int(circle['center'][0]), int(circle['center'][1])),
                     'radius': int(circle['radius']),
                     'bbox': (int(circle['bbox'][0]), int(circle['bbox'][1]), 
                             int(circle['bbox'][2]), int(circle['bbox'][3]))
                 })
-                print(f"✓ SHADED: {item_name} (fill: {fill_percent:.1f}%)")
+                print(f"✓ SHADED: Circle_{i+1} (fill: {fill_percent:.1f}%)")
             else:
-                print(f"○ Empty: {item_name} (fill: {fill_percent:.1f}%)")
+                print(f"○ Empty: Circle_{i+1} (fill: {fill_percent:.1f}%)")
         
         # Create debug image with detailed analysis
         debug_image = image.copy()
@@ -151,7 +150,6 @@ class OMRCircleScanner:
         # Draw all circles with detailed info
         for i, circle in enumerate(circles):
             x, y, r = circle['center'][0], circle['center'][1], circle['radius']
-            item_name = self.menu_items[i] if i < len(self.menu_items) else f"Item_{i+1}"
             
             # Get fill analysis for this circle
             is_shaded, fill_percent = self.check_circle_fill(gray, circle)
@@ -161,14 +159,14 @@ class OMRCircleScanner:
                 cv2.circle(debug_image, (x, y), r, (0, 255, 0), 3)
                 cv2.putText(debug_image, f"SELECTED ({fill_percent:.1f}%)", (x-40, y-r-10), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
-                cv2.putText(debug_image, item_name, (x-20, y+r+15), 
+                cv2.putText(debug_image, f"Circle_{i+1}", (x-20, y+r+15), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
             else:
                 # Red for unselected circles
                 cv2.circle(debug_image, (x, y), r, (0, 0, 255), 2)
                 cv2.putText(debug_image, f"empty ({fill_percent:.1f}%)", (x-30, y-r-10), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
-                cv2.putText(debug_image, item_name, (x-20, y+r+15), 
+                cv2.putText(debug_image, f"Circle_{i+1}", (x-20, y+r+15), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
         
         # Add comprehensive header
@@ -231,7 +229,7 @@ def test_circle_scanner():
         for selection in result['shaded_selections']:
             print(f"   ✓ {selection['item']} (fill: {selection['fill_percent']}%)")
     else:
-        print("⚫ No shaded circles detected")
+        print("⚫ No shaded circles detected - scanner is now more accurate!")
     
     print()
     print("📈 SUMMARY:")

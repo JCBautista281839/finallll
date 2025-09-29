@@ -16,6 +16,7 @@ import base64
 # Import our circle scanner
 # Ensure you have the OMRCircleScanner class defined in omr_circle_scanner.py
 from omr_circle_scanner import OMRCircleScanner
+from restaurant_omr_scanner import RestaurantOMRScanner
 
 app = Flask(__name__)
 CORS(app)
@@ -31,8 +32,9 @@ os.makedirs(RESULTS_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Initialize scanner
+# Initialize scanners
 scanner = OMRCircleScanner()
+restaurant_scanner = RestaurantOMRScanner()
 
 class NumpyEncoder(json.JSONEncoder):
     """Custom JSON encoder for numpy types"""
@@ -326,7 +328,7 @@ def index():
 def upload_file():
     """Handle file upload and scanning"""
     try:
-        print("📤 Upload request received")
+        print("Upload request received")
         
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
@@ -340,17 +342,17 @@ def upload_file():
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"circle_scan_{timestamp}_{file.filename}"
             
-            print(f"📁 Processing file: {filename}")
+            print(f"Processing file: {filename}")
             
             # Save uploaded file
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            print(f"💾 File saved to: {filepath}")
+            print(f"File saved to: {filepath}")
             
-            # Scan for shaded circles
-            print("🔍 Starting circle scan...")
-            result = scanner.scan_shaded_circles(filepath)
-            print("✅ Scan completed")
+            # Scan for restaurant order data
+            print("Starting restaurant order scan...")
+            result = restaurant_scanner.scan_restaurant_order(filepath)
+            print("Restaurant scan completed")
             
             # Handle scan errors
             if 'error' in result:
@@ -362,7 +364,7 @@ def upload_file():
             
             if 'debug_image' in result:
                 cv2.imwrite(debug_path, result['debug_image'])
-                print(f"💾 Debug image saved: {debug_filename}")
+                print(f"Debug image saved: {debug_filename}")
                 
                 # Convert debug image to base64 for web display
                 _, buffer = cv2.imencode('.jpg', result['debug_image'])
@@ -374,30 +376,33 @@ def upload_file():
                 debug_image_b64 = None
             
             # Convert numpy types to JSON-serializable types
-            print("🔄 Converting numpy types...")
+            print("Converting numpy types...")
             result = convert_numpy_types(result)
-            print("✅ Conversion completed")
+            print("Conversion completed")
             
-            # Prepare response
+            # Prepare restaurant order response
             try:
                 response_data = {
                     'success': True,
                     'filename': filename,
-                    'results': result,
+                    'table': result.get('table'),
+                    'pax': result.get('pax'),
+                    'items': result.get('items', []),
+                    'total_amount': result.get('total_amount', 0),
                     'debug_image': debug_image_b64,
                     'summary': {
                         'total_circles': result.get('total_circles', 0),
                         'total_selected': result.get('total_selected', 0),
-                        'scan_type': result.get('scan_type', 'CIRCLE SCAN')
+                        'scan_type': result.get('scan_type', 'RESTAURANT ORDER')
                     }
                 }
-                print("✅ Response prepared successfully")
+                print("Restaurant order response prepared successfully")
             except Exception as e:
-                print(f"❌ Response preparation error: {e}")
+                print(f"Response preparation error: {e}")
                 return jsonify({'error': f'Response preparation failed: {str(e)}'}), 500
             
             # Save results as JSON
-            print("💾 Saving results...")
+            print("Saving results...")
             try:
                 results_filename = f"circle_results_{timestamp}.json"
                 results_path = os.path.join(RESULTS_FOLDER, results_filename)
@@ -416,26 +421,19 @@ def upload_file():
                 json.dumps(response_data, default=str);
                 return jsonify(response_data)
             except Exception as json_error:
-                print(f"❌ JSON serialization error: {json_error}")
-                # Return a simplified response
+                print(f"JSON serialization error: {json_error}")
+                # Return a simplified restaurant response
                 return jsonify({
                     'success': True,
                     'filename': filename,
-                    'results': {
-                        'success': True,
-                        'total_circles': len(result.get('shaded_selections', [])),
-                        'total_selected': len([s for s in result.get('shaded_selections', []) if s]),
-                        'shaded_selections': [
-                            {
-                                'item': str(sel.get('item', 'Unknown')),
-                                'fill_percent': float(sel.get('fill_percent', 0))
-                            } for sel in result.get('shaded_selections', [])
-                        ]
-                    },
+                    'table': result.get('table'),
+                    'pax': result.get('pax'),
+                    'items': result.get('items', []),
+                    'total_amount': result.get('total_amount', 0),
                     'summary': {
-                        'total_circles': len(result.get('shaded_selections', [])),
-                        'total_selected': len([s for s in result.get('shaded_selections', []) if s]),
-                        'scan_type': 'CIRCLE SCAN'
+                        'total_circles': result.get('total_circles', 0),
+                        'total_selected': result.get('total_selected', 0),
+                        'scan_type': 'RESTAURANT ORDER'
                     }
                 })
         
@@ -443,7 +441,7 @@ def upload_file():
             return jsonify({'error': 'Invalid file type. Please upload PNG, JPG, JPEG, or GIF'}), 400
             
     except Exception as e:
-        print(f"❌ Upload error: {str(e)}")
+        print(f"Upload error: {str(e)}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/webcam')
@@ -831,7 +829,7 @@ def capture_webcam():
             return jsonify({'error': 'No circles detected in webcam capture'}), 400
             
     except Exception as e:
-        print(f"❌ Webcam capture error: {str(e)}")
+        print(f"Webcam capture error: {str(e)}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/status')
@@ -846,14 +844,14 @@ def server_status():
 if __name__ == '__main__':
     # Configuration for online deployment
     import os
-    port = int(os.environ.get('PORT', 5000))
+    port = 5000  # Force port 5000
     host = os.environ.get('HOST', '0.0.0.0')  # Allow external connections
     debug = os.environ.get('DEBUG', 'False').lower() == 'true'
     
-    print(f"🚀 Starting OMR Scanner Server...")
-    print(f"📡 Host: {host}")
-    print(f"🔌 Port: {port}")
-    print(f"🐛 Debug: {debug}")
-    print(f"🌐 Access: http://{host}:{port}")
+    print(f"Starting OMR Scanner Server...")
+    print(f"Host: {host}")
+    print(f"Port: {port}")
+    print(f"Debug: {debug}")
+    print(f"Access: http://{host}:{port}")
     
     app.run(debug=debug, host=host, port=port)
