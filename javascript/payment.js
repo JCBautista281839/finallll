@@ -67,6 +67,7 @@ function updateDateTime() {
     }
 }
 // Initialize Back button logic (matches .back-button in payment.html)
+// Back button now acts as "Cancel Order" - clears POS and refreshes as new order
 function initializeBackButton() {
   const backBtn = document.querySelector('.back-button');
   if (backBtn) {
@@ -80,33 +81,48 @@ function initializeBackButton() {
           // Restore inventory for cancelled order
           if (order.items && order.items.length > 0 && typeof restoreInventoryForOrder === 'function') {
             await restoreInventoryForOrder(order.items);
+            console.log('Inventory restored for cancelled order');
           }
           
-          // Set flags to restore the order in POS
-          sessionStorage.setItem('shouldRestoreOrder', 'true');
-          sessionStorage.setItem('pendingOrder', orderRaw);
-          sessionStorage.setItem('isEditMode', 'false'); // This is a back navigation, not edit mode
+          // Delete order from database if it exists
+          if (order.orderNumber || order.orderNumberFormatted) {
+            try {
+              const db = firebase.firestore();
+              const orderNumber = order.orderNumberFormatted || order.orderNumber;
+              
+              // Delete the order completely from database
+              await db.collection('orders').doc(String(orderNumber)).delete();
+              
+              console.log('Order completely removed from database:', orderNumber);
+            } catch (dbError) {
+              console.warn('Failed to delete order from database:', dbError);
+              // Continue with cancellation process even if database deletion fails
+            }
+          }
           
-          // Keep the pendingOrderId so the same order number is maintained
-          // Don't remove pendingOrderId - we want to keep the same order number
-          
-          console.log('Back button: Order data preserved for restoration in POS');
+          console.log('Back button: Order cancelled - clearing POS for new order');
         } catch (e) { 
-          console.warn('Failed to process order data for restoration:', e);
-          // If there's an error, still try to go back but clear the data
-          sessionStorage.removeItem('posOrder');
-          sessionStorage.removeItem('pendingOrderId');
+          console.warn('Failed to process order data for cancellation:', e);
         }
-      } else {
-        // No order data to restore, clear everything
-        sessionStorage.removeItem('posOrder');
-        sessionStorage.removeItem('pendingOrderId');
       }
       
-      // Clear the laterOrder flag since we're going back, not using "Later"
+      // Clear ALL session storage data related to the current order
+      sessionStorage.removeItem('posOrder');
+      sessionStorage.removeItem('pendingOrderId');
+      sessionStorage.removeItem('shouldRestoreOrder');
+      sessionStorage.removeItem('pendingOrder');
+      sessionStorage.removeItem('isEditMode');
+      sessionStorage.removeItem('editingOrder');
+      sessionStorage.removeItem('originalOrderId');
       sessionStorage.removeItem('laterOrder');
+      sessionStorage.removeItem('hasProceeded');
+      sessionStorage.removeItem('activeOrderDiscount');
+      sessionStorage.removeItem('loadedOMRScans');
       
-      // Navigate back to POS
+      // Set flag to start a completely new order
+      sessionStorage.setItem('startNewOrder', 'true');
+      
+      // Navigate back to POS - it will detect startNewOrder flag and clear everything
       window.location.href = '/html/pos.html';
     });
   }
@@ -136,8 +152,8 @@ function initializeOrderControls() {
       }
       orderData.subtotal = subtotal;
       
-      // Calculate tax as 5% of subtotal (same as POS system)
-      const tax = subtotal * 0.05;
+      // Calculate tax as fixed amount (₱5.00) - same as POS system
+      const tax = 5.00;
       orderData.tax = tax;
       
       // Calculate discount
@@ -610,8 +626,8 @@ function initializeProceedButton() {
         }, 0);
       }
       orderData.subtotal = subtotal;
-      // Calculate tax as 5% of subtotal (same as POS system)
-      const tax = subtotal * 0.05;
+      // Calculate tax as fixed amount (₱5.00) - same as POS system
+      const tax = 5.00;
       orderData.tax = tax;
       let discount = 0;
       if (typeof orderData.discountAmount !== 'undefined') {
@@ -632,14 +648,57 @@ function initializeProceedButton() {
       }
       // Save the finalized order object to Firestore (no duplication, no missing fields)
       try {
+        // Validate order data before saving
+        if (!orderData.orderNumberFormatted) {
+          throw new Error('Missing order number');
+        }
+        if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+          throw new Error('No items in order');
+        }
+        if (!orderData.total || orderData.total <= 0) {
+          throw new Error('Invalid order total');
+        }
+        
+        console.log('Attempting to save order to Firestore:', orderData);
+        
+        // Check Firebase connection
+        if (!window.isFirebaseReady || !window.isFirebaseReady()) {
+          throw new Error('Firebase not initialized');
+        }
+        
         const db = firebase.firestore();
-  await db.collection('orders').doc(orderData.orderNumberFormatted).set(orderData);
-  console.log('[Payment][Proceed] Order written to Firestore:', orderData);
+        if (!db) {
+          throw new Error('Firebase Firestore not available');
+        }
+        
+        await db.collection('orders').doc(orderData.orderNumberFormatted).set(orderData);
+        console.log('[Payment][Proceed] Order written to Firestore successfully:', orderData);
+        
         sessionStorage.setItem('paymentReceipt', JSON.stringify(orderData));
         window.location.href = '/html/receipt.html';
       } catch (error) {
-        console.error('Error saving order:', error);
-        alert('There was an error processing your order. Please try again.');
+        console.error('Detailed error saving order:', error);
+        console.error('Order data that failed:', orderData);
+        
+        // More specific error message
+        let errorMessage = 'There was an error processing your order. ';
+        if (error.message.includes('Missing order number')) {
+          errorMessage += 'Order number is missing.';
+        } else if (error.message.includes('No items in order')) {
+          errorMessage += 'Order has no items.';
+        } else if (error.message.includes('Invalid order total')) {
+          errorMessage += 'Order total is invalid.';
+        } else if (error.message.includes('Firebase not initialized')) {
+          errorMessage += 'Database connection failed.';
+        } else if (error.message.includes('permission')) {
+          errorMessage += 'Permission denied. Please check your access rights.';
+        } else if (error.message.includes('network')) {
+          errorMessage += 'Network error. Please check your connection.';
+        } else {
+          errorMessage += 'Please try again.';
+        }
+        
+        alert(errorMessage);
       }
     });
 
@@ -663,8 +722,8 @@ function updateOrderSummary() {
         return sum + (price * qty);
       }, 0);
     }
-    // Calculate tax as 5% of subtotal (same as POS system)
-    const tax = subtotal * 0.05;
+    // Calculate tax as fixed amount (₱5.00) - same as POS system
+    const tax = 5.00;
     const discountAmount = parseFloat(orderData.discountAmount) || 0;
     // Always recalculate total as subtotal + tax - discountAmount
     const total = subtotal + tax - discountAmount;
@@ -696,9 +755,9 @@ function updateOrderSummary() {
     if (orderData.discountType === 'PWD') {
       discountLabel = 'PWD | ' + discountPercent + '%';
     } else if (orderData.discountType === 'Senior Citizen') {
-      discountLabel = 'Senior Citizen | ' + discountPercent + '%';
+      discountLabel = 'SC | ' + discountPercent + '%';
     } else if (orderData.discountType === 'Special Discount' || orderData.discountType === 'custom') {
-      discountLabel = 'Special Discount | ' + (discountPercent ? discountPercent + '%' : '');
+      discountLabel = 'SD | ' + (discountPercent ? discountPercent + '%' : '');
     } else {
       discountLabel = 'None';
     }
