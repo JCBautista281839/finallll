@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Testing System - Viktoria's Bistro</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="header-title">
+                        <i class="fas fa-circle-notch me-2"></i>
+                        OMR Testing System
+                    </h1>
+                    <p class="header-subtitle">Optical Mark Recognition Testing Interface</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="status-indicator">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="statusText">Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Upload Section -->
+            <section class="upload-section mb-5">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-upload me-2"></i>
+                            Image Upload
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-content">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <h4>Drop your OMR form here</h4>
+                                <p>or click to browse files</p>
+                                <button class="btn btn-primary btn-lg" id="browseBtn">
+                                    <i class="fas fa-folder-open me-2"></i>
+                                    Browse Files
+                                </button>
+                                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="upload-preview" id="uploadPreview" style="display: none;">
+                            <img id="previewImage" class="img-fluid rounded" alt="Preview">
+                            <div class="preview-actions mt-3">
+                                <button class="btn btn-success me-2" id="scanBtn">
+                                    <i class="fas fa-search me-2"></i>
+                                    Scan Image
+                                </button>
+                                <button class="btn btn-secondary" id="clearBtn">
+                                    <i class="fas fa-times me-2"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- OMR Functions Section -->
+            <section class="functions-section mb-5">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-cogs me-2"></i>
+                            OMR Functions
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Circle Detection -->
+                            <div class="col-md-4 mb-3">
+                                <div class="function-card">
+                                    <div class="function-icon">
+                                        <i class="fas fa-circle"></i>
+                                    </div>
+                                    <h5>Circle Detection</h5>
+                                    <p>Detect and analyze circles in the image</p>
+                                    <button class="btn btn-outline-primary" id="detectCirclesBtn">
+                                        <i class="fas fa-play me-2"></i>
+                                        Detect Circles
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Shaded Analysis -->
+                            <div class="col-md-4 mb-3">
+                                <div class="function-card">
+                                    <div class="function-icon">
+                                        <i class="fas fa-fill-drip"></i>
+                                    </div>
+                                    <h5>Shaded Analysis</h5>
+                                    <p>Analyze filled/shaded circles</p>
+                                    <button class="btn btn-outline-success" id="analyzeShadedBtn">
+                                        <i class="fas fa-play me-2"></i>
+                                        Analyze Shaded
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Full OMR Scan -->
+                            <div class="col-md-4 mb-3">
+                                <div class="function-card">
+                                    <div class="function-icon">
+                                        <i class="fas fa-search-plus"></i>
+                                    </div>
+                                    <h5>Full OMR Scan</h5>
+                                    <p>Complete OMR form processing</p>
+                                    
+                                    <!-- Full Scan Upload Area -->
+                                    <div class="full-scan-upload-area" id="fullScanUploadArea">
+                                        <div class="upload-content">
+                                            <i class="fas fa-cloud-upload-alt upload-icon-small"></i>
+                                            <p class="upload-text-small">Upload image for full scan</p>
+                                            <button class="btn btn-sm btn-outline-primary" id="fullScanBrowseBtn">
+                                                <i class="fas fa-folder-open me-1"></i>
+                                                Browse
+                                            </button>
+                                            <input type="file" id="fullScanFileInput" accept="image/*" style="display: none;">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Full Scan Preview -->
+                                    <div class="full-scan-preview" id="fullScanPreview" style="display: none;">
+                                        <img id="fullScanPreviewImage" class="img-fluid rounded preview-image-small" alt="Preview">
+                                        <div class="preview-actions-small mt-2">
+                                            <button class="btn btn-sm btn-success me-1" id="fullScanProcessBtn">
+                                                <i class="fas fa-search me-1"></i>
+                                                Process
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" id="fullScanClearBtn">
+                                                <i class="fas fa-times me-1"></i>
+                                                Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="btn btn-outline-warning" id="fullScanBtn" style="margin-top: 1rem;">
+                                        <i class="fas fa-play me-2"></i>
+                                        Full Scan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section mb-5">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Scan Results
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsContent">
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-info-circle fa-3x mb-3"></i>
+                                <h5>No results yet</h5>
+                                <p>Upload an image and run an OMR function to see results here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Debug Section -->
+            <section class="debug-section">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-bug me-2"></i>
+                            Debug Information
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="debug-console" id="debugConsole">
+                            <div class="console-header">
+                                <span class="console-title">Debug Console</span>
+                                <button class="btn btn-sm btn-outline-light" id="clearConsoleBtn">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Clear
+                                </button>
+                            </div>
+                            <div class="console-content" id="consoleContent">
+                                <div class="console-line">
+                                    <span class="console-timestamp">[00:00:00]</span>
+                                    <span class="console-message">System initialized and ready</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2024 Viktoria's Bistro - OMR Testing System</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p class="mb-0">Version 1.0.0 - Testing Environment</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 id="loadingText">Processing...</h5>
+                    <p class="text-muted mb-0" id="loadingSubtext">Please wait while we process your request</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="js/omr-testing.js"></script>
+</body>
+</html>
