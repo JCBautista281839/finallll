@@ -20,7 +20,7 @@ if (typeof AuthManager === 'undefined') {
         inactivityTimeout: 30 * 60 * 1000, // 30 minutes of inactivity
         logoutDelay: 1000, // 1 second delay before logout
         enableInactivityLogout: true,
-        enableTabCloseLogout: true,
+        enableTabCloseLogout: true, // Enabled to logout on tab close
         enableVisibilityLogout: false // Disabled by default - only logout on actual tab close
       };
       
@@ -34,6 +34,9 @@ if (typeof AuthManager === 'undefined') {
         
         // Wait for Firebase to be ready
         await this.waitForFirebase();
+        
+        // Configure Firebase auth persistence to LOCAL (persists across browser sessions)
+        await this.configureAuthPersistence();
         
         // Set up event listeners
         this.setupEventListeners();
@@ -72,6 +75,23 @@ if (typeof AuthManager === 'undefined') {
           reject(new Error('Firebase initialization timeout'));
         }, 10000);
       });
+    }
+
+    // Configure Firebase authentication persistence
+    async configureAuthPersistence() {
+      try {
+        console.log('[AuthManager] Configuring Firebase auth persistence...');
+        
+        // Set Firebase auth persistence to SESSION
+        // This ensures the user is logged out when the tab/browser is closed
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+        
+        console.log('[AuthManager] Firebase auth persistence set to SESSION');
+        
+      } catch (error) {
+        console.error('[AuthManager] Error configuring auth persistence:', error);
+        // Don't throw error - continue with default persistence
+      }
     }
 
     // Set up all event listeners
