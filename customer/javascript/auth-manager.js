@@ -13,6 +13,7 @@ if (typeof AuthManager === 'undefined') {
       this.logoutTimeout = null;
       this.inactivityTimeout = null;
       this.isLoggingOut = false;
+      this.isNavigating = false; // Track if user is navigating vs closing tab
       
       // Configuration
       this.config = {
@@ -20,7 +21,7 @@ if (typeof AuthManager === 'undefined') {
         logoutDelay: 1000, // 1 second delay before logout
         enableInactivityLogout: true,
         enableTabCloseLogout: true,
-        enableVisibilityLogout: true
+        enableVisibilityLogout: false // Disabled by default - only logout on actual tab close
       };
       
       this.init();
@@ -91,10 +92,58 @@ if (typeof AuthManager === 'undefined') {
       // Page hide detection (mobile browsers, some desktop scenarios)
       window.addEventListener('pagehide', this.handlePageHide.bind(this));
       
+      // Navigation detection to distinguish between tab close and navigation
+      this.setupNavigationDetection();
+      
       // User activity detection for inactivity timeout
       this.setupActivityListeners();
       
       console.log('[AuthManager] Event listeners set up successfully');
+    }
+
+    // Set up navigation detection
+    setupNavigationDetection() {
+      // Detect clicks on links (navigation)
+      document.addEventListener('click', (event) => {
+        const target = event.target.closest('a');
+        if (target && target.href && !target.href.startsWith('javascript:')) {
+          this.isNavigating = true;
+          console.log('[AuthManager] Navigation detected - user clicked link');
+          
+          // Reset navigation flag after a short delay
+          setTimeout(() => {
+            this.isNavigating = false;
+          }, 1000);
+        }
+      });
+      
+      // Detect form submissions (navigation)
+      document.addEventListener('submit', () => {
+        this.isNavigating = true;
+        console.log('[AuthManager] Navigation detected - form submission');
+        
+        setTimeout(() => {
+          this.isNavigating = false;
+        }, 1000);
+      });
+      
+      // Detect programmatic navigation
+      const originalPushState = history.pushState;
+      const originalReplaceState = history.replaceState;
+      
+      history.pushState = function(...args) {
+        this.isNavigating = true;
+        console.log('[AuthManager] Navigation detected - pushState');
+        setTimeout(() => { this.isNavigating = false; }, 1000);
+        return originalPushState.apply(history, args);
+      }.bind(this);
+      
+      history.replaceState = function(...args) {
+        this.isNavigating = true;
+        console.log('[AuthManager] Navigation detected - replaceState');
+        setTimeout(() => { this.isNavigating = false; }, 1000);
+        return originalReplaceState.apply(history, args);
+      }.bind(this);
     }
 
     // Set up activity listeners for inactivity detection
@@ -136,21 +185,24 @@ if (typeof AuthManager === 'undefined') {
       
       // Only logout if user is actually authenticated
       if (this.isUserAuthenticated()) {
-        console.log('[AuthManager] User is authenticated, performing logout on tab close');
-        this.performLogout('tab_close');
+        console.log('[AuthManager] User is authenticated, preparing logout on tab close');
+        // Don't perform logout immediately in beforeunload - wait for unload
+        // This prevents logout on page refresh or navigation
       }
-      
-      // Note: We can't prevent the unload event, but we can trigger logout
-      // The actual logout will happen in the unload handler
     }
 
     // Handle unload event
     handleUnload(event) {
       console.log('[AuthManager] unload event triggered');
       
-      if (this.isUserAuthenticated() && !this.isLoggingOut) {
-        console.log('[AuthManager] Performing immediate logout on unload');
+      // Only logout if it's not navigation and user is authenticated
+      if (!this.isNavigating && this.isUserAuthenticated() && !this.isLoggingOut) {
+        console.log('[AuthManager] Performing immediate logout on unload (tab close detected)');
         this.performImmediateLogout('tab_close');
+      } else if (this.isNavigating) {
+        console.log('[AuthManager] Unload event ignored - user is navigating, not closing tab');
+      } else {
+        console.log('[AuthManager] Unload event ignored - user not authenticated or already logging out');
       }
     }
 
@@ -159,10 +211,12 @@ if (typeof AuthManager === 'undefined') {
       if (document.hidden) {
         console.log('[AuthManager] Page became hidden');
         
-        // Optional: logout when tab becomes hidden
+        // Only logout on visibility change if explicitly enabled
         if (this.config.enableVisibilityLogout && this.isUserAuthenticated()) {
           console.log('[AuthManager] Logging out due to page visibility change');
           this.performLogout('visibility_change');
+        } else {
+          console.log('[AuthManager] Visibility logout disabled - user can switch tabs safely');
         }
       } else {
         console.log('[AuthManager] Page became visible');
@@ -175,9 +229,13 @@ if (typeof AuthManager === 'undefined') {
     handlePageHide(event) {
       console.log('[AuthManager] pagehide event triggered');
       
-      if (this.isUserAuthenticated() && !this.isLoggingOut) {
-        console.log('[AuthManager] Performing logout on page hide');
+      // Only logout on page hide if it's likely a tab close (not navigation)
+      // Check if the page is being unloaded (persisted = false means tab close)
+      if (event.persisted === false && this.isUserAuthenticated() && !this.isLoggingOut) {
+        console.log('[AuthManager] Performing logout on page hide (tab close detected)');
         this.performLogout('page_hide');
+      } else {
+        console.log('[AuthManager] Page hide event ignored (likely navigation, not tab close)');
       }
     }
 
