@@ -25,7 +25,8 @@
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
+  flex-wrap: nowrap;
 }
 
 .nav-links a {
@@ -40,12 +41,16 @@
 
 .search-box {
   position: relative;
+  flex-shrink: 1;
+  min-width: 200px;
+  max-width: 250px;
 }
 
 .search-box input {
   padding: 8px 30px 8px 10px;
   border-radius: 20px;
   border: 1px solid #ccc;
+  width: 100%;
 }
 
 .search-box .search-icon {
@@ -66,6 +71,19 @@
   gap: 40px;
 }
 
+.form-section {
+  flex: 1;
+  max-width: 600px;
+}
+
+h3 {
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+
 .form-title {
   color: #8b1d1d;
   margin-bottom: 20px;
@@ -73,18 +91,31 @@
 
 .contact-box {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   padding: 15px;
   border: 1px solid #ccc;
   border-radius: 8px;
   margin-bottom: 20px;
   background-color: #fff;
-  width: 150%; /* Widen the contact box */
+  width: 100%;
 }
 
 .contact-box .label {
   color: #8b1d1d;
   font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.contact-right {
+  width: 100%;
+  max-width: 500px;
+}
+
+#contact-info,
+#delivery-info {
+  line-height: 1.4;
+  word-wrap: break-word;
 }
 
 .shipping-option {
@@ -95,7 +126,8 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  width: 150%; /* Widen the shipping options */
+  width: 100%;
+  transition: all 0.3s ease;
 }
 
 .shipping-option input {
@@ -106,6 +138,7 @@
 .shipping-option.selected {
   border: 2px solid #8b1d1d;
   background: #fdf3f3;
+  box-shadow: 0 2px 4px rgba(139, 29, 29, 0.1);
 }
 
 .option-title {
@@ -190,6 +223,7 @@ hr {
   margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .payment-option:hover {

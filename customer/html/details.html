@@ -11,10 +11,10 @@
   <div class="container">
     <!-- Back button -->
     <div class="top-nav">
-      <a href="../html/menu.html" class="back-btn">← BACK</a>
+      <a href="menucustomer.html" class="back-btn">← BACK</a>
       <div class="nav-links">
         <a href="#">Home</a>
-        <a href="../html/menu.html" class="active">Menu</a>
+        <a href="menucustomer.html" class="active">Menu</a>
         <div class="search-box">
           <input type="text" placeholder="Search">
           <span class="search-icon">🔍</span>
@@ -83,20 +83,18 @@
       <!-- Order Summary -->
       <div class="order-summary">
         <h2>ORDER SUMMARY</h2>
-        <div class="order-item">
-          <span>1</span>
-          <span>Crispy Kare-Kare</span>
-          <span class="price">Php 500</span>
+        <div class="order-menu" id="order-menu">
+          <!-- Cart items will be loaded dynamically -->
         </div>
         <hr>
         <div class="total">
           <span>Total</span>
-          <span class="price">Php 500</span>
+          <span class="price" id="total-price">Php 0</span>
         </div>
         <!-- Checkout page continue button -->
-<button class="continue-btn" onclick="window.location.href='shipping.html'">
-  Continue
-</button>
+        <button class="continue-btn" onclick="window.location.href='shipping.html'">
+          Continue
+        </button>
       </div>
     </div>
 
@@ -116,6 +114,52 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
   <script src="../javascript/maps.js"></script>
   <script src="../javascript/details.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load cart data from sessionStorage (matching cart.js format)
+      const cartData = JSON.parse(sessionStorage.getItem('cartData')) || {};
+      const cartItems = Object.values(cartData);
+      
+      // Update order summary with cart items
+      updateOrderSummary();
+      
+      function updateOrderSummary() {
+        const orderMenuDiv = document.getElementById('order-menu');
+        const totalPriceDiv = document.getElementById('total-price');
+        
+        if (cartItems.length === 0) {
+          orderMenuDiv.innerHTML = `
+            <div class="order-item">
+              <span>1</span>
+              <span>Crispy Kare-Kare</span>
+              <span class="price">Php 500</span>
+            </div>
+          `;
+          totalPriceDiv.textContent = 'Php 500';
+        } else {
+          let orderItemsHTML = '';
+          let total = 0;
+          
+          cartItems.forEach(item => {
+            const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+            const itemTotal = price * item.quantity;
+            total += itemTotal;
+            orderItemsHTML += `
+              <div class="order-item">
+                <span>${item.quantity}</span>
+                <span>${item.name}</span>
+                <span class="price">Php ${itemTotal.toFixed(0)}</span>
+              </div>
+            `;
+          });
+          
+          orderMenuDiv.innerHTML = orderItemsHTML;
+          totalPriceDiv.textContent = `Php ${total.toFixed(0)}`;
+        }
+      }
+    });
+  </script>
   
 </body>
 </html>

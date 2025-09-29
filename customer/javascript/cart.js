@@ -6,6 +6,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const addToCartButtons = document.querySelectorAll(".add-to-cart");
 
   let cart = {}; // in-memory cart object
+  
+  // Load cart from sessionStorage on page load
+  function loadCartFromStorage() {
+    const savedCart = sessionStorage.getItem('cartData');
+    if (savedCart) {
+      cart = JSON.parse(savedCart);
+      updateCartDisplay();
+    }
+  }
+  
+  // Save cart to sessionStorage
+  function saveCartToStorage() {
+    sessionStorage.setItem('cartData', JSON.stringify(cart));
+  }
+  
+  // Load cart on page load
+  loadCartFromStorage();
 
   // Show cart overlay
   openCartBtn.addEventListener("click", (e) => {
@@ -37,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       updateCartDisplay();
+      saveCartToStorage();
     });
   });
 

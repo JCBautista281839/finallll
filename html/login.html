@@ -40,11 +40,11 @@
                     <input type="text" id="username" class="form-input" placeholder="Email Address or Username" required>
                     <input type="password" id="password" class="form-input" placeholder="Password" required>
                     <button type="submit" class="login-btn">Log In</button>
-                    <a href="#" class="forgot-password">Forgot Password</a>
+                    <a href="forgot-password.html" class="forgot-password">Forgot Password</a>
                     <p class="terms-text">
                         By continuing, you agree to our updated<br> 
-                        <a href="#">Terms and Conditions</a> and 
-                        <a href="#">Privacy Policy</a>.
+                        <a href="#" onclick="showTermsModal(); return false;">Terms and Conditions</a> and 
+                        <a href="#" onclick="showPrivacyModal(); return false;">Privacy Policy</a>.
                     </p>
                     <div id="loginError" style="display:none;color:red;margin-top:10px;"></div>
                 </form>
@@ -65,6 +65,95 @@
             </div>
         </div>
     </div>
+
+    <!-- Terms and Conditions Modal -->
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Terms and Conditions</h2>
+                <span class="close" onclick="closeTermsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <h3>Authorized Use</h3>
+                <ul>
+                    <li>Only employees of Viktoria's Bistro (Admin and Kitchen Staff) are allowed to access this side of the system.</li>
+                    <li>Access is strictly for official business purposes, including order processing, sales monitoring, and inventory management.</li>
+                </ul>
+
+                <h3>Account Security</h3>
+                <ul>
+                    <li>Login credentials and One-Time Passwords (OTPs) must be kept confidential.</li>
+                    <li>Unauthorized sharing of accounts or access is prohibited.</li>
+                </ul>
+
+                <h3>Responsibilities</h3>
+                <ul>
+                    <li>Admins are responsible for updating inventory, monitoring sales, managing tickets, and ensuring accurate records.</li>
+                    <li>Kitchen Staff are responsible for receiving orders, preparing meals, and updating order statuses.</li>
+                </ul>
+
+                <h3>Prohibited Actions</h3>
+                <ul>
+                    <li>Misuse of the system, intentional data manipulation, or unauthorized deletion of records is strictly forbidden.</li>
+                    <li>Employees must not access areas of the system beyond their assigned role.</li>
+                </ul>
+
+                <h3>Compliance with Law</h3>
+                <ul>
+                    <li>Users must comply with internal company policies, the Philippine Data Privacy Act of 2012 (RA 10173), and relevant consumer protection laws.</li>
+                </ul>
+
+                <h3>System Monitoring</h3>
+                <ul>
+                    <li>All activities may be logged for security, accountability, and auditing purposes.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="ok-btn" onclick="closeTermsModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Privacy Policy</h2>
+                <span class="close" onclick="closePrivacyModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <h3>Data Collected</h3>
+                <ul>
+                    <li>Login information, account activity, order updates, and inventory records handled by Admins and Kitchen Staff.</li>
+                </ul>
+
+                <h3>Purpose of Data Use</h3>
+                <ul>
+                    <li>To monitor workflow, secure system operations, and ensure accurate records for sales and inventory.</li>
+                </ul>
+
+                <h3>Data Protection</h3>
+                <ul>
+                    <li>All staff data is encrypted and accessible only to authorized personnel.</li>
+                    <li>The system uses OTP verification and secure authentication methods.</li>
+                </ul>
+
+                <h3>Data Retention</h3>
+                <ul>
+                    <li>Information is retained as long as necessary for operational, auditing, and legal purposes.</li>
+                </ul>
+
+                <h3>Employee Rights</h3>
+                <ul>
+                    <li>Staff may request access to their activity logs and report inaccuracies.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="ok-btn" onclick="closePrivacyModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
  <!-- Firebase Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -88,6 +177,37 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Terms and Conditions Modal Functions
+function showTermsModal() {
+    document.getElementById('termsModal').style.display = 'block';
+}
+
+function closeTermsModal() {
+    document.getElementById('termsModal').style.display = 'none';
+}
+
+// Privacy Policy Modal Functions
+function showPrivacyModal() {
+    document.getElementById('privacyModal').style.display = 'block';
+}
+
+function closePrivacyModal() {
+    document.getElementById('privacyModal').style.display = 'none';
+}
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+    const termsModal = document.getElementById('termsModal');
+    const privacyModal = document.getElementById('privacyModal');
+    
+    if (event.target == termsModal) {
+        closeTermsModal();
+    }
+    if (event.target == privacyModal) {
+        closePrivacyModal();
+    }
+}
 </script>
 </body>
 </html>

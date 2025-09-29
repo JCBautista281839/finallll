@@ -45,8 +45,11 @@
               <a href="html/login.html" class="icon-link">
                 <img class="user-img" src="/src/Icons/user (1).png" alt="User Icon">
               </a>
-              <a href="#" class="icon-link">
+              <a href="#" class="icon-link" id="shopping-bag-btn">
+                <div class="bag-container">
                 <img class="bag-img" src="/src/Icons/bag (1).png" alt="Shopping Bag Icon">
+                  <span class="item-counter" id="item-counter">0</span>
+                </div>
               </a>
             </div>
           </div>
@@ -80,20 +83,30 @@
           </div>
         </div>
 
-        <!-- Right: Order Summary -->
-        <div class="col-lg-4">
-          <div class="order-summary custom-order-summary">
+      </div>
+    </main>
+
+    <!-- Shopping Bag Popup -->
+    <div id="shopping-bag-popup" class="shopping-bag-popup">
+      <div class="popup-overlay" id="popup-overlay"></div>
+      <div class="popup-content">
+        <div class="popup-header">
+          <h3>Your Order</h3>
+          <button class="close-btn" id="close-popup">&times;</button>
+        </div>
+        
             <div class="address-section">
               <h5>Your Address</h5>
               <div class="address-details">
-                <img src = "/src/Icons/stroke.png" alt="Location Icon" class="location-icon">
+            <img src="/src/Icons/stroke.png" alt="Location Icon" class="location-icon">
                 <div class="address-text">
-                  <span class="address-name">John Doe Adress</span>
+              <span class="address-name">John Doe Address</span>
                   <button class="change-btn">Change</button>
                   <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
                 </div>
               </div>
             </div>
+        
             <div class="order-menu">
               <h5>Order Menu</h5>
               <div class="order-item">
@@ -102,16 +115,17 @@
                 <span class="order-item-price">Php 500</span>
               </div>
             </div>
+        
             <hr style="margin: 30px 0 10px 0;">
+        
             <div class="order-total">
               <span>Total</span>
               <span class="order-total-price" style="color:#e5735a">Php 500</span>
             </div>
-            <button class="proceed-btn">Proceed</button>
-          </div>
+        
+        <button class="proceed-btn" id="proceed-to-details">Proceed</button>
         </div>
       </div>
-    </main>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -139,13 +153,629 @@
     </script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const proceedBtn = document.querySelector('.proceed-btn');
+        // Shopping bag popup functionality
+        const shoppingBagBtn = document.getElementById('shopping-bag-btn');
+        const popup = document.getElementById('shopping-bag-popup');
+        const closeBtn = document.getElementById('close-popup');
+        const overlay = document.getElementById('popup-overlay');
+        const proceedBtn = document.getElementById('proceed-to-details');
+        const itemCounter = document.getElementById('item-counter');
+
+        // Cart management with Firebase
+        let cartItems = [];
+        let currentUser = null;
+        
+        // Initialize Firebase and cart
+        initializeCart();
+
+        // Firebase Cart Functions
+        async function initializeCart() {
+          try {
+            // Check if user is authenticated
+            currentUser = firebase.auth().currentUser;
+            
+            if (currentUser) {
+              // Load cart from Firebase for authenticated user
+              await loadCartFromFirebase();
+            } else {
+              // For non-authenticated users, use sessionStorage as fallback
+              loadCartFromSessionStorage();
+            }
+            
+            updateCartCounter();
+          } catch (error) {
+            console.error('Error initializing cart:', error);
+            // Fallback to sessionStorage
+            loadCartFromSessionStorage();
+            updateCartCounter();
+          }
+        }
+
+        async function loadCartFromFirebase() {
+          try {
+            const cartRef = firebase.firestore().collection('carts').doc(currentUser.uid);
+            const cartDoc = await cartRef.get();
+            
+            if (cartDoc.exists) {
+              const cartData = cartDoc.data();
+              cartItems = cartData.items || [];
+            } else {
+              cartItems = [];
+            }
+          } catch (error) {
+            console.error('Error loading cart from Firebase:', error);
+            cartItems = [];
+          }
+        }
+
+        function loadCartFromSessionStorage() {
+          // Load from sessionStorage as fallback
+          const savedCart = sessionStorage.getItem('cartData');
+          if (savedCart) {
+            const cartData = JSON.parse(savedCart);
+            cartItems = Object.values(cartData);
+          } else {
+            cartItems = [];
+          }
+        }
+
+        async function saveCartToFirebase() {
+          try {
+            if (currentUser) {
+              const cartRef = firebase.firestore().collection('carts').doc(currentUser.uid);
+              
+              // Get user name from Firebase Auth or user profile
+              let userName = 'Guest User';
+              if (currentUser.displayName) {
+                userName = currentUser.displayName;
+              } else if (currentUser.email) {
+                userName = currentUser.email.split('@')[0]; // Use email prefix as fallback
+              }
+              
+              await cartRef.set({
+                items: cartItems,
+                userId: currentUser.uid,
+                userName: userName,
+                userEmail: currentUser.email || '',
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            } else {
+              // Save to sessionStorage for non-authenticated users
+              saveCartToSessionStorage();
+            }
+          } catch (error) {
+            console.error('Error saving cart to Firebase:', error);
+            // Fallback to sessionStorage
+            saveCartToSessionStorage();
+          }
+        }
+
+        function saveCartToSessionStorage() {
+          // Convert array to object format for sessionStorage compatibility
+          const cartData = {};
+          cartItems.forEach(item => {
+            cartData[item.id] = {
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity
+            };
+          });
+          sessionStorage.setItem('cartData', JSON.stringify(cartData));
+        }
+
+        // Show popup when shopping bag is clicked
+        if (shoppingBagBtn) {
+          shoppingBagBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            updatePopupContent();
+            popup.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+          });
+        }
+
+        // Hide popup when close button is clicked
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function() {
+            popup.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+          });
+        }
+
+        // Hide popup when overlay is clicked
+        if (overlay) {
+          overlay.addEventListener('click', function() {
+            popup.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+          });
+        }
+
+        // Proceed to details page
         if (proceedBtn) {
           proceedBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            window.location.href = '/customer/html/details.html';
+            window.location.href = 'details.html';
           });
         }
+
+        // Function to update cart counter
+        function updateCartCounter() {
+          const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+          if (itemCounter) {
+            itemCounter.textContent = totalItems;
+            if (totalItems === 0) {
+              itemCounter.classList.add('hidden');
+            } else {
+              itemCounter.classList.remove('hidden');
+              itemCounter.classList.add('updated');
+              setTimeout(() => {
+                itemCounter.classList.remove('updated');
+              }, 300);
+            }
+          }
+        }
+
+        // Function to update popup content with current cart items
+        function updatePopupContent() {
+          const orderMenuDiv = popup.querySelector('.order-menu');
+          const orderTotalDiv = popup.querySelector('.order-total');
+          
+          if (cartItems.length === 0) {
+            orderMenuDiv.innerHTML = `
+              <h5>Order Menu</h5>
+              <div class="empty-cart">
+                <p>Your cart is empty</p>
+              </div>
+            `;
+            orderTotalDiv.querySelector('.order-total-price').textContent = 'Php 0';
+          } else {
+            let orderItemsHTML = '<h5>Order Menu</h5>';
+            let total = 0;
+            
+            cartItems.forEach(item => {
+              const itemTotal = item.price * item.quantity;
+              total += itemTotal;
+              orderItemsHTML += `
+                <div class="order-item" data-item-id="${item.id}">
+                  <div class="item-main-info">
+                    <div class="item-name-section">
+                      <span class="quantity-indicator">></span>
+                      <span class="item-quantity">${item.quantity}</span>
+                      <span class="item-name">${item.name}</span>
+                    </div>
+                    <button class="delete-btn" data-item-id="${item.id}" title="Remove item">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <div class="item-price-section">
+                    <span class="item-price">₱${item.price.toFixed(2)}</span>
+                    <div class="quantity-controls">
+                      <button class="quantity-btn minus-btn" data-item-id="${item.id}">-</button>
+                      <span class="quantity-display">${item.quantity}</span>
+                      <button class="quantity-btn plus-btn" data-item-id="${item.id}">+</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+            
+            orderMenuDiv.innerHTML = orderItemsHTML;
+            orderTotalDiv.querySelector('.order-total-price').textContent = `Php ${total}`;
+            
+            // Add event listeners for the new controls
+            addCartControlListeners();
+          }
+        }
+
+        // Function to add event listeners for cart controls
+        function addCartControlListeners() {
+          // Plus buttons
+          document.querySelectorAll('.plus-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const itemId = e.target.getAttribute('data-item-id');
+              const item = cartItems.find(cartItem => cartItem.id === itemId);
+              if (item) {
+                await updateCartItemQuantity(itemId, item.quantity + 1);
+                updatePopupContent();
+                updateCartCounter();
+              }
+            });
+          });
+
+          // Minus buttons
+          document.querySelectorAll('.minus-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const itemId = e.target.getAttribute('data-item-id');
+              console.log('[Cart] Minus button clicked for item:', itemId);
+              const item = cartItems.find(cartItem => cartItem.id === itemId);
+              console.log('[Cart] Found item:', item);
+              if (item && item.quantity > 1) {
+                await updateCartItemQuantity(itemId, item.quantity - 1);
+                updatePopupContent();
+                updateCartCounter();
+              } else if (item && item.quantity === 1) {
+                // If quantity is 1, remove the item completely
+                await removeFromCart(itemId);
+                updatePopupContent();
+                updateCartCounter();
+              }
+            });
+          });
+
+          // Delete buttons
+          document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const itemId = e.target.getAttribute('data-item-id');
+              console.log('[Cart] Delete button clicked for item:', itemId);
+              await removeFromCart(itemId);
+              updatePopupContent();
+              updateCartCounter();
+            });
+          });
+        }
+
+        // Function to add item to cart (can be called from menu items)
+        window.addToCart = async function(item) {
+          try {
+            const existingItem = cartItems.find(cartItem => cartItem.id === item.id);
+            
+            if (existingItem) {
+              existingItem.quantity += 1;
+            } else {
+              cartItems.push({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: 1
+              });
+            }
+            
+            await saveCartToFirebase();
+            updateCartCounter();
+            
+            // Show success notification
+            showAddToCartNotification(item.name);
+          } catch (error) {
+            console.error('Error adding item to cart:', error);
+          }
+        };
+
+        // Function to remove item from cart
+        window.removeFromCart = async function(itemId) {
+          try {
+            const initialLength = cartItems.length;
+            cartItems = cartItems.filter(item => item.id !== itemId);
+            console.log('[Cart] Removed item:', itemId, 'Items before:', initialLength, 'Items after:', cartItems.length);
+            await saveCartToFirebase();
+            updateCartCounter();
+          } catch (error) {
+            console.error('Error removing item from cart:', error);
+          }
+        };
+
+        // Function to update item quantity
+        window.updateCartItemQuantity = async function(itemId, quantity) {
+          try {
+            const item = cartItems.find(cartItem => cartItem.id === itemId);
+            if (item) {
+              if (quantity <= 0) {
+                await removeFromCart(itemId);
+              } else {
+                item.quantity = quantity;
+                await saveCartToFirebase();
+                updateCartCounter();
+                console.log('[Cart] Updated quantity for item:', itemId, 'to:', quantity);
+              }
+            } else {
+              console.error('[Cart] Item not found:', itemId);
+            }
+          } catch (error) {
+            console.error('Error updating item quantity:', error);
+          }
+        };
+
+        // Function to show add to cart notification
+        function showAddToCartNotification(itemName) {
+          // Create notification element
+          const notification = document.createElement('div');
+          notification.className = 'add-to-cart-notification';
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="fas fa-check-circle"></i>
+              <span>Added "${itemName}" to cart!</span>
+            </div>
+          `;
+          
+          // Add styles
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+          `;
+          
+          // Add animation styles
+          const style = document.createElement('style');
+          style.textContent = `
+            @keyframes slideIn {
+              from { transform: translateX(100%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            .add-to-cart-notification .notification-content {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+          `;
+          document.head.appendChild(style);
+          
+          // Add to page
+          document.body.appendChild(notification);
+          
+          // Remove after 3 seconds
+          setTimeout(() => {
+            notification.remove();
+            style.remove();
+          }, 3000);
+        }
+
+        // Order Management Functions
+        async function createOrder(orderData) {
+          try {
+            const orderRef = firebase.firestore().collection('orders').doc();
+            const orderId = orderRef.id;
+            
+            // Get user name for the order
+            let userName = 'Guest User';
+            if (currentUser) {
+              if (currentUser.displayName) {
+                userName = currentUser.displayName;
+              } else if (currentUser.email) {
+                userName = currentUser.email.split('@')[0];
+              }
+            }
+
+            const order = {
+              orderId: orderId,
+              userId: currentUser ? currentUser.uid : null,
+              userName: userName,
+              userEmail: currentUser ? currentUser.email : '',
+              customerInfo: orderData.customerInfo,
+              shippingInfo: orderData.shippingInfo,
+              items: orderData.items,
+              total: orderData.total,
+              shippingCost: orderData.shippingCost || 0,
+              paymentMethod: orderData.paymentMethod || 'Cash On Delivery',
+              shippingMethod: orderData.shippingMethod || 'Pick Up in Store',
+              status: 'pending', // pending, confirmed, preparing, ready, delivered, cancelled
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              notes: orderData.notes || ''
+            };
+            
+            await orderRef.set(order);
+            
+            // Clear cart after successful order
+            cartItems = [];
+            await saveCartToFirebase();
+            updateCartCounter();
+            
+            return orderId;
+          } catch (error) {
+            console.error('Error creating order:', error);
+            throw error;
+          }
+        }
+
+        async function getOrderById(orderId) {
+          try {
+            const orderRef = firebase.firestore().collection('orders').doc(orderId);
+            const orderDoc = await orderRef.get();
+            
+            if (orderDoc.exists) {
+              return orderDoc.data();
+            } else {
+              throw new Error('Order not found');
+            }
+          } catch (error) {
+            console.error('Error getting order:', error);
+            throw error;
+          }
+        }
+
+        async function updateOrderStatus(orderId, status) {
+          try {
+            const orderRef = firebase.firestore().collection('orders').doc(orderId);
+            await orderRef.update({
+              status: status,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          } catch (error) {
+            console.error('Error updating order status:', error);
+            throw error;
+          }
+        }
+
+        async function getUserOrders(userId) {
+          try {
+            const ordersRef = firebase.firestore().collection('orders');
+            const snapshot = await ordersRef.where('userId', '==', userId).orderBy('createdAt', 'desc').get();
+            
+            const orders = [];
+            snapshot.forEach(doc => {
+              orders.push(doc.data());
+            });
+            
+            return orders;
+          } catch (error) {
+            console.error('Error getting user orders:', error);
+            throw error;
+          }
+        }
+
+        async function deleteOrder(orderId) {
+          try {
+            // First, verify the order belongs to the current user
+            const order = await getOrderById(orderId);
+            
+            if (!order) {
+              throw new Error('Order not found');
+            }
+            
+            // Check if user has permission to delete this order
+            if (currentUser && order.userId !== currentUser.uid) {
+              throw new Error('You can only delete your own orders');
+            }
+            
+            // Check if order can be deleted (only pending orders should be deletable)
+            if (order.status !== 'pending') {
+              throw new Error('Only pending orders can be deleted');
+            }
+            
+            // Delete the order from Firebase
+            const orderRef = firebase.firestore().collection('orders').doc(orderId);
+            await orderRef.delete();
+            
+            console.log('[Order Management] Order deleted successfully:', orderId);
+            
+            // Show success notification
+            showOrderDeletedNotification(orderId);
+            
+            return true;
+          } catch (error) {
+            console.error('Error deleting order:', error);
+            showOrderErrorNotification('Failed to delete order: ' + error.message);
+            throw error;
+          }
+        }
+
+        async function cancelOrder(orderId) {
+          try {
+            // Similar to delete, but updates status to 'cancelled' instead of deleting
+            const order = await getOrderById(orderId);
+            
+            if (!order) {
+              throw new Error('Order not found');
+            }
+            
+            if (currentUser && order.userId !== currentUser.uid) {
+              throw new Error('You can only cancel your own orders');
+            }
+            
+            if (order.status !== 'pending') {
+              throw new Error('Only pending orders can be cancelled');
+            }
+            
+            // Update order status to cancelled
+            await updateOrderStatus(orderId, 'cancelled');
+            
+            console.log('[Order Management] Order cancelled successfully:', orderId);
+            showOrderCancelledNotification(orderId);
+            
+            return true;
+          } catch (error) {
+            console.error('Error cancelling order:', error);
+            showOrderErrorNotification('Failed to cancel order: ' + error.message);
+            throw error;
+          }
+        }
+
+        // Notification functions for order management
+        function showOrderDeletedNotification(orderId) {
+          showOrderNotification(`Order ${orderId.substring(0, 8)}... deleted successfully!`, 'success');
+        }
+
+        function showOrderCancelledNotification(orderId) {
+          showOrderNotification(`Order ${orderId.substring(0, 8)}... cancelled successfully!`, 'info');
+        }
+
+        function showOrderErrorNotification(message) {
+          showOrderNotification(message, 'error');
+        }
+
+        function showOrderNotification(message, type = 'info') {
+          const notification = document.createElement('div');
+          notification.className = `order-notification order-${type}`;
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+              <span>${message}</span>
+            </div>
+          `;
+          
+          // Add styles
+          const bgColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3';
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+          `;
+          
+          // Add animation styles if not already added
+          if (!document.querySelector('#order-notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'order-notification-styles';
+            style.textContent = `
+              @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+              }
+              .order-notification .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              }
+            `;
+            document.head.appendChild(style);
+          }
+          
+          // Add to page
+          document.body.appendChild(notification);
+          
+          // Remove after 4 seconds
+          setTimeout(() => {
+            notification.remove();
+          }, 4000);
+        }
+
+        // Make order functions globally available
+        window.createOrder = createOrder;
+        window.getOrderById = getOrderById;
+        window.updateOrderStatus = updateOrderStatus;
+        window.getUserOrders = getUserOrders;
+        window.deleteOrder = deleteOrder;
+        window.cancelOrder = cancelOrder;
+
+        // Listen for Firebase auth state changes
+        firebase.auth().onAuthStateChanged(async (user) => {
+          currentUser = user;
+          if (user) {
+            // User signed in, load cart from Firebase
+            await loadCartFromFirebase();
+          } else {
+            // User signed out, load from sessionStorage
+            loadCartFromSessionStorage();
+          }
+          updateCartCounter();
+        });
       });
     </script>
   </body>
