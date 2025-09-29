@@ -150,10 +150,27 @@
       
       <div class="modal-buttons">
         <button class="btn-cancel" id="modal-cancel">Cancel</button>
+        <button class="btn-summary" id="modal-summary" style="background: #17a2b8; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px; margin: 0 10px;">View Full Summary</button>
         <button class="btn-continue" id="modal-continue">Continue</button>
       </div>
     </div>
   </div>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Firebase Configuration -->
+  <script src="../firebase-config.js"></script>
+  
+  <!-- Firebase Order Management -->
+  <script src="../javascript/firebase-orders.js"></script>
+  
+  <!-- Price Utilities -->
+  <script src="../javascript/price-utils.js"></script>
+  
+  <!-- Firebase Order Summary -->
+  <script src="../javascript/firebase-order-summary.js"></script>
   
   <script src="../javascript/shipping.js"></script>
 </body>

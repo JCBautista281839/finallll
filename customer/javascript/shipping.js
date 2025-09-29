@@ -118,9 +118,12 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const { formData, quotationData } = savedData;
       
-      // Get cart data
+      // Get cart data from sessionStorage
       const cartData = loadCartData();
       const cartItems = Object.values(cartData);
+      
+      // Get cart summary if available
+      const cartSummary = JSON.parse(sessionStorage.getItem('cartSummary')) || null;
       
       // Determine shipping method and cost
       const isPickup = shippingType === 'pickup';
@@ -130,13 +133,18 @@ document.addEventListener('DOMContentLoaded', function() {
       // Get payment method
       const paymentMethod = getSelectedPaymentMethod();
       
-      // Calculate total
-      let total = 0;
-      cartItems.forEach(item => {
-        const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
-        total += price * item.quantity;
-      });
-      total += shippingCost;
+      // Calculate totals
+      let subtotal = 0;
+      if (cartSummary && cartSummary.subtotal) {
+        subtotal = cartSummary.subtotal;
+      } else {
+        cartItems.forEach(item => {
+          const price = window.parsePrice(item.price);
+          subtotal += price * item.quantity;
+        });
+      }
+      
+      const total = subtotal + shippingCost;
       
       // Create order data for Firebase
       const orderData = {
@@ -156,17 +164,33 @@ document.addEventListener('DOMContentLoaded', function() {
           method: shippingMethod,
           cost: shippingCost
         },
-        items: cartItems,
-        total: total,
+        items: cartItems.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          totalPrice: window.calculateItemTotal(item.price, item.quantity)
+        })),
+        subtotal: subtotal,
         shippingCost: shippingCost,
+        total: total,
         paymentMethod: paymentMethod,
-        shippingMethod: shippingMethod
+        shippingMethod: shippingMethod,
+        notes: `Order placed via ${shippingMethod}`,
+        estimatedDeliveryTime: isPickup ? 
+          new Date(Date.now() + 30 * 60 * 1000).toISOString() : // 30 minutes for pickup
+          new Date(Date.now() + 60 * 60 * 1000).toISOString()   // 1 hour for delivery
       };
+
+      console.log('[shipping.js] Preparing to save order to Firebase:', orderData);
 
       // Save to Firebase if createOrder function is available
       if (typeof window.createOrder === 'function') {
         const orderId = await window.createOrder(orderData);
-        console.log('[shipping.js] Order saved to Firebase:', orderId);
+        console.log('[shipping.js] Order saved to Firebase successfully:', orderId);
+        
+        // Store order ID in sessionStorage for confirmation page
+        sessionStorage.setItem('firebaseOrderId', orderId);
+        
         return orderId;
       } else {
         console.warn('[shipping.js] Firebase createOrder function not available');
@@ -192,28 +216,47 @@ document.addEventListener('DOMContentLoaded', function() {
     orderItemsContainer.innerHTML = '';
     
     if (cartItems.length === 0) {
-      orderItemsContainer.innerHTML = '<span>No items in cart</span>';
+      orderItemsContainer.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #666;">
+          <span>No items in cart</span>
+        </div>
+      `;
       totalElement.textContent = 'Php 0';
       return;
     }
     
+    // Create container for all items
+    const itemsContainer = document.createElement('div');
+    itemsContainer.style.cssText = 'margin-bottom: 15px;';
+    
     // Add each cart item
     cartItems.forEach(item => {
-      const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+      const price = window.parsePrice(item.price);
       const itemTotal = price * item.quantity;
       totalPrice += itemTotal;
       
       const itemDiv = document.createElement('div');
-      itemDiv.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px;';
+      itemDiv.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px; background: #f8f9fa; border-radius: 5px;';
       itemDiv.innerHTML = `
-        <span>${item.quantity} ${item.name}</span>
-        <span class="price">Php ${itemTotal.toFixed(0)}</span>
+        <div style="flex: 1;">
+          <span style="font-weight: 600;">${item.name}</span>
+          <br>
+          <small style="color: #666;">Qty: ${item.quantity} × ${item.price}</small>
+        </div>
+        <div style="text-align: right;">
+          <span class="price" style="font-weight: 600; color: #8b1d1d;">Php ${itemTotal.toFixed(0)}</span>
+        </div>
       `;
-      orderItemsContainer.appendChild(itemDiv);
+      itemsContainer.appendChild(itemDiv);
     });
+    
+    orderItemsContainer.appendChild(itemsContainer);
     
     // Update total
     totalElement.textContent = `Php ${totalPrice.toFixed(0)}`;
+    
+    // Store total for Firebase integration
+    sessionStorage.setItem('orderSubtotal', totalPrice.toString());
   }
 
   // Update the UI with saved data
@@ -387,6 +430,23 @@ document.addEventListener('DOMContentLoaded', function() {
     return 'pickup'; // default
   }
 
+  // Get selected payment method
+  function getSelectedPaymentMethod() {
+    const codPayment = document.getElementById('cod-payment');
+    const gcashPayment = document.getElementById('gcash-payment');
+    const cardPayment = document.getElementById('card-payment');
+    
+    if (codPayment && codPayment.checked) {
+      return 'cash_on_delivery';
+    } else if (gcashPayment && gcashPayment.checked) {
+      return 'gcash';
+    } else if (cardPayment && cardPayment.checked) {
+      return 'card';
+    }
+    
+    return 'cash_on_delivery'; // default
+  }
+
   // Main payment button handler
   async function handlePayment(event) {
     event.preventDefault();
@@ -425,6 +485,20 @@ document.addEventListener('DOMContentLoaded', function() {
       // Show order confirmation modal instead of confirm dialog
       showOrderConfirmationModal(orderResult, selectedShippingOption);
       
+      // Also show Firebase order summary if available
+      const firebaseOrderId = sessionStorage.getItem('firebaseOrderId');
+      if (firebaseOrderId && typeof window.showFirebaseOrderSummary === 'function') {
+        // Load and display Firebase order summary
+        setTimeout(async () => {
+          try {
+            const orderData = await window.loadFirebaseOrder(firebaseOrderId);
+            console.log('[shipping.js] Firebase order loaded for summary:', orderData);
+          } catch (error) {
+            console.warn('[shipping.js] Could not load Firebase order for summary:', error);
+          }
+        }, 1000);
+      }
+      
     } catch (error) {
       console.error('[shipping.js] Payment process failed:', error);
       showStatus('Error: ' + error.message, true);
@@ -449,8 +523,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Form data for modal:', formData); // Debug log
     
-    // Get total price
-    const totalPrice = orderResult.data.price ? orderResult.data.price.total : '500';
+    // Get Firebase order ID if available
+    const firebaseOrderId = sessionStorage.getItem('firebaseOrderId');
+    
+    // Get total price from cart data or order result
+    let totalPrice = '500'; // default
+    const cartSummary = JSON.parse(sessionStorage.getItem('cartSummary')) || null;
+    if (cartSummary && cartSummary.subtotal) {
+      totalPrice = cartSummary.subtotal.toString();
+    } else if (orderResult.data.price) {
+      totalPrice = orderResult.data.price.total;
+    }
     
     // Update modal content with actual form data
     document.getElementById('modal-customer-name').textContent = formData ? 
@@ -458,7 +541,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('modal-contact-number').textContent = formData && formData.phone ? 
       formData.phone : 'N/A';
     document.getElementById('modal-order-type').textContent = selectedShippingOption === 'pickup' ? 'Store Pickup' : 'Lalamove Delivery';
-    document.getElementById('modal-order-id').textContent = orderResult.data.orderId || 'N/A';
+    
+    // Show Firebase order ID if available, otherwise show Lalamove order ID
+    const displayOrderId = firebaseOrderId || orderResult.data.orderId || 'N/A';
+    document.getElementById('modal-order-id').textContent = displayOrderId;
+    
     document.getElementById('modal-status').textContent = orderResult.data.state || 'Pending';
     document.getElementById('modal-service').textContent = selectedShippingOption === 'pickup' ? 'N/A' : 'MOTORCYCLE';
     document.getElementById('modal-total').textContent = `₱${totalPrice}`;
@@ -475,6 +562,22 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('modal-cancel').onclick = function() {
       modal.style.display = 'none';
       showStatus('Order saved. You can complete payment later.', false);
+    };
+    
+    // Handle summary button
+    document.getElementById('modal-summary').onclick = async function() {
+      const firebaseOrderId = sessionStorage.getItem('firebaseOrderId');
+      if (firebaseOrderId && typeof window.showFirebaseOrderSummary === 'function') {
+        try {
+          const orderData = await window.loadFirebaseOrder(firebaseOrderId);
+          window.showFirebaseOrderSummary(orderData);
+        } catch (error) {
+          console.error('[shipping.js] Error loading Firebase order for summary:', error);
+          showStatus('Could not load order summary. Please try again.', true);
+        }
+      } else {
+        showStatus('Order summary not available.', true);
+      }
     };
     
     // Close modal when clicking outside

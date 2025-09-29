@@ -100,27 +100,22 @@
               <div class="address-details">
             <img src="/src/Icons/stroke.png" alt="Location Icon" class="location-icon">
                 <div class="address-text">
-              <span class="address-name">John Doe Address</span>
-                  <button class="change-btn">Change</button>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <span class="address-name">No address set</span>
+                  <button class="change-btn">Add Address</button>
+                  <p>Please add your delivery address to continue with your order.</p>
                 </div>
               </div>
             </div>
         
             <div class="order-menu">
-              <h5>Order Menu</h5>
-              <div class="order-item">
-                <span>1</span>
-                <span>Crispy Kare-Kare</span>
-                <span class="order-item-price">Php 500</span>
-              </div>
+              <!-- Cart items will be loaded dynamically -->
             </div>
         
             <hr style="margin: 30px 0 10px 0;">
         
             <div class="order-total">
               <span>Total</span>
-              <span class="order-total-price" style="color:#e5735a">Php 500</span>
+              <span class="order-total-price" style="color:#e5735a">Php 0</span>
             </div>
         
         <button class="proceed-btn" id="proceed-to-details">Proceed</button>
@@ -167,17 +162,43 @@
         
         // Initialize Firebase and cart
         initializeCart();
+        
+        // Clear any existing cart data on page load
+        clearCartData();
+
+        // Function to clear cart data
+        function clearCartData() {
+          try {
+            // Clear cart items array
+            cartItems = [];
+            
+            // Clear sessionStorage cart data
+            sessionStorage.removeItem('cartData');
+            
+            // Update cart counter
+            updateCartCounter();
+            
+            console.log('[Cart] Cart data cleared');
+          } catch (error) {
+            console.error('[Cart] Error clearing cart data:', error);
+          }
+        }
 
         // Firebase Cart Functions
         async function initializeCart() {
           try {
+            // Wait for Firebase to be ready
+            await waitForFirebase();
+            
             // Check if user is authenticated
             currentUser = firebase.auth().currentUser;
             
             if (currentUser) {
+              console.log('[Cart] User authenticated:', currentUser.email);
               // Load cart from Firebase for authenticated user
-              await loadCartFromFirebase();
+              await loadCartFromSessionStorage();
             } else {
+              console.log('[Cart] User not authenticated, using sessionStorage');
               // For non-authenticated users, use sessionStorage as fallback
               loadCartFromSessionStorage();
             }
@@ -191,77 +212,61 @@
           }
         }
 
-        async function loadCartFromFirebase() {
+        // Wait for Firebase to be ready
+        function waitForFirebase() {
+          return new Promise((resolve) => {
+            const checkFirebase = () => {
+              if (typeof firebase !== 'undefined' && 
+                  firebase.apps && 
+                  firebase.apps.length > 0 && 
+                  firebase.auth && 
+                  firebase.firestore) {
+                console.log('[Cart] Firebase is ready');
+                resolve();
+              } else {
+                console.log('[Cart] Waiting for Firebase...');
+                setTimeout(checkFirebase, 100);
+              }
+            };
+            checkFirebase();
+          });
+        }
+
+        async function loadCartFromSessionStorage() {
           try {
-            const cartRef = firebase.firestore().collection('carts').doc(currentUser.uid);
-            const cartDoc = await cartRef.get();
-            
-            if (cartDoc.exists) {
-              const cartData = cartDoc.data();
-              cartItems = cartData.items || [];
+            // Load from sessionStorage only
+            const savedCart = sessionStorage.getItem('cartData');
+            if (savedCart) {
+              const cartData = JSON.parse(savedCart);
+              cartItems = Object.values(cartData);
             } else {
               cartItems = [];
             }
           } catch (error) {
-            console.error('Error loading cart from Firebase:', error);
+            console.error('Error loading cart from sessionStorage:', error);
             cartItems = [];
           }
         }
 
-        function loadCartFromSessionStorage() {
-          // Load from sessionStorage as fallback
-          const savedCart = sessionStorage.getItem('cartData');
-          if (savedCart) {
-            const cartData = JSON.parse(savedCart);
-            cartItems = Object.values(cartData);
-          } else {
-            cartItems = [];
-          }
-        }
 
-        async function saveCartToFirebase() {
+        async function saveCartToSessionStorage() {
           try {
-            if (currentUser) {
-              const cartRef = firebase.firestore().collection('carts').doc(currentUser.uid);
-              
-              // Get user name from Firebase Auth or user profile
-              let userName = 'Guest User';
-              if (currentUser.displayName) {
-                userName = currentUser.displayName;
-              } else if (currentUser.email) {
-                userName = currentUser.email.split('@')[0]; // Use email prefix as fallback
-              }
-              
-              await cartRef.set({
-                items: cartItems,
-                userId: currentUser.uid,
-                userName: userName,
-                userEmail: currentUser.email || '',
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } else {
-              // Save to sessionStorage for non-authenticated users
-              saveCartToSessionStorage();
-            }
+            // Save to sessionStorage only (no Firebase cart collection)
+            const cartData = {};
+            cartItems.forEach(item => {
+              cartData[item.id || item.name] = {
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                description: item.description || '',
+                photoUrl: item.photoUrl || ''
+              };
+            });
+            sessionStorage.setItem('cartData', JSON.stringify(cartData));
+            console.log('[Cart] Cart saved to sessionStorage with', cartItems.length, 'items');
           } catch (error) {
-            console.error('Error saving cart to Firebase:', error);
-            // Fallback to sessionStorage
-            saveCartToSessionStorage();
+            console.error('Error saving cart to sessionStorage:', error);
           }
-        }
-
-        function saveCartToSessionStorage() {
-          // Convert array to object format for sessionStorage compatibility
-          const cartData = {};
-          cartItems.forEach(item => {
-            cartData[item.id] = {
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity
-            };
-          });
-          sessionStorage.setItem('cartData', JSON.stringify(cartData));
         }
 
         // Show popup when shopping bag is clicked
@@ -324,7 +329,10 @@
             orderMenuDiv.innerHTML = `
               <h5>Order Menu</h5>
               <div class="empty-cart">
-                <p>Your cart is empty</p>
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Your cart is empty</h5>
+                <p class="text-muted">Add some delicious items from our menu to get started!</p>
+                <button class="btn btn-primary" onclick="this.closest('.shopping-bag-popup').style.display='none'">Browse Menu</button>
               </div>
             `;
             orderTotalDiv.querySelector('.order-total-price').textContent = 'Php 0';
@@ -332,7 +340,12 @@
             let orderItemsHTML = '<h5>Order Menu</h5>';
             let total = 0;
             
-            cartItems.forEach(item => {
+            cartItems.forEach((item, index) => {
+              // Generate a unique ID for each item if it doesn't have one
+              if (!item.id) {
+                item.id = `cart_item_${index}_${Date.now()}`;
+              }
+              
               const itemTotal = item.price * item.quantity;
               total += itemTotal;
               orderItemsHTML += `
@@ -372,12 +385,22 @@
           // Plus buttons
           document.querySelectorAll('.plus-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
               const itemId = e.target.getAttribute('data-item-id');
+              
+              if (!itemId) {
+                console.error('[Cart] No item ID found for plus button');
+                return;
+              }
+              
               const item = cartItems.find(cartItem => cartItem.id === itemId);
               if (item) {
                 await updateCartItemQuantity(itemId, item.quantity + 1);
                 updatePopupContent();
                 updateCartCounter();
+              } else {
+                console.error('[Cart] Item not found for plus button');
               }
             });
           });
@@ -389,8 +412,15 @@
               e.stopPropagation();
               const itemId = e.target.getAttribute('data-item-id');
               console.log('[Cart] Minus button clicked for item:', itemId);
+              
+              if (!itemId) {
+                console.error('[Cart] No item ID found for minus button');
+                return;
+              }
+              
               const item = cartItems.find(cartItem => cartItem.id === itemId);
               console.log('[Cart] Found item:', item);
+              
               if (item && item.quantity > 1) {
                 await updateCartItemQuantity(itemId, item.quantity - 1);
                 updatePopupContent();
@@ -400,6 +430,8 @@
                 await removeFromCart(itemId);
                 updatePopupContent();
                 updateCartCounter();
+              } else {
+                console.error('[Cart] Item not found or invalid quantity');
               }
             });
           });
@@ -411,9 +443,17 @@
               e.stopPropagation();
               const itemId = e.target.getAttribute('data-item-id');
               console.log('[Cart] Delete button clicked for item:', itemId);
-              await removeFromCart(itemId);
-              updatePopupContent();
-              updateCartCounter();
+              
+              if (!itemId) {
+                console.error('[Cart] No item ID found for delete button');
+                return;
+              }
+              
+              if (confirm('Are you sure you want to remove this item from your cart?')) {
+                await removeFromCart(itemId);
+                updatePopupContent();
+                updateCartCounter();
+              }
             });
           });
         }
@@ -421,20 +461,28 @@
         // Function to add item to cart (can be called from menu items)
         window.addToCart = async function(item) {
           try {
-            const existingItem = cartItems.find(cartItem => cartItem.id === item.id);
+            // Generate a unique ID for the item if it doesn't have one
+            if (!item.id) {
+              item.id = `cart_item_${item.name.replace(/\s+/g, '_')}_${Date.now()}`;
+            }
+            
+            const existingItem = cartItems.find(cartItem => cartItem.name === item.name);
             
             if (existingItem) {
               existingItem.quantity += 1;
+              existingItem.id = item.id; // Update ID if needed
             } else {
               cartItems.push({
                 id: item.id,
                 name: item.name,
-                price: item.price,
-                quantity: 1
+                price: parseFloat(item.price),
+                quantity: 1,
+                description: item.description || '',
+                photoUrl: item.photoUrl || ''
               });
             }
             
-            await saveCartToFirebase();
+            await saveCartToSessionStorage();
             updateCartCounter();
             
             // Show success notification
@@ -448,10 +496,17 @@
         window.removeFromCart = async function(itemId) {
           try {
             const initialLength = cartItems.length;
-            cartItems = cartItems.filter(item => item.id !== itemId);
+          cartItems = cartItems.filter(item => item.id !== itemId);
             console.log('[Cart] Removed item:', itemId, 'Items before:', initialLength, 'Items after:', cartItems.length);
-            await saveCartToFirebase();
-            updateCartCounter();
+            
+            // Save to Firebase (will auto-delete if empty)
+            await saveCartToSessionStorage();
+          updateCartCounter();
+            
+            // Show notification if cart is now empty
+            if (cartItems.length === 0) {
+              showCartEmptyNotification();
+            }
           } catch (error) {
             console.error('Error removing item from cart:', error);
           }
@@ -460,15 +515,20 @@
         // Function to update item quantity
         window.updateCartItemQuantity = async function(itemId, quantity) {
           try {
-            const item = cartItems.find(cartItem => cartItem.id === itemId);
-            if (item) {
-              if (quantity <= 0) {
+          const item = cartItems.find(cartItem => cartItem.id === itemId);
+          if (item) {
+            if (quantity <= 0) {
                 await removeFromCart(itemId);
               } else {
                 item.quantity = quantity;
-                await saveCartToFirebase();
+                await saveCartToSessionStorage();
                 updateCartCounter();
                 console.log('[Cart] Updated quantity for item:', itemId, 'to:', quantity);
+                
+                // Check if cart is now empty after quantity update
+                if (cartItems.length === 0) {
+                  showCartEmptyNotification();
+                }
               }
             } else {
               console.error('[Cart] Item not found:', itemId);
@@ -529,6 +589,40 @@
           }, 3000);
         }
 
+        // Function to show cart empty notification
+        function showCartEmptyNotification() {
+          const notification = document.createElement('div');
+          notification.className = 'cart-empty-notification';
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="fas fa-shopping-cart"></i>
+              <span>Cart is now empty</span>
+            </div>
+          `;
+          
+          // Add styles
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #FF9800;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+          `;
+          
+          // Add to page
+          document.body.appendChild(notification);
+          
+          // Remove after 3 seconds
+          setTimeout(() => {
+            notification.remove();
+          }, 3000);
+        }
+
         // Order Management Functions
         async function createOrder(orderData) {
           try {
@@ -567,7 +661,7 @@
             
             // Clear cart after successful order
             cartItems = [];
-            await saveCartToFirebase();
+            await saveCartToSessionStorage();
             updateCartCounter();
             
             return orderId;
@@ -766,16 +860,127 @@
 
         // Listen for Firebase auth state changes
         firebase.auth().onAuthStateChanged(async (user) => {
+          const previousUser = currentUser;
           currentUser = user;
+          
           if (user) {
-            // User signed in, load cart from Firebase
-            await loadCartFromFirebase();
+            console.log('[Cart] User signed in:', user.email);
+            
+            // If user was previously a guest and had items in cart, sync them
+            if (!previousUser && cartItems.length > 0) {
+              console.log('[Cart] Syncing guest cart to Firebase for user:', user.email);
+              await saveCartToSessionStorage();
+            } else {
+              // Load cart from Firebase for authenticated user
+              await loadCartFromSessionStorage();
+            }
           } else {
+            console.log('[Cart] User signed out, loading from sessionStorage');
             // User signed out, load from sessionStorage
             loadCartFromSessionStorage();
           }
           updateCartCounter();
         });
+
+        // Function to show login prompt for guest users
+        function showLoginPrompt() {
+          const notification = document.createElement('div');
+          notification.className = 'login-prompt-notification';
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="fas fa-user-circle"></i>
+              <div class="notification-text">
+                <strong>Want to save your cart?</strong>
+                <p>Log in to sync your cart across devices</p>
+              </div>
+              <div class="notification-actions">
+                <button class="btn-login" onclick="window.location.href='../html/login.html'">Log In</button>
+                <button class="btn-continue-guest" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">Continue as Guest</button>
+              </div>
+            </div>
+          `;
+          
+          // Add styles
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            color: #333;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 350px;
+            border: 1px solid #e0e0e0;
+          `;
+          
+          // Add button styles
+          const style = document.createElement('style');
+          style.textContent = `
+            @keyframes slideIn {
+              from { transform: translateX(100%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            .login-prompt-notification .notification-content {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+            .login-prompt-notification .notification-text {
+              text-align: center;
+            }
+            .login-prompt-notification .notification-actions {
+              display: flex;
+              gap: 8px;
+            }
+            .login-prompt-notification .btn-login {
+              flex: 1;
+              background: #8b1d1d;
+              color: white;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-weight: 600;
+            }
+            .login-prompt-notification .btn-continue-guest {
+              flex: 1;
+              background: #f5f5f5;
+              color: #666;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 6px;
+              cursor: pointer;
+            }
+            .login-prompt-notification .btn-login:hover {
+              background: #6b1515;
+            }
+            .login-prompt-notification .btn-continue-guest:hover {
+              background: #e0e0e0;
+            }
+          `;
+          document.head.appendChild(style);
+          
+          // Add to page
+          document.body.appendChild(notification);
+          
+          // Remove after 10 seconds
+          setTimeout(() => {
+            if (notification.parentElement) {
+              notification.remove();
+              style.remove();
+            }
+          }, 10000);
+        }
+
+        // Show login prompt for guest users after a delay
+        setTimeout(() => {
+          if (!currentUser && cartItems.length > 0) {
+            showLoginPrompt();
+          }
+        }, 3000);
       });
     </script>
   </body>
