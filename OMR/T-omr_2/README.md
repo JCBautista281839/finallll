@@ -6,7 +6,7 @@ A standalone testing environment for Optical Mark Recognition (OMR) functionalit
 
 ```
 T-omr/
-├── index.html          # Main HTML interface
+├── omr.html            # Main HTML interface
 ├── css/
 │   └── style.css       # Custom styling
 ├── js/
@@ -19,7 +19,7 @@ T-omr/
 
 ## 🚀 Getting Started
 
-1. **Open the interface**: Navigate to `index.html` in your browser
+1. **Open the interface**: Navigate to `omr.html` in your browser
 2. **Upload an image**: Drag and drop or click to browse for OMR form images
 3. **Test functions**: Use the available OMR testing functions
 4. **View results**: Check the results section for scan outputs
