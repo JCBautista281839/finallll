@@ -652,7 +652,7 @@
               items: orderData.items,
               total: orderData.total,
               shippingCost: orderData.shippingCost || 0,
-              paymentMethod: orderData.paymentMethod || 'Cash On Delivery',
+              paymentMethod: orderData.paymentMethod || 'GCash',
               shippingMethod: orderData.shippingMethod || 'Pick Up in Store',
               status: 'pending', // pending, confirmed, preparing, ready, delivered, cancelled
               createdAt: firebase.firestore.FieldValue.serverTimestamp(),

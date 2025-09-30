@@ -112,7 +112,7 @@ if (typeof FirebaseOrderManager === 'undefined') {
         total: orderData.total || 0,
         
         // Payment Information
-        paymentMethod: orderData.paymentMethod || 'cash_on_delivery',
+        paymentMethod: orderData.paymentMethod || 'gcash',
         paymentStatus: 'pending',
         
         // Additional Information

@@ -73,6 +73,289 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
   }
 
+  // Helper function to enable the Place Order button
+  function enablePlaceOrderButton(buttonElement = null) {
+    const placeOrderBtn = buttonElement || document.getElementById('place-order-btn') || document.querySelector('.continue-btn');
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.textContent = 'Place Order';
+      placeOrderBtn.style.opacity = '1';
+      placeOrderBtn.style.cursor = 'pointer';
+      placeOrderBtn.style.backgroundColor = '#28a745'; // Green color to indicate ready
+    }
+  }
+
+  // Helper function to disable the Place Order button
+  function disablePlaceOrderButton(buttonElement = null) {
+    const placeOrderBtn = buttonElement || document.getElementById('place-order-btn') || document.querySelector('.continue-btn');
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = true;
+      placeOrderBtn.textContent = 'Complete Payment First';
+      placeOrderBtn.style.opacity = '0.6';
+      placeOrderBtn.style.cursor = 'not-allowed';
+      placeOrderBtn.style.backgroundColor = '#6c757d'; // Gray color to indicate disabled
+    }
+  }
+
+  // Payment Modal Functionality
+  function initPaymentModal() {
+    const gcashPayment = document.getElementById('gcash-payment');
+    const cardPayment = document.getElementById('card-payment');
+    const paymentModal = document.getElementById('payment-modal');
+    const modalTitle = document.getElementById('payment-modal-title');
+    const qrCodeImage = document.getElementById('payment-qr-code');
+    const modalClose = document.getElementById('payment-modal-close');
+    const paymentCancel = document.getElementById('payment-cancel');
+    const paymentConfirm = document.getElementById('payment-confirm');
+    const referenceCode = document.getElementById('reference-code');
+    const receiptUpload = document.getElementById('receipt-upload');
+    const fileUploadArea = document.getElementById('file-upload-area');
+    const filePreview = document.getElementById('file-preview');
+    const previewImage = document.getElementById('preview-image');
+    const removeFile = document.getElementById('remove-file');
+
+    // QR Code images - replace these paths with your actual QR code images
+    const qrCodes = {
+      gcash: '../src/IMG/gcash-qr.png', // Replace with your GCash QR code
+      card: '../src/IMG/card-qr.png'    // Replace with your Card QR code
+    };
+
+    let uploadedFile = null;
+    let currentPaymentType = '';
+
+    // Show payment modal
+    function showPaymentModal(paymentType) {
+      currentPaymentType = paymentType;
+      modalTitle.textContent = paymentType === 'gcash' ? 'Complete GCash Payment' : 'Complete Card Payment';
+      qrCodeImage.src = qrCodes[paymentType];
+      qrCodeImage.alt = `${paymentType === 'gcash' ? 'GCash' : 'Card'} QR Code`;
+      
+      // Reset form
+      referenceCode.value = '';
+      uploadedFile = null;
+      resetFileUpload();
+      updateConfirmButton();
+      
+      // Add instruction message if not already present
+      const instructionEl = document.querySelector('.payment-instruction');
+      if (instructionEl) {
+        instructionEl.textContent = `You must complete this payment and provide both reference code and receipt screenshot before you can place your order.`;
+      }
+      
+      paymentModal.style.display = 'flex';
+      
+      // Disable place order button until payment is confirmed
+      disablePlaceOrderButton();
+    }
+
+    // Hide payment modal
+    function hidePaymentModal() {
+      paymentModal.style.display = 'none';
+      referenceCode.value = '';
+      uploadedFile = null;
+      resetFileUpload();
+      currentPaymentType = '';
+      
+      // Check if payment was completed, if not, show reminder
+      const paymentInfo = sessionStorage.getItem('paymentInfo');
+      if (!paymentInfo) {
+        showStatus('Payment not completed. You must complete payment to place your order.', true);
+        disablePlaceOrderButton();
+      }
+    }
+
+    // Reset file upload area
+    function resetFileUpload() {
+      const uploadPlaceholder = fileUploadArea.querySelector('.upload-placeholder');
+      uploadPlaceholder.style.display = 'block';
+      filePreview.style.display = 'none';
+      receiptUpload.value = '';
+    }
+
+    // Update confirm button state
+    function updateConfirmButton() {
+      const hasReference = referenceCode.value.trim().length >= 5; // Increased minimum length
+      const hasReceipt = uploadedFile !== null;
+      const isComplete = hasReference && hasReceipt;
+      
+      paymentConfirm.disabled = !isComplete;
+      
+      // Update button text to be more descriptive
+      if (!hasReference && !hasReceipt) {
+        paymentConfirm.textContent = 'Enter Reference Code & Upload Receipt';
+      } else if (!hasReference) {
+        paymentConfirm.textContent = 'Enter Reference Code (min 5 chars)';
+      } else if (!hasReceipt) {
+        paymentConfirm.textContent = 'Upload Payment Receipt';
+      } else {
+        paymentConfirm.textContent = 'Confirm Payment';
+      }
+    }
+
+    // File upload handling
+    function handleFileSelect(file) {
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file.');
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB.');
+        return;
+      }
+
+      uploadedFile = file;
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImage.src = e.target.result;
+        const uploadPlaceholder = fileUploadArea.querySelector('.upload-placeholder');
+        uploadPlaceholder.style.display = 'none';
+        filePreview.style.display = 'block';
+        updateConfirmButton();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Event Listeners
+    
+    // Payment option click handlers
+    gcashPayment.addEventListener('change', function() {
+      if (this.checked) {
+        // Clear any existing payment info when switching methods
+        sessionStorage.removeItem('paymentInfo');
+        disablePlaceOrderButton();
+        showPaymentModal('gcash');
+      }
+    });
+
+    cardPayment.addEventListener('change', function() {
+      if (this.checked) {
+        // Clear any existing payment info when switching methods  
+        sessionStorage.removeItem('paymentInfo');
+        disablePlaceOrderButton();
+        showPaymentModal('card');
+      }
+    });
+
+    // Modal close handlers
+    modalClose.addEventListener('click', hidePaymentModal);
+    paymentCancel.addEventListener('click', hidePaymentModal);
+
+    // Click outside modal to close
+    paymentModal.addEventListener('click', function(e) {
+      if (e.target === paymentModal) {
+        hidePaymentModal();
+      }
+    });
+
+    // Reference code input
+    referenceCode.addEventListener('input', updateConfirmButton);
+
+    // File upload events
+    receiptUpload.addEventListener('change', function(e) {
+      if (e.target.files[0]) {
+        handleFileSelect(e.target.files[0]);
+      }
+    });
+
+    // Drag and drop functionality
+    fileUploadArea.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      this.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files[0]) {
+        handleFileSelect(files[0]);
+      }
+    });
+
+    // Remove file
+    removeFile.addEventListener('click', function() {
+      uploadedFile = null;
+      resetFileUpload();
+      updateConfirmButton();
+    });
+
+    // Payment confirmation
+    paymentConfirm.addEventListener('click', function() {
+      const refCode = referenceCode.value.trim();
+      
+      if (!refCode || refCode.length < 5) {
+        alert('Please enter a valid reference code (minimum 5 characters).');
+        referenceCode.focus();
+        return;
+      }
+
+      if (!uploadedFile) {
+        alert('Please upload your payment receipt screenshot.');
+        return;
+      }
+
+      // Additional validation for reference code format (basic)
+      if (!/^[a-zA-Z0-9]+$/.test(refCode)) {
+        alert('Reference code should only contain letters and numbers.');
+        referenceCode.focus();
+        return;
+      }
+
+      // Store payment data
+      const paymentData = {
+        type: currentPaymentType,
+        reference: refCode,
+        receiptFile: uploadedFile,
+        timestamp: new Date().toISOString()
+      };
+
+      // Store in sessionStorage (convert file to base64 for storage)
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const paymentInfo = {
+          type: currentPaymentType,
+          reference: refCode,
+          receiptData: e.target.result,
+          receiptName: uploadedFile.name,
+          timestamp: new Date().toISOString()
+        };
+        
+        sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
+        sessionStorage.setItem('paymentReference', refCode);
+        sessionStorage.setItem('paymentMethod', currentPaymentType);
+        
+        // Hide modal and show success
+        hidePaymentModal();
+        showStatus(`${currentPaymentType === 'gcash' ? 'GCash' : 'Card'} payment confirmed! You can now place your order.`, false);
+        
+        // Enable the Place Order button
+        enablePlaceOrderButton();
+        
+        console.log('Payment confirmation saved:', { type: currentPaymentType, reference: refCode });
+      };
+      reader.readAsDataURL(uploadedFile);
+    });
+
+    // Escape key to close modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && paymentModal.style.display === 'flex') {
+        hidePaymentModal();
+      }
+    });
+  }
+
   // Load saved data from previous page
   function loadSavedData() {
     const savedFormData = sessionStorage.getItem('orderFormData');
@@ -300,19 +583,76 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update order total based on selected shipping option
   function updateOrderTotal(savedData) {
     const isLalamoveSelected = document.getElementById('lalamove-radio')?.checked || false;
-    const totalElement = document.querySelector('.total .price');
+    const subtotalElement = document.getElementById('subtotal-amount');
+    const shippingFeeElement = document.getElementById('shipping-fee-amount');
+    const totalElement = document.getElementById('total-amount');
     
-    if (totalElement && savedData.quotationData) {
-      const basePrice = 500; // Base order price (should be dynamic in real app)
-      let shippingCost = 0;
-      
-      if (isLalamoveSelected) {
-        shippingCost = parseInt(savedData.quotationData.data.priceBreakdown.total);
-      }
-      
-      const newTotal = basePrice + shippingCost;
+    // Get actual price from cart data
+    const cartData = loadCartData();
+    let basePrice = 0;
+    
+    if (cartData && Object.keys(cartData).length > 0) {
+      // Calculate total from cart items using the same logic as updateOrderForm
+      const cartItems = Object.values(cartData);
+      cartItems.forEach(item => {
+        if (item && item.price && item.quantity) {
+          const price = window.parsePrice ? window.parsePrice(item.price) : parseFloat(item.price.toString().replace(/[^\d.]/g, ''));
+          const quantity = parseInt(item.quantity) || 0;
+          basePrice += price * quantity;
+        }
+      });
+    }
+    
+    // If still no price, try to get it from the order form display
+    if (basePrice <= 0) {
+      const orderItems = document.querySelectorAll('.order-item .price');
+      orderItems.forEach(priceElement => {
+        const priceText = priceElement.textContent;
+        if (priceText) {
+          const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+          basePrice += price;
+        }
+      });
+    }
+    
+    // Final fallback
+    if (basePrice <= 0) {
+      console.warn('[shipping.js] Could not calculate base price from cart, using 0');
+      basePrice = 0;
+    }
+    
+    // Update subtotal
+    if (subtotalElement) {
+      subtotalElement.textContent = `Php ${basePrice}`;
+    }
+    
+    // Calculate shipping cost
+    let shippingCost = 0;
+    let shippingText = 'FREE';
+    
+    if (isLalamoveSelected && savedData?.quotationData?.data?.priceBreakdown) {
+      shippingCost = parseInt(savedData.quotationData.data.priceBreakdown.total);
+      shippingText = `Php ${shippingCost}`;
+    }
+    
+    // Update shipping fee
+    if (shippingFeeElement) {
+      shippingFeeElement.textContent = shippingText;
+    }
+    
+    // Calculate and update total
+    const newTotal = basePrice + shippingCost;
+    if (totalElement) {
       totalElement.textContent = `Php ${newTotal}`;
     }
+    
+    console.log('[shipping.js] Order total updated:', {
+      cartData,
+      basePrice,
+      shippingCost,
+      total: newTotal,
+      isLalamoveSelected
+    });
   }
 
   // Place order using stored quotation data
@@ -432,19 +772,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Get selected payment method
   function getSelectedPaymentMethod() {
-    const codPayment = document.getElementById('cod-payment');
     const gcashPayment = document.getElementById('gcash-payment');
     const cardPayment = document.getElementById('card-payment');
     
-    if (codPayment && codPayment.checked) {
-      return 'cash_on_delivery';
-    } else if (gcashPayment && gcashPayment.checked) {
+    if (gcashPayment && gcashPayment.checked) {
       return 'gcash';
     } else if (cardPayment && cardPayment.checked) {
       return 'card';
     }
     
-    return 'cash_on_delivery'; // default
+    return 'gcash'; // default
   }
 
   // Main payment button handler
@@ -452,6 +789,52 @@ document.addEventListener('DOMContentLoaded', function() {
     event.preventDefault();
     
     try {
+      // Strict validation: MUST have payment info with both reference and receipt
+      const selectedPaymentMethod = getSelectedPaymentMethod();
+      const paymentInfo = sessionStorage.getItem('paymentInfo');
+      
+      // Check if payment method is selected
+      if (!selectedPaymentMethod || (selectedPaymentMethod !== 'gcash' && selectedPaymentMethod !== 'card')) {
+        alert('Please select a payment method (GCash or Card) first.');
+        return;
+      }
+      
+      // Payment info is absolutely required - no exceptions
+      if (!paymentInfo) {
+        alert('You must complete the payment process first. Please click on your selected payment method to open the payment modal and provide your reference code and receipt screenshot.');
+        return;
+      }
+      
+      // Validate payment data completeness
+      let payment;
+      try {
+        payment = JSON.parse(paymentInfo);
+      } catch (error) {
+        alert('Invalid payment information. Please complete the payment process again.');
+        sessionStorage.removeItem('paymentInfo');
+        return;
+      }
+      
+      // Both reference code and receipt are absolutely required
+      if (!payment.reference || payment.reference.trim().length < 5) {
+        alert('Payment reference code is required (minimum 5 characters). Please complete the payment modal first.');
+        sessionStorage.removeItem('paymentInfo');
+        return;
+      }
+      
+      if (!payment.receiptData) {
+        alert('Payment receipt screenshot is required. Please complete the payment modal first.');
+        sessionStorage.removeItem('paymentInfo');
+        return;
+      }
+      
+      // Verify payment method matches
+      if (payment.type !== selectedPaymentMethod) {
+        alert('Payment method mismatch. Please complete the payment process for the selected method.');
+        sessionStorage.removeItem('paymentInfo');
+        return;
+      }
+      
       showStatus('Processing your order...', false);
       
       // Load saved data from previous page
@@ -612,12 +995,35 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
 
-    // Set initial selection (pickup by default)
+    // Add click handlers for the entire shipping option containers
     const pickupOption = document.getElementById('pickup-option');
+    const lalamoveOption = document.getElementById('lalamove-option');
     const pickupRadio = document.getElementById('pickup-radio');
+    const lalamoveRadio = document.getElementById('lalamove-radio');
+    
+    if (pickupOption && pickupRadio) {
+      pickupOption.addEventListener('click', function() {
+        pickupRadio.checked = true;
+        pickupRadio.dispatchEvent(new Event('change'));
+      });
+    }
+    
+    if (lalamoveOption && lalamoveRadio) {
+      lalamoveOption.addEventListener('click', function() {
+        lalamoveRadio.checked = true;
+        lalamoveRadio.dispatchEvent(new Event('change'));
+      });
+    }
+
+    // Set initial selection (pickup by default)
     if (pickupOption && pickupRadio) {
       pickupOption.classList.add('selected');
       pickupRadio.checked = true;
+      
+      // Initial update of totals
+      if (savedData) {
+        updateOrderTotal(savedData);
+      }
     }
   }
 
@@ -636,9 +1042,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load and display cart data
     const cartData = loadCartData();
     updateOrderForm(cartData);
+    
+    // Update order total after cart is displayed
+    if (savedData) {
+      updateOrderTotal(savedData);
+    }
 
     // Initialize shipping options
     initShippingOptions();
+    
+    // Initialize payment modal
+    initPaymentModal();
     
     // Find and modify the payment button
     const paymentBtn = document.querySelector('.continue-btn');
@@ -646,9 +1060,24 @@ document.addEventListener('DOMContentLoaded', function() {
       // Remove the onclick attribute
       paymentBtn.removeAttribute('onclick');
       
-      // Update button text if needed
-      if (paymentBtn.textContent.trim() === 'Payment') {
-        paymentBtn.textContent = 'Place Order';
+      // Initialize button as disabled until payment is confirmed
+      paymentBtn.disabled = true;
+      paymentBtn.textContent = 'Complete Payment First';
+      paymentBtn.style.opacity = '0.6';
+      paymentBtn.style.cursor = 'not-allowed';
+      
+      // Check if payment was already completed
+      const existingPaymentInfo = sessionStorage.getItem('paymentInfo');
+      if (existingPaymentInfo) {
+        try {
+          const payment = JSON.parse(existingPaymentInfo);
+          if (payment.reference && payment.receiptData) {
+            enablePlaceOrderButton(paymentBtn);
+          }
+        } catch (error) {
+          console.error('Invalid payment info in session storage:', error);
+          sessionStorage.removeItem('paymentInfo');
+        }
       }
       
       // Add our custom handler

@@ -221,7 +221,6 @@ class FirebaseOrderSummary {
   // Format payment method for display
   formatPaymentMethod(method) {
     const methods = {
-      'cash_on_delivery': 'Cash on Delivery',
       'gcash': 'GCash',
       'card': 'Credit/Debit Card',
       'paypal': 'PayPal',

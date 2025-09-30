@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const bodyObj = {
         data: {
           serviceType: 'MOTORCYCLE',
-          specialRequests: ['CASH_ON_DELIVERY'],
+          specialRequests: [],
           language: 'en_PH',
           stops: [
             { 
