@@ -10,7 +10,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-function initializeFirebase() {
+async function initializeFirebase() {
     try {
         // Check if Firebase is already initialized
         if (firebase.apps && firebase.apps.length > 0) {
@@ -22,6 +22,15 @@ function initializeFirebase() {
         console.log('Initializing Firebase...');
         const app = firebase.initializeApp(firebaseConfig);
         console.log('Firebase initialized successfully');
+        
+        // Configure authentication persistence to SESSION
+        try {
+            await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+            console.log('Firebase auth persistence set to SESSION');
+        } catch (persistenceError) {
+            console.warn('Could not set auth persistence:', persistenceError);
+        }
+        
         return app;
         
     } catch (error) {
@@ -65,9 +74,9 @@ window.isFirebaseReady = function() {
 };
 
 // Auto-initialize Firebase when the page loads
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('Page loaded, initializing Firebase...');
-    initializeFirebase();
+    await initializeFirebase();
     
     // Test connection after a short delay
     setTimeout(() => {
