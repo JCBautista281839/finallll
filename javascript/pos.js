@@ -324,6 +324,94 @@ async function startPOSSystem() {
 
     // Load menu items
     const menuGrid = document.querySelector('.menu-items-grid');
+    
+    // Category filtering functions
+    function setupCategoryFiltering(items) {
+        const categoryButtons = document.querySelectorAll('#categoryNav .nav-link[data-category]');
+        
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                categoryButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Get the selected category
+                const selectedCategory = this.getAttribute('data-category');
+                
+                // Get current search term
+                const searchInput = document.querySelector('.search-input');
+                const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+                
+                // Filter and render items
+                const filteredItems = filterItemsByCategoryAndSearch(items, selectedCategory, searchTerm);
+                renderMenuCards(filteredItems);
+                
+                console.log(`Filtered by category: ${selectedCategory}, showing ${filteredItems.length} items`);
+            });
+        });
+    }
+    
+    function filterItemsByCategoryAndSearch(items, category, searchTerm) {
+        let filteredItems = items;
+        
+        // Filter by category
+        if (category && category !== 'all') {
+            filteredItems = filteredItems.filter(item => {
+                const itemCategory = (item.category || '').toLowerCase();
+                return itemCategory === category.toLowerCase();
+            });
+        }
+        
+        // Filter by search term
+        if (searchTerm) {
+            filteredItems = filteredItems.filter(item => {
+                const itemName = (item.name || '').toLowerCase();
+                const itemDescription = (item.description || '').toLowerCase();
+                return itemName.includes(searchTerm) || itemDescription.includes(searchTerm);
+            });
+        }
+        
+        return filteredItems;
+    }
+    
+    function updateCategoryButtons(items) {
+        // Get unique categories from items
+        const categories = [...new Set(items.map(item => item.category).filter(Boolean))];
+        
+        // Get the category navigation container
+        const categoryNav = document.querySelector('#categoryNav');
+        if (!categoryNav) return;
+        
+        // Keep the "All" button and "More" button
+        const allButton = categoryNav.querySelector('[data-category="all"]');
+        const moreButton = categoryNav.querySelector('.more-categories');
+        
+        // Clear existing category buttons (except "All" and "More")
+        const existingCategoryButtons = categoryNav.querySelectorAll('.nav-link[data-category]:not([data-category="all"])');
+        existingCategoryButtons.forEach(btn => btn.remove());
+        
+        // Add category buttons for available categories
+        categories.forEach(category => {
+            const button = document.createElement('button');
+            button.className = 'nav-link';
+            button.setAttribute('data-category', category.toLowerCase());
+            button.textContent = category;
+            
+            // Insert before the "More" button
+            if (moreButton) {
+                categoryNav.insertBefore(button, moreButton);
+            } else {
+                categoryNav.appendChild(button);
+            }
+        });
+        
+        // Re-setup category filtering with updated buttons
+        setupCategoryFiltering(items);
+        
+        console.log(`Updated category buttons for ${categories.length} categories:`, categories);
+    }
 
     // Loads menu items from Firestore and renders them
     async function loadMenuForPOS() {
@@ -339,18 +427,29 @@ async function startPOSSystem() {
             items.forEach(item => {
                 menuItemsData[item.name] = item;
             });
+            
+            // Store all items globally for filtering
+            window.allMenuItems = items;
+            
             renderMenuCards(items);
+            
             // Enable search functionality
             const searchInput = document.querySelector('.search-input');
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     const searchTerm = this.value.trim().toLowerCase();
-                    const filteredItems = searchTerm
-                        ? items.filter(item => (item.name || '').toLowerCase().includes(searchTerm))
-                        : items;
+                    const currentCategory = document.querySelector('.nav-link.active')?.getAttribute('data-category') || 'all';
+                    const filteredItems = filterItemsByCategoryAndSearch(items, currentCategory, searchTerm);
                     renderMenuCards(filteredItems);
                 });
             }
+            
+            // Enable category filtering
+            setupCategoryFiltering(items);
+            
+            // Update category buttons based on available categories
+            updateCategoryButtons(items);
+            
             console.log(`Loaded ${items.length} menu items successfully`);
             
         } catch (err) {
@@ -374,6 +473,18 @@ async function startPOSSystem() {
     function renderMenuCards(items) {
         if (!menuGrid) return;
         menuGrid.innerHTML = '';
+
+        // Show message if no items found
+        if (items.length === 0) {
+            menuGrid.innerHTML = `
+                <div class="alert alert-info text-center p-4">
+                    <h5>No items found</h5>
+                    <p>No menu items match the current filter.</p>
+                    <button class="btn btn-primary" onclick="document.querySelector('[data-category=\\'all\\']').click()">Show All Items</button>
+                </div>
+            `;
+            return;
+        }
 
         items.forEach(item => {
             const card = document.createElement('div');
