@@ -629,3 +629,4 @@ if (typeof AuthManager === 'undefined') {
   }
 
 } // End of AuthManager conditional block
+
