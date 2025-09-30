@@ -1070,6 +1070,11 @@ function updateTopProductsDisplay(products) {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Dashboard script loaded');
   
+  // Skip auto-refresh if this is an OMR page
+  if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
+    return;
+  }
+  
   // Initialize time display
   updateTime();
   setInterval(updateTime, 1000 * 60);

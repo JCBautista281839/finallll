@@ -172,7 +172,7 @@ def main():
     
     print("\n" + "=" * 50)
     print("✅ Backend testing completed!")
-    print("🌐 You can now open omr.html in your browser")
+    print("🌐 You can now open index.html in your browser")
     print("=" * 50)
 
 if __name__ == "__main__":

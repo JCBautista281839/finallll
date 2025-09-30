@@ -20,8 +20,7 @@ async function initializeRoleBasedNavigation() {
                     '/html/Dashboard.html',
                     '/html/Order.html',
                     '/html/pos.html',
-                    '/html/menu.html',
-                    '/html/omr.html'
+                    '/html/menu.html'
                 ],
                 'manager': [
                     '/html/Dashboard.html',
@@ -29,8 +28,7 @@ async function initializeRoleBasedNavigation() {
                     '/html/pos.html',
                     '/html/menu.html',
                     '/html/Inventory.html',
-                    '/html/user.html',
-                    '/html/omr.html'
+                    '/html/user.html'
                 ],
                 'admin': 'all' // Admin can access everything
             };

@@ -88,6 +88,11 @@ async function updateOrderStatus(orderId, newStatus) {
 
 // Add event listener to load orders when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+    // Skip auto-refresh if this is an OMR page
+    if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
+        return;
+    }
+    
     displayOrders();
 });
 
@@ -95,4 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.updateOrderStatus = updateOrderStatus;
 
 // Set up real-time updates (refresh every 30 seconds)
-setInterval(displayOrders, 30000);
+// Skip auto-refresh if this is an OMR page
+if (!window.location.pathname.includes('OMR') && !window.location.pathname.includes('omr')) {
+    setInterval(displayOrders, 30000);
+}

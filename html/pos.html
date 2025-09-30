@@ -11,43 +11,7 @@
     <link rel="stylesheet" href="../css/stylepos.css">
     <link rel="stylesheet" href="../css/pos-menu.css">
     
-    <!-- Custom CSS for OMR Scans Modal -->
-    <style>
-        .omr-scan-card {
-            border-left: 4px solid #28a745;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .omr-scan-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .omr-scan-card .card-title {
-            color: #28a745;
-            margin-bottom: 0.5rem;
-        }
-        
-        .omr-scan-card .badge {
-            font-size: 0.7rem;
-            margin-right: 2px;
-        }
-        
-        #omrScansModal .modal-body {
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-        
-        #omrDetailsModal .modal-body {
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .scan-icon {
-            width: 18px;
-            height: 18px;
-        }
-    </style>
+    <!-- OMR-related CSS removed - functionality moved to OMR directory -->
 <body>
      <div class="dashboard-container d-flex">
         <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
@@ -133,13 +97,7 @@
            
            <div class="search-container">
             <div class="input-group">
-              <button class="btn btn-outline-primary me-2" type="button" id="scanBtn" title="Scan OMR Form - Opens OMR Scanner">
-                <img src="../src/Icons/scan.png" alt="Scan" class="scan-icon">
-                <span class="ms-1">OMR Scan</span>
-              </button>
-              <button class="btn btn-outline-success me-2" type="button" id="loadOMRBtn" title="Show OMR Scans from Firebase" onclick="loadLatestOMR()">
-                <img src="../src/Icons/add.png" alt="OMR Scans" class="scan-icon" style="width: 16px; height: 16px;">
-              </button>
+              <!-- OMR scan buttons removed - functionality moved to OMR directory -->
               <input type="text" class="form-control search-input" placeholder="Search">
               <button class="btn btn-outline-secondary" type="button">
                 <img src="../src/Icons/search.png" alt="Search" class="search-icon">
@@ -150,15 +108,18 @@
             
             <div class="category-tabs">
               <div class="nav nav-pills" id="categoryNav">
-                <button class="nav-link active" data-category="appetizers">Appetizers</button>
+                <button class="nav-link active" data-category="all">All</button>
+                <button class="nav-link" data-category="appetizers">Appetizers</button>
                 <button class="nav-link" data-category="specials">Specials</button>
+                <button class="nav-link" data-category="specials">Silog</button>
+                <button class="nav-link" data-category="specials">More Loved</button>
                 <button class="nav-link" data-category="pasta">Pasta</button>
                 <button class="nav-link" data-category="pansit">Pansit</button>
                 <button class="nav-link" data-category="bilao">Bilao</button>
                 <button class="nav-link" data-category="burgers">Burgers</button>
                 <button class="nav-link" data-category="sandwiches">Sandwiches</button>
                 <button class="nav-link" data-category="feast">Feast</button>
-                <button class="nav-link" data-category="bowl">Rice Bowls</button>
+                <button class="nav-link" data-category="rice-bowls">Rice Bowls</button>
                 <button class="nav-link" data-category="drinks">Drinks</button>
                 <button class="nav-link" data-category="sizzling">Sizzlings</button>
                 <button class="nav-link more-categories">
@@ -269,14 +230,7 @@
         });
       }
       
-      // Add OMR Scanner redirect functionality
-      var scanBtn = document.getElementById('scanBtn');
-      if (scanBtn) {
-        scanBtn.addEventListener('click', function() {
-          // Redirect to OMR Scanner HTML page
-          window.open('omr.html', '_blank');
-        });
-      }
+      // OMR scanner functionality removed - moved to OMR directory
     });
     </script>
 </body>

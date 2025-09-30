@@ -1,5 +1,10 @@
 // This file helps debug Firebase and data loading issues
 (function() {
+    // Skip if this is an OMR page to avoid conflicts
+    if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
+        return;
+    }
+    
     console.log('🔍 Dashboard Debug Helper loaded');
     
     // Monitor Firebase initialization

@@ -117,8 +117,6 @@ function initializeBackButton() {
       sessionStorage.removeItem('laterOrder');
       sessionStorage.removeItem('hasProceeded');
       sessionStorage.removeItem('activeOrderDiscount');
-      sessionStorage.removeItem('loadedOMRScans');
-      
       // Set flag to start a completely new order
       sessionStorage.setItem('startNewOrder', 'true');
       

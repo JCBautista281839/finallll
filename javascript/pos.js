@@ -27,7 +27,6 @@ function clearOrderAndSummary() {
     if (discountDropdown) discountDropdown.value = 'none';
     sessionStorage.removeItem('activeOrderDiscount');
     sessionStorage.removeItem('posOrder'); // Clear posOrder to reset discount state
-    sessionStorage.removeItem('loadedOMRScans'); // Clear OMR tracking
     window.activeDiscountID = '';
 }
 // Global variables accessible throughout the file
@@ -354,11 +353,6 @@ async function startPOSSystem() {
             }
             console.log(`Loaded ${items.length} menu items successfully`);
             
-            // Check for OMR results after menu is loaded
-            setTimeout(() => {
-                console.log('🔄 Checking for OMR results after menu load...');
-                checkForOMRResults();
-            }, 1000);
         } catch (err) {
             console.error('POS load menu error:', err);
             
@@ -804,6 +798,11 @@ async function startPOSSystem() {
 
     loadMenuForPOS();
     updateOrderNumber();
+    
+    // Initialize category filtering after menu is loaded
+    setTimeout(() => {
+        initializeCategoryFiltering();
+    }, 1000);
 
     // Helper function to update order status in Firebase
     window.updateOrderStatus = async function(orderNumber, status) {
@@ -1221,237 +1220,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize order type dropdown state
     initializeOrderTypeState();
     
-    // Initialize scan button functionality
-    initializeScanButton();
-    
-    // Check for OMR scan results from scanner page
-    checkForOMRResults();
-    
-    // Add global debug function for OMR testing
-    window.debugOMR = function() {
-        console.log('🔧 DEBUG: Manual OMR check');
-        console.log('Session Storage omr_scan_results:', sessionStorage.getItem('omr_scan_results'));
-        console.log('Session Storage omr_scan_timestamp:', sessionStorage.getItem('omr_scan_timestamp'));
-        console.log('Menu Items Data:', Object.keys(menuItemsData));
-        checkForOMRResults();
-    };
-    
-    // Add global function to show OMR scans from Firebase
-    window.loadLatestOMR = function() {
-        console.log('  MANUAL: Showing OMR scans from Firebase');
-        showOMRScansModal();
-    };
-    
-    // Add global function to show OMR scan history
-    window.showOMRHistory = async function() {
-        try {
-            console.log('📋 MANUAL: Showing OMR scan history');
-            if (!window.isFirebaseReady || !window.isFirebaseReady()) {
-                showToast('⏳ Firebase not ready, please wait...', 'warning');
-                return;
-            }
-            
-            const db = firebase.firestore();
-            const omrQuery = db.collection('omr_scans')
-                .orderBy('timestamp', 'desc')
-                .limit(10);
-                
-            const querySnapshot = await omrQuery.get();
-            
-            if (!querySnapshot.empty) {
-                console.log('📋 Recent OMR scans:');
-                querySnapshot.docs.forEach((doc, index) => {
-                    const data = doc.data();
-                    console.log(`${index + 1}. ${data.timestamp} - ${data.totalItems} items (₱${data.totalAmount})`);
-                });
-                showToast(`📋 Found ${querySnapshot.size} recent OMR scans (check console)`, 'info');
-            } else {
-                showToast('📋 No OMR scans found in history', 'info');
-            }
-        } catch (error) {
-            console.error('❌ Error loading OMR history:', error);
-            showToast('❌ Error loading OMR history', 'error');
-        }
-    };
-    
-    // Add global function to create test OMR data (for development/testing)
-    window.createTestOMRData = async function() {
-        try {
-            console.log('🧪 Creating test OMR data...');
-            
-            if (!window.isFirebaseReady || !window.isFirebaseReady()) {
-                showToast('⏳ Firebase not ready, please wait...', 'warning');
-                return;
-            }
-            
-            const db = firebase.firestore();
-            
-            // Sample test data
-            const testScans = [
-                {
-                    scanId: Date.now().toString(),
-                    timestamp: new Date().toISOString(),
-                    scanType: 'OMR_FORM',
-                    totalItems: 3,
-                    totalAmount: 450.00,
-                    items: [
-                        { item: 'Burger Deluxe', quantity: 1, price: 250.00, firebase_id: 'menu_001' },
-                        { item: 'French Fries', quantity: 2, price: 100.00, firebase_id: 'menu_002' }
-                    ],
-                    status: 'completed'
-                },
-                {
-                    scanId: (Date.now() - 300000).toString(), // 5 minutes ago
-                    timestamp: new Date(Date.now() - 300000).toISOString(),
-                    scanType: 'OMR_FORM',
-                    totalItems: 2,
-                    totalAmount: 320.00,
-                    items: [
-                        { item: 'Pizza Margherita', quantity: 1, price: 220.00, firebase_id: 'menu_003' },
-                        { item: 'Soft Drink', quantity: 1, price: 100.00, firebase_id: 'menu_004' }
-                    ],
-                    status: 'completed'
-                }
-            ];
-            
-            // Add test data to Firebase
-            for (const scan of testScans) {
-                await db.collection('omr_scans').add(scan);
-            }
-            
-            showToast('🧪 Test OMR data created successfully!', 'success');
-            console.log('✅ Test OMR data created');
-            
-        } catch (error) {
-            console.error('❌ Error creating test OMR data:', error);
-            showToast('❌ Error creating test data', 'error');
-        }
-    };
-    
-    // Listen for OMR results from popup windows
-    initializeOMRMessageListener();
     
     waitForFirebase();
 });
-
-// Show OMR scans in a modal/popup
-async function showOMRScansModal() {
-    try {
-        console.log('📋 Loading OMR scans from Firebase...');
-        
-        // Wait for Firebase to be ready
-        if (!window.isFirebaseReady || !window.isFirebaseReady()) {
-            showToast('⏳ Firebase not ready, please wait...', 'warning');
-            return;
-        }
-
-        const db = firebase.firestore();
-        
-        // Query for recent OMR scans (last 20)
-        const omrQuery = db.collection('omr_scans')
-            .orderBy('timestamp', 'desc')
-            .limit(20);
-            
-        const querySnapshot = await omrQuery.get();
-        
-        if (querySnapshot.empty) {
-            showToast('📋 No OMR scans found in Firebase', 'info');
-            return;
-        }
-        
-        // Create modal HTML
-        const modalHTML = `
-            <div id="omrScansModal" class="modal fade" tabindex="-1" aria-labelledby="omrScansModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="omrScansModalLabel">🔥 OMR Scans from Firebase</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="omrScansList">
-                                <!-- OMR scans will be populated here -->
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remove existing modal if any
-        const existingModal = document.getElementById('omrScansModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        // Add modal to page
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Populate scan data
-        const scansList = document.getElementById('omrScansList');
-        let scansHTML = '';
-        
-        querySnapshot.docs.forEach((doc, index) => {
-            const data = doc.data();
-            const scanDate = new Date(data.timestamp);
-            const timeAgo = getTimeAgo(scanDate);
-            
-            scansHTML += `
-                <div class="card mb-3 omr-scan-card" data-scan-id="${doc.id}">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6 class="card-title">
-                                    📋 Scan #${data.scanId || doc.id.substring(0, 8)}
-                                    <small class="text-muted">(${timeAgo})</small>
-                                </h6>
-                                <p class="card-text mb-1">
-                                    <strong>📅 Time:</strong> ${scanDate.toLocaleString()}<br>
-                                    <strong>📊 Items:</strong> ${data.totalItems || 0}<br>
-                                    <strong>💰 Total:</strong> ₱${(data.totalAmount || 0).toFixed(2)}
-                                </p>
-                                ${data.items && data.items.length > 0 ? `
-                                    <div class="mt-2">
-                                        <small class="text-muted">Items:</small>
-                                        <div class="d-flex flex-wrap gap-1 mt-1">
-                                            ${data.items.slice(0, 3).map(item => 
-                                                `<span class="badge bg-light text-dark">${item.item} (${item.quantity}x)</span>`
-                                            ).join('')}
-                                            ${data.items.length > 3 ? `<span class="badge bg-secondary">+${data.items.length - 3} more</span>` : ''}
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <button class="btn btn-primary btn-sm mb-2" onclick="loadOMRScan('${doc.id}')">
-                                    📥 Load to POS
-                                </button><br>
-                                <button class="btn btn-outline-info btn-sm" onclick="viewOMRDetails('${doc.id}')">
-                                    👁️ View Details
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        scansList.innerHTML = scansHTML;
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('omrScansModal'));
-        modal.show();
-        
-        console.log(`📋 Loaded ${querySnapshot.size} OMR scans from Firebase`);
-        
-    } catch (error) {
-        console.error('❌ Error loading OMR scans:', error);
-        showToast('❌ Error loading OMR scans from Firebase', 'error');
-    }
-}
 
 // Helper function to calculate time ago
 function getTimeAgo(date) {
@@ -1468,1372 +1239,262 @@ function getTimeAgo(date) {
     return date.toLocaleDateString();
 }
 
-// Load specific OMR scan to POS
-// Load specific OMR scan to order processing panel
-// Load specific OMR scan directly to order panel
-async function loadOMRScan(scanId) {
-    try {
-        console.log(`📥 Loading OMR scan ${scanId} to order panel...`);
-        
-        const db = firebase.firestore();
-        const scanDoc = await db.collection('omr_scans').doc(scanId).get();
-        
-        if (!scanDoc.exists) {
-            showToast('❌ OMR scan not found', 'error');
-            return;
-        }
-        
-        const scanData = scanDoc.data();
-        
-        // Close scans modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('omrScansModal'));
-        if (modal) modal.hide();
-        
-        // Add items directly to order panel
-        addOMRItemsToOrder(scanData, scanId);
-        
-        // Track this OMR scan ID for later removal
-        trackLoadedOMRScan(scanId);
-        
-    } catch (error) {
-        console.error('❌ Error loading OMR scan:', error);
-        showToast('❌ Error loading OMR scan', 'error');
-    }
-}
 
-// Track loaded OMR scan IDs for removal when proceeding
-function trackLoadedOMRScan(scanId) {
-    try {
-        // Get existing loaded OMR scans from session storage
-        let loadedOMRScans = JSON.parse(sessionStorage.getItem('loadedOMRScans') || '[]');
-        
-        // Add this scan ID if not already tracked
-        if (!loadedOMRScans.includes(scanId)) {
-            loadedOMRScans.push(scanId);
-            sessionStorage.setItem('loadedOMRScans', JSON.stringify(loadedOMRScans));
-            console.log(`🔖 Tracked OMR scan ${scanId} for removal on proceed`);
-        }
-    } catch (error) {
-        console.error('❌ Error tracking OMR scan:', error);
-    }
-}
 
-// Remove loaded OMR scans from Firebase when proceeding
-async function removeLoadedOMRScans() {
-    try {
-        const loadedOMRScans = JSON.parse(sessionStorage.getItem('loadedOMRScans') || '[]');
-        
-        if (loadedOMRScans.length === 0) {
-            console.log('ℹ️ No OMR scans to remove');
-            return;
-        }
-        
-        console.log(`🗑️ Removing ${loadedOMRScans.length} OMR scans from Firebase...`);
-        
-        const db = firebase.firestore();
-        const batch = db.batch();
-        
-        // Add each OMR scan deletion to the batch
-        for (const scanId of loadedOMRScans) {
-            const scanRef = db.collection('omr_scans').doc(scanId);
-            batch.delete(scanRef);
-            console.log(`🗑️ Queued deletion of OMR scan: ${scanId}`);
-        }
-        
-        // Execute the batch deletion
-        await batch.commit();
-        
-        // Clear the tracking list
-        sessionStorage.removeItem('loadedOMRScans');
-        
-        console.log(`✅ Successfully removed ${loadedOMRScans.length} OMR scans from Firebase`);
-        
-    } catch (error) {
-        console.error('❌ Error removing OMR scans:', error);
-        // Don't show user error for this cleanup operation
-    }
-}
 
-// Add OMR items directly to the order panel
-function addOMRItemsToOrder(scanData, scanId) {
-    try {
-        console.log('🛒 Adding OMR items to order panel...');
-        
-        // Check if order items container exists
-        const orderItemsContainer = document.querySelector('.order-items');
-        if (!orderItemsContainer) {
-            console.error('❌ Order items container not found');
-            showToast('❌ Order panel not ready', 'error');
-            return;
-        }
-        
-        const items = scanData.items || [];
-        if (items.length === 0) {
-            showToast('⚠️ No items found in OMR scan', 'warning');
-            return;
-        }
-        
-        let addedCount = 0;
-        let totalAmount = 0;
-        let addedItems = [];
-        let failedItems = [];
-        
-        // Add each item to the order
-        items.forEach(item => {
-            try {
-                const itemName = item.item;
-                const itemPrice = item.price || 0;
-                const itemQuantity = item.quantity || 1;
-                const itemImage = item.photoUrl || '/src/Icons/default-food.png';
-                const priceString = `₱${itemPrice.toFixed(2)}`;
-                
-                console.log(`🔧 Processing: ${itemName} (${itemQuantity}x) at ${priceString}`);
-                
-                // Add item to order with the specified quantity
-                for (let i = 0; i < itemQuantity; i++) {
-                    try {
-                        window.addItemToOrder(itemName, priceString, itemImage);
-                    } catch (addError) {
-                        console.error(`❌ Error adding ${itemName} (attempt ${i + 1}):`, addError);
-                        failedItems.push(`${itemName} (${i + 1}/${itemQuantity})`);
-                    }
-                }
-                
-                addedCount += itemQuantity;
-                totalAmount += (itemPrice * itemQuantity);
-                addedItems.push(`${itemName} (${itemQuantity}x)`);
-                
-                console.log(`✅ Added ${itemQuantity}x ${itemName} to order panel`);
-                
-            } catch (itemError) {
-                console.error(`❌ Error processing item:`, item, itemError);
-                failedItems.push(item.item || 'Unknown item');
+
+// Find menu item by name
+function findMenuItemByName(itemName) {
+    console.log(`🔍 Looking for menu item: "${itemName}"`);
+    
+    // Get all menu items
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    for (let item of menuItems) {
+        const nameElement = item.querySelector('.menu-item-name');
+        if (nameElement) {
+            const name = nameElement.textContent.trim().toLowerCase();
+            if (name.includes(itemName.toLowerCase())) {
+                console.log(`✅ Found matching menu item: "${name}"`);
+                return item;
             }
+        }
+    }
+    
+    console.log(`❌ No matching menu item found for: "${itemName}"`);
+    return null;
+}
+
+// Increase quantity
+function increaseQuantity(button) {
+    const quantityElement = button.parentElement.querySelector('.quantity');
+    let currentQuantity = parseInt(quantityElement.textContent);
+    quantityElement.textContent = currentQuantity + 1;
+}
+
+// Decrease quantity
+function decreaseQuantity(button) {
+    const quantityElement = button.parentElement.querySelector('.quantity');
+    let currentQuantity = parseInt(quantityElement.textContent);
+    if (currentQuantity > 1) {
+        quantityElement.textContent = currentQuantity - 1;
+    }
+}
+
+// Show page
+function showPage() {
+    navLinks.forEach((btn, i) => {
+        btn.classList.remove('active');
+        document.querySelectorAll('.page').forEach(page => {
+            page.style.display = 'none';
         });
         
-        // Update order summary if any items were added
-        if (addedCount > 0) {
-            try {
-                window.updateOrderSummary();
-            } catch (summaryError) {
-                console.error('❌ Error updating order summary:', summaryError);
-            }
+        if (btn.classList.contains('active')) {
+            document.querySelectorAll('.page')[i].style.display = 'block';
         }
-        
-        // Show appropriate message
-        if (failedItems.length > 0) {
-            const failureMessage = `⚠️ Some items failed to load: ${failedItems.join(', ')}`;
-            showToast(failureMessage, 'warning');
-            console.warn('⚠️ Failed items:', failedItems);
-        }
-        
-        if (addedCount > 0) {
-            // Show success message with Firebase details
-            const scanTime = new Date(scanData.timestamp).toLocaleString();
-            const message = `🔥 OMR scan loaded to order panel!\n📅 Scan: ${scanTime}\n📊 Added: ${addedCount} items\n💰 Total: ₱${totalAmount.toFixed(2)}`;
-            showToast(message, 'success');
-            
-            // Enhanced logging for Firebase integration
-            console.log('🔥 === OMR TO ORDER PANEL COMPLETE ===');
-            console.log(`🆔 Firebase Scan ID: ${scanId}`);
-            console.log(`📅 Scan Time: ${scanTime}`);
-            console.log(`📊 Items Added: ${addedCount}`);
-            console.log(`💰 Total Amount: ₱${totalAmount.toFixed(2)}`);
-            console.log(`📋 Items: ${addedItems.join(', ')}`);
-            if (failedItems.length > 0) {
-                console.log(`⚠️ Failed Items: ${failedItems.join(', ')}`);
-            }
-            console.log('🔥 ================================');
-        } else {
-            showToast('❌ No items could be added to order panel', 'error');
-        }
-        
-    } catch (error) {
-        console.error('❌ Error adding OMR items to order:', error);
-        showToast(`❌ Error adding items to order panel: ${error.message}`, 'error');
-    }
+    });
 }
 
-// Show OMR data in processing panel with quantity controls
-function showOMRProcessingPanel(scanData, scanId) {
-    try {
-        // Create processing modal HTML
-        const processingHTML = `
-            <div id="omrProcessingModal" class="modal fade" tabindex="-1" aria-labelledby="omrProcessingModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="omrProcessingModalLabel">
-                                🛒 Process OMR Scan to Order
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <h6 class="text-muted mb-2">📋 Scan Information</h6>
-                                <div class="row text-sm">
-                                    <div class="col-6"><strong>Scan Time:</strong> ${new Date(scanData.timestamp).toLocaleString()}</div>
-                                    <div class="col-6"><strong>Total Items:</strong> ${scanData.totalItems || 0}</div>
-                                </div>
-                                <div class="row text-sm mt-1">
-                                    <div class="col-6"><strong>Original Total:</strong> ₱${(scanData.totalAmount || 0).toFixed(2)}</div>
-                                    <div class="col-6"><strong>Status:</strong> <span class="badge bg-success">${scanData.status || 'completed'}</span></div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <h6 class="mb-2">🛒 Items to Add to Order</h6>
-                                <div id="omrItemsList" class="border rounded p-2" style="max-height: 400px; overflow-y: auto;">
-                                    <!-- Items will be populated here -->
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="card bg-light">
-                                        <div class="card-body p-2">
-                                            <small class="text-muted">Selected Items:</small>
-                                            <div id="selectedItemsCount" class="fw-bold">0</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="card bg-light">
-                                        <div class="card-body p-2">
-                                            <small class="text-muted">Updated Total:</small>
-                                            <div id="updatedTotal" class="fw-bold text-success">₱0.00</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-success" onclick="processSelectedOMRItems('${scanId}')">
-                                🛒 Add Selected Items to Order
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remove existing processing modal if any
-        const existingModal = document.getElementById('omrProcessingModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        // Add modal to page
-        document.body.insertAdjacentHTML('beforeend', processingHTML);
-        
-        // Populate items list
-        populateOMRItemsList(scanData.items || []);
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('omrProcessingModal'));
-        modal.show();
-        
-        showToast('📋 OMR scan loaded for processing', 'success');
-        
-    } catch (error) {
-        console.error('❌ Error showing OMR processing panel:', error);
-        showToast('❌ Error showing processing panel', 'error');
-    }
-}
-
-// Populate the items list with quantity controls
-function populateOMRItemsList(items) {
-    const itemsList = document.getElementById('omrItemsList');
-    if (!itemsList) return;
+// Initialize category filtering functionality
+function initializeCategoryFiltering() {
+    const categoryButtons = document.querySelectorAll('#categoryNav .nav-link[data-category]');
+    const moreCategoriesBtn = document.querySelector('#categoryNav .more-categories');
     
-    let itemsHTML = '';
+    // Store current page state
+    window.currentCategoryPage = 0;
+    window.categoriesPerPage = 9;
     
-    if (items && items.length > 0) {
-        items.forEach((item, index) => {
-            const itemPrice = item.price || 0;
-            const itemQuantity = item.quantity || 1;
-            const itemTotal = itemPrice * itemQuantity;
+    // Initially show first page
+    showCategoryPage(0);
+    
+    // Add click handlers for category buttons
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
             
-            itemsHTML += `
-                <div class="omr-item-row mb-3 p-3 border rounded" data-item-index="${index}">
-                    <div class="row align-items-center">
-                        <div class="col-1">
-                            <div class="form-check">
-                                <input class="form-check-input omr-item-checkbox" type="checkbox" 
-                                       id="item_${index}" checked onchange="updateOMRTotals()">
-                            </div>
-                        </div>
-                        <div class="col-5">
-                            <div class="fw-bold">${item.item}</div>
-                            <small class="text-muted">₱${itemPrice.toFixed(2)} each</small>
-                        </div>
-                        <div class="col-3">
-                            <div class="input-group input-group-sm">
-                                <button class="btn btn-outline-secondary btn-sm" type="button" 
-                                        onclick="changeOMRQuantity(${index}, -1)">-</button>
-                                <input type="number" class="form-control text-center omr-quantity-input" 
-                                       id="qty_${index}" value="${itemQuantity}" min="0" max="99" 
-                                       onchange="updateOMRTotals()">
-                                <button class="btn btn-outline-secondary btn-sm" type="button" 
-                                        onclick="changeOMRQuantity(${index}, 1)">+</button>
-                            </div>
-                        </div>
-                        <div class="col-3 text-end">
-                            <div class="fw-bold text-success item-total" id="total_${index}">
-                                ₱${itemTotal.toFixed(2)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            // Remove active class from all buttons
+            categoryButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Get the category and filter menu items
+            const category = this.getAttribute('data-category');
+            filterMenuGridByCategory(category);
         });
-    } else {
-        itemsHTML = '<div class="text-center text-muted py-3">No items found in OMR scan</div>';
+    });
+    
+    // Add click handler for "next/prev" button
+    if (moreCategoriesBtn) {
+        moreCategoriesBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleCategoryPage();
+        });
     }
-    
-    itemsList.innerHTML = itemsHTML;
-    
-    // Initial totals calculation
-    updateOMRTotals();
 }
 
-// Change quantity for OMR item
-function changeOMRQuantity(itemIndex, change) {
-    const qtyInput = document.getElementById(`qty_${itemIndex}`);
-    if (!qtyInput) return;
+// Show specific category page
+function showCategoryPage(pageNumber) {
+    const categoryButtons = document.querySelectorAll('#categoryNav .nav-link[data-category]');
+    const moreCategoriesBtn = document.querySelector('#categoryNav .more-categories');
+    const chevronIcon = moreCategoriesBtn.querySelector('i');
     
-    let currentQty = parseInt(qtyInput.value) || 0;
-    currentQty += change;
+    const startIndex = pageNumber * window.categoriesPerPage;
+    const endIndex = startIndex + window.categoriesPerPage;
     
-    if (currentQty < 0) currentQty = 0;
-    if (currentQty > 99) currentQty = 99;
-    
-    qtyInput.value = currentQty;
-    updateOMRTotals();
-}
-
-// Update totals based on selected items and quantities
-function updateOMRTotals() {
-    let selectedCount = 0;
-    let totalAmount = 0;
-    
-    const checkboxes = document.querySelectorAll('.omr-item-checkbox');
-    checkboxes.forEach((checkbox, index) => {
-        if (checkbox.checked) {
-            selectedCount++;
-            
-            const qtyInput = document.getElementById(`qty_${index}`);
-            const quantity = parseInt(qtyInput?.value) || 0;
-            
-            // Get price from the item data (you'll need to store this)
-            const itemRow = checkbox.closest('.omr-item-row');
-            const priceText = itemRow.querySelector('.text-muted').textContent;
-            const price = parseFloat(priceText.replace('₱', '').replace(' each', '')) || 0;
-            
-            const itemTotal = price * quantity;
-            totalAmount += itemTotal;
-            
-            // Update individual item total
-            const totalElement = document.getElementById(`total_${index}`);
-            if (totalElement) {
-                totalElement.textContent = `₱${itemTotal.toFixed(2)}`;
-                totalElement.className = quantity > 0 ? 'fw-bold text-success item-total' : 'fw-bold text-muted item-total';
-            }
+    // Show/hide categories based on current page
+    categoryButtons.forEach((button, index) => {
+        if (index >= startIndex && index < endIndex) {
+            button.style.display = 'block';
         } else {
-            // Update individual item total for unchecked items
-            const totalElement = document.getElementById(`total_${index}`);
-            if (totalElement) {
-                totalElement.textContent = '₱0.00';
-                totalElement.className = 'fw-bold text-muted item-total';
-            }
+            button.style.display = 'none';
         }
     });
     
-    // Update summary
-    const selectedCountElement = document.getElementById('selectedItemsCount');
-    const updatedTotalElement = document.getElementById('updatedTotal');
+    // Update chevron direction and visibility
+    const totalPages = Math.ceil(categoryButtons.length / window.categoriesPerPage);
     
-    if (selectedCountElement) {
-        selectedCountElement.textContent = selectedCount;
-    }
-    
-    if (updatedTotalElement) {
-        updatedTotalElement.textContent = `₱${totalAmount.toFixed(2)}`;
+    if (totalPages <= 1) {
+        moreCategoriesBtn.style.display = 'none';
+    } else {
+        moreCategoriesBtn.style.display = 'block';
+        
+        if (pageNumber === 0) {
+            chevronIcon.classList.remove('bi-chevron-left');
+            chevronIcon.classList.add('bi-chevron-right');
+        } else {
+            chevronIcon.classList.remove('bi-chevron-right');
+            chevronIcon.classList.add('bi-chevron-left');
+        }
     }
 }
 
-// Process selected OMR items and add them to the order
-async function processSelectedOMRItems(scanId) {
+// Toggle between category pages
+function toggleCategoryPage() {
+    const totalPages = Math.ceil(document.querySelectorAll('#categoryNav .nav-link[data-category]').length / window.categoriesPerPage);
+    
+    if (window.currentCategoryPage === 0) {
+        // Go to next page
+        window.currentCategoryPage = 1;
+    } else {
+        // Go back to first page
+        window.currentCategoryPage = 0;
+    }
+    
+    showCategoryPage(window.currentCategoryPage);
+}
+
+// Scroll categories horizontally to show more categories
+function scrollCategoriesRight() {
+    const categoryTabs = document.querySelector('.category-tabs');
+    if (categoryTabs) {
+        categoryTabs.scrollBy({
+            left: 200,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Filter menu grid by category
+function filterMenuGridByCategory(category) {
+    const menuGrid = document.querySelector('.menu-items-grid');
+    const menuItems = menuGrid.querySelectorAll('.menu-item-card');
+    
+    menuItems.forEach(item => {
+        const itemCategory = item.getAttribute('data-category');
+        if (category === 'all' || itemCategory === category) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Quantity control functions
+// Increases the quantity of an order item
+function increaseQuantity(button) {
+window.increaseQuantity = increaseQuantity;
     try {
-        console.log('🛒 Processing selected OMR items...');
+        const orderItem = button.closest('.order-item');
+        const quantitySpan = button.parentElement.querySelector('.quantity');
+        if (!quantitySpan) return;
         
-        const checkboxes = document.querySelectorAll('.omr-item-checkbox:checked');
-        if (checkboxes.length === 0) {
-            showToast('⚠️ Please select at least one item to add', 'warning');
+        // Get item number element to keep it in sync
+        const itemNumberElement = orderItem.querySelector('.item-number');
+        
+        const unitPrice = parseFloat(orderItem.getAttribute('data-unit-price'));
+        let currentQty = parseInt(quantitySpan.textContent) || 0;
+        
+        // Set a reasonable maximum quantity limit
+        if (currentQty >= 99) {
+            button.style.background = '#ff6b6b';
+            setTimeout(() => {
+                button.style.background = '';
+            }, 300);
             return;
         }
         
-        let addedCount = 0;
-        let totalAmount = 0;
-        let addedItems = [];
+        // Increase quantity
+        currentQty += 1;
         
-        // Get the original scan data
-        const db = firebase.firestore();
-        const scanDoc = await db.collection('omr_scans').doc(scanId).get();
-        const originalScanData = scanDoc.exists ? scanDoc.data() : null;
-        
-        checkboxes.forEach((checkbox, index) => {
-            const itemIndex = parseInt(checkbox.closest('.omr-item-row').dataset.itemIndex);
-            const qtyInput = document.getElementById(`qty_${itemIndex}`);
-            const quantity = parseInt(qtyInput?.value) || 0;
-            
-            if (quantity > 0) {
-                // Get item data from original scan
-                const originalItem = originalScanData?.items?.[itemIndex];
-                if (originalItem) {
-                    const itemName = originalItem.item;
-                    const itemPrice = originalItem.price || 0;
-                    const itemImage = originalItem.photoUrl || '/src/Icons/default-food.png';
-                    const priceString = `₱${itemPrice.toFixed(2)}`;
-                    
-                    // Add item to order with the specified quantity
-                    for (let i = 0; i < quantity; i++) {
-                        addItemToOrder(itemName, priceString, itemImage);
-                    }
-                    
-                    addedCount += quantity;
-                    totalAmount += (itemPrice * quantity);
-                    addedItems.push(`${itemName} (${quantity}x)`);
-                    
-                    console.log(`✅ Added ${quantity}x ${itemName} to order`);
-                }
-            }
-        });
-        
-        // Close processing modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('omrProcessingModal'));
-        if (modal) modal.hide();
-        
-        // Update order summary
-        updateOrderSummary();
-        
-        // Show success message
-        if (addedCount > 0) {
-            const message = `🛒 Successfully added ${addedCount} item(s) to order!\n📋 Items: ${addedItems.join(', ')}\n💰 Total Added: ₱${totalAmount.toFixed(2)}`;
-            showToast(message, 'success');
-            
-            console.log('🔥 === OMR PROCESSING COMPLETE ===');
-            console.log(`📊 Items Added: ${addedCount}`);
-            console.log(`💰 Total Amount: ₱${totalAmount.toFixed(2)}`);
-            console.log(`📋 Items: ${addedItems.join(', ')}`);
-            console.log('🔥 ===========================');
-        } else {
-            showToast('⚠️ No items were added (zero quantities)', 'warning');
+        // Update all quantity displays
+        quantitySpan.textContent = currentQty;
+        if (itemNumberElement) {
+            itemNumberElement.textContent = currentQty;
         }
         
-    } catch (error) {
-        console.error('❌ Error processing OMR items:', error);
-        showToast('❌ Error processing OMR items', 'error');
-    }
-}
-
-// View OMR scan details
-async function viewOMRDetails(scanId) {
-    try {
-        console.log(`👁️ Viewing OMR scan details for ${scanId}...`);
+        // Calculate new line total
+        const lineTotal = unitPrice * currentQty;
         
-        const db = firebase.firestore();
-        const scanDoc = await db.collection('omr_scans').doc(scanId).get();
-        
-        if (!scanDoc.exists) {
-            showToast('❌ OMR scan not found', 'error');
-            return;
+        // Update item price display
+        const itemPriceElement = orderItem.querySelector('.item-price');
+        if (itemPriceElement) {
+            itemPriceElement.textContent = `₱${lineTotal.toFixed(2)}`;
         }
         
-        const scanData = scanDoc.data();
-        
-        // Create details modal
-        const detailsHTML = `
-            <div id="omrDetailsModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">🔍 OMR Scan Details</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>📋 Scan Information</h6>
-                                    <table class="table table-sm">
-                                        <tr><td><strong>Scan ID:</strong></td><td>${scanData.scanId || scanId}</td></tr>
-                                        <tr><td><strong>Timestamp:</strong></td><td>${new Date(scanData.timestamp).toLocaleString()}</td></tr>
-                                        <tr><td><strong>Type:</strong></td><td>${scanData.scanType || 'OMR_FORM'}</td></tr>
-                                        <tr><td><strong>Status:</strong></td><td><span class="badge bg-success">${scanData.status || 'completed'}</span></td></tr>
-                                        <tr><td><strong>Total Items:</strong></td><td>${scanData.totalItems || 0}</td></tr>
-                                        <tr><td><strong>Total Amount:</strong></td><td>₱${(scanData.totalAmount || 0).toFixed(2)}</td></tr>
-                                    </table>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>📊 Items Scanned</h6>
-                                    <div style="max-height: 300px; overflow-y: auto;">
-                                        ${scanData.items && scanData.items.length > 0 ? scanData.items.map((item, index) => `
-                                            <div class="card mb-2">
-                                                <div class="card-body p-2">
-                                                    <div class="d-flex justify-content-between">
-                                                        <div>
-                                                            <strong>${item.item}</strong><br>
-                                                            <small class="text-muted">Qty: ${item.quantity || 1}</small>
-                                                        </div>
-                                                        <div class="text-end">
-                                                            <strong>₱${(item.price || 0).toFixed(2)}</strong><br>
-                                                            <small class="text-muted">Total: ₱${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</small>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        `).join('') : '<p class="text-muted">No items found</p>'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <h6>🔧 Raw Data</h6>
-                                    <textarea class="form-control" rows="8" readonly>${JSON.stringify(scanData, null, 2)}</textarea>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" onclick="loadOMRScan('${scanId}'); bootstrap.Modal.getInstance(document.getElementById('omrDetailsModal')).hide();">
-                                📥 Load to POS
-                            </button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remove existing details modal if any
-        const existingModal = document.getElementById('omrDetailsModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        // Add modal to page
-        document.body.insertAdjacentHTML('beforeend', detailsHTML);
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('omrDetailsModal'));
-        modal.show();
-        
-    } catch (error) {
-        console.error('❌ Error viewing OMR details:', error);
-        showToast('❌ Error viewing OMR details', 'error');
-    }
-}
-
-// Initialize scan button functionality
-function initializeScanButton() {
-    const scanBtn = document.getElementById('scanBtn');
-    if (scanBtn) {
-        scanBtn.addEventListener('click', function() {
-            console.log('🔍 Scan button clicked - Opening OMR scanner...');
-            
-            // Show loading state briefly
-            const originalHTML = scanBtn.innerHTML;
-            scanBtn.disabled = true;
-            scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Opening...';
-            
-            // Open OMR scanner directly
-            setTimeout(() => {
-                openOMRScanner();
-                resetScanButton();
-            }, 500);
-        });
-    }
-}
-
-// Check if OMR server is running
-async function checkOMRServerStatus() {
-    try {
-        const response = await fetch('http://127.0.0.1:5000/status', {
-            method: 'GET',
-            timeout: 2000
-        });
-        
-        if (response.ok) {
-            console.log('✅ OMR server is already running');
-            return true;
-        } else {
-            console.log('⚠️ OMR server not responding properly');
-            return false;
-        }
-    } catch (error) {
-        console.log('⚠️ OMR server is not running:', error.message);
-        return false;
-    }
-}
-
-// Start OMR server automatically
-// Note: startOMRServer function removed - replaced with user instruction modal
-// Server auto-start is handled via showOMRStartInstructions() function
-
-// Auto-start OMR server using launcher service
-async function startOMRServerBatch() {
-    try {
-        console.log('🚀 Attempting to start OMR server via launcher service...');
-        
-        // First, check if launcher service is running
-        try {
-            const launcherResponse = await fetch('http://localhost:3001/status', {
-                method: 'GET',
-                timeout: 2000
-            });
-            
-            if (launcherResponse.ok) {
-                console.log('✅ Launcher service is running');
-                
-                // Start the OMR server via launcher
-                const startResponse = await fetch('http://localhost:3001/start-omr', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: 10000
-                });
-                
-                const result = await startResponse.json();
-                
-                if (result.success) {
-                    console.log('✅ OMR server started via launcher:', result.message);
-                    showToast('✅ OMR server started successfully!', 'success');
-                    return true;
-                } else {
-                    console.error('❌ Failed to start OMR server:', result.message);
-                    showToast('❌ Failed to start OMR server: ' + result.message, 'error');
-                    return false;
-                }
-            }
-        } catch (launcherError) {
-            console.log('⚠️ Launcher service not available:', launcherError.message);
-        }
-        
-        // Fallback: Try direct batch file execution
-        console.log('🔄 Direct batch file execution...');
-        
-        // Method 1: Try to open/execute the batch file directly
-        try {
-            // Create a direct link to the batch file
-            const link = document.createElement('a');
-            link.href = './start_omr_server.bat';
-            link.target = '_blank';
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            
-            // Try to open the batch file (may trigger execution prompt)
-            link.click();
-            
-            setTimeout(() => {
-                document.body.removeChild(link);
-            }, 1000);
-            
-            console.log('✅ Batch file open attempted - browser should prompt to run');
-            showToast('🚀 Starting OMR server... Please allow the batch file to run', 'info');
-            return true;
-            
-        } catch (openError) {
-            console.log('⚠️ Direct open failed:', openError.message);
-        }
-        
-        // Method 2: Try using file:// protocol for direct execution
-        try {
-            // Get the current page location to construct absolute path
-            const currentUrl = new URL(window.location.href);
-            const baseUrl = currentUrl.origin + currentUrl.pathname.substring(0, currentUrl.pathname.lastIndexOf('/'));
-            const batchFileUrl = `${baseUrl}/start_omr_server.bat`;
-            
-            console.log('📁 Trying to execute batch file at:', batchFileUrl);
-            
-            // Create iframe to try to execute the batch file
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = batchFileUrl;
-            document.body.appendChild(iframe);
-            
-            setTimeout(() => {
-                try {
-                    document.body.removeChild(iframe);
-                } catch (e) {
-                    // Ignore cleanup errors
-                }
-            }, 3000);
-            
-            console.log('✅ Batch file execution via iframe attempted');
-            showToast('🚀 Attempting to run batch file... Server should start soon', 'info');
-            return true;
-            
-        } catch (iframeError) {
-            console.log('⚠️ Iframe execution failed:', iframeError.message);
-        }
-        
-        // Method 3: Try downloading the batch file for manual execution
-        // Method 3: Try downloading the batch file for manual execution
-        try {
-            const link = document.createElement('a');
-            link.href = './start_omr_server.bat';
-            link.download = 'start_omr_server.bat';
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            
-            setTimeout(() => {
-                document.body.removeChild(link);
-            }, 1000);
-            
-            console.log('✅ Batch file downloaded for manual execution');
-            showToast('📁 Batch file downloaded! Please run start_omr_server.bat', 'info');
-            return true;
-            
-        } catch (downloadError) {
-            console.log('⚠️ Download method failed:', downloadError.message);
-        }
-        
-        // Method 2: Show manual instructions
-        showToast('📋 Please manually run start_omr_server.bat from the project folder', 'warning');
-        
-        // Also try to open file explorer to the batch file location
-        try {
-            const currentPath = window.location.pathname;
-            const projectPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
-            const batchUrl = window.location.origin + projectPath + '/start_omr_server.bat';
-            
-            // Try to navigate to the batch file (browser will show it)
-            setTimeout(() => {
-                window.open(batchUrl, '_blank');
-            }, 1000);
-        } catch (e) {
-            console.log('Could not open batch file location:', e.message);
-        }
-        
-        return false;
-        
-    } catch (error) {
-        console.error('❌ Failed to start OMR server:', error);
-        showToast('❌ Please manually start the OMR server', 'error');
-        return false;
-    }
-}
-
-// Start server process (requires additional setup)
-async function startServerProcess() {
-    // Browser security prevents direct process execution
-    // Show user-friendly instructions instead
-    
-    const startInstructions = `
-🚀 OMR Scanner Auto-Start Instructions:
-
-Option 1 (Recommended):
-📁 Double-click: start_omr_server.bat
-
-Option 2 (Manual):
-1. Open Command Prompt/PowerShell
-2. Navigate to project folder
-3. Run: python omr/omr_web_circle_scanner.py
-
-Option 3 (Node.js):
-1. Install Node.js (if not installed)
-2. Run: node omr-autostart.js
-
-The server will start at: http://127.0.0.1:5000
-    `;
-    
-    console.log('📋 OMR Server start instructions:', startInstructions);
-    
-    // Show modal with instructions
-    showOMRStartInstructions();
-    
-    return false; // Indicate manual start needed
-}
-
-// Show OMR start instructions modal
-function showOMRStartInstructions() {
-    // Create modal if it doesn't exist
-    let modal = document.getElementById('omrStartModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'omrStartModal';
-        modal.className = 'modal fade';
-        modal.innerHTML = `
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">🚀 Start OMR Scanner Server</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-info">
-                            <strong>📋 Quick Start:</strong> Double-click <code>start_omr_server.bat</code> in the project folder
-                        </div>
-                        
-                        <h6>📂 Manual Options:</h6>
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Option 1: Batch File</h6>
-                                <p class="card-text">Double-click: <code>start_omr_server.bat</code></p>
-                            </div>
-                        </div>
-                        
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Option 2: Command Line</h6>
-                                <p class="card-text">
-                                    1. Open Command Prompt<br>
-                                    2. Navigate to project folder<br>
-                                    3. Run: <code>python omr/omr_web_circle_scanner.py</code>
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h6 class="card-title">Option 3: Node.js</h6>
-                                <p class="card-text">Run: <code>node omr-autostart.js</code></p>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-success">
-                            <strong>✅ Server Address:</strong> <a href="http://127.0.0.1:5000" target="_blank">http://127.0.0.1:5000</a>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="retryOMRConnection()">🔄 Try Again</button>
-                        <button type="button" class="btn btn-success" onclick="openOMRDirect()">📋 Open Scanner</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    
-    // Show the modal
-    const modalInstance = new bootstrap.Modal(modal);
-    modalInstance.show();
-}
-
-// Retry OMR connection
-async function retryOMRConnection() {
-    const modal = bootstrap.Modal.getInstance(document.getElementById('omrStartModal'));
-    
-    try {
-        const isRunning = await checkOMRServerStatus();
-        
-        if (isRunning) {
-            modal.hide();
-            showToast('✅ OMR server detected! Opening scanner...', 'success');
-            openOMRScanner();
-        } else {
-            showToast('⚠️ OMR server still not running. Please start it manually.', 'warning');
-        }
-    } catch (error) {
-        showToast('❌ Connection failed. Please check server status.', 'error');
-    }
-}
-
-// Open OMR scanner directly (even if server might not be ready)
-function openOMRDirect() {
-    const modal = bootstrap.Modal.getInstance(document.getElementById('omrStartModal'));
-    modal.hide();
-    
-    // Try both local and server versions
-    setTimeout(() => {
-        openOMRScanner();
-    }, 500);
-}
-
-// Open OMR scanner interface
-function openOMRScanner() {
-    console.log('📋 Opening OMR Scanner interface...');
-    
-    // Open the Python Flask OMR server directly
-    const omrWindow = window.open('http://127.0.0.1:5000', 'omr_scanner', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-    
-    if (omrWindow) {
-        showToast('📋 OMR Scanner opened in new window', 'success');
-        
-        // Focus the new window
-        omrWindow.focus();
-        
-        // Set up message listener for results
-        const messageHandler = (event) => {
-            if (event.origin === 'http://127.0.0.1:5000' && event.data.type === 'OMR_SCAN_RESULT') {
-                console.log('📨 Received OMR results from scanner:', event.data);
-                processDirectOMRResults(event.data.results || event.data.data);
-                showToast('📋 OMR scan results imported successfully!', 'success');
-                
-                // Remove the event listener
-                window.removeEventListener('message', messageHandler);
-            }
-        };
-        
-        window.addEventListener('message', messageHandler);
-        
-        // Cleanup listener after 10 minutes
+        // Animation feedback
+        button.style.transform = 'scale(0.9)';
         setTimeout(() => {
-            window.removeEventListener('message', messageHandler);
-        }, 600000);
+            button.style.transform = '';
+        }, 150);
         
-    } else {
-        // Fallback to local OMR page
-        console.log('🔄 Falling back to local OMR page...');
-        window.location.href = './omr.html';
-    }
-}
-
-// Initialize listener for OMR scanner messages (popup integration)
-function initializeOMRMessageListener() {
-    window.addEventListener('message', function(event) {
-        // Security: Check origin if needed
-        // if (event.origin !== 'expected-origin') return;
-        
-        if (event.data && event.data.type === 'OMR_SCAN_RESULT') {
-            console.log('📨 Received OMR results via postMessage:', event.data.results);
-            
-            // Process the results
-            processDirectOMRResults(event.data.results);
-            
-            // Show notification
-            showToast('📋 OMR scan results imported successfully!', 'success');
-        }
-    });
-}
-
-// Check for OMR scan results from session storage and Firebase
-function checkForOMRResults() {
-    console.log('🔍 POS: Checking for OMR scan results...');
-    
-    // First check for results from direct OMR scanner (session storage)
-    const omrResults = sessionStorage.getItem('omr_scan_results');
-    const omrTimestamp = sessionStorage.getItem('omr_scan_timestamp');
-    
-    console.log('📋 POS: OMR results in storage:', omrResults ? 'FOUND' : 'NOT FOUND');
-    if (omrTimestamp) {
-        console.log('📅 POS: OMR scan timestamp:', omrTimestamp);
-    }
-    
-    if (omrResults) {
-        try {
-            const scanResults = JSON.parse(omrResults);
-            console.log('📋 POS: Found Direct OMR scan results:', scanResults);
-            
-            // Clear the results from session storage
-            sessionStorage.removeItem('omr_scan_results');
-            sessionStorage.removeItem('omr_scan_timestamp');
-            
-            // Add a small delay to ensure DOM is ready
-            setTimeout(() => {
-                console.log('⏰ POS: Processing OMR results after delay...');
-                processDirectOMRResults(scanResults);
-            }, 500);
-            
-        } catch (error) {
-            console.error('❌ POS: Error processing OMR results:', error);
-            sessionStorage.removeItem('omr_scan_results');
-            sessionStorage.removeItem('omr_scan_timestamp');
-        }
-    } else {
-        console.log('ℹ️ POS: No OMR scan results found in session storage');
-        // If no session storage results, check Firebase for latest OMR scan
-        checkLatestOMRFromFirebase();
-    }
-}
-
-// Check Firebase for latest OMR scan data
-let firebaseCheckAttempts = 0;
-const maxFirebaseCheckAttempts = 10;
-
-async function checkLatestOMRFromFirebase() {
-    try {
-        console.log('🔥 POS: Checking Firebase for latest OMR scan...');
-        
-        // Wait for Firebase to be ready
-        if (!window.isFirebaseReady || !window.isFirebaseReady()) {
-            firebaseCheckAttempts++;
-            
-            if (firebaseCheckAttempts > maxFirebaseCheckAttempts) {
-                console.error('❌ POS: Firebase initialization timeout after', maxFirebaseCheckAttempts, 'attempts');
-                return;
-            }
-            
-            console.log('⏳ POS: Waiting for Firebase to initialize... (attempt', firebaseCheckAttempts, '/', maxFirebaseCheckAttempts, ')');
-            setTimeout(checkLatestOMRFromFirebase, 2000); // Increased delay to prevent rapid loops
-            return;
-        }
-        
-        // Reset counter on successful Firebase detection
-        firebaseCheckAttempts = 0;
-
-        const db = firebase.firestore();
-        
-        // Query for the latest OMR scan (ordered by timestamp, limit 1)
-        const omrQuery = db.collection('omr_scans')
-            .orderBy('timestamp', 'desc')
-            .limit(1);
-            
-        const querySnapshot = await omrQuery.get();
-        
-        if (!querySnapshot.empty) {
-            const latestScan = querySnapshot.docs[0];
-            const scanData = latestScan.data();
-            
-            console.log('🔥 POS: Found latest OMR scan from Firebase:', scanData);
-            console.log('📅 POS: Scan timestamp:', scanData.timestamp);
-            console.log('📋 POS: Total items:', scanData.totalItems);
-            
-            // Check if this scan was taken recently (within last 5 minutes)
-            const scanTime = new Date(scanData.timestamp);
-            const now = new Date();
-            const timeDiff = (now - scanTime) / 1000 / 60; // difference in minutes
-            
-            if (timeDiff <= 5) {
-                console.log('✅ POS: Recent OMR scan found (within 5 minutes), processing...');
-                
-                // Convert Firebase OMR data to the format expected by processDirectOMRResults
-                const formattedScanResults = {
-                    success: true,
-                    timestamp: scanData.timestamp,
-                    scan_type: scanData.scanType || 'OMR_FORM',
-                    results: {
-                        shaded_selections: scanData.items || []
-                    },
-                    firebase_omr_id: latestScan.id
-                };
-                
-                // Show notification that we're loading from Firebase
-                showToast('🔥 Loading latest OMR scan from Firebase...', 'info');
-                
-                // Process the Firebase OMR results
-                setTimeout(() => {
-                    processDirectOMRResults(formattedScanResults);
-                    showToast('✅ Latest OMR scan loaded from Firebase!', 'success');
-                }, 500);
-                
-            } else {
-                console.log(`ℹ️ POS: Latest OMR scan is ${timeDiff.toFixed(1)} minutes old, skipping auto-load`);
-            }
-            
-        } else {
-            console.log('ℹ️ POS: No OMR scans found in Firebase');
-        }
-        
+        // Always update summary after quantity change
+        updateOrderSummary();
     } catch (error) {
-        console.error('❌ POS: Error checking Firebase for OMR scans:', error);
+        console.error('Error increasing quantity:', error);
     }
 }
 
-// Reset scan button to original state
-function resetScanButton() {
-    const scanBtn = document.getElementById('scanBtn');
-    if (scanBtn) {
-        scanBtn.disabled = false;
-        scanBtn.innerHTML = '<img src="/src/Icons/scan.png" alt="Scan" class="scan-icon">';
-    }
-}
-
-// Process OMR file by sending to Python backend
-async function processOMRFile(file) {
-    try {
-        console.log('🔍 Processing OMR file:', file.name);
-        showToast('📷 Connecting to Python OMR Scanner...', 'info');
-        
-        // Create form data for upload
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        console.log('📤 Sending file to Python scanner at /upload');
-        showToast('🐍 Running Python OMR detection...', 'info');
-        
-        // Send to OMR scanner backend
-        const response = await fetch('/upload', {
-            method: 'POST',
-            body: formData
-        });
-        
-        console.log('📥 Response received from Python:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`Python scanner error! HTTP status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Python OMR scan completed:', result);
-        
-        if (result.success && result.results) {
-            showToast('🎯 Python scan successful! Processing results...', 'success');
-            processOMRResults(result.results);
-        } else {
-            showToast('⚠️ Python scan completed but no items detected', 'warning');
-            console.log('No results from Python scanner:', result);
-        }
-        
-    } catch (error) {
-        console.error('❌ Python OMR processing error:', error);
-        
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            showToast('🔌 Cannot connect to Python scanner. Please ensure the OMR server is running on port 5000', 'error');
-        } else {
-            showToast('❌ Python OMR processing failed: ' + error.message, 'error');
-        }
-    }
-}
-
-// Process OMR scan results and add to order
-function processOMRResults(scanResults) {
-    if (!scanResults || !scanResults.shaded_selections) {
-        showToast('No items selected in OMR scan', 'warning');
-        return;
-    }
-    
-    console.log('Processing OMR results:', scanResults);
-    
-    // Add each selected item to the order
-    scanResults.shaded_selections.forEach(selection => {
-        const itemName = selection.item;
-        
-        // Find the menu item in our data
-        const menuItem = findMenuItemByName(itemName);
-        if (menuItem) {
-            // Add to order with quantity 1
-            addToOrder(menuItem, 1);
-            console.log(`Added ${itemName} to order`);
-        } else {
-            console.warn(`Menu item not found: ${itemName}`);
-        }
-    });
-    
-    // Show success message
-    const itemCount = scanResults.shaded_selections.length;
-    showToast(`Successfully added ${itemCount} item(s) from OMR scan!`, 'success');
-}
-
-// Process Direct OMR scan results and add to order
-function processDirectOMRResults(scanResults) {
-    console.log('📋 Processing OMR scan results:', scanResults);
-    console.log('🏪 Available menu items in POS:', Object.keys(menuItemsData));
-    
-    // Show processing message
-    showToast('📋 Processing OMR scan results...', 'info');
-    
-    // Handle different data structures
-    let selections = [];
-    
-    if (scanResults.results && scanResults.results.shaded_selections) {
-        selections = scanResults.results.shaded_selections;
-    } else if (scanResults.shaded_selections) {
-        selections = scanResults.shaded_selections;
-    } else {
-        showToast('No items selected in OMR scan', 'warning');
-        return;
-    }
-
-    if (selections.length === 0) {
-        showToast('No shaded circles detected in OMR form', 'warning');
-        return;
-    }
-    
-    let addedCount = 0;
-    let notFoundItems = [];
-    let mappedItems = [];
-    
-    // Add each selected item to the order
-    selections.forEach(selection => {
-        const itemName = selection.item;
-        const quantity = selection.quantity || 1;
-        const fillPercent = selection.fill_percent || 100;
-        const mappedFrom = selection.mapped_from || null;
-        const isUnmapped = selection.unmapped || false;
-        
-        console.log(`🔍 Processing OMR item: "${itemName}" (Qty: ${quantity}, Fill: ${fillPercent}%)`);
-        if (mappedFrom) {
-            console.log(`🔄 Originally mapped from: "${mappedFrom}"`);
-        }
-        
-        // If the item already has Firebase data from OMR scanner
-        if (selection.firebase_id && selection.price) {
-            console.log(`🔥 Using Firebase data from OMR: ${itemName} (₱${selection.price})`);
-            
-            const itemPrice = `₱${selection.price.toFixed(2)}`;
-            const itemImage = selection.photoUrl || '/src/Icons/default-food.png';
-            
-            // Add item to order with specified quantity
-            for (let i = 0; i < quantity; i++) {
-                addItemToOrder(itemName, itemPrice, itemImage);
-            }
-            
-            addedCount += quantity;
-            totalAmount += (selection.price * quantity);
-            mappedItems.push(`${itemName} (${quantity}x)`);
-        } else {
-            // Find the menu item in local POS data as fallback
-            const menuItem = findMenuItemByName(itemName);
-            if (menuItem) {
-                const itemPrice = `₱${menuItem.price.toFixed(2)}`;
-                const itemImage = menuItem.photoUrl || '/src/Icons/default-food.png';
-                
-                // Add item to order with specified quantity
-                for (let i = 0; i < quantity; i++) {
-                    addItemToOrder(menuItem.name, itemPrice, itemImage);
-                }
-                
-                console.log(`✅ Added "${itemName}" -> "${menuItem.name}" (${quantity}x) to order (${fillPercent}% filled)`);
-                addedCount += quantity;
-                totalAmount += (menuItem.price * quantity);
-                mappedItems.push(`${menuItem.name} (${quantity}x)`);
-            } else {
-                console.warn(`⚠️ Menu item not found for OMR item: "${itemName}"`);
-                notFoundItems.push(itemName + (mappedFrom ? ` (from ${mappedFrom})` : ''));
-            }
-        }
-    });
-    
-    // Show comprehensive success/warning message
-    let message;
-    let toastType = 'success';
-    
-    if (addedCount > 0) {
-        if (isFromFirebase) {
-            message = `🔥 Successfully loaded ${addedCount} item(s) from Firebase OMR scan!`;
-            message += `\n📅 Scan time: ${new Date(scanTimestamp).toLocaleString()}`;
-            message += `\n💰 Total: ₱${totalAmount.toFixed(2)}`;
-        } else {
-            message = `✅ Successfully added ${addedCount} item(s) from OMR scan!`;
-        }
-        
-        if (mappedItems.length > 0) {
-            message += `\n📋 Items: ${mappedItems.join(', ')}`;
-        }
-        if (notFoundItems.length > 0) {
-            message += `\n⚠️ ${notFoundItems.length} items not found: ${notFoundItems.join(', ')}`;
-            toastType = 'warning';
-        }
-    } else {
-        message = `❌ No items could be added. Items not found in menu: ${notFoundItems.join(', ')}`;
-        toastType = 'error';
-    }
-    
-    showToast(message, toastType);
-    
-    // Enhanced logging for Firebase integration
-    if (isFromFirebase) {
-        console.log('🔥 === FIREBASE OMR INTEGRATION SUMMARY ===');
-        console.log(`📅 Scan Time: ${new Date(scanTimestamp).toLocaleString()}`);
-        console.log(`🆔 Firebase ID: ${scanResults.firebase_omr_id}`);
-        console.log(`📊 Total Items: ${addedCount}`);
-        console.log(`💰 Total Amount: ₱${totalAmount.toFixed(2)}`);
-        console.log(`✅ Successfully Mapped: ${mappedItems.length}`);
-        console.log(`❌ Not Found: ${notFoundItems.length}`);
-        if (notFoundItems.length > 0) {
-            console.log(`📋 Missing Items: ${notFoundItems.join(', ')}`);
-        }
-        console.log('🔥 ========================================');
-    } else {
-        console.log(`📊 OMR Processing Summary: Added ${addedCount}, Not Found ${notFoundItems.length}`);
-    }
-    
-    // Update the order summary
-    updateOrderSummary();
-    
-    // Clear the session storage after processing
-    sessionStorage.removeItem('omr_scan_results');
-    sessionStorage.removeItem('omr_scan_timestamp');
-}
 
 // Helper function to find menu item by name
 function findMenuItemByName(itemName) {
     console.log(`🔍 Looking for menu item: "${itemName}"`);
     console.log('📋 Available menu items:', Object.keys(menuItemsData));
     
-    // First try exact match (case insensitive)
-    for (const menuItemName in menuItemsData) {
-        if (menuItemName.toLowerCase() === itemName.toLowerCase()) {
-            console.log(`✅ Found exact match: ${menuItemName}`);
-            return menuItemsData[menuItemName];
+    // Try to find exact match first
+    for (const [key, item] of Object.entries(menuItemsData)) {
+        if (item.name.toLowerCase() === itemName.toLowerCase()) {
+            console.log(`✅ Found exact match: ${item.name}`);
+            return item;
         }
     }
     
-    // Then try partial matching (item name contains search term or vice versa)
-    for (const menuItemName in menuItemsData) {
-        if (menuItemName.toLowerCase().includes(itemName.toLowerCase()) ||
-            itemName.toLowerCase().includes(menuItemName.toLowerCase())) {
-            console.log(`✅ Found partial match: ${menuItemName} for search "${itemName}"`);
-            return menuItemsData[menuItemName];
+    // If no exact match, try partial match
+    for (const [key, item] of Object.entries(menuItemsData)) {
+        if (item.name.toLowerCase().includes(itemName.toLowerCase()) || 
+            itemName.toLowerCase().includes(item.name.toLowerCase())) {
+            console.log(`✅ Found partial match: ${item.name}`);
+            return item;
         }
     }
     
-    // If not found by name matching, try common OMR form mappings
-    const omrMappings = {
-        // Actual OMR menu items from Python scanner
-        'isda': 'Fish',
-        'water': 'Water',
-        'sinigang': 'Sinigang',
-        'chicken': 'Chicken',
-        'pusit': 'Squid', 
-        'egg': 'Egg',
-        'milk': 'Milk',
-        'beef': 'Beef',
-        
-        // Generic mappings for compatibility
-        'burger': 'Burger',
-        'pizza': 'Pizza', 
-        'pasta': 'Pasta',
-        'rice': 'Rice Bowl',
-        'drink': 'Soft Drink',
-        'coffee': 'Coffee',
-        'sandwich': 'Sandwich',
-        'salad': 'Caesar Salad',
-        'fries': 'French Fries',
-        
-        // Numbered menu items
-        'menu item 1': 'isda',
-        'menu item 2': 'Water',
-        'menu item 3': 'Sinigang',
-        'menu item 4': 'Chicken',
-        'menu item 5': 'pusit',
-        'menu item 6': 'egg',
-        'menu item 7': 'milk',
-        'menu item 8': 'beef',
-        'item 1': 'isda',
-        'item 2': 'Water',
-        'item 3': 'Sinigang',
-        'item 4': 'Chicken',
-        'item 5': 'pusit',
-        'item 6': 'egg',
-        'item 7': 'milk',
-        'item 8': 'beef',
-        'item_1': 'isda',
-        'item_2': 'Water',
-        'item_3': 'Sinigang',
-        'item_4': 'Chicken',
-        'item_5': 'pusit',
-        'item_6': 'egg',
-        'item_7': 'milk',
-        'item_8': 'beef'
-    };
-    
-    const mappedName = omrMappings[itemName.toLowerCase()];
-    if (mappedName) {
-        console.log(`🔄 Using mapping: "${itemName}" -> "${mappedName}"`);
-        return findMenuItemByName(mappedName);
-    }
-    
-    console.log(`❌ Menu item not found: "${itemName}"`);
+    // No match found
+    console.log(`❌ No matching menu item found for: "${itemName}"`);
     return null;
 }
 
-    // Initializes order type dropdown and input visibility
-    function initializeOrderTypeState() {
+// Initializes order type dropdown and input visibility
+function initializeOrderTypeState() {
     const orderTypeSpan = document.querySelector('.order-type span');
     const tableInput = document.querySelector('.table-number');
     const paxInput = document.querySelector('.pax-number');
@@ -2922,132 +1583,48 @@ window.decreaseQuantity = decreaseQuantity;
         const unitPrice = parseFloat(orderItem.getAttribute('data-unit-price'));
         let currentQty = parseInt(quantitySpan.textContent) || 0;
         
+        // If quantity is 1 or less, remove the item
+        if (currentQty <= 1) {
+            // Animation feedback before removal
+            orderItem.style.transform = 'scale(0.9)';
+            orderItem.style.opacity = '0.5';
+            
+            setTimeout(() => {
+                orderItem.remove();
+                updateOrderSummary();
+            }, 150);
+            return;
+        }
+        
+        // Decrease quantity
+        currentQty -= 1;
+        
+        // Update all quantity displays
+        quantitySpan.textContent = currentQty;
+        if (itemNumberElement) {
+            itemNumberElement.textContent = currentQty;
+        }
+        
+        // Calculate new line total
+        const lineTotal = unitPrice * currentQty;
+        
+        // Update item price display
+        const itemPriceElement = orderItem.querySelector('.item-price');
+        if (itemPriceElement) {
+            itemPriceElement.textContent = `₱${lineTotal.toFixed(2)}`;
+        }
+        
         // Animation feedback
         button.style.transform = 'scale(0.9)';
         setTimeout(() => {
             button.style.transform = '';
         }, 150);
         
-        if (currentQty > 1) {
-            // Decrease quantity
-            currentQty -= 1;
-            // Update all quantity displays
-            quantitySpan.textContent = currentQty;
-            if (itemNumberElement) {
-                itemNumberElement.textContent = currentQty;
-            }
-            // Calculate new line total
-            const lineTotal = unitPrice * currentQty;
-            // Update item price display
-            const itemPriceElement = orderItem.querySelector('.item-price');
-            if (itemPriceElement) {
-                itemPriceElement.textContent = `₱${lineTotal.toFixed(2)}`;
-            }
-            updateOrderSummary();
-        } else {
-            // Remove item immediately (no animation for speed)
-            orderItem.remove();
-            updateOrderSummary();
-        }
+        // Always update summary after quantity change
+        updateOrderSummary();
     } catch (error) {
         console.error('Error decreasing quantity:', error);
     }
 }
 
-const navLinks = document.querySelectorAll('#categoryNav .nav-link:not(.more-categories)');
-const moreBtn = document.querySelector('.more-categories');
-
-let currentIndex = 0;
-const itemsPerPage = 8; // number of categories shown at a time
-
-function showPage() {
-  navLinks.forEach((btn, i) => {
-    if (i >= currentIndex && i < currentIndex + itemsPerPage) {
-      btn.style.display = "inline-block";
-    } else {
-      btn.style.display = "none";
-    }
-  });
-}
-
-// initial render
-showPage();
-
-moreBtn.addEventListener('click', () => {
-  currentIndex += itemsPerPage;
-  if (currentIndex >= navLinks.length) {
-    currentIndex = 0; // loop back to start
-  }
-  showPage();
-});
-// --- ADD 'ALL' CATEGORY TAB IF NOT PRESENT ---
-const categoryNav = document.getElementById('categoryNav');
-if (categoryNav && !categoryNav.querySelector('[data-category="all"]')) {
-    const allBtn = document.createElement('button');
-    allBtn.className = 'nav-link';
-    allBtn.setAttribute('data-category', 'all');
-    allBtn.textContent = 'All';
-    categoryNav.insertBefore(allBtn, categoryNav.firstChild);
-}
-// Re-select navLinks to include 'All'
-const navLinksAll = document.querySelectorAll('#categoryNav .nav-link:not(.more-categories)');
-// --- CATEGORY FILTER FUNCTIONALITY ---
-navLinksAll.forEach(btn => {
-    btn.addEventListener('click', function() {
-        // Remove active class from all buttons
-        navLinksAll.forEach(b => b.classList.remove('active'));
-        // Add active class to clicked button
-        btn.classList.add('active');
-        // Get selected category
-        const selectedCategory = btn.getAttribute('data-category');
-        filterMenuGridByCategory(selectedCategory);
-    });
-});
-
-function filterMenuGridByCategory(category) {
-    const menuGrid = document.querySelector('.menu-items-grid');
-    if (!menuGrid) return;
-    const cards = menuGrid.querySelectorAll('.menu-item-card');
-    const selected = category.toLowerCase();
-    let found = false;
-    if (selected === 'all') {
-        // Sort cards by category
-        const sortedCards = Array.from(cards).sort((a, b) => {
-            const catA = (a.getAttribute('data-category') || '').toLowerCase();
-            const catB = (b.getAttribute('data-category') || '').toLowerCase();
-            if (catA < catB) return -1;
-            if (catA > catB) return 1;
-            return 0;
-        });
-        sortedCards.forEach(card => {
-            card.style.display = '';
-            menuGrid.appendChild(card);
-            found = true;
-        });
-    } else {
-        cards.forEach(card => {
-            const cardCategory = (card.getAttribute('data-category') || '').toLowerCase();
-            if (cardCategory === selected) {
-                card.style.display = '';
-                found = true;
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-    // If no items found, show a message
-    let noItemsMsg = menuGrid.querySelector('.no-items-msg');
-    if (!found) {
-        if (!noItemsMsg) {
-            noItemsMsg = document.createElement('div');
-            noItemsMsg.className = 'no-items-msg text-center text-muted d-flex justify-content-center align-items-center';
-            noItemsMsg.style.height = '250px';
-            noItemsMsg.style.fontSize = '1.5rem';
-            noItemsMsg.textContent = 'No Items Registered';
-            menuGrid.appendChild(noItemsMsg);
-        }
-    } else {
-        if (noItemsMsg) noItemsMsg.remove();
-    }
-}
-
+// End of file

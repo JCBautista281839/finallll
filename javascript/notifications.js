@@ -106,6 +106,11 @@ function refreshUnseenNotificationBadge() {
 
 // Refresh badge on page load and every 30 seconds
 document.addEventListener('DOMContentLoaded', function() {
+    // Skip auto-refresh if this is an OMR page
+    if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
+        return;
+    }
+    
     refreshUnseenNotificationBadge();
     setInterval(refreshUnseenNotificationBadge, 30000);
 

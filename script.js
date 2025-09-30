@@ -1,8 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Skip if this is an OMR page to avoid conflicts
+    if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
+        return;
+    }
+    
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
     const processBtn = document.getElementById('processBtn');
     const status = document.getElementById('status');
+    
+    // Only proceed if these elements exist and we're not on an OMR page
+    if (!uploadArea || !fileInput || !processBtn || !status) {
+        return;
+    }
     
     uploadArea.addEventListener('click', () => fileInput.click());
     
@@ -22,8 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         status.innerHTML = `
             <div style="background: #e3f2fd; padding: 15px; border-radius: 8px;">
-                <strong>🚀 OMR System Ready!</strong><br>
-                <small>Upload images here OR run: <code>python omr_processor.py</code> for auto-demo</small>
+                <strong>🚀 System Ready!</strong><br>
+                <small>Upload images here OR run: <code>python processor.py</code> for auto-demo</small>
             </div>
         `;
     }, 1000);

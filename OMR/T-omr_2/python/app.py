@@ -73,7 +73,7 @@ def create_response(success=True, message="", data=None, error=None):
 @app.route('/')
 def index():
     """Serve the main HTML file"""
-    return send_from_directory(os.path.dirname(os.path.dirname(__file__)), 'omr.html')
+    return send_from_directory(os.path.dirname(os.path.dirname(__file__)), 'index.html')
 
 @app.route('/css/<path:filename>')
 def serve_css(filename):
@@ -309,4 +309,4 @@ if __name__ == '__main__':
     print("   - POST /api/full-scan")
     print("   - GET /api/health")
     
-    app.run(host='0.0.0.0', port=5003, debug=False)
+    app.run(host='0.0.0.0', port=5003, debug=True)

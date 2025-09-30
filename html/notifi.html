@@ -93,6 +93,11 @@
         <script>
             // Auto-refresh notifications every 30 seconds for real-time updates
             document.addEventListener('DOMContentLoaded', function() {
+                // Skip auto-refresh if this is an OMR page
+                if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
+                    return;
+                }
+                
                 loadNotifications();
                 setInterval(loadNotifications, 30000);
             });

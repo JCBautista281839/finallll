@@ -115,6 +115,11 @@ function setupFormValidation(formId) {
 
 // Auto-initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Skip if this is an OMR page to avoid conflicts
+    if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
+        return;
+    }
+    
     // Setup validation for user form if it exists
     setupFormValidation('userForm');
 });

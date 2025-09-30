@@ -1,7 +1,7 @@
 {
   "name": "viktoria-bistro-complete",
   "version": "1.0.0",
-  "description": "Viktoria's Bistro Complete System - OMR Scanner + OTP Service +  lalamove",
+  "description": "Viktoria's Bistro Complete System - POS, Inventory, and Restaurant Management",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -28,11 +28,10 @@
     "node": "18.x"
   },
   "keywords": [
-    "scanner",
     "pos",
     "restaurant",
-    "python",
-    "opencv",
+    "inventory",
+    "management",
     "viktorias-bistro"
   ]
 }

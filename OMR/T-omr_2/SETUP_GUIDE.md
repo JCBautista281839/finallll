@@ -4,14 +4,14 @@
 
 ### Option 1: Windows (Easy)
 1. **Double-click** `start_server.bat`
-2. **Open** `omr.html` in your browser
+2. **Open** `index.html` in your browser
 3. **Start testing!**
 
 ### Option 2: Manual Setup
 1. **Install Python 3.7+** from [python.org](https://python.org)
 2. **Open terminal** in the T-omr folder
 3. **Run**: `python start_server.py`
-4. **Open** `omr.html` in your browser
+4. **Open** `index.html` in your browser
 
 ## 📋 Prerequisites
 
@@ -32,13 +32,13 @@ python start_server.py
 ```
 
 ### 3. Open the Frontend
-- Open `omr.html` in your web browser
+- Open `index.html` in your web browser
 - The interface will automatically connect to the backend
 
 ## 🌐 Server Information
 
 - **Backend URL**: http://localhost:5003
-- **Frontend**: Open `omr.html` in browser
+- **Frontend**: Open `index.html` in browser
 - **API Endpoints**:
   - `POST /api/upload` - Upload image files
   - `POST /api/detect-circles` - Detect circles in image
@@ -68,7 +68,7 @@ python start_server.py
 
 ```
 T-omr/
-├── omr.html                # Main frontend interface
+├── index.html              # Main frontend interface
 ├── css/style.css           # Frontend styling
 ├── js/omr-testing.js       # Frontend JavaScript
 ├── python/
