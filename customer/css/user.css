@@ -322,6 +322,34 @@ body {
   opacity: 0.8;
 }
 
+/* Edit profile icon styles */
+.edit-profile-icon {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  background: #007bff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.edit-profile-icon:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.edit-profile-icon i {
+  color: white;
+  font-size: 16px;
+}
+
 /* Section titles like 'General', 'Security' */
 .profile-section-titles {
   font-family: 'PoppinsMedium', Arial, sans-serif;
