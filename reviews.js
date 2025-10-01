@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing reviews system...');
     loadReviewsFromFirebase();
     setupReviewForm();
+    setupAuthStateListener();
   }
   
   function loadReviewsFromFirebase() {
@@ -58,6 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     reviewDocs.forEach((doc, index) => {
       const reviewData = doc.data();
+      console.log(`Review ${index + 1} categories:`, reviewData.categories);
+      
+      // Clean up categories before displaying
+      if (reviewData.categories && Array.isArray(reviewData.categories)) {
+        reviewData.categories = [...new Set(reviewData.categories.filter(cat => cat && cat.trim()))];
+        console.log(`Cleaned categories for review ${index + 1}:`, reviewData.categories);
+      }
+      
       const reviewCard = createReviewCard(reviewData, index);
       reviewsContainer.appendChild(reviewCard);
     });
@@ -73,15 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create star rating HTML
     const stars = createStarRating(reviewData.rating || 4);
     
-    // Create categories HTML
-    const categories = reviewData.categories || ['Overall Service'];
+    // Create categories HTML - use empty array if no categories to avoid duplicates
+    const categories = reviewData.categories || [];
     const categoriesHTML = createCategoriesDisplay(categories);
+    
+    // Format the name properly
+    const displayName = reviewData.name && reviewData.name !== 'Anonymous' ? 
+      reviewData.name.toUpperCase() : 'ANONYMOUS';
     
     reviewCard.innerHTML = `
       <div class="review-avatar">${avatar}</div>
       <div class="review-content">
         <div class="review-header">
-          <div class="review-name">${reviewData.name || 'ANONYMOUS'}</div>
+          <div class="review-name">${displayName}</div>
           <div class="review-stars">
             ${stars}
           </div>
@@ -112,26 +125,36 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function createCategoriesDisplay(categories) {
     if (!categories || categories.length === 0) {
-      return '<span class="review-category-tag">Overall Service</span>';
+      return '<span class="review-category-tag">General Review</span>';
     }
     
-    return categories.map(category => 
+    // Remove duplicates and filter out empty/null values
+    const uniqueCategories = [...new Set(categories.filter(cat => cat && cat.trim()))];
+    
+    return uniqueCategories.map(category => 
       `<span class="review-category-tag">${category}</span>`
     ).join(' ');
   }
   
+  // Global variable to track selected rating
+  let globalSelectedRating = 0;
+
   function setupReviewForm() {
     const ratingForm = document.querySelector('.rating-form');
     if (!ratingForm) return;
     
     let selectedRating = 0;
-    let selectedCategory = 'Overall Service';
+    globalSelectedRating = 0; // Initialize global variable
+    
+    // Check authentication state and update UI accordingly
+    checkAuthenticationAndUpdateUI();
     
     // Handle star rating selection
     const starInputs = ratingForm.querySelectorAll('.star-input');
     starInputs.forEach((star, index) => {
       star.addEventListener('click', () => {
         selectedRating = index + 1;
+        globalSelectedRating = index + 1; // Update global variable
         updateStarDisplay(starInputs, selectedRating);
       });
       
@@ -147,59 +170,77 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Handle category selection - allow unlimited multiple selection
     const categoryBtns = ratingForm.querySelectorAll('.rating-category-btn');
-    let selectedCategories = ['Overall Service']; // Start with Overall Service selected
+    let selectedCategories = []; // Start with no categories selected
     
     // Remove counter functionality - no longer needed
     
     categoryBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('Category button clicked:', btn.textContent);
-        console.log('Current active state:', btn.classList.contains('active'));
+        e.stopPropagation();
         
-        if (btn.classList.contains('active')) {
+        console.log('Button clicked:', btn.textContent);
+        console.log('Button disabled:', btn.disabled);
+        
+        // Don't allow interaction if form is disabled
+        if (btn.disabled) {
+          console.log('Button is disabled, ignoring click');
+          return;
+        }
+        
+        const isCurrentlyActive = btn.classList.contains('active');
+        console.log('Current active state:', isCurrentlyActive);
+        
+        if (isCurrentlyActive) {
           // If already selected, deselect it
-          btn.classList.remove('active');
-          btn.style.backgroundColor = '#eee';
-          btn.style.color = '#282828';
+          console.log('Deselecting button:', btn.textContent);
+          toggleCategoryButton(btn, false);
           selectedCategories = selectedCategories.filter(cat => cat !== btn.textContent);
           console.log('Deselected:', btn.textContent);
         } else {
           // If not selected, select it
-          btn.classList.add('active');
-          btn.style.backgroundColor = '#96392d';
-          btn.style.color = '#fff';
+          console.log('Selecting button:', btn.textContent);
+          toggleCategoryButton(btn, true);
           selectedCategories.push(btn.textContent);
           console.log('Selected:', btn.textContent);
         }
         
-        // Allow deselecting all if user wants to start over
-        // But provide a helpful message
+        // Show message if no categories are selected (but allow it)
         if (selectedCategories.length === 0) {
-          alert('Please select at least one category for your review.');
-          btn.classList.add('active');
-          selectedCategories.push(btn.textContent);
+          showCategoryMessage('No categories selected. You can add categories to help categorize your review.');
         }
         
         console.log('Selected categories:', selectedCategories);
-        console.log('Button classes after click:', btn.className);
+        console.log('Button classes after toggle:', btn.className);
       });
     });
     
-    // Initialize with Overall Service selected
+    // Initialize with no categories selected by default
     setTimeout(() => {
-      const firstBtn = categoryBtns[0];
-      if (firstBtn) {
-        firstBtn.classList.add('active');
-        firstBtn.style.backgroundColor = '#96392d';
-        firstBtn.style.color = '#fff';
-        console.log('Initialized first button with active class:', firstBtn.className);
-      }
+      // Ensure all buttons start in unselected state
+      categoryBtns.forEach((btn, index) => {
+        // Clear any existing classes and styles
+        btn.classList.remove('active');
+        btn.style.removeProperty('background-color');
+        btn.style.removeProperty('color');
+        btn.style.removeProperty('border');
+        
+        // Set default unselected state
+        toggleCategoryButton(btn, false);
+        console.log(`Initialized button ${index + 1} (${btn.textContent}) as unselected`);
+      });
+      console.log('All category buttons initialized as unselected');
     }, 100);
     
     // Handle form submission
     ratingForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      
+      // Check if user is authenticated first
+      if (!isUserAuthenticated()) {
+        showLoginPrompt();
+        return;
+      }
       
       const comment = ratingForm.querySelector('.rating-textarea').value.trim();
       
@@ -213,11 +254,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
+      // Categories are now optional - no validation needed
+      
+      // Check if user wants to post anonymously
+      const anonymousCheckbox = document.getElementById('anonymous-review');
+      const isAnonymous = anonymousCheckbox ? anonymousCheckbox.checked : false;
+      
       submitReview({
         rating: selectedRating,
         categories: selectedCategories, // Save all selected categories
         comment: comment,
-        name: 'Anonymous' // You can modify this to get user name if needed
+        name: isAnonymous ? 'Anonymous' : getAuthenticatedUserName()
       });
     });
   }
@@ -230,6 +277,70 @@ document.addEventListener('DOMContentLoaded', () => {
         star.classList.remove('active');
       }
     });
+  }
+
+  function toggleCategoryButton(button, isActive) {
+    // Clear any existing inline styles first
+    button.style.removeProperty('background-color');
+    button.style.removeProperty('color');
+    button.style.removeProperty('border');
+    
+    if (isActive) {
+      // Select the button
+      button.classList.add('active');
+      button.style.setProperty('background-color', '#96392d', 'important');
+      button.style.setProperty('color', '#fff', 'important');
+      button.style.setProperty('border', '2px solid #760000', 'important');
+      button.style.setProperty('transform', 'scale(1.02)', 'important');
+      
+      // Add a subtle animation
+      setTimeout(() => {
+        button.style.setProperty('transform', 'scale(1)', 'important');
+      }, 150);
+    } else {
+      // Deselect the button
+      button.classList.remove('active');
+      button.style.setProperty('background-color', '#f8f9fa', 'important');
+      button.style.setProperty('color', '#333', 'important');
+      button.style.setProperty('border', '2px solid #dee2e6', 'important');
+      button.style.setProperty('transform', 'scale(0.98)', 'important');
+      
+      // Add a subtle animation
+      setTimeout(() => {
+        button.style.setProperty('transform', 'scale(1)', 'important');
+      }, 150);
+    }
+  }
+
+  function showCategoryMessage(message) {
+    // Remove any existing message
+    const existingMessage = document.querySelector('.category-message');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
+    
+    // Create new message
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'category-message';
+    messageDiv.innerHTML = `
+      <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 8px 12px; margin: 8px 0; text-align: center; font-size: 12px; color: #856404; font-family: 'PoppinsRegular', sans-serif;">
+        ${message}
+      </div>
+    `;
+    
+    // Insert after the category buttons
+    const ratingForm = document.querySelector('.rating-form');
+    const categoriesDiv = ratingForm.querySelector('.rating-categories');
+    if (categoriesDiv) {
+      categoriesDiv.parentNode.insertBefore(messageDiv, categoriesDiv.nextSibling);
+      
+      // Remove message after 3 seconds
+      setTimeout(() => {
+        if (messageDiv.parentNode) {
+          messageDiv.remove();
+        }
+      }, 3000);
+    }
   }
   
   function submitReview(reviewData) {
@@ -285,22 +396,235 @@ document.addEventListener('DOMContentLoaded', () => {
   function resetReviewForm() {
     const ratingForm = document.querySelector('.rating-form');
     
-    // Reset rating
+    // Reset rating to zero (no stars selected)
     const starInputs = ratingForm.querySelectorAll('.star-input');
     starInputs.forEach(star => star.classList.remove('active'));
     
-    // Reset categories - only keep Overall Service selected
+    // Reset global rating variable
+    globalSelectedRating = 0;
+    
+    // Force update star display to show 0 stars
+    updateStarDisplay(starInputs, 0);
+    
+    // Reset categories - no categories selected by default
     const categoryBtns = ratingForm.querySelectorAll('.rating-category-btn');
-    categoryBtns.forEach(btn => btn.classList.remove('active'));
-    categoryBtns[0].classList.add('active'); // Set first category (Overall Service) as active
+    categoryBtns.forEach(btn => toggleCategoryButton(btn, false));
     
     // Reset selected categories array
-    selectedCategories = ['Overall Service'];
+    selectedCategories = [];
     
     // Reset textarea
     ratingForm.querySelector('.rating-textarea').value = '';
+    
+    // Reset anonymous checkbox
+    const anonymousCheckbox = document.getElementById('anonymous-review');
+    if (anonymousCheckbox) {
+      anonymousCheckbox.checked = false;
+    }
+    
+    console.log('Review form reset - rating set to 0, all fields cleared');
   }
   
+  // Authentication helper functions
+  function isUserAuthenticated() {
+    try {
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        const user = firebase.auth().currentUser;
+        return user !== null;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      return false;
+    }
+  }
+
+  function getAuthenticatedUserName() {
+    try {
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        const user = firebase.auth().currentUser;
+        if (user) {
+          return user.displayName || user.email.split('@')[0] || 'User';
+        }
+      }
+      return 'Anonymous';
+    } catch (error) {
+      console.error('Error getting user name:', error);
+      return 'Anonymous';
+    }
+  }
+
+  function checkAuthenticationAndUpdateUI() {
+    const ratingForm = document.querySelector('.rating-form');
+    if (!ratingForm) return;
+
+    if (isUserAuthenticated()) {
+      // User is authenticated - show normal form
+      updateFormForAuthenticatedUser();
+    } else {
+      // User is not authenticated - show login prompt
+      updateFormForUnauthenticatedUser();
+    }
+  }
+
+  function updateFormForAuthenticatedUser() {
+    const ratingForm = document.querySelector('.rating-form');
+    const shareBtn = ratingForm.querySelector('.share-btn');
+    const ratingTitle = ratingForm.querySelector('.rating-form-title');
+    
+    // Remove any login prompts
+    const loginPrompt = ratingForm.querySelector('.login-prompt');
+    if (loginPrompt) {
+      loginPrompt.remove();
+    }
+    
+    // Restore normal functionality
+    if (shareBtn) {
+      shareBtn.textContent = 'Share';
+      shareBtn.disabled = false;
+      shareBtn.style.opacity = '1';
+    }
+    
+    if (ratingTitle) {
+      ratingTitle.textContent = 'Rate your experience';
+    }
+    
+    // Enable form elements
+    enableFormElements(true);
+    
+  }
+
+  function updateFormForUnauthenticatedUser() {
+    const ratingForm = document.querySelector('.rating-form');
+    const shareBtn = ratingForm.querySelector('.share-btn');
+    const ratingTitle = ratingForm.querySelector('.rating-form-title');
+    
+    // Update title to indicate login requirement
+    if (ratingTitle) {
+      ratingTitle.textContent = 'Sign in to share your experience';
+    }
+    
+    // Update share button
+    if (shareBtn) {
+      shareBtn.textContent = 'Sign In to Review';
+      shareBtn.disabled = false;
+      shareBtn.style.opacity = '1';
+    }
+    
+    // Remove any existing login prompts
+    const loginPrompt = ratingForm.querySelector('.login-prompt');
+    if (loginPrompt) {
+      loginPrompt.remove();
+    }
+    
+    // Disable form elements (but keep them visible for preview)
+    enableFormElements(false);
+    
+  }
+
+  function enableFormElements(enabled) {
+    const ratingForm = document.querySelector('.rating-form');
+    const stars = ratingForm.querySelectorAll('.star-input');
+    const categories = ratingForm.querySelectorAll('.rating-category-btn');
+    const textarea = ratingForm.querySelector('.rating-textarea');
+    const anonymousCheckbox = document.getElementById('anonymous-review');
+    
+    stars.forEach(star => {
+      star.style.pointerEvents = enabled ? 'auto' : 'none';
+      star.style.opacity = enabled ? '1' : '0.5';
+    });
+    
+    categories.forEach(btn => {
+      btn.disabled = !enabled;
+      btn.style.opacity = enabled ? '1' : '0.5';
+    });
+    
+    if (textarea) {
+      textarea.disabled = !enabled;
+      textarea.style.opacity = enabled ? '1' : '0.5';
+      if (!enabled) {
+        textarea.placeholder = 'Please sign in to write a review...';
+      } else {
+        textarea.placeholder = 'Tell us what can be improved...';
+      }
+    }
+    
+    // Handle anonymous checkbox
+    if (anonymousCheckbox) {
+      anonymousCheckbox.disabled = !enabled;
+      const checkboxLabel = anonymousCheckbox.closest('.anonymous-checkbox');
+      if (checkboxLabel) {
+        checkboxLabel.style.opacity = enabled ? '1' : '0.5';
+        checkboxLabel.style.pointerEvents = enabled ? 'auto' : 'none';
+      }
+    }
+  }
+
+
+  function showLoginPrompt() {
+    // Create a modal-style login prompt
+    const modal = document.createElement('div');
+    modal.className = 'review-login-modal';
+    modal.innerHTML = `
+      <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+          <div style="margin-bottom: 16px;">
+            <i class="fas fa-user-lock" style="font-size: 48px; color: #96392d; margin-bottom: 16px;"></i>
+          </div>
+          <h3 style="color: #96392d; font-family: 'PoppinsRegular', sans-serif; margin-bottom: 12px;">Sign In Required</h3>
+          <p style="color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.5;">
+            Please sign in to your account to share your review and help other customers make informed decisions.
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="review-login-btn" style="background: #96392d; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-family: 'PoppinsRegular', sans-serif; cursor: pointer; font-size: 14px;">
+              Sign In
+            </button>
+            <button id="review-cancel-btn" style="background: #f8f9fa; color: #666; border: 1px solid #dee2e6; padding: 12px 24px; border-radius: 6px; font-family: 'PoppinsRegular', sans-serif; cursor: pointer; font-size: 14px;">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('review-login-btn').addEventListener('click', () => {
+      document.body.removeChild(modal);
+      window.location.href = 'html/login.html';
+    });
+    
+    document.getElementById('review-cancel-btn').addEventListener('click', () => {
+      document.body.removeChild(modal);
+    });
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+      }
+    });
+  }
+
+
+  function setupAuthStateListener() {
+    try {
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        firebase.auth().onAuthStateChanged((user) => {
+          console.log('Reviews: Auth state changed:', user ? 'User logged in' : 'User logged out');
+          
+          // Update the review form UI based on authentication state
+          setTimeout(() => {
+            checkAuthenticationAndUpdateUI();
+          }, 100);
+        });
+      }
+    } catch (error) {
+      console.error('Error setting up auth state listener for reviews:', error);
+    }
+  }
+
   // Start the Firebase initialization
   waitForFirebase();
 });

@@ -198,7 +198,7 @@
     <!-- Customer Reviews & Feedback Section (exactly as screenshot) -->
     <section class="customer-reviews-section">
       <h2 class="customer-reviews-title">WHY OUR CUSTOMERS LOVE US</h2>
-          <div class="customer-reviews-subtitle">Share your own experience at Viktoria’s Bistro</div>
+          <div class="customer-reviews-subtitle">Share your own experience at Viktoria's Bistro</div>
       <div class="customer-reviews-flex">
         <!-- Left: Reviews List -->
         <div class="customer-reviews-list">
@@ -265,6 +265,13 @@
             <button type="button" class="rating-category-btn">Pricing</button>
           </div>
           <textarea class="rating-textarea" placeholder="Tell us what can be improved..." maxlength="300"></textarea>
+          <div class="anonymous-toggle">
+            <label class="anonymous-checkbox">
+              <input type="checkbox" id="anonymous-review" />
+              <span class="checkmark"></span>
+              Post as anonymous
+            </label>
+          </div>
           <button type="submit" class="share-btn">Share</button>
         </form>
       </div>
@@ -593,6 +600,106 @@
           right: -50px;
           min-width: 180px;
         }
+      }
+
+
+      /* Anonymous toggle styling */
+      .anonymous-toggle {
+        margin: 12px 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      .anonymous-checkbox {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 14px;
+        font-family: 'PoppinsRegular', sans-serif;
+        color: #666;
+        user-select: none;
+      }
+
+      .anonymous-checkbox input[type="checkbox"] {
+        display: none;
+      }
+
+      .checkmark {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #96392d;
+        border-radius: 3px;
+        margin-right: 8px;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .anonymous-checkbox input[type="checkbox"]:checked + .checkmark {
+        background-color: #96392d;
+        border-color: #96392d;
+      }
+
+      .anonymous-checkbox input[type="checkbox"]:checked + .checkmark:after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .anonymous-checkbox:hover .checkmark {
+        border-color: #760000;
+      }
+
+      .anonymous-checkbox input[type="checkbox"]:checked + .checkmark {
+        background-color: #96392d;
+      }
+
+      /* Enhanced category button styling */
+      .rating-category-btn {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 2px solid #dee2e6;
+        position: relative;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        color: #333;
+        user-select: none;
+      }
+
+      .rating-category-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(150, 57, 45, 0.3);
+      }
+
+      .rating-category-btn.active {
+        box-shadow: 0 2px 8px rgba(150, 57, 45, 0.4);
+      }
+
+      .rating-category-btn:active {
+        transform: translateY(0);
+      }
+
+      /* Add a subtle ripple effect */
+      .rating-category-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.3s, height 0.3s;
+      }
+
+      .rating-category-btn:active::before {
+        width: 200px;
+        height: 200px;
       }
     </style>
     
