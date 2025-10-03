@@ -241,6 +241,33 @@ async function createMonthlyDetailCharts(year, month, db) {
   drawProfitChart();
 }
 
+// Safari browser detection and compatibility fixes
+function isSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+}
+
+function isMobileSafari() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+// Safari-specific chart rendering optimizations
+function optimizeForSafari(chartDiv) {
+  if (isSafari() || isMobileSafari()) {
+    // Force hardware acceleration for Safari
+    chartDiv.style.webkitTransform = 'translateZ(0)';
+    chartDiv.style.transform = 'translateZ(0)';
+    chartDiv.style.webkitBackfaceVisibility = 'hidden';
+    chartDiv.style.backfaceVisibility = 'hidden';
+    
+    // Safari-specific container fixes
+    const container = chartDiv.parentElement;
+    if (container) {
+      container.style.webkitTransform = 'translateZ(0)';
+      container.style.transform = 'translateZ(0)';
+    }
+  }
+}
+
 function drawOrdersChart() {
   const chartDiv = document.getElementById('ordersChart');
   if (!chartDiv || !ordersChartData) return;
@@ -298,6 +325,9 @@ function drawOrdersChart() {
     tooltip: { textStyle: { fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 12) } }
   };
   
+  // Safari-specific optimizations
+  optimizeForSafari(chartDiv);
+  
   // Ensure chart container is visible before drawing
   if (chartDiv.offsetWidth === 0 || chartDiv.offsetHeight === 0) {
     console.log('Chart container not visible, waiting...');
@@ -305,8 +335,13 @@ function drawOrdersChart() {
     return;
   }
   
-  ordersChart = new google.visualization.LineChart(chartDiv);
-  ordersChart.draw(ordersChartData, options);
+  // Safari-specific delay for proper rendering
+  const safariDelay = (isSafari() || isMobileSafari()) ? 50 : 0;
+  
+  setTimeout(() => {
+    ordersChart = new google.visualization.LineChart(chartDiv);
+    ordersChart.draw(ordersChartData, options);
+  }, safariDelay);
 }
 
 function drawProfitChart() {
@@ -366,6 +401,9 @@ function drawProfitChart() {
     tooltip: { textStyle: { fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 12) } }
   };
   
+  // Safari-specific optimizations
+  optimizeForSafari(chartDiv);
+  
   // Ensure chart container is visible before drawing
   if (chartDiv.offsetWidth === 0 || chartDiv.offsetHeight === 0) {
     console.log('Chart container not visible, waiting...');
@@ -373,8 +411,13 @@ function drawProfitChart() {
     return;
   }
   
-  profitChart = new google.visualization.LineChart(chartDiv);
-  profitChart.draw(profitChartData, options);
+  // Safari-specific delay for proper rendering
+  const safariDelay = (isSafari() || isMobileSafari()) ? 50 : 0;
+  
+  setTimeout(() => {
+    profitChart = new google.visualization.LineChart(chartDiv);
+    profitChart.draw(profitChartData, options);
+  }, safariDelay);
 }
 
 // ...existing code...
