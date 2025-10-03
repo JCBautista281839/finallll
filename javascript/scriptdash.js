@@ -248,6 +248,8 @@ function drawOrdersChart() {
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
+  const isMobile = window.innerWidth <= 576;
+  const isIPhone13 = window.innerWidth <= 390 && window.innerHeight <= 844;
   
   // Dynamic chart title based on selection
   let chartTitle = '';
@@ -261,16 +263,20 @@ function drawOrdersChart() {
   const options = {
     title: chartTitle,
     fontName: 'Poppins',
-    titleTextStyle: { color: '#333333', fontSize: 16, bold: true },
+    titleTextStyle: { 
+      color: '#333333', 
+      fontSize: isIPhone13 ? 13 : (isMobile ? 14 : 16), 
+      bold: true 
+    },
     hAxis: {
-      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
-      textStyle: { color: '#666666', fontSize: 11 },
+      titleTextStyle: { color: '#666666', fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 13), bold: true },
+      textStyle: { color: '#666666', fontSize: isIPhone13 ? 9 : (isMobile ? 10 : 11) },
       gridlines: { color: '#e5e7eb', count: isDaily ? -1 : 12 },
       slantedText: isDaily && selectedMonth !== 'all'
     },
     vAxis: {
-      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
-      textStyle: { color: '#666666', fontSize: 11 },
+      titleTextStyle: { color: '#666666', fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 13), bold: true },
+      textStyle: { color: '#666666', fontSize: isIPhone13 ? 9 : (isMobile ? 10 : 11) },
       gridlines: { color: '#e5e7eb' },
       format: 'short',
       viewWindow: { min: 0 }
@@ -280,12 +286,25 @@ function drawOrdersChart() {
     colors: ['#c81f7b'],
     curveType: 'function',
     interpolateNulls: true,
-    chartArea: { left: 30, top: 15, width: '90%', height: '80%' },
-    lineWidth: 3,
-    pointSize: 6,
+    chartArea: { 
+      left: isIPhone13 ? 25 : (isMobile ? 30 : 30), 
+      top: isIPhone13 ? 20 : (isMobile ? 25 : 15), 
+      width: isIPhone13 ? '90%' : (isMobile ? '88%' : '90%'), 
+      height: isIPhone13 ? '75%' : (isMobile ? '78%' : '80%') 
+    },
+    lineWidth: isIPhone13 ? 2 : (isMobile ? 2.5 : 3),
+    pointSize: isIPhone13 ? 4 : (isMobile ? 5 : 6),
     focusTarget: 'category',
-    tooltip: { textStyle: { fontSize: 12 } }
+    tooltip: { textStyle: { fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 12) } }
   };
+  
+  // Ensure chart container is visible before drawing
+  if (chartDiv.offsetWidth === 0 || chartDiv.offsetHeight === 0) {
+    console.log('Chart container not visible, waiting...');
+    setTimeout(() => drawOrdersChart(), 100);
+    return;
+  }
+  
   ordersChart = new google.visualization.LineChart(chartDiv);
   ordersChart.draw(ordersChartData, options);
 }
@@ -297,6 +316,8 @@ function drawProfitChart() {
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
+  const isMobile = window.innerWidth <= 576;
+  const isIPhone13 = window.innerWidth <= 390 && window.innerHeight <= 844;
   
   // Dynamic chart chart title based on selection
   let chartTitle = '';
@@ -310,16 +331,20 @@ function drawProfitChart() {
   const options = {
     title: chartTitle,
     fontName: 'Poppins',
-    titleTextStyle: { color: '#333333', fontSize: 16, bold: true },
+    titleTextStyle: { 
+      color: '#333333', 
+      fontSize: isIPhone13 ? 13 : (isMobile ? 14 : 16), 
+      bold: true 
+    },
     hAxis: {
-      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
-      textStyle: { color: '#666666', fontSize: 11 },
+      titleTextStyle: { color: '#666666', fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 13), bold: true },
+      textStyle: { color: '#666666', fontSize: isIPhone13 ? 9 : (isMobile ? 10 : 11) },
       gridlines: { color: '#e5e7eb', count: isDaily ? -1 : 12 },
       slantedText: isDaily && selectedMonth !== 'all'
     },
     vAxis: {
-      titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
-      textStyle: { color: '#666666', fontSize: 11 },
+      titleTextStyle: { color: '#666666', fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 13), bold: true },
+      textStyle: { color: '#666666', fontSize: isIPhone13 ? 9 : (isMobile ? 10 : 11) },
       gridlines: { color: '#e5e7eb' },
       format: '₱#,###',
       viewWindow: { min: 0 }
@@ -329,12 +354,25 @@ function drawProfitChart() {
     colors: ['#926afa'],
     curveType: 'function',
     interpolateNulls: true,
-    chartArea: { left: 40, top: 15, width: '90%', height: '80%' },
-    lineWidth: 3,
-    pointSize: 6,
+    chartArea: { 
+      left: isIPhone13 ? 30 : (isMobile ? 35 : 40), 
+      top: isIPhone13 ? 20 : (isMobile ? 25 : 15), 
+      width: isIPhone13 ? '90%' : (isMobile ? '88%' : '90%'), 
+      height: isIPhone13 ? '75%' : (isMobile ? '78%' : '80%') 
+    },
+    lineWidth: isIPhone13 ? 2 : (isMobile ? 2.5 : 3),
+    pointSize: isIPhone13 ? 4 : (isMobile ? 5 : 6),
     focusTarget: 'category',
-    tooltip: { textStyle: { fontSize: 12 } }
+    tooltip: { textStyle: { fontSize: isIPhone13 ? 10 : (isMobile ? 11 : 12) } }
   };
+  
+  // Ensure chart container is visible before drawing
+  if (chartDiv.offsetWidth === 0 || chartDiv.offsetHeight === 0) {
+    console.log('Chart container not visible, waiting...');
+    setTimeout(() => drawProfitChart(), 100);
+    return;
+  }
+  
   profitChart = new google.visualization.LineChart(chartDiv);
   profitChart.draw(profitChartData, options);
 }

@@ -2451,6 +2451,113 @@ body.dark-mode .sticky-header table thead th { background:#2d2d2d !important; }
   background: #a8a8a8;
 }
 
+/* ========== IPHONE 13 SPECIFIC RESPONSIVE (390px x 844px) ========== */
+@media (max-width: 390px) and (max-height: 844px) {
+  .dashboard-container {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* iPhone 13 chart optimizations */
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 200px !important;
+    min-height: 200px !important;
+    overflow: visible !important;
+  }
+  
+  /* iPhone 13 chart container improvements */
+  #ordersChart,
+  #profitChart {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+    min-height: 200px !important;
+  }
+  
+  /* iPhone 13 chart section spacing */
+  .chart-section {
+    margin-bottom: 1rem !important;
+    padding: 0.75rem !important;
+  }
+  
+  /* iPhone 13 chart titles */
+  .chart-section h6.mb-0.text-muted {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.75rem !important;
+    color: #555 !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+  }
+  
+  /* iPhone 13 Orders & Revenue Overview container */
+  .col-12.col-lg-8 > .bg-white {
+    min-height: 450px !important;
+    padding: 1rem !important;
+  }
+  
+  /* iPhone 13 mini-cards adjustments */
+  .mini-card {
+    padding: 0.9rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mini-card .icon,
+  .mini-card .icon-img,
+  .mini-card .cultery-img,
+  .mini-card .team-img {
+    width: 32px !important;
+    height: 32px !important;
+    margin-top: -8px !important;
+  }
+  
+  .mini-card .fw-bold.fs-5 {
+    font-size: 1rem !important;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small {
+    font-size: 0.8rem !important;
+  }
+  
+  /* iPhone 13 chart toggle buttons */
+  .chart-toggle-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+  
+  /* iPhone 13 form selects */
+  .form-select {
+    font-size: 13px !important;
+    padding: 0.3rem 0.6rem !important;
+  }
+}
+
+/* ========== IPHONE 13 PRO MAX (428px x 926px) ========== */
+@media (max-width: 428px) and (max-height: 926px) {
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 220px !important;
+    min-height: 220px !important;
+    overflow: visible !important;
+  }
+  
+  #ordersChart,
+  #profitChart {
+    min-height: 220px !important;
+  }
+  
+  .col-12.col-lg-8 > .bg-white {
+    min-height: 480px !important;
+    padding: 1.1rem !important;
+  }
+  
+  .chart-section {
+    margin-bottom: 1.1rem !important;
+    padding: 0.85rem !important;
+  }
+}
+
 /* Show hidden cards and hide FAB on mid-mobile/desktop */
 @media (min-width: 577px) {
   .mobile-hide-cards {
