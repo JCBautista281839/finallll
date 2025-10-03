@@ -202,13 +202,28 @@
               </div>
             </div>
             
+            <!-- Mobile Chart Toggle Button -->
+            <div class="d-md-none d-flex justify-content-center mb-3">
+              <div class="btn-group chart-toggle-group" role="group" aria-label="Chart toggle">
+                <input type="radio" class="btn-check" name="chartToggle" id="ordersToggle" autocomplete="off" checked>
+                <label class="btn btn-outline-primary chart-toggle-btn" for="ordersToggle">
+                  <i class="bi bi-graph-up me-1"></i>Orders
+                </label>
+
+                <input type="radio" class="btn-check" name="chartToggle" id="revenueToggle" autocomplete="off">
+                <label class="btn btn-outline-primary chart-toggle-btn" for="revenueToggle">
+                  <i class="bi bi-currency-dollar me-1"></i>Revenue
+                </label>
+              </div>
+            </div>
+            
             <!-- Charts Side by Side -->
             <div class="row g-3">
               <!-- Orders Chart -->
               <div class="col-12 col-md-6">
                 <div class="chart-section">
                   <div class="d-flex align-items-center mb-2">
-                    <h6 class="mb-0 text-muted">Monthly Orders</h6>
+                    <h6 class="mb-0 text-muted" id="ordersChartTitle">Monthly Orders</h6>
                   </div>
                   <div class="orders-chart-container">
                     <div id="ordersChart" style="width: 100%; height: 300px;"></div>
@@ -220,7 +235,7 @@
               <div class="col-12 col-md-6">
                 <div class="chart-section">
                   <div class="d-flex align-items-center mb-2">
-                    <h6 class="mb-0 text-muted">Monthly Revenue</h6>
+                    <h6 class="mb-0 text-muted" id="revenueChartTitle">Monthly Revenue</h6>
                   </div>
                   <div class="profit-chart-container">
                     <div id="profitChart" style="width: 100%; height: 300px;"></div>
@@ -232,7 +247,7 @@
         </div>
 
         
-        <div class="col-12 col-md-4 d-flex">
+        <div class="col-12 col-md-4 d-flex mobile-hide-cards">
           <div id="topProductsCard" class="bg-white rounded-4 shadow-sm p-3 p-md-4 dashboard-card bottom-panel h-100">
             <h5 class="mb-3">Sales</h5>
             <div class="row g-3">
@@ -263,9 +278,34 @@
         </div>
 
         
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-4 mobile-hide-cards">
           <div class="bg-white rounded-4 shadow-sm p-3 p-md-4 dashboard-card bottom-panel">
-            <h5 class="mb-3">Top Products</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Top Products</h5>
+              <!-- Table-specific burger menu -->
+              <div class="position-relative">
+                <button class="table-burger-menu d-lg-none" id="topProductsBurger">
+                  <span class="burger-line"></span>
+                  <span class="burger-line"></span>
+                  <span class="burger-line"></span>
+                </button>
+                <!-- Dropdown menu -->
+                <div class="table-menu-dropdown" id="topProductsDropdown">
+                  <button class="table-menu-item">
+                    <i class="bi bi-eye"></i>View Details
+                  </button>
+                  <button class="table-menu-item">
+                    <i class="bi bi-download"></i>Export Data
+                  </button>
+                  <button class="table-menu-item">
+                    <i class="bi bi-arrow-clockwise"></i>Refresh
+                  </button>
+                  <button class="table-menu-item">
+                    <i class="bi bi-gear"></i>Settings
+                  </button>
+                </div>
+              </div>
+            </div>
             <div class="table-container sticky-header">
               <table class="table table-sm align-middle mb-0 responsive-table">
                 <thead>
@@ -287,9 +327,37 @@
         </div>
 
         
-        <div class="col-12 col-md-4 d-flex">
+        <div class="col-12 col-md-4 d-flex mobile-hide-cards">
           <div class="bg-white rounded-4 shadow-sm p-3 p-md-4 dashboard-card inventory-status-card bottom-panel h-100">
-            <h5 class="mb-3">Inventory Status</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Inventory Status</h5>
+              <!-- Table-specific burger menu -->
+              <div class="position-relative">
+                <button class="table-burger-menu d-lg-none" id="inventoryBurger">
+                  <span class="burger-line"></span>
+                  <span class="burger-line"></span>
+                  <span class="burger-line"></span>
+                </button>
+                <!-- Dropdown menu -->
+                <div class="table-menu-dropdown" id="inventoryDropdown">
+                  <button class="table-menu-item">
+                    <i class="bi bi-eye"></i>View Details
+                  </button>
+                  <button class="table-menu-item">
+                    <i class="bi bi-plus-circle"></i>Add Item
+                  </button>
+                  <button class="table-menu-item">
+                    <i class="bi bi-download"></i>Export Data
+                  </button>
+                  <button class="table-menu-item">
+                    <i class="bi bi-arrow-clockwise"></i>Refresh
+                  </button>
+                  <button class="table-menu-item">
+                    <i class="bi bi-gear"></i>Settings
+                  </button>
+                </div>
+              </div>
+            </div>
             <div class="table-container inventory-status-container sticky-header">
               <table class="table table-sm align-middle mb-0 inventory-status-table responsive-table keep-header">
                 <thead>
@@ -312,6 +380,79 @@
 
       </div>
     </main>
+  </div>
+  
+  <!-- Floating Action Button for Dashboard Cards -->
+  <button id="dashboardFAB" class="fab-button d-md-none" title="Show Dashboard Cards">
+    <i class="fas fa-chart-bar"></i>
+  </button>
+  
+  <!-- Dashboard Cards Modal -->
+  <div id="dashboardCardsModal" class="dashboard-modal-overlay d-md-none">
+    <div class="dashboard-modal-content">
+      <div class="dashboard-modal-header">
+        <h5 class="mb-0">Dashboard Cards</h5>
+        <button id="closeDashboardModal" class="btn-close-modal">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="dashboard-modal-body">
+        <!-- Sales Card -->
+        <div class="mobile-dashboard-card mb-3">
+          <h6 class="fw-bold mb-3">Sales</h6>
+          <div class="mobile-sales-stats">
+            <div class="mobile-stat-item">
+              <span class="text-secondary small">Total Sales</span>
+              <span class="fw-bold">100</span>
+            </div>
+            <div class="mobile-stat-item">
+              <span class="text-secondary small">This Month</span>
+              <span class="fw-bold">100</span>
+            </div>
+            <div class="mobile-stat-item">
+              <span class="text-secondary small">Today</span>
+              <span class="fw-bold">100</span>
+            </div>
+          </div>
+          <div class="text-success small mt-3 d-flex align-items-center justify-content-center gap-1">
+            <i class="bi bi-graph-up-arrow"></i> 
+            <span>20% increased</span>
+          </div>
+        </div>
+        
+        <!-- Top Products Card -->
+        <div class="mobile-dashboard-card mb-3">
+          <h6 class="fw-bold mb-3">Top Products</h6>
+          <div class="mobile-table-container">
+            <table class="table table-sm align-middle mb-0">
+              <tbody id="mobileTopProductsBody">
+                <tr>
+                  <td colspan="2" class="text-center text-muted py-3">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Inventory Status Card -->
+        <div class="mobile-dashboard-card">
+          <h6 class="fw-bold mb-3">Inventory Status</h6>
+          <div class="mobile-table-container">
+            <table class="table table-sm align-middle mb-0">
+              <tbody id="mobileInventoryStatusBody">
+                <tr>
+                  <td colspan="2" class="text-center text-muted">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   
   
@@ -362,7 +503,7 @@
       
       // Toggle sidebar functions
       function toggleSidebar() {
-        if (sidebar.classList.contains('open')) {
+        if (sidebar && sidebar.classList.contains('open')) {
           closeSidebar();
         } else {
           openSidebar();
@@ -370,8 +511,12 @@
       }
       
       function openSidebar() {
-        sidebar.classList.add('open');
-        mobileOverlay.classList.add('show');
+        if (sidebar) {
+          sidebar.classList.add('open');
+        }
+        if (mobileOverlay) {
+          mobileOverlay.classList.add('show');
+        }
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
         
         // Hide the burger button when sidebar opens
@@ -381,8 +526,12 @@
       }
       
       function closeSidebar() {
-        sidebar.classList.remove('open');
-        mobileOverlay.classList.remove('show');
+        if (sidebar) {
+          sidebar.classList.remove('open');
+        }
+        if (mobileOverlay) {
+          mobileOverlay.classList.remove('show');
+        }
         document.body.style.overflow = ''; // Restore scrolling
         
         // Show the burger button when sidebar closes
@@ -406,31 +555,257 @@
       
       // Close sidebar when clicking on nav links on mobile
       document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-          if (window.innerWidth <= 768) {
-            closeSidebar();
+         link.addEventListener('click', () => {
+           if (window.innerWidth <= 576) {
+             closeSidebar();
+           }
+         });
+      });
+      
+       // Handle window resize
+       window.addEventListener('resize', function() {
+         if (window.innerWidth > 992) {
+           closeSidebar();
+         }
+       });
+      
+      // Prevent sidebar from opening on desktop (992px+)
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 992) {
+          sidebar.classList.remove('open');
+          mobileOverlay.classList.remove('show');
+          document.body.style.overflow = '';
+          // Hide burger button on desktop
+          if (mobileMenuBtn) {
+            mobileMenuBtn.style.display = 'none';
+          }
+        } else if (window.innerWidth >= 769 && window.innerWidth <= 992) {
+          // Tablet range - show burger button
+          if (mobileMenuBtn) {
+            mobileMenuBtn.style.display = 'block';
+          }
+        } else if (window.innerWidth >= 577 && window.innerWidth <= 768) {
+          // Mid-mobile range - hide burger button, show sidebar
+          if (mobileMenuBtn) {
+            mobileMenuBtn.style.display = 'none';
+          }
+          sidebar.classList.remove('open');
+          mobileOverlay.classList.remove('show');
+          document.body.style.overflow = '';
+        }
+      });
+      
+      // Dashboard Cards Modal functionality
+      const dashboardFAB = document.getElementById('dashboardFAB');
+      const dashboardModal = document.getElementById('dashboardCardsModal');
+      const closeModalBtn = document.getElementById('closeDashboardModal');
+      
+      // Open modal
+      if (dashboardFAB) {
+        dashboardFAB.addEventListener('click', function() {
+          dashboardModal.classList.add('show');
+          document.body.style.overflow = 'hidden';
+          syncMobileData();
+        });
+      }
+      
+      // Close modal
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeModal);
+      }
+      
+      // Close modal when clicking outside
+      if (dashboardModal) {
+        dashboardModal.addEventListener('click', function(e) {
+          if (e.target === dashboardModal) {
+            closeModal();
+          }
+        });
+      }
+      
+      function closeModal() {
+        dashboardModal.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+      
+      function syncMobileData() {
+        try {
+          // Copy top products data
+          const topProductsBody = document.getElementById('topProductsBody');
+          const mobileTopProductsBody = document.getElementById('mobileTopProductsBody');
+          
+          if (topProductsBody && mobileTopProductsBody) {
+            mobileTopProductsBody.innerHTML = topProductsBody.innerHTML;
+          }
+          
+          // Copy inventory data
+          const inventoryStatusBody = document.getElementById('inventoryStatusBody');
+          const mobileInventoryStatusBody = document.getElementById('mobileInventoryStatusBody');
+          
+          if (inventoryStatusBody && mobileInventoryStatusBody) {
+            mobileInventoryStatusBody.innerHTML = inventoryStatusBody.innerHTML;
+          }
+        } catch (error) {
+          console.log('Error syncing mobile data:', error);
+        }
+      }
+      
+       // Close modal on window resize to mid-mobile/desktop
+       window.addEventListener('resize', function() {
+         if (window.innerWidth > 576) {
+           closeModal();
+         }
+       });
+      
+      // Mobile Chart Toggle Functionality
+      const ordersToggle = document.getElementById('ordersToggle');
+      const revenueToggle = document.getElementById('revenueToggle');
+      const ordersChartContainer = document.querySelector('.col-12.col-md-6:first-child');
+      const revenueChartContainer = document.querySelector('.col-12.col-md-6:last-child');
+      
+      function toggleCharts() {
+        if (window.innerWidth <= 576) { // Mobile view only (576px and below)
+          if (ordersToggle && ordersToggle.checked) {
+            ordersChartContainer.style.display = 'block';
+            revenueChartContainer.style.display = 'none';
+            // Redraw orders chart after toggle with slight delay
+            setTimeout(() => {
+              if (window.drawOrdersChart && typeof window.drawOrdersChart === 'function') {
+                window.drawOrdersChart();
+              }
+            }, 150);
+          } else if (revenueToggle && revenueToggle.checked) {
+            ordersChartContainer.style.display = 'none';
+            revenueChartContainer.style.display = 'block';
+            // Redraw revenue chart after toggle with slight delay
+            setTimeout(() => {
+              if (window.drawProfitChart && typeof window.drawProfitChart === 'function') {
+                window.drawProfitChart();
+              }
+            }, 150);
+          }
+        } else { // Mid-mobile, Tablet and Desktop view (577px+) - show both charts
+          ordersChartContainer.style.display = 'block';
+          revenueChartContainer.style.display = 'block';
+          // Ensure both charts display properly
+          setTimeout(() => {
+            if (window.drawOrdersChart && typeof window.drawOrdersChart === 'function') {
+              window.drawOrdersChart();
+            }
+            if (window.drawProfitChart && typeof window.drawProfitChart === 'function') {
+              window.drawProfitChart();
+            }
+          }, 100);
+        }
+      }
+      
+      // Add event listeners for toggle buttons
+      if (ordersToggle) {
+        ordersToggle.addEventListener('change', toggleCharts);
+      }
+      if (revenueToggle) {
+        revenueToggle.addEventListener('change', toggleCharts);
+      }
+      
+      // Handle window resize to reset chart visibility
+      window.addEventListener('resize', function() {
+        toggleCharts();
+      });
+      
+      // Initialize chart visibility on page load
+      toggleCharts();
+      
+      // Table-specific burger menu functionality
+      const topProductsBurger = document.getElementById('topProductsBurger');
+      const inventoryBurger = document.getElementById('inventoryBurger');
+      const topProductsDropdown = document.getElementById('topProductsDropdown');
+      const inventoryDropdown = document.getElementById('inventoryDropdown');
+      
+      // Function to toggle dropdown menu
+      function toggleDropdown(button, dropdown) {
+        const isActive = button.classList.contains('active');
+        
+        // Close all other dropdowns first
+        document.querySelectorAll('.table-menu-dropdown').forEach(dd => {
+          dd.classList.remove('show');
+        });
+        document.querySelectorAll('.table-burger-menu').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        
+        // Toggle current dropdown
+        if (!isActive) {
+          button.classList.add('active');
+          dropdown.classList.add('show');
+        }
+      }
+      
+      // Event listeners for burger menus
+      if (topProductsBurger && topProductsDropdown) {
+        topProductsBurger.addEventListener('click', function(e) {
+          e.stopPropagation();
+          toggleDropdown(topProductsBurger, topProductsDropdown);
+        });
+      }
+      
+      if (inventoryBurger && inventoryDropdown) {
+        inventoryBurger.addEventListener('click', function(e) {
+          e.stopPropagation();
+          toggleDropdown(inventoryBurger, inventoryDropdown);
+        });
+      }
+      
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.table-burger-menu') && !e.target.closest('.table-menu-dropdown')) {
+          document.querySelectorAll('.table-menu-dropdown').forEach(dd => {
+            dd.classList.remove('show');
+          });
+          document.querySelectorAll('.table-burger-menu').forEach(btn => {
+            btn.classList.remove('active');
+          });
+        }
+      });
+      
+      // Handle menu item clicks
+      document.querySelectorAll('.table-menu-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const action = this.textContent.trim();
+          
+          // Close dropdown
+          this.closest('.table-menu-dropdown').classList.remove('show');
+          this.closest('.position-relative').querySelector('.table-burger-menu').classList.remove('active');
+          
+          // Handle different actions
+          switch(action) {
+            case 'View Details':
+              console.log('View Details clicked');
+              break;
+            case 'Export Data':
+              console.log('Export Data clicked');
+              break;
+            case 'Refresh':
+              console.log('Refresh clicked');
+              // Add refresh functionality here
+              break;
+            case 'Settings':
+              console.log('Settings clicked');
+              break;
+            case 'Add Item':
+              console.log('Add Item clicked');
+              break;
           }
         });
       });
       
-      // Handle window resize
-      window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-          closeSidebar();
-        }
-      });
-      
-      // Prevent sidebar from opening on desktop
-      window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-          sidebar.classList.remove('open');
-          mobileOverlay.classList.remove('show');
-          document.body.style.overflow = '';
-          // Show burger button when returning to desktop
-          if (mobileMenuBtn) {
-            mobileMenuBtn.style.display = 'block';
-          }
-        }
+    });
+    
+    // Remove any existing table view toggle buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      const toggleButtons = document.querySelectorAll('.table-view-toggle');
+      toggleButtons.forEach(button => {
+        button.remove();
       });
     });
     </script>

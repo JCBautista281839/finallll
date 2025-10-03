@@ -248,10 +248,20 @@ function drawOrdersChart() {
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
+  
+  // Dynamic chart title based on selection
+  let chartTitle = '';
+  if (isDaily) {
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    chartTitle = `Daily Orders - ${monthNames[parseInt(selectedMonth)]}`;
+  } else {
+    chartTitle = 'Monthly Orders Overview';
+  }
+  
   const options = {
-    title: '',
+    title: chartTitle,
     fontName: 'Poppins',
-    titleTextStyle: { color: '#333333' },
+    titleTextStyle: { color: '#333333', fontSize: 16, bold: true },
     hAxis: {
       titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
       textStyle: { color: '#666666', fontSize: 11 },
@@ -287,10 +297,20 @@ function drawProfitChart() {
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
+  
+  // Dynamic chart chart title based on selection
+  let chartTitle = '';
+  if (isDaily) {
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    chartTitle = `Daily Revenue - ${monthNames[parseInt(selectedMonth)]}`;
+  } else {
+    chartTitle = 'Monthly Revenue Overview';
+  }
+  
   const options = {
-    title: '',
+    title: chartTitle,
     fontName: 'Poppins',
-    titleTextStyle: { color: '#333333' },
+    titleTextStyle: { color: '#333333', fontSize: 16, bold: true },
     hAxis: {
       titleTextStyle: { color: '#666666', fontSize: 13, bold: true },
       textStyle: { color: '#666666', fontSize: 11 },
