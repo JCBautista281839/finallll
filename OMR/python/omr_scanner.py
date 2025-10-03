@@ -16,8 +16,23 @@ class OMRScanner:
     def __init__(self):
         """Initialize OMR Scanner with default parameters"""
         self.menu_items = [
-            'isda', 'egg', 'water', 'sinigang', 
-            'chicken', 'pusit', 'gatas', 'beef'
+            'WhtRc', 'Bangsi', 'TnaPng', 'PnkBagn', 'Bulalo',  
+            'MacChs', 'OvrBngs', 'Carbo', 'OrgChk', 'PltWhtRc',  
+            'RB-Bina', 'Viktoria’s Classic', 'SngTun', 'Alfrdo', 'Tapsi',  
+            'SzTofu', 'Porksi', 'PrkSsg', 'SprRc', 'Lechsi',  
+            'Fst3', 'Parmesan Wings', 'Crispy Diniguan w/ Rice', 'ChkSsg', 'PrkRc',  
+            'VktChk', 'BcnEggChs', 'BgrRc', 'PltGrlcRc', 'BfKald',  
+            'ChickBul', 'Chk&Moj', 'RB-KK', 'Fst2', 'SisiSi',  
+            'Cal&Frs', 'GrnSld', 'OrgChkR', 'ChkFil', 'Chksi',  
+            'TstBrd', 'SngBab', 'Fst1', 'RB-BulDng', 'ClbHse',  
+            'Liemsi', 'RB-Tofu', 'AmpCar', 'Bagn', 'Htdog',  
+            'Mojos', 'TndRc', 'RB-Kald', 'Chopsy', 'FshFil',  
+            'Hotsi', 'Longsi', 'BtrShrp', 'CrisKK', 'HnyWngs',  
+            'Tocsi', 'Spag', 'CrsPata', 'TbnRc', 'Egg',  
+            'CdnBlu', 'Nachos', 'SngHip', 'GrlcRc', 'Fst4',  
+            'Viktoria’s Cheesy Bacon', 'Fish&Moj', 'FrFrs', 'ChkTapa', 'BufWngs',  
+            'Viktoria’s Double Cheesy Bacon', 'HamEggChs', 'BfBroc', 'CrisDng'
+
         ]
         
         # Circle detection parameters
@@ -40,14 +55,85 @@ class OMRScanner:
         
         # Price mapping for menu items
         self.price_map = {
-            'isda': 180.00,
-            'egg': 25.00,
-            'water': 15.00,
-            'sinigang': 120.00,
-            'chicken': 150.00,
-            'pusit': 220.00,
-            'gatas': 35.00,
-            'beef': 200.00
+            'WhtRc': 30.00,
+            'Bangsi': 145.00,
+            'TnaPng': 320.00,
+            'PnkBagn': 510.00,
+            'Bulalo': 510.00,
+            'MacChs': 180.00,
+            'OvrBngs': 420.00,
+            'Carbo': 190.00,
+            'OrgChk': 460.00,
+            'PltWhtRc': 110.00,
+            'RB-Bina': 190.00,
+            'Viktoria’s Classic': 220.00,
+            'SngTun': 490.00,
+            'Alfrdo': 230.00,
+            'Tapsi': 150.00,
+            'SzTofu': 190.00,
+            'Porksi': 155.00,
+            'PrkSsg': 230.00,
+            'SprRc': 290.00,
+            'Lechsi': 160.00,
+            'Fst3': 1889.00,
+            'Parmesan Wings': 240.00,
+            'Crispy Diniguan w/ Rice': 170.00,
+            'ChkSsg': 230.00,
+            'PrkRc': 250.00,
+            'VktChk': 490.00,
+            'BcnEggChs': 150.00,
+            'BgrRc': 180.00,
+            'PltGrlcRc': 120.00,
+            'BfKald': 505.00,
+            'ChickBul': 160.00,
+            'Chk&Moj': 270.00,
+            'RB-KK': 230.00,
+            'Fst2': 1669.00,
+            'SisiSi': 140.00,
+            'Cal&Frs': 300.00,
+            'GrnSld': 230.00,
+            'OrgChkR': 170.00,
+            'ChkFil': 140.00,
+            'Chksi': 150.00,
+            'TstBrd': 30.00,
+            'SngBab': 495.00,
+            'Fst1': 1449.00,
+            'RB-BulDng': 160.00,
+            'ClbHse': 180.00,
+            'Liemsi': 160.00,
+            'RB-Tofu': 160.00,
+            'AmpCar': 460.00,
+            'Bagn': 360.00,
+            'Htdog': 80.00,
+            'Mojos': 120.00,
+            'TndRc': 290.00,
+            'RB-Kald': 250.00,
+            'Chopsy': 420.00,
+            'FshFil': 170.00,
+            'Hotsi': 90.00,
+            'Longsi': 170.00,
+            'BtrShrp': 505.00,
+            'CrisKK': 505.00,
+            'HnyWngs': 220.00,
+            'Tocsi': 140.00,
+            'Spag': 210.00,
+            'CrsPata': 800.00,
+            'TbnRc': 290.00,
+            'Egg': 60.00,
+            'CdnBlu': 170.00,
+            'Nachos': 205.00,
+            'SngHip': 490.00,
+            'GrlcRc': 35.00,
+            'Fst4': 1779.00,
+            'Viktoria’s Cheesy Bacon': 280.00,
+            'Fish&Moj': 260.00,
+            'FrFrs': 80.00,
+            'ChkTapa': 140.00,
+            'BufWngs': 220.00,
+            'Viktoria’s Double Cheesy Bacon': 350.00,
+            'HamEggChs': 150.00,
+            'BfBroc': 505.00,
+            'CrisDng': 495.00
         }
 
     def load_image(self, filepath: str) -> Optional[np.ndarray]:
@@ -101,8 +187,8 @@ class OMRScanner:
             if circles is not None:
                 circles = np.round(circles[0, :]).astype("int")
                 
-                # Sort circles by y-coordinate (top to bottom)
-                circles = sorted(circles, key=lambda c: c[1])
+    
+                circles = sorted(circles, key=lambda c: (c[0], c[1]))
                 
                 for i, (x, y, r) in enumerate(circles):
                     circle_data.append({
@@ -170,7 +256,7 @@ class OMRScanner:
         
         return is_shaded, fill_percentage
 
-    def analyze_shaded_circles(self, filepath: str) -> Dict:
+    def analyze_shaded_circles(self, filepath: str, circles_data: Optional[List[Dict]] = None) -> Dict:
         """Analyze shaded/filled circles in the image"""
         try:
             print(f"Analyzing shaded circles in: {os.path.basename(filepath)}")
@@ -182,12 +268,14 @@ class OMRScanner:
             
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
-            # First detect all circles
-            circles_result = self.detect_circles(filepath)
-            if 'error' in circles_result:
-                return circles_result
-            
-            circles = circles_result['circles']
+            # Use provided circles or detect them
+            if circles_data is None:
+                circles_result = self.detect_circles(filepath)
+                if 'error' in circles_result:
+                    return circles_result
+                circles = circles_result['circles']
+            else:
+                circles = circles_data
             
             # Analyze each circle for shading
             shaded_circles = []
@@ -221,6 +309,8 @@ class OMRScanner:
                 status = "SHADED" if is_shaded else "EMPTY"
                 cv2.putText(debug_image, status, (x-20, y-r-10), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+                cv2.putText(debug_image, str(circle['id']), (x-10, y+5), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1) # Add circle ID
             
             # Save debug image
             debug_filename = f"shaded_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
@@ -261,43 +351,65 @@ class OMRScanner:
             
             circles = circles_result['circles']
             
-            # Analyze shaded circles
-            shaded_result = self.analyze_shaded_circles(filepath)
+            # Analyze shaded circles, passing the detected circles
+            shaded_result = self.analyze_shaded_circles(filepath, circles_data=circles)
             if 'error' in shaded_result:
                 return shaded_result
             
             # Map shaded circles to menu items
-            selected_items = []
-            for i, shaded_circle in enumerate(shaded_result['shaded_circle_data']):
-                if i < len(self.menu_items):
-                    item_name = self.menu_items[i]
+            selected_items = [] # Re-introduce for calculations
+            selected_items_display = []
+            for i, circle in enumerate(circles): # Iterate through all circles, not just shaded ones
+                item_name = self.menu_items[i] if i < len(self.menu_items) else "N/A"
+                is_shaded = any(c['id'] == circle['id'] for c in shaded_result['shaded_circle_data'])
+                
+                if is_shaded and i < len(self.menu_items): # Only add shaded items for price/confidence calculation
                     selected_items.append({
                         'item': item_name,
                         'quantity': 1,
                         'price': self.price_map.get(item_name, 100.00),
-                        'fill_percentage': shaded_circle['fill_percentage'],
-                        'confidence': min(100, max(70, 100 - shaded_circle['fill_percentage'] + 70))
+                        'fill_percentage': next(c['fill_percentage'] for c in shaded_result['shaded_circle_data'] if c['id'] == circle['id']), # Get fill_percentage for shaded item
+                        'confidence': min(100, max(70, 100 - next(c['fill_percentage'] for c in shaded_result['shaded_circle_data'] if c['id'] == circle['id']) + 70))
                     })
-            
+
+                status = "Shaded" if is_shaded else "Not Shaded"
+                selected_items_display.append(f"ID {circle['id']}: {item_name} ({status})")
+
             # Calculate totals
-            total_price = sum(item['price'] for item in selected_items)
+            total_price = sum(item['price'] for item in selected_items) # Keep original calculation for total price
             
             # Create comprehensive debug image
             debug_image = image.copy()
+            # Create a set of shaded circle IDs for quick lookup
+            shaded_circle_ids = {c['id'] for c in shaded_result['shaded_circle_data']}
+
             for i, circle in enumerate(circles):
                 x, y, r = circle['center'][0], circle['center'][1], circle['radius']
-                is_shaded = i < len(selected_items)
+                current_circle_id = circle['id']
+                is_shaded = current_circle_id in shaded_circle_ids
                 
-                color = (0, 255, 0) if is_shaded else (0, 0, 255)
+                color = (0, 255, 0) if is_shaded else (0, 0, 255) # Green for shaded, Red for empty
                 cv2.circle(debug_image, (x, y), r, color, 3)
                 
+                # Find the corresponding item name for the circle ID
+                item_name = "N/A"
+                for item_data in selected_items:
+                    # This logic assumes a direct mapping from circle index to menu_items index.
+                    # We need to refine this to map based on circle ID if possible, but for now, 
+                    # we'll stick to the existing index-based mapping for item names.
+                    # However, the is_shaded logic is now correctly based on detected shaded circles.
+                    if i < len(self.menu_items):
+                        item_name = self.menu_items[i]
+                        break
+                
                 if is_shaded:
-                    item_name = selected_items[i]['item']
-                    cv2.putText(debug_image, f"✓ {item_name}", (x-30, y-r-15), 
+                    cv2.putText(debug_image, f" {item_name}", (x-30, y-r-15), 
                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                 else:
-                    cv2.putText(debug_image, "○", (x-5, y+5), 
+                    cv2.putText(debug_image, f" {item_name}", (x-30, y-r-15), 
                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                cv2.putText(debug_image, str(current_circle_id), (x-10, y+5), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1) # Add circle ID
             
             # Add summary text
             cv2.putText(debug_image, f"Total Items: {len(selected_items)}", 
@@ -314,12 +426,13 @@ class OMRScanner:
                 'scan_type': 'FULL_OMR_SCAN',
                 'total_circles': len(circles),
                 'selected_items': len(selected_items),
-                'selected_item_data': selected_items,
+                'selected_item_data': selected_items_display, # Use the new display-ready list
                 'total_price': round(total_price, 2),
                 'menu_items_available': self.menu_items,
                 'debug_image': debug_filename,
                 'processing_time': datetime.now().isoformat(),
-                'confidence_score': round(np.mean([item['confidence'] for item in selected_items]) if selected_items else 0, 1)
+                'confidence_score': round(np.mean([item['confidence'] for item in selected_items]) if selected_items else 0, 1),
+                'selected_items_display': selected_items_display # Ensure this is also available
             }
             
         except Exception as e:

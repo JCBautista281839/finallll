@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="../css/nav.css"> 
     <link rel="stylesheet" href="../css/stylepos.css">
     <link rel="stylesheet" href="../css/pos-menu.css">
+    <link rel="stylesheet" href="../css/omr-scanner.css">
     
-    <!-- OMR-related CSS removed - functionality moved to OMR directory -->
 <body>
      <div class="dashboard-container d-flex">
         <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
@@ -97,12 +97,15 @@
            
            <div class="search-container">
             <div class="input-group">
-              <!-- OMR scan buttons removed - functionality moved to OMR directory -->
               <input type="text" class="form-control search-input" placeholder="Search">
               <button class="btn btn-outline-secondary" type="button">
                 <img src="../src/Icons/search.png" alt="Search" class="search-icon">
               </button>
             </div>
+            <!-- OMR Scanner Button -->
+            <button class="btn btn-primary mt-2" id="omrScannerBtn" title="Scan OMR Sheet">
+              <i class="bi bi-upc-scan"></i> Scan Order Sheet
+            </button>
           </div>
 
             
@@ -205,6 +208,7 @@
         </div>
       </main>
      </div>
+
       <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
       <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
       <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -217,6 +221,7 @@
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
       <script src="../javascript/pos.js"></script>
       <script src="../javascript/clock.js"></script>
+      <script src="../javascript/omr-scanner-integration.js"></script>
 
      
     <script>
@@ -229,8 +234,6 @@
           }
         });
       }
-      
-      // OMR scanner functionality removed - moved to OMR directory
     });
     </script>
 </body>

@@ -7,6 +7,8 @@ const admin = require('firebase-admin');
 require('dotenv').config(); // Load environment variables from .env file
 
 const { spawn, exec } = require('child_process');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 
@@ -47,6 +49,22 @@ if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
     console.warn('📝 Please create a .env file with your SendGrid API key');
     console.warn('📖 See SETUP_INSTRUCTIONS.md for details');
 }
+
+// Multer configuration for file uploads
+const upload = multer({
+    dest: 'uploads/',
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        // Accept only image files
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'), false);
+        }
+    }
+});
 
 // Mask API key for security (only show first 8 and last 4 characters)
 function maskApiKey(apiKey) {

@@ -552,7 +552,20 @@ class OMRTestingSystem {
         // Add details based on result type
         Object.entries(result.details).forEach(([key, value]) => {
             const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-            html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value}</p>`;
+            
+            if (key === 'selectedItemsDisplay') {
+                html += `<p class="mb-1"><strong>${formattedKey}:</strong></p><ul>`;
+                value.forEach(item => {
+                    html += `<li>${item}</li>`;
+                });
+                html += `</ul>`;
+            } else if (key === 'debugImage') {
+                html += `<p class="mb-1"><strong>${formattedKey}:</strong> <a href="/api/results/${value}" target="_blank">${value}</a></p>`;
+            } else if (key === 'menuItemsAvailable'){
+                html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value.join(', ')}</p>`;
+            } else {
+                html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value}</p>`;
+            }
         });
 
         html += `

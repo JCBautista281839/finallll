@@ -524,7 +524,7 @@ async function startPOSSystem() {
             }
             
             const existingItem = document.querySelector(`[data-item-name="${name}"]`);
-            const unitPrice = parseFloat(price.replace('₱','').replace(',',''));
+            const unitPrice = parseFloat(String(price).replace('₱','').replace(',',''));
             
             if (isNaN(unitPrice)) {
                 throw new Error(`Invalid price format: ${price}`);
@@ -1737,5 +1737,3 @@ window.decreaseQuantity = decreaseQuantity;
         console.error('Error decreasing quantity:', error);
     }
 }
-
-// End of file
