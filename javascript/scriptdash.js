@@ -530,6 +530,9 @@ function loadInventoryStatus() {
 
           visible.forEach(item => inventoryBody.appendChild(createInventoryRow(item)));
 
+          // Also update mobile inventory table
+          updateMobileInventoryDisplay(visible);
+
           if (remaining.length) {
             const showMoreRow = document.createElement('tr');
             showMoreRow.id = 'showMoreInventoryRow';
@@ -635,24 +638,40 @@ function createInventoryRow(item) {
   return tr;
 }
 
-// Firebase authentication and user data loading
+// Enhanced Firebase authentication and data loading
 function initializeFirebaseAuth() {
-  if (typeof firebase !== 'undefined' && firebase.auth) {
-    firebase.auth().onAuthStateChanged(async (user) => {
-      if (user) {
-        console.log("User is signed in:", user.uid);
-        await loadUserName(user.uid);
+  console.log('🔧 Initializing Firebase authentication...');
+  
+  // Wait for Firebase to be ready
+  const checkFirebase = () => {
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.firestore) {
+      console.log('✅ Firebase is ready, setting up authentication...');
+      
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+          console.log("✅ User is signed in:", user.uid);
+          await loadUserName(user.uid);
+        } else {
+          console.log("❌ No user signed in");
+        }
+        
+        // Load dashboard data regardless of authentication status
+        console.log('📊 Loading dashboard data...');
         loadDashboardData();
-      } else {
-        console.log("No user signed in");
-        // Uncomment to redirect to login
-        // window.location.href = '/index.html';
-      }
-    });
-  } else {
-    console.log('Firebase not available, waiting...');
-    setTimeout(initializeFirebaseAuth, 1000);
-  }
+        
+        // Set up real-time listeners
+        setupSalesDataListener();
+        loadSalesSummaryData();
+        loadTopProductsData();
+        loadInventoryStatus();
+      });
+    } else {
+      console.log('⏳ Firebase not ready yet, retrying in 500ms...');
+      setTimeout(checkFirebase, 500);
+    }
+  };
+  
+  checkFirebase();
 }
 
 // Load user name from Firestore
@@ -698,35 +717,99 @@ function updateWelcomeMessage(userData) {
   }
 }
 
-// Load dashboard data
+// Enhanced dashboard data loading with Firebase connection test
 function loadDashboardData() {
+  console.log('📊 Loading dashboard data...');
   updateTime();
-  loadInventoryStatus();
-  loadSalesData();
+  
+  // Test Firebase connection first
+  testFirebaseConnection().then(() => {
+    console.log('✅ Firebase connection verified, loading data...');
+    loadInventoryStatus();
+    loadSalesData();
+    loadMobileDashboardData(); // Load mobile dashboard data
+  }).catch((error) => {
+    console.error('❌ Firebase connection failed:', error);
+    console.log('🔄 Retrying data load in 2 seconds...');
+    setTimeout(() => {
+      loadInventoryStatus();
+      loadSalesData();
+      loadMobileDashboardData(); // Load mobile dashboard data
+    }, 2000);
+  });
 }
 
-// Load sales data
+// Test Firebase connection
+function testFirebaseConnection() {
+  return new Promise((resolve, reject) => {
+    if (typeof firebase === 'undefined') {
+      reject(new Error('Firebase not loaded'));
+      return;
+    }
+    
+    if (!firebase.apps || firebase.apps.length === 0) {
+      reject(new Error('Firebase not initialized'));
+      return;
+    }
+    
+    // Test connection with a simple query
+    const db = firebase.firestore();
+    const testQuery = db.collection('orders').limit(1);
+    
+    const timeout = setTimeout(() => {
+      reject(new Error('Firebase connection timeout'));
+    }, 10000); // 10 second timeout
+    
+    testQuery.get()
+      .then(() => {
+        clearTimeout(timeout);
+        console.log('✅ Firebase connection verified');
+        resolve(true);
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        console.error('❌ Firebase connection failed:', error);
+        reject(error);
+      });
+  });
+}
+
+// Enhanced sales data loading with better Firebase connection
 async function loadSalesData() {
   try {
+    console.log('📊 Starting to load sales data from Firebase...');
+    
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined' || !firebase.firestore) {
+      console.error('❌ Firebase not available');
+      updateSalesCard('revenue', 0);
+      updateSalesCard('orders', 0);
+      updateSalesCard('customers', 0);
+      return;
+    }
+    
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     
-    console.log('Loading sales data for date range:', startOfDay, 'to', endOfDay);
+    console.log('📅 Loading sales data for today:', startOfDay.toLocaleDateString());
     
-    // Get all orders and filter by date in JavaScript since we have mixed timestamp formats
+    // Get all orders from Firebase
     const ordersSnapshot = await firebase.firestore()
       .collection('orders')
       .get();
     
+    console.log(`📦 Retrieved ${ordersSnapshot.size} orders from Firebase`);
+    
     let totalRevenue = 0;
     let totalOrders = 0;
-    let totalPax = 0; // Track total number of guests served
+    let totalPax = 0;
     let uniqueCustomers = new Set();
     
     ordersSnapshot.forEach(doc => {
       const order = doc.data();
       let orderDate = null;
+      
       // Handle different timestamp formats
       if (order.timestamp && order.timestamp.toDate) {
         orderDate = order.timestamp.toDate();
@@ -734,11 +817,15 @@ async function loadSalesData() {
         orderDate = new Date(order.createdAt);
       } else if (order.dateCreated) {
         orderDate = new Date(order.dateCreated);
+      } else if (order.timestamp && typeof order.timestamp === 'string') {
+        orderDate = new Date(order.timestamp);
       }
+      
       // Check if order is from today
       if (orderDate && orderDate >= startOfDay && orderDate < endOfDay) {
-        // Use payment.total if present (from payment.html), else fallback to order.total
+        // Calculate revenue from different possible fields
         let paidTotal = 0;
+        
         if (order.payment && typeof order.payment.total === 'number') {
           paidTotal = order.payment.total;
         } else if (order.payment && typeof order.payment.total === 'string') {
@@ -747,85 +834,165 @@ async function loadSalesData() {
           paidTotal = order.total;
         } else if (order.total && typeof order.total === 'string') {
           paidTotal = parseFloat(order.total) || 0;
-        } else {
+        } else if (order.items && Array.isArray(order.items)) {
           // Calculate from items if no total is available
-          if (order.items && Array.isArray(order.items)) {
-            paidTotal = order.items.reduce((sum, item) => {
-              const price = parseFloat(item.unitPrice || item.price) || 0;
-              const qty = parseInt(item.quantity) || 1;
-              return sum + (price * qty);
-            }, 0);
-          }
+          paidTotal = order.items.reduce((sum, item) => {
+            const price = parseFloat(item.unitPrice || item.price || item.pricePerUnit) || 0;
+            const qty = parseInt(item.quantity) || 1;
+            return sum + (price * qty);
+          }, 0);
         }
+        
         totalRevenue += paidTotal;
         totalOrders++;
         
-        // Log payment method and source
-        const paymentMethod = order.payment?.method || 'Unknown';
-        const paymentSource = order.payment ? 'Payment System' : 'POS System';
-        console.log(`Order ${doc.id}: ₱${paidTotal} (${paymentMethod} - ${paymentSource}) on ${orderDate.toLocaleString()}`);
+        // Log order details
+        console.log(`✅ Order ${doc.id}: ₱${paidTotal.toFixed(2)} on ${orderDate.toLocaleString()}`);
         
-        // Add pax count from this order - only count if pax was actually entered
+        // Add pax count
         if (order.paxNumber && parseInt(order.paxNumber) > 0) {
           const paxCount = parseInt(order.paxNumber);
           totalPax += paxCount;
-          console.log(`  → Pax: ${paxCount}`);
-        } else {
-          console.log(`  → No pax entered`);
+          console.log(`   👥 Pax: ${paxCount}`);
         }
-        // Use order number or table number as unique customer identifier
-        const customerId = order.customerId || order.orderNumberFormatted || order.tableNumber;
+        
+        // Track unique customers
+        const customerId = order.customerId || order.orderNumberFormatted || order.tableNumber || doc.id;
         if (customerId) {
           uniqueCustomers.add(customerId);
         }
       }
     });
     
-    console.log(`Found ${totalOrders} orders with total revenue ${totalRevenue} serving ${totalPax} guests total (only counting orders with pax specified)`);
+    console.log(`📊 Sales Summary:`);
+    console.log(`   💰 Total Revenue: ₱${totalRevenue.toFixed(2)}`);
+    console.log(`   📦 Total Orders: ${totalOrders}`);
+    console.log(`   👥 Total Pax: ${totalPax}`);
+    console.log(`   🧑‍🤝‍🧑 Unique Customers: ${uniqueCustomers.size}`);
     
+    // Update the sales cards with real data
     updateSalesCard('revenue', totalRevenue);
     updateSalesCard('orders', totalOrders);
-    updateSalesCard('customers', totalPax); // Show total pax - only actual entered values
+    updateSalesCard('customers', totalPax);
+    
+    // Also update any hardcoded values
+    updateHardcodedSalesValues(totalRevenue, totalOrders, totalPax);
     
   } catch (error) {
-    console.error('Error loading sales data:', error);
+    console.error('❌ Error loading sales data:', error);
+    
     // Set default values on error
     updateSalesCard('revenue', 0);
     updateSalesCard('orders', 0);
     updateSalesCard('customers', 0);
+    
+    // Show error message
+    showSalesDataError(error.message);
   }
-  
-  // Ensure revenue is updated even if no orders found
-  setTimeout(() => {
-    const revenueElement = document.querySelector('.sales-card-top .fs-5');
-    if (revenueElement && revenueElement.textContent === '₱2500.00') {
-      console.log('Updating hardcoded revenue value...');
-      updateSalesCard('revenue', 0);
-    }
-  }, 1000);
 }
 
-// Set up real-time listener for sales data updates
+// Update hardcoded sales values
+function updateHardcodedSalesValues(revenue, orders, customers) {
+  // Update any hardcoded values in the HTML
+  const hardcodedElements = document.querySelectorAll('.fs-5');
+  hardcodedElements.forEach(element => {
+    const text = element.textContent;
+    if (text === '100' || text === '₱100.00' || text === 'P100.00') {
+      if (text.includes('₱') || text.includes('P')) {
+        element.textContent = `₱${revenue.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+      } else {
+        element.textContent = orders.toString();
+      }
+    }
+  });
+  
+  // Update any other hardcoded values
+  const allTextElements = document.querySelectorAll('*');
+  allTextElements.forEach(element => {
+    if (element.children.length === 0) { // Only text nodes
+      const text = element.textContent;
+      if (text === '100' && element.parentElement && element.parentElement.classList.contains('fs-5')) {
+        element.textContent = orders.toString();
+      }
+    }
+  });
+}
+
+// Show sales data error
+function showSalesDataError(errorMessage) {
+  console.log('🚨 Showing sales data error:', errorMessage);
+  
+  // Update sales cards to show error state
+  const revenueElement = document.querySelector('.sales-card-top .fs-5');
+  const ordersElement = document.querySelector('.sales-card-middle .fs-5');
+  const customersElement = document.querySelector('.sales-card-bottom .fs-5');
+  
+  if (revenueElement) {
+    revenueElement.textContent = '₱0.00';
+    revenueElement.style.color = '#dc3545';
+  }
+  if (ordersElement) {
+    ordersElement.textContent = '0';
+    ordersElement.style.color = '#dc3545';
+  }
+  if (customersElement) {
+    customersElement.textContent = '0';
+    customersElement.style.color = '#dc3545';
+  }
+}
+
+// Enhanced real-time listener for sales data updates
 function setupSalesDataListener() {
   try {
+    console.log('🔔 Setting up real-time Firebase listeners...');
+    
+    if (typeof firebase === 'undefined' || !firebase.firestore) {
+      console.error('❌ Firebase not available for real-time listeners');
+      return;
+    }
+    
     const db = firebase.firestore();
     
-    // Listen for new orders (especially from payment system)
+    // Listen for all orders (broader scope for better data capture)
     db.collection('orders')
-      .where('timestamp', '>=', new Date(new Date().setHours(0, 0, 0, 0)))
       .onSnapshot((snapshot) => {
-        console.log('📊 Sales data updated - refreshing dashboard...');
+        console.log('📊 Orders collection updated - refreshing sales data...');
+        console.log(`📦 ${snapshot.size} orders in collection`);
+        
+        // Reload sales data when orders change
         loadSalesData();
+        
+        // Also reload other data that depends on orders
+        loadTopProductsData();
+        
+        // Update mobile dashboard data
+        loadMobileDashboardData();
+        
       }, (error) => {
-        console.error('Error setting up sales data listener:', error);
+        console.error('❌ Error in orders listener:', error);
+        console.log('🔄 Retrying listener setup in 5 seconds...');
+        setTimeout(setupSalesDataListener, 5000);
+      });
+    
+    // Listen for inventory changes
+    db.collection('inventory')
+      .onSnapshot((snapshot) => {
+        console.log('📦 Inventory updated - refreshing inventory status...');
+        loadInventoryStatus();
+      }, (error) => {
+        console.error('❌ Error in inventory listener:', error);
       });
       
+    console.log('✅ Real-time listeners set up successfully');
+      
   } catch (error) {
-    console.error('Error initializing sales data listener:', error);
+    console.error('❌ Error initializing sales data listener:', error);
+    console.log('🔄 Retrying listener setup in 3 seconds...');
+    setTimeout(setupSalesDataListener, 3000);
   }
 }
 
-// Update sales cards
+// Update sales cards (both desktop and mobile)
 function updateSalesCard(type, value) {
   const cards = {
     revenue: '.sales-card-top .fs-5',
@@ -840,6 +1007,221 @@ function updateSalesCard(type, value) {
     } else {
       element.textContent = value.toString();
     }
+  }
+  
+  // Also update mobile dashboard cards
+  updateMobileSalesCards(type, value);
+}
+
+// Update mobile sales cards
+function updateMobileSalesCards(type, value) {
+  let elementId = '';
+  
+  switch(type) {
+    case 'revenue':
+      elementId = 'mobileTodaySales';
+      break;
+    case 'orders':
+      // For orders, we'll update a different mobile element if needed
+      break;
+    case 'customers':
+      // For customers, we'll update a different mobile element if needed
+      break;
+  }
+  
+  if (elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      if (type === 'revenue') {
+        element.textContent = `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+      } else {
+        element.textContent = value.toString();
+      }
+    }
+  }
+}
+
+// Enhanced mobile dashboard data loading
+async function loadMobileDashboardData() {
+  try {
+    console.log('📱 Loading mobile dashboard data from Firebase...');
+    
+    if (typeof firebase === 'undefined' || !firebase.firestore) {
+      console.error('❌ Firebase not available for mobile dashboard');
+      return;
+    }
+    
+    const db = firebase.firestore();
+    
+    // Load today's sales data
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    
+    // Load this month's sales data
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    
+    // Get all orders
+    const ordersSnapshot = await db.collection('orders').get();
+    
+    let todayRevenue = 0;
+    let monthlyRevenue = 0;
+    let totalRevenue = 0;
+    let todayOrders = 0;
+    let monthlyOrders = 0;
+    let totalOrders = 0;
+    
+    ordersSnapshot.forEach(doc => {
+      const order = doc.data();
+      let orderDate = null;
+      
+      // Handle different timestamp formats
+      if (order.timestamp && order.timestamp.toDate) {
+        orderDate = order.timestamp.toDate();
+      } else if (order.createdAt) {
+        orderDate = new Date(order.createdAt);
+      } else if (order.dateCreated) {
+        orderDate = new Date(order.dateCreated);
+      } else if (order.timestamp && typeof order.timestamp === 'string') {
+        orderDate = new Date(order.timestamp);
+      }
+      
+      if (orderDate) {
+        // Calculate revenue
+        let paidTotal = 0;
+        if (order.payment && typeof order.payment.total === 'number') {
+          paidTotal = order.payment.total;
+        } else if (order.total && typeof order.total === 'number') {
+          paidTotal = order.total;
+        } else if (order.items && Array.isArray(order.items)) {
+          paidTotal = order.items.reduce((sum, item) => {
+            const price = parseFloat(item.unitPrice || item.price || item.pricePerUnit) || 0;
+            const qty = parseInt(item.quantity) || 1;
+            return sum + (price * qty);
+          }, 0);
+        }
+        
+        totalRevenue += paidTotal;
+        totalOrders++;
+        
+        // Today's data
+        if (orderDate >= startOfDay && orderDate < endOfDay) {
+          todayRevenue += paidTotal;
+          todayOrders++;
+        }
+        
+        // This month's data
+        if (orderDate >= startOfMonth && orderDate < endOfMonth) {
+          monthlyRevenue += paidTotal;
+          monthlyOrders++;
+        }
+      }
+    });
+    
+    // Update mobile sales cards
+    updateMobileSalesCard('mobileTodaySales', todayRevenue);
+    updateMobileSalesCard('mobileMonthlySales', monthlyRevenue);
+    updateMobileSalesCard('mobileTotalSales', totalRevenue);
+    
+    // Calculate sales trend
+    const salesTrend = calculateSalesTrend(todayRevenue, monthlyRevenue);
+    updateMobileSalesTrend(salesTrend);
+    
+    console.log('📱 Mobile dashboard data loaded:', {
+      today: todayRevenue,
+      monthly: monthlyRevenue,
+      total: totalRevenue
+    });
+    
+  } catch (error) {
+    console.error('❌ Error loading mobile dashboard data:', error);
+    updateMobileSalesCard('mobileTodaySales', 0);
+    updateMobileSalesCard('mobileMonthlySales', 0);
+    updateMobileSalesCard('mobileTotalSales', 0);
+    updateMobileSalesTrend('Error loading data');
+  }
+}
+
+// Update individual mobile sales card
+function updateMobileSalesCard(elementId, value) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.textContent = `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+  }
+}
+
+// Calculate sales trend
+function calculateSalesTrend(todayRevenue, monthlyRevenue) {
+  if (monthlyRevenue === 0) return 'No data available';
+  
+  const dailyAverage = monthlyRevenue / new Date().getDate();
+  const trend = ((todayRevenue - dailyAverage) / dailyAverage) * 100;
+  
+  if (trend > 0) {
+    return `${trend.toFixed(1)}% increased`;
+  } else if (trend < 0) {
+    return `${Math.abs(trend).toFixed(1)}% decreased`;
+  } else {
+    return 'No change';
+  }
+}
+
+// Update mobile sales trend
+function updateMobileSalesTrend(trend) {
+  const element = document.getElementById('mobileSalesTrend');
+  if (element) {
+    element.textContent = trend;
+    
+    // Update color based on trend
+    if (trend.includes('increased')) {
+      element.parentElement.className = 'text-success small mt-3 d-flex align-items-center justify-content-center gap-1';
+    } else if (trend.includes('decreased')) {
+      element.parentElement.className = 'text-danger small mt-3 d-flex align-items-center justify-content-center gap-1';
+    } else {
+      element.parentElement.className = 'text-muted small mt-3 d-flex align-items-center justify-content-center gap-1';
+    }
+  }
+}
+
+// Update mobile inventory display
+function updateMobileInventoryDisplay(items) {
+  const mobileInventoryBody = document.getElementById('mobileInventoryStatusBody');
+  
+  if (!mobileInventoryBody) {
+    console.log('Mobile inventory table body not found');
+    return;
+  }
+  
+  if (items.length === 0) {
+    mobileInventoryBody.innerHTML = `
+      <tr>
+        <td colspan="2" class="text-center text-muted">
+          No inventory data available
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  // Clear existing content
+  mobileInventoryBody.innerHTML = '';
+  
+  // Add inventory items (limit to 5 for mobile)
+  const mobileItems = items.slice(0, 5);
+  mobileItems.forEach(item => {
+    mobileInventoryBody.appendChild(createInventoryRow(item));
+  });
+  
+  // If there are more items, show a "more" indicator
+  if (items.length > 5) {
+    const moreRow = document.createElement('tr');
+    moreRow.innerHTML = `
+      <td colspan="2" class="text-center text-muted small">
+        +${items.length - 5} more items
+      </td>
+    `;
+    mobileInventoryBody.appendChild(moreRow);
   }
 }
 
@@ -1096,32 +1478,36 @@ function showFallbackTopProductsData() {
   updateTopProductsDisplay(fallbackProducts);
 }
 
-// Update top products display
+// Update top products display (both desktop and mobile)
 function updateTopProductsDisplay(products) {
   const tbody = document.getElementById('topProductsBody');
+  const mobileTbody = document.getElementById('mobileTopProductsBody');
   
   if (!tbody) {
     console.error('Top products table body not found');
     return;
   }
   
-  if (products.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="2" class="text-center text-muted py-3">
-          No product data available
-        </td>
-      </tr>
-    `;
-    return;
-  }
-  
-  tbody.innerHTML = products.map(product => `
+  const tableHTML = products.length === 0 ? `
+    <tr>
+      <td colspan="2" class="text-center text-muted py-3">
+        No product data available
+      </td>
+    </tr>
+  ` : products.map(product => `
     <tr>
       <td>${product.name}</td>
       <td class="text-end fw-medium">${product.count}</td>
     </tr>
   `).join('');
+  
+  // Update desktop table
+  tbody.innerHTML = tableHTML;
+  
+  // Update mobile table if it exists
+  if (mobileTbody) {
+    mobileTbody.innerHTML = tableHTML;
+  }
 }
 
 // DOM Content Loaded event listener
