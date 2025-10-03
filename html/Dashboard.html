@@ -18,10 +18,14 @@
   <link rel="stylesheet" href="../css/nav.css">
 </head>
 <body class="bg-light">
-    <div class="dashboard-container d-flex">
+    <!-- Mobile overlay for sidebar -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    
+    <div class="dashboard-container d-flex" id="dashboardContainer">
         <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
-      <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
-        <i class="bi bi-list"></i>
+      <!-- Close button for mobile -->
+      <button id="closeSidebarBtn" class="btn btn-outline-light d-md-none mb-3" style="align-self: flex-start; margin-left: 1rem;">
+        <i class="bi bi-x-lg"></i>
       </button>
       <div class="brand mb-1">
         <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
@@ -63,7 +67,6 @@
           <img src="../src/Icons/user.png" alt="user" class="nav-icon">
           <div class="nav-text">Users</div>
         </a>
-        <br>
         <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
           <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
           <div class="nav-text">Settings</div>
@@ -110,6 +113,10 @@
     <main class="main p-3 p-md-4 flex-grow-1">
       
       <div class="d-flex align-items-center justify-content-between bg-white rounded-4 p-3 p-md-4 shadow-sm mb-4">
+        <!-- Mobile menu button -->
+        <button id="mobileMenuBtn" class="btn btn-outline-secondary d-md-none me-3">
+          <i class="bi bi-list"></i>
+        </button>
         <div>
           <h2 class="fw-bold text-primary-emphasis mb-1" id="welcomeMessage">Welcome,</h2>
           <p class="text-secondary mb-0">Here's what's happening in your restaurant.</p>
@@ -345,6 +352,86 @@
           }
         });
       }
+      
+      // Mobile sidebar functionality
+      const sidebar = document.getElementById('sidebar');
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+      const dashboardContainer = document.getElementById('dashboardContainer');
+      
+      // Toggle sidebar functions
+      function toggleSidebar() {
+        if (sidebar.classList.contains('open')) {
+          closeSidebar();
+        } else {
+          openSidebar();
+        }
+      }
+      
+      function openSidebar() {
+        sidebar.classList.add('open');
+        mobileOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        
+        // Hide the burger button when sidebar opens
+        if (mobileMenuBtn) {
+          mobileMenuBtn.style.display = 'none';
+        }
+      }
+      
+      function closeSidebar() {
+        sidebar.classList.remove('open');
+        mobileOverlay.classList.remove('show');
+        document.body.style.overflow = ''; // Restore scrolling
+        
+        // Show the burger button when sidebar closes
+        if (mobileMenuBtn) {
+          mobileMenuBtn.style.display = 'block';
+        }
+      }
+      
+      // Event listeners
+      if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', toggleSidebar);
+      }
+      
+      if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+      }
+      
+      if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', closeSidebar);
+      }
+      
+      // Close sidebar when clicking on nav links on mobile
+      document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 768) {
+            closeSidebar();
+          }
+        });
+      });
+      
+      // Handle window resize
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+          closeSidebar();
+        }
+      });
+      
+      // Prevent sidebar from opening on desktop
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+          sidebar.classList.remove('open');
+          mobileOverlay.classList.remove('show');
+          document.body.style.overflow = '';
+          // Show burger button when returning to desktop
+          if (mobileMenuBtn) {
+            mobileMenuBtn.style.display = 'block';
+          }
+        }
+      });
     });
     </script>
 </body> 

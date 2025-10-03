@@ -27,9 +27,11 @@
           <img src="src/IMG/Logo.png" alt="Viktoria's Bistro Logo" class="logo-img">
         </a>
         
-        <!-- Burger Button -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#headerCollapse" aria-controls="headerCollapse" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
+        <!-- Hamburger Menu Button -->
+        <button class="navbar-toggler hamburger-menu" type="button" data-bs-toggle="collapse" data-bs-target="#headerCollapse" aria-controls="headerCollapse" aria-expanded="false" aria-label="Toggle navigation" id="hamburgerMenu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
         </button>
         
         <!-- Collapsible Content -->
@@ -77,6 +79,68 @@
         </div>
       </div>
     </header>
+
+    <!-- Fullscreen Menu Overlay -->
+    <div class="fullscreen-menu-overlay" id="fullscreenMenu">
+      <div class="fullscreen-menu-content">
+        <!-- Close Button -->
+        
+        
+        <!-- Navigation Menu -->
+        <nav class="fullscreen-nav">
+          <ul class="fullscreen-nav-list">
+            <li class="fullscreen-nav-item">
+              <a href="index.html" class="fullscreen-nav-link">
+                <span class="nav-text">Home</span>
+                <span class="nav-highlight"></span>
+              </a>
+            </li>
+            <li class="fullscreen-nav-item">
+              <a href="/customer/html/menucustomer.html" class="fullscreen-nav-link">
+                <span class="nav-text">Menu</span>
+                <span class="nav-highlight"></span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        
+        <!-- Action Icons -->
+        <div class="fullscreen-actions">
+          <div class="action-item">
+            <a href="#" class="action-link" id="fullscreenUserProfile" onclick="handleUserProfileClick(event)">
+              <div class="action-icon">
+                <img src="src/Icons/user (1).png" alt="User Icon">
+              </div>
+              <span class="action-text">Account</span>
+            </a>
+            <!-- User dropdown for fullscreen menu -->
+            <div class="fullscreen-user-dropdown" id="fullscreenUserDropdown" style="display: none;">
+              <div class="fullscreen-user-info" id="fullscreenUserInfo">
+                <div class="fullscreen-user-name" id="fullscreenUserName">Loading...</div>
+                <div class="fullscreen-user-email" id="fullscreenUserEmail">Loading...</div>
+              </div>
+              <div class="fullscreen-dropdown-divider"></div>
+              <a href="customer/html/account.html" class="fullscreen-dropdown-item">
+                <i class="fas fa-user"></i> My Account
+              </a>
+              <div class="fullscreen-dropdown-divider"></div>
+              <a href="#" class="fullscreen-dropdown-item logout-item" onclick="handleLogout(event)">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </a>
+            </div>
+          </div>
+          
+          <div class="action-item">
+            <a href="#" class="action-link">
+              <div class="action-icon">
+                <img src="src/Icons/bag (1).png" alt="Shopping Bag Icon">
+              </div>
+              <span class="action-text">Bag</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -413,8 +477,13 @@
         // Update user info in dropdown
         const userName = document.getElementById('userName');
         const userEmail = document.getElementById('userEmail');
+        const fullscreenUserName = document.getElementById('fullscreenUserName');
+        const fullscreenUserEmail = document.getElementById('fullscreenUserEmail');
+        
         if (userName) userName.textContent = user.displayName || 'User';
         if (userEmail) userEmail.textContent = user.email;
+        if (fullscreenUserName) fullscreenUserName.textContent = user.displayName || 'User';
+        if (fullscreenUserEmail) fullscreenUserEmail.textContent = user.email;
 
         // Add welcome message or user info if needed
         console.log('UI updated for logged-in user:', user.email);
@@ -518,232 +587,83 @@
       }
 
     </script>
-    
-    <!-- User Dropdown Styles -->
-    <style>
-      .user-profile-container {
-        position: relative;
-        display: inline-block;
-      }
 
-      .user-dropdown {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        min-width: 200px;
-        z-index: 1000;
-        margin-top: 8px;
-      }
-
-      .user-info {
-        padding: 12px 16px;
-        background: #f8f9fa;
-        border-radius: 8px 8px 0 0;
-      }
-
-      .user-name {
-        font-weight: 600;
-        color: #333;
-        font-size: 14px;
-        margin-bottom: 2px;
-      }
-
-      .user-email {
-        color: #666;
-        font-size: 12px;
-      }
-
-      .dropdown-item {
-        display: flex;
-        align-items: center;
-        padding: 10px 16px;
-        color: #333;
-        text-decoration: none;
-        font-size: 14px;
-        transition: background-color 0.2s;
-      }
-
-      .dropdown-item:hover {
-        background-color: #f8f9fa;
-        color: #333;
-        text-decoration: none;
-      }
-
-      .dropdown-item i {
-        margin-right: 8px;
-        width: 16px;
-        text-align: center;
-      }
-
-      .dropdown-divider {
-        height: 1px;
-        background-color: #e9ecef;
-        margin: 4px 0;
-      }
-
-      .logout-item {
-        color: #dc3545;
-      }
-
-      .logout-item:hover {
-        background-color: #f8d7da;
-        color: #dc3545;
-      }
-
-      /* Responsive adjustments */
-      @media (max-width: 768px) {
-        .user-dropdown {
-          right: -50px;
-          min-width: 180px;
-        }
-      }
-
-
-      /* Anonymous toggle styling */
-      .anonymous-toggle {
-        margin: 12px 0;
-        display: flex;
-        justify-content: center;
-      }
-
-      .anonymous-checkbox {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        font-size: 14px;
-        font-family: 'PoppinsRegular', sans-serif;
-        color: #666;
-        user-select: none;
-      }
-
-      .anonymous-checkbox input[type="checkbox"] {
-        display: none;
-      }
-
-      .checkmark {
-        width: 18px;
-        height: 18px;
-        border: 2px solid #96392d;
-        border-radius: 3px;
-        margin-right: 8px;
-        position: relative;
-        transition: all 0.2s ease;
-      }
-
-      .anonymous-checkbox input[type="checkbox"]:checked + .checkmark {
-        background-color: #96392d;
-        border-color: #96392d;
-      }
-
-      .anonymous-checkbox input[type="checkbox"]:checked + .checkmark:after {
-        content: '✓';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-size: 12px;
-        font-weight: bold;
-      }
-
-      .anonymous-checkbox:hover .checkmark {
-        border-color: #760000;
-      }
-
-      .anonymous-checkbox input[type="checkbox"]:checked + .checkmark {
-        background-color: #96392d;
-      }
-
-      /* Enhanced category button styling */
-      .rating-category-btn {
-        transition: all 0.2s ease;
-        cursor: pointer;
-        border: 2px solid #dee2e6;
-        position: relative;
-        overflow: hidden;
-        background-color: #f8f9fa;
-        color: #333;
-        user-select: none;
-      }
-
-      .rating-category-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(150, 57, 45, 0.3);
-      }
-
-      .rating-category-btn.active {
-        box-shadow: 0 2px 8px rgba(150, 57, 45, 0.4);
-      }
-
-      .rating-category-btn:active {
-        transform: translateY(0);
-      }
-
-      /* Add a subtle ripple effect */
-      .rating-category-btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.3s, height 0.3s;
-      }
-
-      .rating-category-btn:active::before {
-        width: 200px;
-        height: 200px;
-      }
-    </style>
-    
+    <!-- Fullscreen Menu JavaScript -->
     <script>
-      // Animate elements on scroll (in and out)
-      (function() {
-        if (window.innerWidth <= 768) return; // Don't run on mobile
-
-        const targets = document.querySelectorAll('.scroll-left, .scroll-right');
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('in-view');
-            } else {
-              // Don't remove 'in-view' for scroll-left/right on exit, let scroll handler do it
-              if (!entry.target.classList.contains('scroll-left') && !entry.target.classList.contains('scroll-right')) {
-                entry.target.classList.remove('in-view');
+      // Fullscreen menu functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const fullscreenMenu = document.getElementById('fullscreenMenu');
+        
+        // Function to open menu
+        function openMenu() {
+          fullscreenMenu.classList.add('active');
+          hamburgerMenu.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+        
+        // Function to close menu
+        function closeMenu() {
+          fullscreenMenu.classList.remove('active');
+          hamburgerMenu.classList.remove('active');
+          document.body.style.overflow = 'auto';
+        }
+        
+        // Toggle fullscreen menu with hamburger button
+        hamburgerMenu.addEventListener('click', function() {
+          if (fullscreenMenu.classList.contains('active')) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+        
+        // Close menu when clicking outside the content
+        fullscreenMenu.addEventListener('click', function(e) {
+          if (e.target === fullscreenMenu) {
+            closeMenu();
+          }
+        });
+        
+        // Close menu with Escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && fullscreenMenu.classList.contains('active')) {
+            closeMenu();
+          }
+        });
+        
+        // Enhanced user profile click handler for fullscreen menu
+        const fullscreenUserProfile = document.getElementById('fullscreenUserProfile');
+        const fullscreenUserDropdown = document.getElementById('fullscreenUserDropdown');
+        
+        if (fullscreenUserProfile && fullscreenUserDropdown) {
+          fullscreenUserProfile.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            try {
+              if (typeof firebase === 'undefined') {
+                window.location.href = 'html/login.html';
+                return;
               }
+              
+              const user = firebase.auth().currentUser;
+              
+              if (user) {
+                // Toggle dropdown in fullscreen menu
+                const isVisible = fullscreenUserDropdown.style.display !== 'none';
+                fullscreenUserDropdown.style.display = isVisible ? 'none' : 'block';
+              } else {
+                window.location.href = 'html/login.html';
+              }
+              
+            } catch (error) {
+              console.error('Error handling fullscreen user click:', error);
+              window.location.href = 'html/login.html';
             }
           });
-        }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
-
-        targets.forEach((el) => observer.observe(el));
-      })();
-
-      // Exit animation on scroll
-      window.addEventListener('scroll', function() {
-        if (window.innerWidth <= 768) return; // Don't run on mobile
-
-        const scrollLeft = document.querySelector('.scroll-left');
-        const scrollRight = document.querySelector('.scroll-right');
-        if (!scrollLeft || !scrollRight) return;
-
-        let scrollPosition = window.scrollY;
-        
-        // Start exit animation after scrolling a bit
-        if (scrollPosition > 100) {
-          scrollLeft.classList.add('exit-left');
-          scrollRight.classList.add('exit-right');
-        } else {
-          scrollLeft.classList.remove('exit-left');
-          scrollRight.classList.remove('exit-right');
         }
       });
     </script>
+    
   </body>
 </html>

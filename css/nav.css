@@ -1,12 +1,3 @@
-/* Dark mode sidebar background */
-.dark-mode .sidebar {
-  background: #232323 !important;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.18);
-}
-
-.dark-mode body {
-    background: #0f1014 !important;
-}
 
 #closeDropdown, .bi-x-lg {
   width: 12px !important;
@@ -15,6 +6,41 @@
   font-size: 1.3rem;
   color: #888;
   transition: color 0.2s, transform 0.2s;
+}
+
+/* Mobile responsive close button */
+@media (max-width: 768px) {
+  .sidebar #closeSidebarBtn {
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    background: #f0f0f0 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #666 !important;
+    transition: all 0.2s ease !important;
+    font-size: 1.2rem !important;
+    z-index: 1002 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  }
+  
+  .sidebar #closeSidebarBtn:hover {
+    background: #e0e0e0 !important;
+    color: #333 !important;
+    transform: rotate(90deg) scale(1.1) !important;
+  }
+  
+  .sidebar #closeSidebarBtn .bi-x-lg {
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 1.2rem !important;
+    color: inherit !important;
+  }
 }
 #closeDropdown:hover, .bi-x-lg:hover {
   color: #96392d  !important;
@@ -105,10 +131,6 @@ body {
     padding-top: 5px;
   }
   
-  .sidebar .nav-link.mt-auto {
-    margin-top: auto !important;
-    margin-bottom: 10px;
-  }
   .nav-icon {
     width: 20px;
     height: 20px;
@@ -292,6 +314,7 @@ body {
     height: 600px;
     padding-top: 30px;
     padding-bottom: 30px;
+    border-radius: 0 47px 47px 0;
   }
   
   .dashboard-container {
@@ -299,8 +322,8 @@ body {
   }
   
   .brand img {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
   }
   
   .nav-icon {
@@ -316,6 +339,11 @@ body {
     gap: 0.5px;
     padding-top: 8px;
   }
+  
+  .sidebar .nav-link.mt-auto {
+    margin-top: -10px;
+    margin-bottom: 15px;
+  }
 }
 
 
@@ -327,6 +355,7 @@ body {
     height: 550px;
     padding-top: 25px;
     padding-bottom: 25px;
+    border-radius: 0 45px 45px 0;
   }
   
   .dashboard-container {
@@ -334,8 +363,8 @@ body {
   }
   
   .brand img {
-    width: 55px;
-    height: 55px;
+    width: 65px;
+    height: 65px;
   }
   
   .nav-icon {
@@ -351,6 +380,11 @@ body {
     gap: 0.5px;
     padding-top: 6px;
   }
+  
+  .sidebar .nav-link.mt-auto {
+    margin-top: -10px;
+    margin-bottom: 12px;
+  }
 }
 
 
@@ -358,11 +392,10 @@ body {
   .sidebar {
     width: 70px;
     left: 10px;
-    margin-top: 5px;
     height: 500px;
     padding-top: 20px;
     padding-bottom: 20px;
-    border-radius: 30px;
+    border-radius: 0 30px 30px 0;
   }
   
   .dashboard-container {
@@ -370,8 +403,8 @@ body {
   }
   
   .brand img {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border: 2px solid #eee;
   }
   
@@ -393,6 +426,26 @@ body {
   .sidebar .nav-link {
     margin: 4px 0;
   }
+  
+  .sidebar .nav-link.mt-auto {
+    margin-top: -10px;
+    margin-bottom: 10px;
+  }
+  
+  /* Close button for small mobile */
+  .sidebar #closeSidebarBtn {
+    width: 36px !important;
+    height: 36px !important;
+    top: 0.75rem !important;
+    right: 0.75rem !important;
+    font-size: 1rem !important;
+  }
+  
+  .sidebar #closeSidebarBtn .bi-x-lg {
+    width: 14px !important;
+    height: 14px !important;
+    font-size: 1rem !important;
+  }
 }
 
 
@@ -403,7 +456,7 @@ body {
     height: 450px;
     padding-top: 15px;
     padding-bottom: 15px;
-    border-radius: 25px;
+    border-radius: 0 25px 25px 0;
   }
   
   .dashboard-container {
@@ -411,8 +464,8 @@ body {
   }
   
   .brand img {
-    width: 45px;
-    height: 45px;
+    width: 55px;
+    height: 55px;
   }
   
   .nav-icon {
@@ -422,6 +475,26 @@ body {
   
   .nav-text {
     font-size: 5px;
+  }
+  
+  .sidebar .nav-link.mt-auto {
+    margin-top:-10px;
+    margin-bottom: 8px;
+  }
+  
+  /* Close button for extra small mobile */
+  .sidebar #closeSidebarBtn {
+    width: 32px !important;
+    height: 32px !important;
+    top: 0.5rem !important;
+    right: 0.5rem !important;
+    font-size: 0.95rem !important;
+  }
+  
+  .sidebar #closeSidebarBtn .bi-x-lg {
+    width: 12px !important;
+    height: 12px !important;
+    font-size: 0.95rem !important;
   }
 }
 

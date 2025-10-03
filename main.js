@@ -116,3 +116,52 @@ function handleUserProfileClick(event) {
         window.location.href = 'html/login.html';
     }
 }
+
+// Scroll animations for hero elements
+function initializeScrollAnimations() {
+    // Animate elements on scroll (in and out)
+    (function() {
+        if (window.innerWidth <= 768) return; // Don't run on mobile
+
+        const targets = document.querySelectorAll('.scroll-left, .scroll-right');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                } else {
+                    // Don't remove 'in-view' for scroll-left/right on exit, let scroll handler do it
+                    if (!entry.target.classList.contains('scroll-left') && !entry.target.classList.contains('scroll-right')) {
+                        entry.target.classList.remove('in-view');
+                    }
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+
+        targets.forEach((el) => observer.observe(el));
+    })();
+
+    // Exit animation on scroll
+    window.addEventListener('scroll', function() {
+        if (window.innerWidth <= 768) return; // Don't run on mobile
+
+        const scrollLeft = document.querySelector('.scroll-left');
+        const scrollRight = document.querySelector('.scroll-right');
+        if (!scrollLeft || !scrollRight) return;
+
+        let scrollPosition = window.scrollY;
+        
+        // Start exit animation after scrolling a bit
+        if (scrollPosition > 100) {
+            scrollLeft.classList.add('exit-left');
+            scrollRight.classList.add('exit-right');
+        } else {
+            scrollLeft.classList.remove('exit-left');
+            scrollRight.classList.remove('exit-right');
+        }
+    });    
+}
+
+// Initialize scroll animations when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeScrollAnimations();
+});

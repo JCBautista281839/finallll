@@ -496,30 +496,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateFormForUnauthenticatedUser() {
     const ratingForm = document.querySelector('.rating-form');
-    const shareBtn = ratingForm.querySelector('.share-btn');
-    const ratingTitle = ratingForm.querySelector('.rating-form-title');
+    if (!ratingForm) return;
     
-    // Update title to indicate login requirement
-    if (ratingTitle) {
-      ratingTitle.textContent = 'Sign in to share your experience';
+    // Create the unauthenticated user form layout
+    ratingForm.innerHTML = `
+      <div class="rating-form-title-stars-row">
+        <span class="rating-form-title">Sign in to share your experience</span>
+        <span class="rating-stars-input">
+          <span class="star-input"></span>
+          <span class="star-input"></span>
+          <span class="star-input"></span>
+          <span class="star-input"></span>
+          <span class="star-input"></span>
+        </span>
+      </div>
+      <div class="rating-categories">
+        <button type="button" class="rating-category-btn active" disabled>Overall Service</button>
+        <button type="button" class="rating-category-btn" disabled>Food Quality</button>
+        <button type="button" class="rating-category-btn" disabled>Cleanliness</button>
+        <button type="button" class="rating-category-btn" disabled>Ambience</button>
+        <button type="button" class="rating-category-btn" disabled>Pricing</button>
+      </div>
+      <textarea class="rating-textarea" placeholder="Please sign in to write a review..." maxlength="300" disabled></textarea>
+      <div class="anonymous-toggle">
+        <label class="anonymous-checkbox">
+          <input type="checkbox" id="anonymous-review" disabled />
+          <span class="checkmark"></span>
+          Post as anonymous
+        </label>
+      </div>
+      <button type="button" class="share-btn" id="sign-in-btn">Sign In to Review</button>
+    `;
+    
+    // Add event listener for the sign-in button
+    const signInBtn = ratingForm.querySelector('#sign-in-btn');
+    if (signInBtn) {
+      signInBtn.addEventListener('click', () => {
+        window.location.href = 'html/login.html';
+      });
     }
-    
-    // Update share button
-    if (shareBtn) {
-      shareBtn.textContent = 'Sign In to Review';
-      shareBtn.disabled = false;
-      shareBtn.style.opacity = '1';
-    }
-    
-    // Remove any existing login prompts
-    const loginPrompt = ratingForm.querySelector('.login-prompt');
-    if (loginPrompt) {
-      loginPrompt.remove();
-    }
-    
-    // Disable form elements (but keep them visible for preview)
-    enableFormElements(false);
-    
   }
 
   function enableFormElements(enabled) {
