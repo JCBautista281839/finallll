@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Information</title>
+  <link rel="stylesheet" href="../css/payment.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Top Nav -->
+    <div class="top-nav">
+      <a href="../html/shipping.html" class="back-btn">← BACK</a>
+      <div class="nav-links">
+        <a href="#">Home</a>
+        <a href="../html/menu.html" class="active">Menu</a>
+        <div class="search-box">
+          <input type="text" placeholder="Search">
+          <span class="search-icon">🔍</span>
+        </div>
+        <span class="icon">👤</span>
+        <span class="icon">🛒</span>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="checkout">
+      <!-- Left Section -->
+      <div class="form-section">
+        <h2 class="form-title">PAYMENT INFORMATION</h2>
+
+        <h3>Payment</h3>
+        <div class="payment-option">
+          <input type="radio" name="payment" checked>
+          <span>💵 Cash On Delivery</span>
+        </div>
+
+        <div class="payment-option">
+          <input type="radio" name="payment">
+          <span>📱 GCash</span>
+        </div>
+
+        <div class="payment-option">
+          <input type="radio" name="payment">
+          <span>💳 Card</span>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h2>ORDER FORM</h2>
+        <div class="order-item">
+          <span>1</span>
+          <span>Crispy Kare-Kare</span>
+          <span class="price">Php 500</span>
+        </div>
+        <hr>
+        <div class="total">
+          <span>Total</span>
+          <span class="price">Php 500</span>
+        </div>
+        <!-- Payment page continue button -->
+<button class="continue-btn" onclick="alert('Order Placed Successfully!')">
+  Place Order
+</button>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Firebase Configuration -->
+  <script src="../firebase-config.js"></script>
+  
+  <!-- Authentication Manager for Auto Logout -->
+  <script src="../javascript/auth-manager.js"></script>
+</body>
+</html>

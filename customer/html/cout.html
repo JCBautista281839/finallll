@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout Page</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      background-color: #fff;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      /* removed border-bottom */
+    }
+
+    .header .left {
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .header .left .arrow {
+      margin-right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .header .right {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .header .right a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .header .right .search-container {
+      position: relative;
+    }
+
+    .header .right .search-container input {
+      padding: 8px 10px 8px 35px;
+      border-radius: 20px;
+      border: 1px solid #ddd;
+      width: 150px;
+      outline: none;
+    }
+
+    .header .right .search-container .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+    }
+
+    .header .right .icons i {
+      font-size: 22px;
+      color: #555;
+      cursor: pointer;
+    }
+
+    /* Main Content */
+    .main-content {
+      display: flex;
+      padding: 20px;
+      gap: 40px;
+      margin: 0 60px;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      flex: 2;
+    }
+
+    .right-panel {
+      flex: 1;
+      background-color: #f7f7f7;
+      padding: 20px;
+      border-radius: 35px;
+      display: flex;
+      flex-direction: column; /* make it a column layout */
+    }
+
+    .section {
+      margin-bottom: 10px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .section-header h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #c93b4a;
+      margin: 0;
+    }
+
+    .section-header .sub-heading {
+      font-size: 20px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .section-header a {
+      color: #777;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .details p {
+      margin: 5px 0;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .details .main-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .details .main-info i {
+      font-size: 18px;
+    }
+
+    .add-details-input {
+      width: 95%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      margin-top: 5px;
+    }
+
+    .payment-options .option {
+      display: flex;
+      align-items: center;
+      background-color: #fcfcfc;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .payment-options .option:hover {
+      border-color: #c93b4a;
+    }
+
+    .payment-options .option input[type="radio"] {
+      margin-right: 15px;
+      accent-color: #c93b4a;
+      transform: scale(1.2);
+    }
+
+    .payment-options .option label {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+    }
+
+    .payment-options .option img {
+      width: 25px;
+      margin-left: 10px;
+    }
+
+    /* Right Panel */
+    .right-panel h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .order-item p {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .bottom-section {
+      margin-top: auto; /* push this section to bottom */
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 18px;
+      margin-top: 20px;
+      border-top: 1px solid #eee;
+      padding-top: 5px;
+      border-top: 2px solid #ddd;
+    }
+
+    .place-order-btn {
+      width: 100%;
+      padding: 15px;
+      background-color: #3b8a4f;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background-color 0.3s ease;
+    }
+
+    .place-order-btn:hover {
+      background-color: #2e6b3e;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="left">
+        <span class="arrow"><i class="fas fa-arrow-left"></i></span>
+        <span>CHECKOUT</span>
+      </div>
+      <div class="right">
+        <a href="#">Home</a>
+        <a href="#">Menu</a>
+        <a href="#">About Us</a>
+        <div class="search-container">
+          <span class="search-icon"><i class="fas fa-search"></i></span>
+          <input type="text" placeholder="Search">
+        </div>
+        <div class="icons">
+          <i class="fas fa-shopping-bag"></i>
+          <i class="fas fa-user-circle"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="left-panel">
+        <div class="section">
+          <div class="section-header">
+            <h2>REVIEW AND PLACE YOUR ORDER</h2>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <span class="sub-heading">Delivery Address</span>
+            <a href="#">View Saved Addresses</a>
+          </div>
+          <div class="details">
+            <p class="main-info"><i class="fas fa-map-marker-alt"></i> 123 San Rafael Street, Brgy. Mabini, Quezon City, Metro Manila, Philippines 1103</p>
+            <input type="text" class="add-details-input" placeholder="Add Additional Details">
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <span class="sub-heading">Personal Details</span>
+            <a href="#">Edit</a>
+          </div>
+          <div class="details">
+            <p>John Doe</p>
+            <p>johndoe@gmail.com</p>
+            <p>0912345987</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <span class="sub-heading">Payment</span>
+            <a href="#">Show All</a>
+          </div>
+          <div class="payment-options">
+            <div class="option">
+              <input type="radio" id="cod" name="payment" checked>
+              <label for="cod"><i class="fas fa-money-bill-wave"></i> Cash On Delivery</label>
+            </div>
+            <div class="option">
+              <input type="radio" id="gcash" name="payment">
+              <label for="gcash"><img src="" alt="GCash Logo"> GCash</label>
+            </div>
+            <div class="option">
+              <input type="radio" id="card" name="payment">
+              <label for="card"><i class="far fa-credit-card"></i> Card</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="section-header">
+          <span class="sub-heading">ORDER FORM</span>
+        </div>
+        <div class="order-items">
+          <div class="order-item">
+            <p>1 Crispy Kare-Kare</p>
+            <p>PHP 500</p>
+          </div>
+        </div>
+        <div class="bottom-section">
+          <div class="total">
+            <p>Total</p>
+            <p>PHP 500</p>
+          </div>
+          <button class="place-order-btn">Place Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+  <!-- Firebase Config -->
+  <script src="../firebase-config.js"></script>
+  
+  <!-- Authentication Manager for Auto Logout -->
+  <script src="../javascript/auth-manager.js"></script>
+  
+  <!-- Checkout JavaScript -->
+  <script src="../javascript/cout.js"></script>
+</body>
+</html>

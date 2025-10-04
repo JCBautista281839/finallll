@@ -1,0 +1,851 @@
+	{
+	"info": {
+		"_postman_id": "844d5ab6-cf11-4af3-b92e-120b1d9b3309",
+		"name": "HK",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20345840",
+		"_collection_link": "https://solar-trinity-764804.postman.co/workspace/New-Team-Workspace~73ce1a37-4ab1-4538-8aaa-d928b1e714d8/collection/20345840-844d5ab6-cf11-4af3-b92e-120b1d9b3309?action=share&creator=20345840&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "Get Quotation (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"pm.environment.set(\"market\", \"PH\");",
+							"",
+							"let body = {",
+							"    \"data\": {",
+							"       // \"scheduleAt\": \"2022-04-01T14:30:00.00Z\", // optional",
+							"        \"serviceType\": \"MOTORCYCLE\",",
+							"        \"specialRequests\": [\"CASH_ON_DELIVERY\"], // optional",
+							"        \"language\": \"en_PH\",",
+							"        \"stops\": [",
+							"           {",
+							"               \"coordinates\": {",
+							"                    \"lat\": \"14.599512\",",
+							"                    \"lng\": \"120.984222\"",
+							"                },",
+							"                \"address\": \"SM Mall of Asia, Pasay, Metro Manila\"",
+							"           },",
+							"           {",
+							"               \"coordinates\": {",
+							"                    \"lat\": \"14.554729\",",
+							"                    \"lng\": \"121.024445\"",
+							"                },",
+							"                \"address\": \"Bonifacio High Street, Taguig, Metro Manila\"",
+							"           }",
+							"        ],",
+							"        \"isRouteOptimized\": false, // optional only for quotations",
+							"        \"item\":{",
+							"              \"quantity\":\"12\",",
+							"              \"weight\":\"LESS_THAN_3_KG\",",
+							"              \"categories\":[",
+							"                 \"FOOD_DELIVERY\",",
+							"                 \"OFFICE_ITEM\"",
+							"              ],",
+							"              \"handlingInstructions\":[",
+							"                 \"KEEP_UPRIGHT\"",
+							"              ]",
+							"       },",
+							"    }",
+							"};",
+							"",
+							"body = JSON.stringify(body);",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nPOST\\r\\n/v3/quotations\\r\\n\\r\\n${body}`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('body', body);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"",
+							"pm.environment.set(\"total\", response.data.priceBreakdown.total);",
+							"pm.environment.set(\"currency\", response.data.priceBreakdown.currency);",
+							"pm.environment.set(\"quotationId\", response.data.quotationId);",
+							"pm.environment.set(\"stopId-0\", response.data.stops[0].stopId);",
+							"pm.environment.set(\"stopId-1\", response.data.stops[1].stopId);",
+							"//pm.environment.set(\"stopId-2\", response.data.stops[2].stopId); //should be disabled if you only have 1 drop-off point"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{body}}"
+				},
+				"url": {
+					"raw": "https://{{hostname}}/v3/quotations",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"quotations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Place Order (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"let quotationId = pm.environment.get(\"quotationId\");",
+							"",
+							"let body = {",
+							"    \"data\": {",
+							"        \"quotationId\": pm.environment.get('quotationId'),",
+							"        \"sender\": {",
+							"            \"stopId\":pm.environment.get('stopId-0'),",
+							"            \"name\": \"Juan Dela Cruz\",",
+							"            \"phone\": \"+639171234567\"",
+							"        },",
+							"        ",
+							"        \"recipients\": [",
+							"            {",
+							"                \"stopId\":pm.environment.get('stopId-1'),",
+							"                \"name\": \"Maria Santos\",",
+							"                \"phone\": \"+639189876543\",",
+							"                \"remarks\": \"Salamat po!\" // optional",
+							"            }",
+							"",
+							"        ],",
+							"        \"isPODEnabled\": true, // optional",
+							"        \"partner\": \"Lalamove Partner 1\" // optional ",
+							"    }",
+							"};",
+							"",
+							"body = JSON.stringify(body);",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nPOST\\r\\n/v3/orders\\r\\n\\r\\n${body}`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('body', body);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"",
+							"pm.environment.set(\"orderId\", response.data.orderId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{body}}"
+				},
+				"url": {
+					"raw": "https://{{hostname}}/v3/orders",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Priority Fee (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"let orderId = pm.environment.get(\"orderId\");",
+							"",
+							"let body = {",
+							"    \"data\": {",
+							"        \"priorityFee\": \"20\" ",
+							"    }",
+							"};",
+							"",
+							"body = JSON.stringify(body);",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nPOST\\r\\n/v3/orders/${orderId}/priority-fee\\r\\n\\r\\n${body}`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('body', body);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"",
+							"pm.environment.set(\"orderId\", response.data.orderId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{body}}"
+				},
+				"url": {
+					"raw": "https://{{hostname}}/v3/orders/{{orderId}}/priority-fee",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"orders",
+						"{{orderId}}",
+						"priority-fee"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Order Details (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"let orderId = pm.environment.get(\"orderId\");",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nGET\\r\\n/v3/orders/${orderId}\\r\\n\\r\\n`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('orderId', orderId);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"",
+							"pm.environment.set(\"driverId\", response.data.driverId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{hostname}}/v3/orders/{{orderId}}",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"orders",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Edit Order (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"let body = {",
+							"    \"data\": {",
+							"        \"stops\": [",
+							"            {",
+							"                \"coordinates\": {",
+							"                    \"lat\": \"14.599512\",",
+							"                    \"lng\": \"120.984222\",",
+							"                },",
+							"                \"address\": \"SM Mall of Asia, Pasay, Metro Manila\",",
+							"                \"name\": \"Juan Dela Cruz\",",
+							"                \"phone\": \"+639171234567\",",
+							"            },",
+							"            {",
+							"                \"coordinates\": {",
+							"                    \"lat\": \"14.554729\",",
+							"                    \"lng\": \"121.024445\",",
+							"                },",
+							"                \"address\": \"Bonifacio High Street, Taguig, Metro Manila\",",
+							"                \"name\": \"Maria Santos\",",
+							"                \"phone\": \"+639189876543\",",
+							"            },",
+							"        ],",
+							"    },",
+							"};",
+							"",
+							"let orderId = pm.environment.get(\"orderId\");",
+							"body = JSON.stringify(body);",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nPATCH\\r\\n/v3/orders/${orderId}\\r\\n\\r\\n${body}`, environment['secret']);",
+							"",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('body', body);",
+							"",
+							"//postman.setEnvironmentVariable('orderId', orderId);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"",
+							"//pm.environment.set(\"total\", response.data.priceBreakdown.total);",
+							"//pm.environment.set(\"currency\", response.data.priceBreakdown.currency);",
+							"//pm.environment.set(\"quotationId\", response.data.quotationId);",
+							"//pm.environment.set(\"stopId-0\", response.data.stops[0].stopId);",
+							"//pm.environment.set(\"stopId-1\", response.data.stops[1].stopId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{body}}"
+				},
+				"url": {
+					"raw": "https://{{hostname}}/v3/orders/{{orderId}}",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"orders",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Quotation Details (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"let quotationId = pm.environment.get(\"quotationId\");",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nGET\\r\\n/v3/quotations/${quotationId}\\r\\n\\r\\n`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('quotationId', quotationId);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"",
+							"//pm.environment.set(\"driverID\", response.driverId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{hostname}}/v3/quotations/{{quotationId}}",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"quotations",
+						"{{quotationId}}"
+					],
+					"query": [
+						{
+							"key": "quotationId",
+							"value": "1513532625233506329",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get City Info (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nGET\\r\\n/v3/cities\\r\\n\\r\\n`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{hostname}}/v3/cities",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"cities"
+					],
+					"query": [
+						{
+							"key": "quotationId",
+							"value": "1513532625233506329",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Driver Details (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"let orderId = pm.environment.get(\"orderId\");",
+							"let driverId = pm.environment.get(\"driverId\");",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nGET\\r\\n/v3/orders/${orderId}/drivers/${driverId}\\r\\n\\r\\n`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('orderId', orderId);",
+							"postman.setEnvironmentVariable('driverId', driverId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"url": {
+					"raw": "https://{{hostname}}/v3/orders/{{orderId}}/drivers/{{driverId}}",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"orders",
+						"{{orderId}}",
+						"drivers",
+						"{{driverId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cancel Order (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"",
+							"let body = {};",
+							"let orderId = pm.environment.get(\"orderId\");",
+							"",
+							"body = JSON.stringify(body);",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nDELETE\\r\\n/v3/orders/${orderId}\\r\\n\\r\\n${body}`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('body', body);",
+							"postman.setEnvironmentVariable('orderId', orderId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{body}}"
+				},
+				"url": {
+					"raw": "https://{{hostname}}/v3/orders/{{orderId}}",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"orders",
+						"{{orderId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change Driver (PH)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"let orderId = pm.environment.get(\"orderId\");",
+							"let driverId = pm.environment.get(\"driverId\");",
+							"",
+							"// let body = {",
+							"//     \"data\": {",
+							"//         \"reason\": \"DRIVER_LATE\"",
+							"//     }",
+							"// };",
+							"",
+							"let body = { data :{",
+							"            \"reason\": \"DRIVER_LATE\"",
+							"    }",
+							"};",
+							"",
+							"body = JSON.stringify(body);",
+							"",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nDELETE\\r\\n/v3/orders/${orderId}/drivers/${driverId}\\r\\n\\r\\n${body}`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('body', body);",
+							"// postman.setEnvironmentVariable('orderId', orderId);",
+							"// postman.setEnvironmentVariable('driverId', driverId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{body}}"
+				},
+				"url": {
+					"raw": "https://{{hostname}}/v3/orders/{{orderId}}/drivers/{{driverId}}",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"orders",
+						"{{orderId}}",
+						"drivers",
+						"{{driverId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Webhook",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let time = new Date().getTime();",
+							"let orderId = pm.environment.get(\"orderId\");",
+							"let driverId = pm.environment.get(\"driverId\");",
+							"",
+							"// let body = {",
+							"//     \"data\": {",
+							"//         \"reason\": \"DRIVER_LATE\"",
+							"//     }",
+							"// };",
+							"",
+							"let body = {",
+							"    \"data\": {",
+							"        \"url\": \"https://webhook.site/e44cc811-f4c2-40cd-8507-20d5eca234db?\" // ur",
+							"    }",
+							"};",
+							"",
+							"body = JSON.stringify(body);",
+							"",
+							"",
+							"let signature = CryptoJS.HmacSHA256(`${time.toString()}\\r\\nPATCH\\r\\n/v3/webhook\\r\\n\\r\\n${body}`, environment['secret']);",
+							"",
+							"postman.setEnvironmentVariable('signature', signature.toString());",
+							"postman.setEnvironmentVariable('time', time);",
+							"postman.setEnvironmentVariable('body', body);",
+							"// postman.setEnvironmentVariable('orderId', orderId);",
+							"// postman.setEnvironmentVariable('driverId', driverId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "hmac {{apikey}}:{{time}}:{{signature}}"
+					},
+					{
+						"key": "Market",
+						"value": "{{market}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{body}}"
+				},
+				"url": {
+					"raw": "https://{{hostname}}/v3/webhook",
+					"protocol": "https",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"v3",
+						"webhook"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Settings</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/user.css">
+</head>
+<body>
+  <div class="profile-settings-wrapper">
+    <div class="profile-left">
+      <div class="profile-header">
+        <i class="fa-solid fa-arrow-left" onclick="goBackToIndex()" style="cursor: pointer;"></i>
+        <span>PROFILE SETTINGS</span>
+        <button class="edit-profile-btn" type="button" aria-label="Edit Profile">
+          Edit Profile <i class="fa-regular fa-pen-to-square"></i>
+        </button>
+      </div>
+      <div class="profile-avatar" id="profileImageContainer">
+        <img id="profileImg" src="" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: none;">
+        <i id="placeholderIcon" class="fa-solid fa-user" style="font-size: 2rem; color: #666;"></i>
+        <div id="editProfileIcon" class="edit-profile-icon" style="display: none;">
+          <i class="fa-solid fa-camera"></i>
+        </div>
+      </div>
+      <div class="profile-section-titles">General</div>
+      <div class="profile-fields">
+        <div class="profile-field">
+          <div class="profile-label">Full Name
+            <div class="profile-desc">Your display name</div>
+          </div>
+          <input class="profile-input" type="text" name="fullName">
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Contact Number</div>
+          <input class="profile-input" type="text" name="contactNumber">
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Address</div>
+          <div style="display:flex;align-items:center;gap:8px;width:100%">
+            <input class="profile-input" type="text" name="address">
+            <img src="/../src/Icons/add (1).png" alt="Add Address" class="addAddress">
+          </div>
+        </div>
+      </div>
+      <div class="profile-section-title">Security</div>
+      <div class="profile-fields">
+        <div class="profile-field">
+          <div class="profile-label">Email Address</div>
+          <input class="profile-input" type="text" name="email">
+        </div>
+        <div class="profile-field">
+          <div class="profile-label">Password</div>
+          <input class="profile-input" type="password" name="password" placeholder="••••••••">
+        </div>
+      </div>
+      <!-- Save/Cancel buttons (hidden by default) -->
+      <div class="profile-btn-row" id="saveCancelButtons" style="display: none;">
+        <button class="btn-cancel" type="button" onclick="cancelEdit()">
+          <i class="fa-solid fa-times"></i> Cancel
+        </button>
+        <button class="btn-save" type="button" onclick="saveProfileData()">
+          <i class="fa-solid fa-check"></i> Save Changes
+        </button>
+      </div>
+      
+      <span class="logout-link" style="cursor: default; pointer-events: none;">Log out</span>
+    </div>
+    <div class="profile-divider"></div>
+    <div class="profile-right">
+      <div class="order-history-title">Order History</div>
+      <!-- Order history content goes here -->
+    </div>
+  </div>
+  
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Authentication Manager for Auto Logout -->
+  <script src="../javascript/auth-manager.js"></script>
+  
+  <!-- Cloudinary Upload Script -->
+  <script src="../../cloud.js"></script>
+  
+  
+  <script src="../javascript/profilesettings.js"></script>
+</body>
+</html>

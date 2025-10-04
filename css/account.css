@@ -1,0 +1,503 @@
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsLight';
+  src: url('../src/fonts/Poppins-Light.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+/* Account Page Styles */
+.account-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    ;
+}
+
+.account-title {
+    font-size: 2rem;
+    font-family: 'PoppinsMedium';
+    margin-bottom: 1.5rem;
+    margin-top: -5px;
+    color: #000000;
+    padding: 2rem 2rem 0 2rem;
+}
+
+.account-content {
+    background: #fff;
+    border-radius: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    min-height: 652px;
+    font-family: 'PoppinsRegular';
+}
+
+.account-body {
+    flex: 1;
+}
+
+/* Profile Panel */
+.profile-panel {
+    background: #ffffff;
+    padding: 2rem 1.5rem;
+    width: 300px;
+    min-width: 300px;
+    border-right: 1px solid #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-image-container {
+    margin-bottom: 1.5rem;
+}
+
+.profile-image {
+    width: 180px;
+    height: 180px;
+    border: 2px solid #e9ecef;
+    border-radius: 50%;
+    position: relative;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.profile-image:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    border-color: #ccc;
+}
+
+.profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.profile-image img.loaded {
+    opacity: 1;
+}
+
+.placeholder-icon {
+    position: absolute;
+    color: #adb5bd;
+    font-size: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+}
+
+.edit-icon {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: transparent;
+    color: transparent;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    opacity: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.profile-image:hover .edit-icon {
+    opacity: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-family: 'PoppinsMedium';
+    margin-bottom: -1px;
+    margin-top: -10px;
+    color: #760000;
+    text-align: center;
+}
+
+.profile-name:last-child {
+    text-transform: capitalize;
+}
+
+.profile-role {
+    color: #6c757d;
+    margin-bottom: 2.5rem;
+    text-align: center;
+}
+
+.profile-menu {
+    width: 100%;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.menu-item:hover {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.menu-item.active {
+    background: #96392d;
+    color: white;
+}
+
+.menu-item i {
+    margin-right: 0.75rem;
+    font-size: 1rem;
+}
+
+.menu-item span {
+    font-size: 0.95rem;
+}
+
+/* Info Panel */
+.info-panel {
+    padding: 2rem;
+    flex: 1;
+}
+
+.info-title {
+    font-size: 1.5rem;
+    font-family: 'PoppinsRegular';
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.personal-info-form .form-label {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.personal-info-form .form-control {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 0.75rem 0.875rem;
+    font-size: 0.95rem;
+    background: #fff;
+}
+
+.personal-info-form .form-control:focus {
+    border-color: #ce947d;
+    box-shadow: 0 0 0 0.2rem rgba(255, 0, 0, 0.25);
+}
+
+
+/* Admin Controls */
+.admin-controls {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    position: relative;
+}
+
+.admin-badge {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.admin-badge .badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    margin-right: 0.5rem;
+}
+
+#userSelector {
+    max-width: 400px;
+    display: inline-block;
+}
+
+.admin-note {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.admin-controls .btn-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Gender Selection */
+.gender-selection {
+    margin-bottom: 1.5rem;
+}
+
+.gender-selection .form-check-input {
+    margin-right: 0.5rem;
+}
+
+.gender-selection .form-check-input:checked {
+    background-color: #760000;
+    border-color: #760000;
+}
+
+.gender-selection .form-check-label {
+    font-weight: 500;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.gender-selection .form-check {
+    margin-right: 2rem;
+}
+
+input {
+  text-transform: capitalize;
+  border-radius: 20px !important;
+}
+
+/* Verified Email */
+.verified {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-left: 1px solid #c3e6cb;
+}
+
+.verified i {
+    margin-right: 0.5rem;
+}
+
+.btn {
+    background: #96392d;
+    border: none;
+    border-radius: 19px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: #760000;
+    border: none;
+    border-radius: 19px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+/* Input Groups */
+.input-group-text {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #6c757d;
+}
+
+.form-control:focus + .input-group-text {
+    border-color: #007bff;
+}
+
+/* Main Content */
+.main-content {
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+
+/* Row spacing */
+.row.mb-3 {
+    margin-bottom: 1.5rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .account-content {
+        flex-direction: column;
+    }
+    
+    .profile-panel {
+        width: 100%;
+        min-width: auto;
+        border-right: none;
+        border-bottom: 1px solid #e9ecef;
+        padding: 1.5rem;
+    }
+    
+    .profile-menu {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .menu-item {
+        white-space: nowrap;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+    
+    .info-panel {
+        padding: 1.5rem;
+    }
+    
+    .account-title {
+        margin-left: 0;
+        text-align: center;
+    }
+}
+
+/* Profile image specific styles */
+#profileImg {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 10 !important;
+    display: none !important;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#profileImg[src]:not([src=""]) {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+#profileImg.loaded {
+    opacity: 1 !important;
+}
+
+#placeholderIcon {
+    z-index: 1;
+    position: relative;
+}
+
+/* Login & Password Panel Styles */
+.login-password-form {
+    max-width: 600px;
+}
+
+.login-password-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.login-password-form .input-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.login-password-form .form-control {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.login-password-form .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.login-password-form .input-group .btn {
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+}
+
+.login-password-form .input-group .form-control {
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+}
+
+.login-password-form hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #dee2e6, transparent);
+    margin: 2rem 0;
+}
+
+.login-password-form h4 {
+    color: #495057;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.login-password-form .btn-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.login-password-form .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.login-password-form .btn-secondary {
+    border: 2px solid #6c757d;
+    background: transparent;
+    color: #6c757d;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.login-password-form .btn-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-1px);
+}

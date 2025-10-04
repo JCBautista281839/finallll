@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shipping Options</title>
+  <link rel="stylesheet" href="../css/shipping.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Consistent Header -->
+    <header class="menu-header">
+      <div class="menu-header-content">
+        <a href="details.html" class="back-to-menu" id="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back</span>
+        </a>
+        <div style="flex:1;"></div>
+        <div class="header-right-content">
+          <nav class="main-nav">
+            <ul class="nav-list">
+              <li><a href="/index.html" class="nav-link">Home</a></li>
+              <li><a href="../html/menucustomer.html" class="nav-link active">Menu</a></li>
+            </ul>
+          </nav>
+          <div class="search-bar">
+            <input type="text" placeholder="Search" class="search-input">
+            <img class="search-img" src="/src/Icons/search.png" alt="Search Icon">
+          </div>
+          <div class="header-icons">
+            <a href="login.html" class="icon-link">
+              <img class="user-img" src="/src/Icons/user (1).png" alt="User Icon">
+            </a>
+            <a href="#" class="icon-link" id="shopping-bag-btn">
+              <div class="bag-container">
+                <img class="bag-img" src="/src/Icons/bag (1).png" alt="Shopping Bag Icon">
+                <span class="item-counter" id="item-counter">0</span>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="checkout">
+      <!-- Left Section -->
+      <div class="form-section">
+        <h2 class="form-title">SHIPPING OPTIONS</h2>
+
+        <h3>Contact Information</h3>
+        <div class="contact-box">
+          <div class="contact-right">
+            <p class="label">Deliver to</p>
+            <p id="delivery-info">
+              <b>Name:</b> John Doe<br>
+              <b>Address:</b> zapote 1, bacoor, cavite, 4102<br>
+              <b>Email:</b> johndoe@gmail.com<br>
+              <b>Phone:</b> 0912345987
+            </p>
+          </div>
+        </div>
+
+        <h3>Shipping Options</h3>
+        <div class="shipping-option selected" id="pickup-option">
+          <input type="radio" name="shipping" id="pickup-radio" checked>
+          <span class="option-title">Pick Up in Store</span>
+          <span class="option-desc">Free pickup at our location</span>
+          <span class="price">FREE</span>
+        </div>
+
+        <div class="shipping-option" id="lalamove-option">
+          <input type="radio" name="shipping" id="lalamove-radio">
+          <span class="option-title">Lalamove Delivery</span>
+          <span class="option-desc">Door-to-door delivery service</span>
+          <span class="price">₱89.00<br><small>SEDAN • 0.5km</small></span>
+        </div>
+
+        <!-- Payment Information Section -->
+        <h2 class="form-title payment-title">PAYMENT INFORMATION</h2>
+
+        <h3>Payment</h3>
+        <div class="payment-option">
+          <input type="radio" name="payment" id="gcash-payment" checked>
+          <span>📱 GCash</span>
+        </div>
+
+        <div class="payment-option">
+          <input type="radio" name="payment" id="card-payment">
+          <span>💳 Card</span>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h2>ORDER FORM</h2>
+        <div class="order-item">
+          <span>1</span>
+          <span>Crispy Kare-Kare</span>
+          <span class="price">Php 500</span>
+        </div>
+        <hr>
+        
+        <!-- Subtotal -->
+        <div class="subtotal">
+          <span>Subtotal</span>
+          <span class="price" id="subtotal-amount">Php 500</span>
+        </div>
+        
+        <!-- Shipping Fee -->
+        <div class="shipping-fee">
+          <span>Shipping Fee</span>
+          <span class="price" id="shipping-fee-amount">FREE</span>
+        </div>
+        
+        <hr>
+        
+        <!-- Updated Total -->
+        <div class="total">
+          <span>Total</span>
+          <span class="price" id="total-amount">Php 500</span>
+        </div>
+        <!-- Shipping page continue button -->
+<button class="continue-btn" id="place-order-btn">
+  Payment
+</button>
+
+      </div>
+    </div>
+
+  </div>
+  
+  <!-- Payment Modal -->
+  <div id="payment-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content payment-modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="payment-modal-title">GCash Payment</h2>
+        <button class="modal-close" id="payment-modal-close">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- QR Code Section -->
+        <div class="qr-code-section">
+          <p class="payment-instruction">⚠️ REQUIRED: You must complete this payment and provide both reference code and receipt screenshot before you can place your order.</p>
+          <div class="qr-code-container">
+            <img id="payment-qr-code" src="" alt="Payment QR Code" class="qr-code-image">
+          </div>
+        </div>
+        
+        <!-- Payment Form -->
+        <div class="payment-form">
+          <!-- Reference Code Input -->
+          <div class="form-group">
+            <label for="reference-code">Payment Reference Code * (Required for Order)</label>
+            <input type="text" id="reference-code" placeholder="Enter payment reference code (min 5 characters)" required minlength="5">
+            <small class="form-help">Enter the reference code from your payment confirmation (minimum 5 characters, letters and numbers only)</small>
+          </div>
+          
+          <!-- Receipt Upload -->
+          <div class="form-group">
+            <label for="receipt-upload">Upload Payment Receipt Screenshot * (Required for Order)</label>
+            <div class="file-upload-area" id="file-upload-area">
+              <input type="file" id="receipt-upload" accept="image/*" required>
+              <div class="upload-placeholder">
+                <div class="upload-icon">📷</div>
+                <p>Click to upload or drag and drop your payment receipt screenshot</p>
+                <small>Image files only (JPG, PNG, etc.) - Required to place order</small>
+              </div>
+              <div class="file-preview" id="file-preview" style="display: none;">
+                <img id="preview-image" src="" alt="Receipt Preview">
+                <button type="button" class="remove-file" id="remove-file">&times;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Modal Buttons -->
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="payment-cancel">Cancel</button>
+          <button type="button" class="btn-primary" id="payment-confirm">Confirm Payment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Order Confirmation Modal -->
+  <div id="order-confirmation-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 class="modal-title">ORDER CONFIRMATION</h2>
+      
+      <div class="confirmation-details">
+        <div class="detail-row">
+          <span class="label">Customer Name:</span>
+          <span class="value" id="modal-customer-name">Vonn Isaac</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Contact Number:</span>
+          <span class="value" id="modal-contact-number">09568992189</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Order Type:</span>
+          <span class="value" id="modal-order-type">Lalamove Delivery</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Order ID:</span>
+          <span class="value" id="modal-order-id">332426758424512859</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Status:</span>
+          <span class="value" id="modal-status">undefined</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Service:</span>
+          <span class="value" id="modal-service">MOTORCYCLE</span>
+        </div>
+        
+        <div class="detail-row total-row">
+          <span class="label">Total:</span>
+          <span class="value total-amount" id="modal-total">₱500</span>
+        </div>
+      </div>
+      
+      <div class="modal-question">
+        <p>Would you like to proceed to Payment and Shipping Options?</p>
+      </div>
+      
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="modal-cancel">Cancel</button>
+        <button class="btn-summary" id="modal-summary" style="background: #17a2b8; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 16px; margin: 0 10px;">View Full Summary</button>
+        <button class="btn-continue" id="modal-continue">Continue</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Firebase Configuration -->
+  <script src="../firebase-config.js"></script>
+  
+  <!-- Authentication Manager for Auto Logout -->
+  <script src="../javascript/auth-manager.js"></script>
+  
+  <!-- Firebase Order Management -->
+  <script src="../javascript/firebase-orders.js"></script>
+  
+  <!-- Price Utilities -->
+  <script src="../javascript/price-utils.js"></script>
+  
+  <!-- Firebase Order Summary -->
+  <script src="../javascript/firebase-order-summary.js"></script>
+  
+  <script src="../javascript/shipping.js"></script>
+</body>
+</html>

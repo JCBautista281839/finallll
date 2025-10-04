@@ -1,0 +1,672 @@
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsExtraLight';
+  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+.main-content {
+    background: #ffffff;
+    min-height: calc(100vh - 40px);
+    border-radius: 60px;
+    font-family: 'PoppinsRegular', sans-serif;
+    margin: 30px;
+}
+
+.header-action-row {
+    background: transparent;
+    padding: 1.25rem;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 0.75rem;
+}
+
+.inventory-header {
+    flex-shrink: 0;
+}
+
+.inventory-title {
+    font-size: 12px !important;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.inventory-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 0;
+    font-weight: 500;
+}
+
+.inventory-table-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.inventory-table {
+    margin: 0;
+    border-collapse: collapse;
+}
+
+.inventory-table thead {
+    background: transparent;
+}
+
+.inventory-table th {
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.inventory-table td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    color: #333;
+    font-weight: 500;
+}
+
+.inventory-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.inventory-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.bi {
+    font-size: 1.5rem;
+    vertical-align: middle;
+}
+
+/* Remove any user/person icons from notifications */
+.inventory-table td::before,
+.inventory-table td::after {
+    display: none !important;
+}
+
+.inventory-table td img[alt*="user"],
+.inventory-table td img[alt*="person"],
+.inventory-table td img[alt*="avatar"] {
+    display: none !important;
+}
+
+/* Hide any Font Awesome user icons */
+.inventory-table td .fa-user,
+.inventory-table td .fa-user-circle,
+.inventory-table td .fa-user-o {
+    display: none !important;
+}
+
+/* ========== MID-MOBILE TO TABLET (577px to 768px) ========== */
+@media (min-width: 577px) and (max-width: 768px) {
+    .dashboard-container {
+        margin-left: 100px !important;
+        transition: margin-left 0.3s ease;
+        width: calc(100% - 100px) !important;
+    }
+    
+    /* Hide burger menu on mid-mobile - sidebar is visible */
+    #mobileMenuBtn {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin: 20px !important;
+        border-radius: 40px !important;
+        padding: 1.5rem !important;
+    }
+    
+    .header-action-row {
+        padding: 1.25rem !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 1rem !important;
+    }
+    
+    .inventory-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .inventory-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Remove sidebar highlights on mid-mobile - maximum specificity */
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active,
+    .sidebar .nav-link.text-white.active,
+    .sidebar .nav-link[title="Notifications"].active,
+    .sidebar .nav-link[title="Notifications"].text-white.active {
+        background: transparent !important;
+        color: #222 !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .sidebar .nav-link:hover .nav-icon,
+    .sidebar .nav-link.active .nav-icon,
+    .sidebar .nav-link.text-white.active .nav-icon,
+    .sidebar .nav-link[title="Notifications"].active .nav-icon,
+    .sidebar .nav-link[title="Notifications"].text-white.active .nav-icon {
+        filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%) !important;
+    }
+    
+    .sidebar .nav-link:hover .nav-text,
+    .sidebar .nav-link.active .nav-text,
+    .sidebar .nav-link.text-white.active .nav-text,
+    .sidebar .nav-link[title="Notifications"].active .nav-text,
+    .sidebar .nav-link[title="Notifications"].text-white.active .nav-text {
+        color: #222 !important;
+    }
+}
+
+/* ========== TABLET RESPONSIVE (768px to 992px) - MOBILE STYLE OVERLAY ========== */
+@media (min-width: 768px) and (max-width: 992px) {
+    .dashboard-container {
+        margin-left: 0 !important;
+        transition: margin-left 0.3s ease;
+        width: 100% !important;
+    }
+    
+    /* Hide sidebar completely on tablet - make it overlay like mobile */
+    .sidebar {
+        position: fixed !important;
+        left: -250px !important;
+        top: -20px !important;
+        height: calc(100vh + 20px) !important;
+        width: 250px !important;
+        background: #ffffff !important;
+        z-index: 1000 !important;
+        transition: all 0.3s ease !important;
+        overflow-y: auto !important;
+        transform: translateX(-100%) !important;
+        margin-top: 0 !important;
+        padding-top: 20px !important;
+        padding-bottom: 0 !important;
+        border-right: 1px solid #e0e0e0 !important;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
+    }
+    
+    .sidebar.open {
+        left: 0 !important;
+        transform: translateX(0) !important;
+    }
+    
+    .sidebar.open {
+        z-index: 1001 !important;
+    }
+    
+    .main-content {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    
+    /* Tablet sidebar navigation styling - icons with labels */
+    .sidebar .nav {
+        gap: 0.25rem !important;
+        padding-top: 1rem !important;
+        align-items: stretch !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        text-align: left !important;
+    }
+    
+    .sidebar .nav-link {
+        margin: 0 !important;
+        padding: 0.875rem 1rem !important;
+        border-radius: 0px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-decoration: none !important;
+        color: #333 !important;
+        transition: all 0.2s ease !important;
+        min-height: 48px !important;
+        position: relative !important;
+        text-align: left !important;
+    }
+    
+    /* Remove sidebar highlights on tablet - maximum specificity */
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active,
+    .sidebar .nav-link.text-white.active,
+    .sidebar .nav-link[title="Notifications"].active,
+    .sidebar .nav-link[title="Notifications"].text-white.active {
+        background: transparent !important;
+        color: #333 !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .sidebar .nav-link:hover .nav-icon,
+    .sidebar .nav-link.active .nav-icon,
+    .sidebar .nav-link.text-white.active .nav-icon,
+    .sidebar .nav-link[title="Notifications"].active .nav-icon,
+    .sidebar .nav-link[title="Notifications"].text-white.active .nav-icon {
+        filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%) !important;
+    }
+    
+    .sidebar .nav-link:hover .nav-text,
+    .sidebar .nav-link.active .nav-text,
+    .sidebar .nav-link.text-white.active .nav-text,
+    .sidebar .nav-link[title="Notifications"].active .nav-text,
+    .sidebar .nav-link[title="Notifications"].text-white.active .nav-text {
+        color: #333 !important;
+    }
+    
+    .sidebar .nav-icon {
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 0.875rem !important;
+        margin-bottom: 0 !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .sidebar .nav-text {
+        color: inherit !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        line-height: 1.2 !important;
+        flex-grow: 1 !important;
+    }
+    
+    /* Show burger menu on tablet - matching Dashboard */
+    #mobileMenuBtn {
+        display: block !important;
+        background: #b76e79 !important;
+        border-color: #b76e79 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 1rem !important;
+        box-shadow: 0 2px 4px rgba(183, 110, 121, 0.3) !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    #mobileMenuBtn:hover {
+        background: #a55b68 !important;
+        border-color: #a55b68 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(183, 110, 121, 0.4) !important;
+    }
+    
+    /* Overlay for tablet sidebar */
+    .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    
+    .mobile-overlay.show {
+        display: block;
+    }
+    
+    /* Main content adjustments for tablet */
+    .main-content {
+        padding: 1.5rem !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        flex: 1 !important;
+        margin: 20px !important;
+        border-radius: 40px !important;
+    }
+    
+    .header-action-row {
+        padding: 1.5rem !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 1rem !important;
+    }
+    
+    .inventory-title {
+        font-size: 2rem !important;
+    }
+    
+    .inventory-subtitle {
+        font-size: 1.1rem !important;
+    }
+    
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1.25rem !important;
+        font-size: 0.95rem !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .header-action-row {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+    .inventory-title {
+        font-size: 2rem;
+    }
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        border-radius: 0;
+    }
+    .header-action-row {
+        padding: 1.5rem;
+    }
+    .inventory-title {
+        font-size: 2rem;
+    }
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ========== MOBILE RESPONSIVE DESIGN ========== */
+/* ========== SMALL MOBILE (576px and below) ========== */
+@media (max-width: 576px) {
+    .dashboard-container {
+        margin-left: 0 !important;
+        transition: margin-left 0.3s ease;
+        width: 100% !important;
+    }
+    
+    .main-content {
+        margin: 0 !important;
+        border-radius: 0 !important;
+        padding: 1rem !important;
+        min-height: 100vh !important;
+    }
+    
+    .header-action-row {
+        padding: 1rem !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 1rem !important;
+    }
+    
+    .inventory-title {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .inventory-subtitle {
+        font-size: 0.9rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .inventory-table-container {
+        border-radius: 8px !important;
+        overflow-x: auto !important;
+        margin: 0 !important;
+    }
+    
+    /* Mobile table responsive design */
+    .inventory-table {
+        min-width: 100% !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .inventory-table th,
+    .inventory-table td {
+        padding: 0.75rem 0.5rem !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap !important;
+    }
+    
+    .inventory-table th:first-child,
+    .inventory-table td:first-child {
+        position: sticky !important;
+        left: 0 !important;
+        background: #fff !important;
+        z-index: 2 !important;
+        border-right: 1px solid #e9ecef !important;
+    }
+    
+    /* Mobile sidebar styling */
+    .sidebar {
+        position: fixed !important;
+        left: -250px !important;
+        top: -20px !important;
+        height: calc(100vh + 20px) !important;
+        width: 250px !important;
+        background: #ffffff !important;
+        z-index: 1000 !important;
+        transition: all 0.3s ease !important;
+        overflow-y: auto !important;
+        transform: translateX(-100%) !important;
+        margin-top: 0 !important;
+        padding-top: 20px !important;
+        padding-bottom: 0 !important;
+        border-right: 1px solid #e0e0e0 !important;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
+    }
+    
+    .sidebar.open {
+        left: 0 !important;
+        transform: translateX(0) !important;
+    }
+    
+    .sidebar.open {
+        z-index: 1001 !important;
+    }
+    
+    .main-content {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    
+    /* Mobile overlay */
+    .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    
+    .mobile-overlay.show {
+        display: block;
+    }
+    
+    /* Mobile menu button styling - matching Dashboard */
+    #mobileMenuBtn {
+        background: #b76e79 !important;
+        border-color: #b76e79 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 1rem !important;
+        box-shadow: 0 2px 4px rgba(183, 110, 121, 0.3) !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    #mobileMenuBtn:hover {
+        background: #a55b68 !important;
+        border-color: #a55b68 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(183, 110, 121, 0.4) !important;
+    }
+    
+    /* Remove sidebar highlights on mobile - maximum specificity */
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active,
+    .sidebar .nav-link.text-white.active,
+    .sidebar .nav-link[title="Notifications"].active,
+    .sidebar .nav-link[title="Notifications"].text-white.active {
+        background: transparent !important;
+        color: #222 !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .sidebar .nav-link:hover .nav-icon,
+    .sidebar .nav-link.active .nav-icon,
+    .sidebar .nav-link.text-white.active .nav-icon,
+    .sidebar .nav-link[title="Notifications"].active .nav-icon,
+    .sidebar .nav-link[title="Notifications"].text-white.active .nav-icon {
+        filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%) !important;
+    }
+    
+    .sidebar .nav-link:hover .nav-text,
+    .sidebar .nav-link.active .nav-text,
+    .sidebar .nav-link.text-white.active .nav-text,
+    .sidebar .nav-link[title="Notifications"].active .nav-text,
+    .sidebar .nav-link[title="Notifications"].text-white.active .nav-text {
+        color: #222 !important;
+    }
+    
+    /* Mobile sidebar navigation styling */
+    .sidebar .brand {
+        margin-bottom: 1.5rem !important;
+        margin-top: 0.5rem !important;
+        text-align: center !important;
+    }
+    
+    .sidebar .brand img {
+        width: 65px !important;
+        height: 65px !important;
+        object-fit: contain !important;
+    }
+    
+    .sidebar .nav {
+        gap: 0.25rem !important;
+        padding-top: 1rem !important;
+        align-items: stretch !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        text-align: left !important;
+    }
+    
+    .sidebar .nav-link {
+        margin: 0 !important;
+        padding: 0.875rem 1rem !important;
+        border-radius: 0px !important;
+        display: flex !important;
+        align-items: center !important;
+        color: #333 !important;
+        font-size: 1rem !important;
+        transition: all 0.2s ease !important;
+        width: 100% !important;
+        min-height: 48px !important;
+        justify-content: flex-start !important;
+        position: relative !important;
+    }
+    
+    .sidebar .nav-link:hover {
+        background: #f5f5f5 !important;
+        color: #b76e79 !important;
+        transform: translateX(2px) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+    
+    .sidebar .nav-link.active {
+        background: #b76e79 !important;
+        color: white !important;
+    }
+    
+    .sidebar .nav-icon {
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 0.875rem !important;
+        margin-bottom: 0 !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .sidebar .nav-text {
+        color: inherit !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        line-height: 1.2 !important;
+        flex-grow: 1 !important;
+    }
+    
+    .sidebar .nav-link.mt-auto {
+        margin-top: 1rem !important;
+    }
+    
+    /* Close button styling */
+    .sidebar #closeSidebarBtn {
+        position: absolute !important;
+        top: 1rem !important;
+        right: 1rem !important;
+        background: #f0f0f0 !important;
+        border: none !important;
+        border-radius: 50% !important;
+        width: 36px !important;
+        height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #666 !important;
+        transition: all 0.2s ease !important;
+        font-size: 1.1rem !important;
+    }
+    
+    .sidebar #closeSidebarBtn:hover {
+        background: #e0e0e0 !important;
+        color: #333 !important;
+        transform: rotate(90deg) scale(1.1) !important;
+    }
+    
+    /* Settings and Logout spacing */
+    .sidebar .nav-link.mt-auto {
+        margin-top: 0.5rem !important;
+        border-top: 1px solid #e0e0e0 !important;
+        padding-top: 0.5rem !important;
+    }
+}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/nav.css">
+    <link rel="stylesheet" href="../css/styleReceipt.css">
+</head>
+<body>
+    <div class="dashboard-container d-flex">
+        <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
+            <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="brand mb-1">
+                <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
+            </div>
+            <nav class="nav flex-column w-100 text-center">
+                <a href="../html/Dashboard.html" class="nav-link text-white" title="Home">
+                    <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
+                    <div class="nav-text">Home</div>
+                </a>
+                
+                <a  class="nav-link text-white" title="Notifications" style="position:relative;">
+                    <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon" >
+                    <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+                    <div class="nav-text">Notifications</div>
+                </a>
+                <a href="../html/Order.html" class="nav-link text-white" title="Orders">
+                    <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
+                    <div class="nav-text">Orders</div>
+                </a>
+                <a href="../html/pos.html" class="nav-link text-white" title="POS">
+                    <img src="../src/Icons/cashier-machine.png" alt="POS" class="nav-icon">
+                    <div class="nav-text">POS</div>
+                </a>
+                <a href="../html/menu.html" class="nav-link text-white" title="Menu">
+                    <img src="../src/Icons/menu (1).png" alt="Menu" class="nav-icon">
+                    <div class="nav-text">Menu</div>
+                </a>
+                <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
+                    <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
+                    <div class="nav-text">Inventory</div>
+                </a>
+                <a href="../html/analytics.html" class="nav-link text-white" title="Reports">
+                    <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
+                    <div class="nav-text">Reports</div>
+                </a>
+                <a href="../html/user.html" class="nav-link text-white" title="Users">
+                    <img src="../src/Icons/user.png" alt="user" class="nav-icon">
+                    <div class="nav-text">Users</div>
+                </a>
+                <br>
+                <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+                    <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
+                    <div class="nav-text">Settings</div>
+                </a>
+                <a href="#" class="nav-link text-white" title="Logout">
+                    <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
+                    <div class="nav-text">Logout</div>
+                </a>
+            </nav>
+             <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+      <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+          <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+              <img src="../src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+              <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+              <img src="../src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+          </div>
+          <div class="dropdown-body p-2" id="dropdownNotificationsList">
+              <!-- Notifications will be loaded here dynamically -->
+              <div class="text-center text-muted py-3">No notifications</div>
+          </div>
+          <div class="dropdown-footer p-2 text-center border-top">
+              <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+          </div>
+      </div>
+        </aside>
+        
+        <main class="main-content flex-grow-1 p-4">
+            
+            <div class="top-bar d-flex justify-content-between align-items-center mb-4">
+                <div class="back-button d-flex align-items-center">
+                    <img src="../src/Icons/left-arrow.png" alt="Back" class="me-2" style="width: 40px; height: 40px;">
+                    <span class="back-text">Back</span>
+                </div>
+                
+                <div class="datetime-display" id="currentDateTime">
+                    12:00 PM Monday
+                </div>
+                
+              
+            </div>
+            
+            <div class="transaction-content d-flex gap-4">
+                
+                <div class="receipt-panel flex-grow-1">
+                    <div class="transaction-complete-container">
+                        <h2 class="transaction-title">Transaction Complete</h2>
+                        
+                        <div class="receipt-image-container">
+                            <div class="receipt-paper">
+                                <div class="receipt-content">
+                                    <div class="receipt-header">
+                                        <div class="restaurant-name">VIKTORIA'S BISTRO</div>
+                                        <div class="restaurant-address">Bisita St., Medicion 2C, Imus, Cavite</div>
+                                        <div class="phone-number">Phone: 046 850 3816</div>
+                                        <div class="receipt-date" id="receiptDate">Date: January 1, 2024</div>
+                                        <div class="receipt-number" id="receiptNumber">Receipt #: 0001</div>
+                                        <div class="order-type" id="orderType">Order Type: Dine-In</div>
+                                        <div class="order-meta" id="orderMeta" style="font-size: 10px; color: #444; margin-bottom: 2px;"></div>
+                                    </div>
+
+                                    <div class="receipt-items" id="receiptItems">
+                                        
+                                    </div>
+                                    <div class="receipt-summary">
+                                        <div class="item-row subtotal-row">
+                                            <span class="item-name">Subtotal</span>
+                                            <span class="item-price" id="subtotal">₱0.00</span>
+                                        </div>
+                                        <div class="item-row tax-row">
+                                            <span class="item-name">Tax</span>
+                                            <span class="item-price" id="tax">₱0.00</span>
+                                        </div>
+                                        <div class="item-row discount-row">
+                                            <span class="item-name">Discount</span>
+                                            <span class="item-price" id="discount">₱0.00</span>
+                                        </div>
+                                        <div class="item-row received-row">
+                                            <span class="item-name">Amount Received</span>
+                                            <span class="item-price" id="amountReceived">₱0.00</span>
+                                        </div>
+                                        <div class="item-row total-row">
+                                            <span class="item-name">TOTAL</span>
+                                            <span class="item-price" id="total">₱0.00</span>
+                                        </div>
+                                        <div class="item-row change-row">
+                                            <span class="item-name">Change</span>
+                                            <span class="item-price" id="changeAmount">₱0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="payment-method" id="paymentMethod">
+                                        Payment Method: Cash
+                                    </div>
+                                    <div class="thank-you">
+                                        Thank you for dining with us!
+                                        <br>
+                                        Please come again!
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="print-button-container">
+                            <button class="btn btn-success print-btn" onclick="printReceipt()">
+                                <i class="bi bi-printer"></i> Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+
+<script src="../javascript/navnotifi.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../javascript/receipt.js"></script>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var notifLink = document.querySelector('.nav-link[title="Notifications"]');
+            if (notifLink) {
+                notifLink.addEventListener('click', function() {
+                    if (typeof loadNotifications === 'function') {
+                        loadNotifications();
+                    }
+                });
+            }
+        });
+        </script>
+</body>
+</html>

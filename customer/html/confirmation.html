@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Victoria's Bistro - Email Verification</title>
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Your Custom CSS -->
+    <link rel="stylesheet" href="../css/confirmation.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Email Verification Section -->
+        <div class="login-section">
+            <div class="back-arrow" onclick="window.location.href='create-account.html'">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+
+            <div class="login-form">
+                <h1 class="welcome-title">Check your email address</h1>
+                <p class="welcome-subtitle">
+                    We sent a code to <span class="email-highlight">johndoe@gmail.com</span>
+                </p>
+
+                <form>
+                    <div class="verification-code">
+                        <input type="text" class="code-input" maxlength="1" data-index="0">
+                        <input type="text" class="code-input" maxlength="1" data-index="1">
+                        <input type="text" class="code-input" maxlength="1" data-index="2">
+                        <input type="text" class="code-input" maxlength="1" data-index="3">
+                        <input type="text" class="code-input" maxlength="1" data-index="4">
+                        <input type="text" class="code-input" maxlength="1" data-index="5">
+                    </div>
+                    
+                    <div class="resend-text">
+                        Didn't get a code? <span class="resend-link" onclick="resendCode()">Click to resend.</span>
+                    </div>
+                    
+                    <button type="submit" class="login-btn">Sign Up</button>
+                </form>
+                
+                <div class="no-account">
+                    Already have an account? <a href="login.html">Login</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Photo Section -->
+        <div class="photo-section">
+            <div class="photo-item">
+                <!-- Replace with your verification image -->
+                <img src="/src/viktoriaslogin.png">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="../firebase-config.js"></script>
+    
+    <!-- Authentication Manager for Auto Logout -->
+    <script src="../javascript/auth-manager.js"></script>
+    
+    <script>
+        // Auto-focus and navigation between code inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeInputs = document.querySelectorAll('.code-input');
+            
+            codeInputs.forEach((input, index) => {
+                input.addEventListener('input', function(e) {
+                    const value = e.target.value;
+                    
+                    // Only allow numbers
+                    if (!/^\d*$/.test(value)) {
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Move to next input if current is filled
+                    if (value && index < codeInputs.length - 1) {
+                        codeInputs[index + 1].focus();
+                    }
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    // Move to previous input on backspace if current is empty
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                    
+                    // Move to next input on arrow right
+                    if (e.key === 'ArrowRight' && index < codeInputs.length - 1) {
+                        codeInputs[index + 1].focus();
+                    }
+                    
+                    // Move to previous input on arrow left
+                    if (e.key === 'ArrowLeft' && index > 0) {
+                        codeInputs[index - 1].focus();
+                    }
+                });
+                
+                // Handle paste functionality
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedData = e.clipboardData.getData('text');
+                    const digits = pastedData.replace(/\D/g, '').slice(0, 6);
+                    
+                    digits.split('').forEach((digit, i) => {
+                        if (codeInputs[i]) {
+                            codeInputs[i].value = digit;
+                        }
+                    });
+                    
+                    // Focus on the next empty input or the last one
+                    const nextEmptyIndex = Math.min(digits.length, codeInputs.length - 1);
+                    codeInputs[nextEmptyIndex].focus();
+                });
+            });
+            
+            // Focus on first input
+            codeInputs[0].focus();
+        });
+        
+        function resendCode() {
+            alert('Verification code resent to your email address!');
+            // Add your resend code logic here
+        }
+        
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const codeInputs = document.querySelectorAll('.code-input');
+            const code = Array.from(codeInputs).map(input => input.value).join('');
+            
+            if (code.length !== 6) {
+                e.preventDefault();
+                alert('Please enter the complete 6-digit verification code.');
+                return;
+            }
+            
+            if (!/^\d{6}$/.test(code)) {
+                e.preventDefault();
+                alert('Please enter only numbers in the verification code.');
+                return;
+            }
+            
+            // Here you would normally verify the code with your backend
+            console.log('Verification code:', code);
+        });
+    </script>
+</body>
+</html>

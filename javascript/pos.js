@@ -1,0 +1,1739 @@
+// Clears the active order and resets the UI
+function clearOrderAndSummary() {
+    const orderItems = document.querySelector('.order-items');
+    if (orderItems) orderItems.innerHTML = '';
+    const subtotalEl = document.querySelector('.summary-subtotal');
+    const taxEl = document.querySelector('.summary-tax');
+    const discountEl = document.querySelector('.summary-discount');
+    const totalEl = document.querySelector('.summary-total');
+    if (subtotalEl) subtotalEl.textContent = '₱0.00';
+    if (taxEl) taxEl.textContent = '₱0.00';
+    if (discountEl) discountEl.textContent = '0%';
+    if (totalEl) totalEl.textContent = '₱0.00';
+    const discountIDEl = document.getElementById('discount-id-summary');
+    if (discountIDEl) discountIDEl.textContent = '';
+    const discountIdInput = document.getElementById('discount-id-input');
+    if (discountIdInput) {
+        discountIdInput.value = '';
+        discountIdInput.style.display = 'none';
+    }
+    const discountInputContainer = document.querySelector('.discount-input');
+    if (discountInputContainer) discountInputContainer.style.display = 'none';
+    const customDiscountInputRow = document.getElementById('customDiscountInputRow');
+    if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+    const customDiscountInput = document.getElementById('customDiscountInput');
+    if (customDiscountInput) customDiscountInput.value = '';
+    const discountDropdown = document.querySelector('.discount-dropdown');
+    if (discountDropdown) discountDropdown.value = 'none';
+    sessionStorage.removeItem('activeOrderDiscount');
+    sessionStorage.removeItem('posOrder'); // Clear posOrder to reset discount state
+    window.activeDiscountID = '';
+}
+// Global variables accessible throughout the file
+// --- POS ACTIVE ORDER RESET/RESTORE LOGIC ---
+// On page load, clear session if not proceeding to payment
+window.addEventListener('load', function() {
+    const hasProceeded = sessionStorage.getItem('hasProceeded') === 'true';
+    if (!hasProceeded) clearOrderAndSummary();
+});
+let menuItemsData = {};
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 350px;
+        `;
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    const typeClass = type === 'success' ? 'alert-success' : 
+                     type === 'error' ? 'alert-danger' : 
+                     type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    toast.className = `alert ${typeClass} alert-dismissible fade show mb-2`;
+    toast.style.cssText = `
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    `;
+    
+    toast.innerHTML = `
+        <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    // Add toast to container
+    toastContainer.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 10);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+    }, 5000);
+}
+
+// Wait for Firebase to be ready before initializing
+function waitForFirebase() {
+    try {
+        if (window.isFirebaseReady && window.isFirebaseReady()) {
+            initializePOS();
+        } else if (typeof firebase !== 'undefined' && firebase.firestore) {
+            initializePOS();
+        } else {
+            setTimeout(waitForFirebase, 500); // Increased timeout for more stability
+        }
+    } catch (error) {
+        setTimeout(waitForFirebase, 1000);
+    }
+}
+
+function initializePOS() {
+    try {
+        // Check authentication
+        const auth = firebase.auth();
+        
+        // Add error handler for auth state changes
+        auth.onAuthStateChanged((user) => {
+            try {
+                if (user) {
+                    
+                    // Check if we have a valid token before proceeding
+                    user.getIdToken(true)
+                        .then(token => {
+                            
+                            // Verify user has proper permissions by checking if they can access menu collection
+                            const db = firebase.firestore();
+                            return db.collection('menu').limit(1).get();
+                        })
+                        .then(() => {
+                            startPOSSystem();
+                        })
+                        .catch((error) => {
+                            
+                            if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+                                // Sign out since credentials aren't working
+                                auth.signOut().then(() => window.location.href = '/index.html');
+                            } else {
+                            }
+                        });
+                } else {
+                    window.location.href = '/index.html';
+                }
+            } catch (authError) {
+                window.location.href = '/index.html';
+            }
+        }, (authError) => {
+            window.location.href = '/index.html';
+        });
+    } catch (error) {
+        window.location.href = '/index.html';
+    }
+}
+
+async function startPOSSystem() {
+    try {
+        
+        // Clear any leftover session storage that might interfere with new orders
+        sessionStorage.removeItem('editingOrder');
+        sessionStorage.removeItem('originalOrderId');
+        sessionStorage.removeItem('isEditMode');
+        // Always clear and generate a new pendingOrderId for each new order session
+        sessionStorage.removeItem('pendingOrderId');
+        let nextOrderId = generateProgressiveOrderId();
+        sessionStorage.setItem('pendingOrderId', nextOrderId);
+        
+        // Initialize order number
+    // Assign a new unique order number for every new order, but only finalize on payment
+        let currentOrderNumber = null;
+        let currentOrderNumberFormatted = null;
+        // Helper to generate progressive order ID (4 digits, then 5 digits)
+        function generateProgressiveOrderId() {
+            // Get used order IDs from localStorage
+            const usedIds = JSON.parse(localStorage.getItem('usedOrderIds') || '[]');
+            
+            // Check if we need to switch to 5 digits (when 4-digit range is 90% full)
+            const fourDigitMax = 9999;
+            const fourDigitUsed = usedIds.filter(id => id.length === 4 && parseInt(id) <= fourDigitMax).length;
+            const fourDigitCapacity = 9000; // 1000-9999
+            const shouldUseFiveDigits = fourDigitUsed >= (fourDigitCapacity * 0.9);
+            
+            // Debug logging
+            console.log(`Order ID Status: 4-digit used: ${fourDigitUsed}/${fourDigitCapacity}, Using 5-digit: ${shouldUseFiveDigits}`);
+            
+            let newId;
+            let attempts = 0;
+            const maxAttempts = 100;
+            
+            do {
+                if (shouldUseFiveDigits) {
+                    // Generate 5-digit number (10000-99999)
+                    newId = (Math.floor(Math.random() * 90000) + 10000).toString();
+                } else {
+                    // Generate 4-digit number (1000-9999)
+                    newId = (Math.floor(Math.random() * 9000) + 1000).toString();
+                }
+                attempts++;
+            } while (usedIds.includes(newId) && attempts < maxAttempts);
+            
+            // If we couldn't find a unique ID after max attempts, use timestamp fallback
+            if (attempts >= maxAttempts) {
+                newId = 'T' + Date.now();
+                console.warn('Could not generate unique ID after max attempts, using timestamp fallback');
+            }
+            
+            // Add the new ID to used IDs and save to localStorage
+            usedIds.push(newId);
+            localStorage.setItem('usedOrderIds', JSON.stringify(usedIds));
+            
+            console.log(`Generated Order ID: ${newId} (${newId.length} digits, attempt ${attempts})`);
+            return newId;
+        }
+
+        // Helper function to get order ID statistics
+        function getOrderIdStats() {
+            const usedIds = JSON.parse(localStorage.getItem('usedOrderIds') || '[]');
+            const fourDigitUsed = usedIds.filter(id => id.length === 4 && parseInt(id) <= 9999).length;
+            const fiveDigitUsed = usedIds.filter(id => id.length === 5 && parseInt(id) >= 10000 && parseInt(id) <= 99999).length;
+            const totalUsed = usedIds.length;
+            
+            return {
+                fourDigitUsed,
+                fiveDigitUsed,
+                totalUsed,
+                fourDigitCapacity: 9000,
+                fiveDigitCapacity: 90000
+            };
+        }
+
+        // Make functions globally accessible for debugging
+        window.getOrderIdStats = getOrderIdStats;
+        window.generateProgressiveOrderId = generateProgressiveOrderId;
+        
+        // Add a function to reset order ID tracking (for testing)
+        window.resetOrderIdTracking = function() {
+            localStorage.removeItem('usedOrderIds');
+            console.log('Order ID tracking reset');
+        };
+
+        // Function to get the last order number from Firestore
+        async function getLastOrderNumber() {
+            const db = firebase.firestore();
+            const counterDoc = db.collection('counters').doc('orders');
+            
+            try {
+                const doc = await counterDoc.get();
+                if (doc.exists) {
+                    return doc.data().current;
+                }
+                return 0;  // Return 0 if no document exists
+            } catch (error) {
+                console.error('Error getting last order number:', error);
+                return 0;  // Return 0 in case of an error
+            }
+        }
+
+        // Function to get the next order number from Firestore and increment it
+        async function getNextOrderNumber() {
+            const db = firebase.firestore();
+            const counterDoc = db.collection('counters').doc('orders');
+            
+            try {
+                const result = await db.runTransaction(async (transaction) => {
+                    const doc = await transaction.get(counterDoc);
+                    const newNumber = (doc.exists ? doc.data().current : 0) + 1;
+                    // Increment order number in Firestore
+                    transaction.set(counterDoc, { 
+                        current: newNumber,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    return newNumber;
+                });
+                return result;
+            } catch (error) {
+                console.error('Error getting next order number:', error);
+                return null;
+            }
+        }
+
+        // Function to update the order number display
+        async function updateOrderNumber() {
+            // Only assign a new orderId if not already assigned for this session/order
+            const orderNumberElement = document.querySelector('.order-number');
+            let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+            if (!pendingOrderId) {
+                pendingOrderId = generateProgressiveOrderId();
+                sessionStorage.setItem('pendingOrderId', pendingOrderId);
+            }
+            currentOrderNumber = pendingOrderId;
+            currentOrderNumberFormatted = String(pendingOrderId);
+            if (orderNumberElement) {
+                orderNumberElement.textContent = `Order No. ${currentOrderNumberFormatted}`;
+            }
+        }
+
+    // On POS page load, scan Firebase for highest order number and show next
+    async function getNextOrderNumberFromOrdersCollection() {
+        const db = firebase.firestore();
+        const ordersSnapshot = await db.collection('orders').orderBy('orderNumber', 'desc').limit(1).get();
+        let nextOrderNumber = 1;
+        if (!ordersSnapshot.empty) {
+            const lastOrder = ordersSnapshot.docs[0].data();
+            nextOrderNumber = (lastOrder.orderNumber || 0) + 1;
+        }
+        return nextOrderNumber;
+    }
+
+    // Replace initial order number logic
+    const orderNumberElement = document.querySelector('.order-number');
+    let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+    if (!pendingOrderId) {
+        pendingOrderId = generateProgressiveOrderId();
+        sessionStorage.setItem('pendingOrderId', pendingOrderId);
+    }
+    currentOrderNumber = pendingOrderId;
+    currentOrderNumberFormatted = String(pendingOrderId);
+    if (orderNumberElement) {
+        orderNumberElement.textContent = `Order No. ${currentOrderNumberFormatted}`;
+    }
+
+    // Load menu items
+    const menuGrid = document.querySelector('.menu-items-grid');
+    
+    // Category filtering functions
+    function setupCategoryFiltering(items) {
+        const categoryButtons = document.querySelectorAll('#categoryNav .nav-link[data-category]');
+        
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                categoryButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Get the selected category
+                const selectedCategory = this.getAttribute('data-category');
+                
+                // Get current search term
+                const searchInput = document.querySelector('.search-input');
+                const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+                
+                // Filter and render items
+                const filteredItems = filterItemsByCategoryAndSearch(items, selectedCategory, searchTerm);
+                renderMenuCards(filteredItems);
+                
+                console.log(`Filtered by category: ${selectedCategory}, showing ${filteredItems.length} items`);
+            });
+        });
+    }
+    
+    function filterItemsByCategoryAndSearch(items, category, searchTerm) {
+        let filteredItems = items;
+        
+        // Filter by category
+        if (category && category !== 'all') {
+            filteredItems = filteredItems.filter(item => {
+                const itemCategory = (item.category || '').toLowerCase();
+                return itemCategory === category.toLowerCase();
+            });
+        }
+        
+        // Filter by search term
+        if (searchTerm) {
+            filteredItems = filteredItems.filter(item => {
+                const itemName = (item.name || '').toLowerCase();
+                const itemDescription = (item.description || '').toLowerCase();
+                return itemName.includes(searchTerm) || itemDescription.includes(searchTerm);
+            });
+        }
+        
+        return filteredItems;
+    }
+    
+    function updateCategoryButtons(items) {
+        // Get unique categories from items
+        const categories = [...new Set(items.map(item => item.category).filter(Boolean))];
+        
+        // Get the category navigation container
+        const categoryNav = document.querySelector('#categoryNav');
+        if (!categoryNav) return;
+        
+        // Keep the "All" button and "More" button
+        const allButton = categoryNav.querySelector('[data-category="all"]');
+        const moreButton = categoryNav.querySelector('.more-categories');
+        
+        // Clear existing category buttons (except "All" and "More")
+        const existingCategoryButtons = categoryNav.querySelectorAll('.nav-link[data-category]:not([data-category="all"])');
+        existingCategoryButtons.forEach(btn => btn.remove());
+        
+        // Add category buttons for available categories
+        categories.forEach(category => {
+            const button = document.createElement('button');
+            button.className = 'nav-link';
+            button.setAttribute('data-category', category.toLowerCase());
+            button.textContent = category;
+            
+            // Insert before the "More" button
+            if (moreButton) {
+                categoryNav.insertBefore(button, moreButton);
+            } else {
+                categoryNav.appendChild(button);
+            }
+        });
+        
+        // Re-setup category filtering with updated buttons
+        setupCategoryFiltering(items);
+        
+        console.log(`Updated category buttons for ${categories.length} categories:`, categories);
+    }
+
+    // Loads menu items from Firestore and renders them
+    async function loadMenuForPOS() {
+        const db = firebase.firestore();
+        try {
+            console.log('Loading menu items from Firebase...');
+            const menuSnapshot = await db.collection('menu').where('available', '==', true).get();
+            const items = menuSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            items.forEach(item => {
+                menuItemsData[item.name] = item;
+            });
+            
+            // Store all items globally for filtering
+            window.allMenuItems = items;
+            
+            renderMenuCards(items);
+            
+            // Enable search functionality
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.trim().toLowerCase();
+                    const currentCategory = document.querySelector('.nav-link.active')?.getAttribute('data-category') || 'all';
+                    const filteredItems = filterItemsByCategoryAndSearch(items, currentCategory, searchTerm);
+                    renderMenuCards(filteredItems);
+                });
+            }
+            
+            // Enable category filtering
+            setupCategoryFiltering(items);
+            
+            // Update category buttons based on available categories
+            updateCategoryButtons(items);
+            
+            console.log(`Loaded ${items.length} menu items successfully`);
+            
+        } catch (err) {
+            console.error('POS load menu error:', err);
+            
+            // Show user-friendly error message
+            if (menuGrid) {
+                menuGrid.innerHTML = `
+                    <div class="alert alert-warning text-center p-4">
+                        <h5>Unable to load menu items</h5>
+                        <p>There was an issue connecting to the database.</p>
+                        <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Render menu cards
+    // Renders menu item cards in the menu grid
+    function renderMenuCards(items) {
+        if (!menuGrid) return;
+        menuGrid.innerHTML = '';
+
+        // Show message if no items found
+        if (items.length === 0) {
+            menuGrid.innerHTML = `
+                <div class="alert alert-info text-center p-4">
+                    <h5>No items found</h5>
+                    <p>No menu items match the current filter.</p>
+                    <button class="btn btn-primary" onclick="document.querySelector('[data-category=\\'all\\']').click()">Show All Items</button>
+                </div>
+            `;
+            return;
+        }
+
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'menu-item-card';
+            card.setAttribute('data-id', item.id);
+            card.setAttribute('data-category', (item.category || '').toLowerCase());
+            card.innerHTML = `
+                <div class="item-image">
+                    <img src="${item.photoUrl || '../src/Icons/menu.png'}" alt="${item.name || 'Item'}">
+                </div>
+                <div class="item-details">
+                    <h6 class="item-name">${item.name || ''}</h6>
+                    <p class="item-price">₱${(item.price ?? 0).toFixed(2)}</p>
+                </div>
+            `;
+            card.addEventListener('click', async function() {
+                const itemName = this.querySelector('.item-name').textContent;
+                const itemPrice = this.querySelector('.item-price').textContent;
+                const itemImage = this.querySelector('.item-image img').src;
+                // Ingredient deduction and inventory checks are now handled in Kitchen on 'Order Ready'.
+                // Only add item to order here.
+                addItemToOrder(itemName, itemPrice, itemImage);
+            });
+            menuGrid.appendChild(card);
+        });
+    }
+
+    // Add item to order
+    // Adds an item to the current order
+    window.addItemToOrder = function addItemToOrder(name, price, image) {
+        try {
+            console.log(`🔧 Adding item: ${name} at ${price}`);
+            
+            const orderItems = document.querySelector('.order-items');
+            if (!orderItems) {
+                throw new Error('Order items container not found');
+            }
+            
+            const existingItem = document.querySelector(`[data-item-name="${name}"]`);
+            const unitPrice = parseFloat(String(price).replace('₱','').replace(',',''));
+            
+            if (isNaN(unitPrice)) {
+                throw new Error(`Invalid price format: ${price}`);
+            }
+
+            if (existingItem) {
+                // Increase quantity by 1 only
+                const quantitySpan = existingItem.querySelector('.quantity-controls .quantity');
+                if (!quantitySpan) {
+                    throw new Error(`Quantity span not found for existing item: ${name}`);
+                }
+                
+                let currentQty = parseInt(quantitySpan.textContent);
+                if (isNaN(currentQty)) {
+                    currentQty = 0;
+                }
+                currentQty += 1;
+                quantitySpan.textContent = currentQty;
+                
+                // Update price next to quantity controls
+                const priceElement = existingItem.querySelector('.quantity-controls .item-price');
+                if (priceElement) {
+                    priceElement.textContent = `₱${(unitPrice * currentQty).toFixed(2)}`;
+                }
+                
+                console.log(`✅ Updated existing item: ${name} (qty: ${currentQty})`);
+            } else {
+                const orderItem = document.createElement('div');
+                orderItem.className = 'order-item';
+                orderItem.setAttribute('data-item-name', name);
+                orderItem.setAttribute('data-unit-price', unitPrice);
+                orderItem.innerHTML = `
+                    <div class="item-info">
+                        <div class="item-quantity">
+                            <i class="bi bi-chevron-right"></i>
+                            <span class="item-number">1</span>
+                        </div>
+                        <div class="item-details">
+                            <h6 class="item-name">${name}</h6>
+                        </div>
+                        <button class="btn-remove-item">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div class="quantity-controls">
+                        <p class="item-price">₱${unitPrice.toFixed(2)}</p>
+                        <button class="btn-quantity btn-minus">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                        <span class="quantity">1</span>
+                        <button class="btn-quantity btn-plus">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                `;
+                // Attach event listeners for quantity buttons
+                const minusBtn = orderItem.querySelector('.btn-minus');
+                const plusBtn = orderItem.querySelector('.btn-plus');
+                
+                if (minusBtn && plusBtn) {
+                    minusBtn.addEventListener('click', function() {
+                        window.decreaseQuantity(this);
+                        window.updateOrderSummary();
+                    });
+                    plusBtn.addEventListener('click', function() {
+                        window.increaseQuantity(this);
+                        window.updateOrderSummary();
+                    });
+                }
+                
+                // Attach remove button event
+                const removeBtn = orderItem.querySelector('.btn-remove-item');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function() {
+                        this.closest('.order-item').remove();
+                        window.updateOrderSummary();
+                    });
+                }
+                
+                orderItems.appendChild(orderItem);
+                console.log(`✅ Created new item: ${name} at ₱${unitPrice.toFixed(2)}`);
+            }
+            
+            window.updateOrderSummary();
+            
+        } catch (error) {
+            console.error(`❌ Error in addItemToOrder for ${name}:`, error);
+            throw error; // Re-throw to be caught by calling function
+        }
+    }
+
+    // Ensure discount dropdown is always clickable and updates summary instantly
+    function ensureDiscountDropdownListener() {
+        const discountDropdown = document.querySelector('.discount-dropdown');
+        if (discountDropdown && !discountDropdown.hasListener) {
+            discountDropdown.addEventListener('change', function() {
+                window.updateOrderSummary();
+            });
+            discountDropdown.hasListener = true;
+        }
+    }
+    // Attach listener on DOMContentLoaded
+    window.addEventListener('DOMContentLoaded', function() {
+        ensureDiscountDropdownListener();
+    });
+    // Call after adding/removing items
+    ensureDiscountDropdownListener();
+
+    // Update order summary (subtotal, tax, total)
+    // Updates subtotal, tax, discount, and total in the order summary
+    window.updateOrderSummary = function updateOrderSummary() {
+            const orderItemsEls = document.querySelectorAll('.order-item');
+            let subtotal = 0;
+            orderItemsEls.forEach(item => {
+                const unitPrice = parseFloat(item.getAttribute('data-unit-price'));
+                let quantityElement = item.querySelector('.quantity-controls .quantity');
+                if (!quantityElement) quantityElement = item.querySelector('.quantity');
+                const quantity = quantityElement ? parseInt(quantityElement.textContent) || 1 : 1;
+                const lineTotal = unitPrice * quantity;
+                subtotal += lineTotal;
+                const priceElement = item.querySelector('.quantity-controls .item-price');
+                if (priceElement) priceElement.textContent = `₱${lineTotal.toFixed(2)}`;
+                const itemNumberEl = item.querySelector('.item-number');
+                if (itemNumberEl) itemNumberEl.textContent = quantity;
+            });
+
+            // Calculate tax as fixed amount (₱5.00)
+            const tax = 5.00;
+            let discountPercent = 0;
+            let discount = 0;
+            let discountType = 'none';
+            let discountID = '';
+            const discountDropdown = document.querySelector('.discount-dropdown');
+            const customDiscountInputRow = document.getElementById('customDiscountInputRow');
+            const customDiscountInput = document.getElementById('customDiscountInput');
+            if (discountDropdown) {
+                // Only count visible order items for the noItems check
+                const visibleOrderItems = Array.from(document.querySelectorAll('.order-item')).filter(item => item.offsetParent !== null);
+                const noItems = visibleOrderItems.length === 0;
+                // Only show alert if not restoring order and no visible items
+                const isRestoring = sessionStorage.getItem('shouldRestoreOrder') === 'true';
+                if (discountDropdown.value !== 'none' && noItems && !isRestoring) {
+                    // For all discount types, just reset fields and return silently if no items
+                    discountDropdown.value = 'none';
+                    if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+                    discountType = 'none';
+                    discountPercent = 0;
+                    discount = 0;
+                    return;
+                }
+                if (discountDropdown.value === 'none') {
+                    discountType = 'none';
+                    discountPercent = 0;
+                    discount = 0;
+                    if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+                } else if (discountDropdown.value === 'pwd' || discountDropdown.value === 'senior') {
+                    discountType = discountDropdown.value;
+                    discountPercent = 20;
+                    discount = subtotal * 0.20;
+                    if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+                } else if (discountDropdown.value === 'custom') {
+                    discountType = 'custom';
+                    if (customDiscountInputRow) {
+                        customDiscountInputRow.style.display = '';
+                        if (customDiscountInput) {
+                            let customPercent = parseFloat(customDiscountInput.value) || 0;
+                            if (customPercent > 100) customPercent = 100;
+                            if (customPercent < 0) customPercent = 0;
+                            discountPercent = customPercent;
+                            discount = subtotal * (customPercent / 100);
+                            customDiscountInput.oninput = function() { updateOrderSummary(); };
+                        }
+                    }
+                }
+            }
+            // Calculate total
+            const total = subtotal + tax - discount;
+            // Update summary displays
+            const subtotalEl = document.querySelector('.summary-subtotal');
+            const taxEl = document.querySelector('.summary-tax');
+            const discountEl = document.querySelector('.summary-discount');
+            const totalEl = document.querySelector('.summary-total');
+            if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
+            if (taxEl) taxEl.textContent = `₱${tax.toFixed(2)}`;
+            if (discountEl) discountEl.textContent = `${discountPercent}%`;
+            if (totalEl) {
+                totalEl.textContent = `₱${total.toFixed(2)}`;
+                console.log('Updated total display to:', totalEl.textContent);
+            }
+            // Show discount ID in summary if present
+            let discountIDEl = document.getElementById('discount-id-summary');
+            if ((discountType === 'pwd' || discountType === 'senior') && discountID) {
+                if (!discountIDEl) {
+                    discountIDEl = document.createElement('div');
+                    discountIDEl.id = 'discount-id-summary';
+                    discountIDEl.className = 'mt-1 text-muted';
+                    totalEl?.parentNode?.appendChild(discountIDEl);
+                }
+                discountIDEl.textContent = (discountType === 'pwd' ? 'PWD ID: ' : 'Senior Citizen ID: ') + discountID;
+            } else if (discountIDEl) {
+                discountIDEl.textContent = '';
+            }
+
+            // --- PATCH: Save all discount fields to posOrder in sessionStorage ---
+            // Get or create the active order object
+            let posOrder = {};
+            try {
+                posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+            } catch (e) { posOrder = {}; }
+            posOrder.discountType = discountType === 'custom' ? 'Special Discount' : (discountType === 'pwd' ? 'PWD' : (discountType === 'senior' ? 'Senior Citizen' : 'None'));
+            posOrder.discountPercent = discountPercent;
+            posOrder.discountAmount = discount;
+            // Also save computed totals for Payment page
+            posOrder.subtotal = subtotal;
+            posOrder.tax = tax;
+            posOrder.total = total;
+            sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+            // --- END PATCH ---
+
+            window.activeDiscountID = discountID;
+            console.log('Order summary updated:', { subtotal, tax, discountPercent, discount, total, discountType, discountID });
+    }
+
+    // Save order data and proceed to payment
+    // Handles Proceed button: saves order and navigates to payment
+
+    const proceedBtn = document.querySelector('.proceed-btn');
+    if (proceedBtn) {
+        proceedBtn.addEventListener('click', async function() {
+            await saveOrder();
+        });
+    }
+
+    async function saveOrder() {
+        // Always ensure pendingOrderId is set before proceeding
+        let pendingOrderId = sessionStorage.getItem('pendingOrderId');
+        if (!pendingOrderId) {
+            pendingOrderId = generateProgressiveOrderId();
+            sessionStorage.setItem('pendingOrderId', pendingOrderId);
+        }
+        sessionStorage.setItem('hasProceeded', 'true');
+        const orderItemsContainer = document.querySelector('.order-items');
+        const orderItems = orderItemsContainer ? Array.from(orderItemsContainer.children).filter(el => el.classList.contains('order-item') && el.offsetParent !== null) : [];
+        if (!orderItems || orderItems.length === 0) {
+            alert('Please add items from the menu first.');
+            return;
+        }
+        // Build orderData from DOM
+        const orderTypeEl = document.querySelector('.order-type span');
+        const tableNumberInput = document.querySelector('.table-number input');
+        const paxNumberInput = document.querySelector('.pax-number input');
+        const orderType = orderTypeEl ? orderTypeEl.textContent.trim() : '';
+        const tableNumberValue = tableNumberInput ? tableNumberInput.value.trim() : '';
+        const paxValue = paxNumberInput ? paxNumberInput.value.trim() : '';
+        // Defensive validation
+        if (orderType === 'Dine in' && (!tableNumberValue || !paxValue)) {
+            alert('Please enter both Table Number and Pax before proceeding.');
+            return;
+        }
+        const items = orderItems.map(item => {
+            const quantity = parseInt(item.querySelector('.quantity').textContent);
+            const unitPrice = parseFloat(item.getAttribute('data-unit-price'));
+            const price = unitPrice; // for compatibility
+            const total = parseFloat(item.querySelector('.item-price').textContent.replace('₱','').replace(',',''));
+            return {
+                name: item.getAttribute('data-item-name'),
+                quantity,
+                unitPrice,
+                price,
+                total
+            };
+        });
+        if (!items.length) {
+            alert('Order must have at least one item.');
+            return;
+        }
+        // Ensure order summary is up to date before reading values
+        updateOrderSummary();
+        
+        // Numeric fields
+        const subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
+        const tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
+        
+        // Get discount from posOrder object instead of sessionStorage
+        let discount = 0;
+        try {
+            const posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+            discount = posOrder.discountAmount || 0;
+        } catch (e) {
+            console.log('Error getting discount from posOrder:', e.message);
+        }
+        
+        const total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
+        const orderNumberFormatted = String(currentOrderNumber);
+        const status = 'Pending Payment';
+        const createdAt = new Date().toISOString();
+        // Get discount details from posOrder for persistence
+        let discountDetails = {};
+        try {
+            const posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+            discountDetails = {
+                discountType: posOrder.discountType || 'None',
+                discountPercent: posOrder.discountPercent || 0,
+                discountAmount: posOrder.discountAmount || 0,
+                discountID: posOrder.discountID || '',
+                discountName: posOrder.discountName || ''
+            };
+        } catch (e) {
+            console.log('Error getting discount details:', e.message);
+        }
+        
+        const orderData = {
+            orderId: orderNumberFormatted,
+            orderNumber: orderNumberFormatted,
+            orderNumberFormatted: orderNumberFormatted,
+            orderType,
+            tableNumber: tableNumberValue,
+            pax: paxValue,
+            items,
+            subtotal,
+            tax,
+            discount,
+            total,
+            status,
+            createdAt,
+            timestamp: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : null,
+            // Include discount details for restoration
+            discountType: discountDetails.discountType,
+            discountPercent: discountDetails.discountPercent,
+            discountAmount: discountDetails.discountAmount,
+            discountID: discountDetails.discountID,
+            discountName: discountDetails.discountName
+        };
+        
+        // Debug logging
+        console.log('Saving order with values:', { subtotal, tax, discount, total });
+        try {
+            const db = firebase.firestore();
+            // Save to Firestore
+            await db.collection('orders').doc(orderNumberFormatted).set(orderData);
+            // Save to sessionStorage for payment page
+            sessionStorage.setItem('posOrder', JSON.stringify(orderData));
+            // UI cleanup
+            document.querySelector('.order-items').innerHTML = '';
+            updateOrderSummary();
+            if (tableNumberInput) tableNumberInput.value = '';
+            await updateOrderNumber();
+            window.location.href = '/html/payment.html';
+        } catch (error) {
+            console.error('Error saving order:', error);
+            alert('There was an error processing your order. Please try again.');
+        }
+    }
+
+    // Also update order number when clearing the order
+    // Handles Clear/New Order button: resets everything
+    const closeOrderBtn = document.querySelector('.btn-close-order');
+    if (closeOrderBtn) {
+        closeOrderBtn.addEventListener('click', async function() {
+            if (confirm('Are you sure you want to clear this order?')) {
+                // Clear the reserved order number first
+                sessionStorage.removeItem('reservedOrderNumber');
+                sessionStorage.removeItem('hasProceeded'); // Clear flag on Clear
+                sessionStorage.removeItem('pendingOrderId'); // Clear pending order ID for new order
+                document.querySelector('.order-items').innerHTML = '';
+                updateOrderSummary();
+                
+                // Generate new order ID for the cleared order
+                let newOrderId = generateProgressiveOrderId();
+                sessionStorage.setItem('pendingOrderId', newOrderId);
+                updateOrderNumber();
+                // Reset Table No and Pax fields to null
+                const tableInput = document.querySelector('.table-number input');
+                const paxInput = document.querySelector('.pax-number input');
+                if (tableInput) tableInput.value = '';
+                if (paxInput) paxInput.value = '';
+                // Get a new order number for the cleared order
+                await updateOrderNumber();
+            }
+        });
+    }
+
+    loadMenuForPOS();
+    updateOrderNumber();
+    
+    // Initialize category filtering after menu is loaded
+    setTimeout(() => {
+        initializeCategoryFiltering();
+    }, 1000);
+
+    // Helper function to update order status in Firebase
+    window.updateOrderStatus = async function(orderNumber, status) {
+        try {
+            const db = firebase.firestore();
+            const orderDoc = await db.collection('orders').doc(orderNumber).get();
+            
+            if (orderDoc.exists) {
+                await db.collection('orders').doc(orderNumber).update({
+                    status: status,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log(`Order ${orderNumber} status updated to ${status}`);
+                return true;
+            } else {
+                console.error(`Order ${orderNumber} not found`);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            return false;
+        }
+    };
+
+    // Add event listener for order type change to handle table number visibility
+    // Handle order type dropdown selection
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.dropdown-item[data-type]')) {
+            e.preventDefault();
+            const selectedType = e.target.getAttribute('data-type');
+            const orderTypeButton = document.querySelector('.order-type span');
+            const tableInput = document.querySelector('.table-number input');
+            const paxInput = document.querySelector('.pax-number input');
+            
+            // Update the dropdown button text
+            if (orderTypeButton) {
+                orderTypeButton.textContent = selectedType;
+            }
+            
+            // Handle table and pax input visibility based on order type
+            if (selectedType === 'Dine in') {
+                // Show table and pax inputs for dine in
+                document.querySelector('.table-number').style.display = 'block';
+                document.querySelector('.pax-number').style.display = 'block';
+                if (tableInput) {
+                    tableInput.required = true;
+                }
+                if (paxInput) {
+                    paxInput.required = true;
+                }
+            } else if (selectedType === 'Take out') {
+                // Hide table and pax inputs for take out
+                document.querySelector('.table-number').style.display = 'none';
+                document.querySelector('.pax-number').style.display = 'none';
+                if (tableInput) {
+                    tableInput.required = false;
+                    tableInput.value = '';
+                }
+                if (paxInput) {
+                    paxInput.required = false;
+                    paxInput.value = '';
+                }
+            }
+        }
+    });
+
+    // Check for start new order flag first
+    const startNewOrder = sessionStorage.getItem('startNewOrder');
+    if (startNewOrder === 'true') {
+        // Clear the flag and start fresh
+        sessionStorage.removeItem('startNewOrder');
+        sessionStorage.removeItem('reservedOrderNumber'); // Clear any reserved order number
+        sessionStorage.removeItem('hasProceeded'); // Clear flag on New Order
+        sessionStorage.removeItem('pendingOrderId'); // Clear pending order ID for new order
+        // Clear order items and reset interface
+        const orderItems = document.querySelector('.order-items');
+        if (orderItems) {
+            orderItems.innerHTML = '';
+        }
+        
+        // Generate new order ID for the new order
+        let newOrderId = generateRandomOrderId();
+        sessionStorage.setItem('pendingOrderId', newOrderId);
+        updateOrderNumber();
+        // Clear table number
+        const tableInput = document.querySelector('.table-number input');
+        if (tableInput) {
+            tableInput.value = '';
+        }
+        // Reset order type to default
+        const orderTypeSpan = document.querySelector('.order-type span');
+        if (orderTypeSpan) {
+            orderTypeSpan.textContent = 'Dine in';
+        }
+        // Update order summary
+        updateOrderSummary();
+        // Get a new order number for the fresh order
+        await updateOrderNumber();
+        console.log('Started new order - POS interface cleared and new order number assigned');
+        return; // Don't restore any pending orders
+    }
+
+    // Check for orders to restore (Back from Payment)
+    const hasProceeded = sessionStorage.getItem('hasProceeded') === 'true';
+    const pendingOrder = sessionStorage.getItem('pendingOrder');
+    const editingOrder = sessionStorage.getItem('editingOrder');
+    const shouldRestore = sessionStorage.getItem('shouldRestoreOrder') === 'true';
+    const isEditMode = sessionStorage.getItem('isEditMode') === 'true';
+    const originalOrderId = sessionStorage.getItem('originalOrderId');
+    console.log('POS Order restoration check:', {
+        pendingOrderExists: !!pendingOrder,
+        editingOrderExists: !!editingOrder,
+        shouldRestore,
+        isEditMode,
+        originalOrderId,
+        hasProceeded
+    });
+    // Restore if: (hasProceeded and shouldRestoreOrder) OR (shouldRestoreOrder from back button)
+    if ((hasProceeded && shouldRestore) || (shouldRestore && !isEditMode)) {
+        try {
+            // Parse the order data
+            const orderData = JSON.parse(pendingOrder || editingOrder);
+            console.log('Restoring order data:', orderData);
+
+            // Set the order number
+            if (orderData.orderNumberFormatted) {
+                const orderNumberElement = document.querySelector('.order-number');
+                if (orderNumberElement) {
+                    orderNumberElement.textContent = `Order No. ${orderData.orderNumberFormatted}`;
+                    currentOrderNumber = typeof orderData.orderNumber === 'number' ? orderData.orderNumber : parseInt(orderData.orderNumberFormatted) || currentOrderNumber;
+                }
+            }
+
+            // Clear old items
+            const orderItems = document.querySelector('.order-items');
+            if (orderItems) orderItems.innerHTML = '';
+
+            // Load items
+            if (orderData.items && Array.isArray(orderData.items)) {
+                orderData.items.forEach(item => {
+                    addItemToOrder(item.name, `₱${parseFloat(item.unitPrice).toFixed(2)}`, '');
+                    // Set correct quantity if not 1
+                    const orderItemEl = document.querySelector(`.order-item[data-item-name="${item.name}"]`);
+                    if (orderItemEl) {
+                        const qtySpan = orderItemEl.querySelector('.quantity');
+                        if (qtySpan) qtySpan.textContent = item.quantity;
+                        const priceEl = orderItemEl.querySelector('.item-price');
+                        if (priceEl) priceEl.textContent = `₱${parseFloat(item.lineTotal).toFixed(2)}`;
+                    }
+                });
+            }
+
+            // Restore order details
+            if (orderData.orderType) {
+                const orderTypeSpan = document.querySelector('.order-type span');
+                if (orderTypeSpan) orderTypeSpan.textContent = orderData.orderType;
+            }
+            if (orderData.tableNumber) {
+                const tableInput = document.querySelector('.table-number input');
+                if (tableInput) tableInput.value = orderData.tableNumber;
+            }
+            if (orderData.paxNumber) {
+                const paxInput = document.querySelector('.pax-number input');
+                if (paxInput) paxInput.value = orderData.paxNumber;
+            }
+            // Restore discount state from posOrder or orderData if available
+            try {
+                let posOrder = JSON.parse(sessionStorage.getItem('posOrder')) || {};
+                
+                // If posOrder doesn't have discount info, try to get it from orderData
+                if (!posOrder.discountType && orderData.discountType && orderData.discountType !== 'None') {
+                    posOrder = {
+                        discountType: orderData.discountType,
+                        discountPercent: orderData.discountPercent || 0,
+                        discountAmount: orderData.discountAmount || 0,
+                        discountID: orderData.discountID || '',
+                        discountName: orderData.discountName || ''
+                    };
+                    // Save the restored discount info to posOrder
+                    sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
+                }
+                
+                if (posOrder.discountType && posOrder.discountType !== 'None') {
+                    const discountDropdown = document.querySelector('.discount-dropdown');
+                    const customDiscountInputRow = document.getElementById('customDiscountInputRow');
+                    const customDiscountInput = document.getElementById('customDiscountInput');
+                    
+                    if (discountDropdown) {
+                        // Map discount type back to dropdown value
+                        if (posOrder.discountType === 'PWD') {
+                            discountDropdown.value = 'pwd';
+                            if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+                        } else if (posOrder.discountType === 'Senior Citizen') {
+                            discountDropdown.value = 'senior';
+                            if (customDiscountInputRow) customDiscountInputRow.style.display = 'none';
+                        } else if (posOrder.discountType === 'Special Discount') {
+                            discountDropdown.value = 'custom';
+                            if (customDiscountInputRow) customDiscountInputRow.style.display = '';
+                            if (customDiscountInput && posOrder.discountPercent) {
+                                customDiscountInput.value = posOrder.discountPercent.toString();
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('No discount data to restore:', e.message);
+            }
+
+            // Update order summary
+            updateOrderSummary();
+            
+            // Ensure discount dropdown listener is attached after restoration
+            ensureDiscountDropdownListener();
+            
+            // Update order number display if we have order number data
+            if (orderData.orderNumber || orderData.orderNumberFormatted) {
+                const orderNumberElement = document.querySelector('.order-number');
+                if (orderNumberElement) {
+                    const displayNumber = orderData.orderNumberFormatted || orderData.orderNumber;
+                    orderNumberElement.textContent = `Order No. ${displayNumber}`;
+                }
+            }
+
+            // Set hasProceeded flag if it wasn't already set (for back button restoration)
+            if (!hasProceeded) {
+                sessionStorage.setItem('hasProceeded', 'true');
+            }
+            
+            // Clean up restoration flags so POS is ready for normal use
+            sessionStorage.removeItem('pendingOrder');
+            sessionStorage.removeItem('shouldRestoreOrder');
+            // Do NOT clear hasProceeded, so order persists until New Order/Clear
+
+            // Show success
+            console.log('Order restoration complete:', {
+                orderNumber: orderData.orderNumberFormatted,
+                table: orderData.tableNumber,
+                pax: orderData.paxNumber,
+                items: orderData.items ? orderData.items.length : 0,
+                total: orderData.total
+            });
+        } catch (error) {
+            console.error('Error restoring order:', error);
+            sessionStorage.removeItem('pendingOrder');
+            sessionStorage.removeItem('shouldRestoreOrder');
+            showToast('Error loading order: ' + error.message, 'error');
+        }
+    }
+
+    } catch (error) {
+        console.error('Error initializing POS system:', error);
+    }
+}
+
+async function reduceInventoryForOrder(orderItems) {
+    const db = firebase.firestore();
+    const batch = db.batch();
+    
+    console.log('Reducing inventory for order items:', orderItems);
+    
+    let deductionSummary = [];
+    let batchOperations = 0;
+    
+    try {
+        for (const item of orderItems) {
+            console.log(`Processing item: ${item.name} (quantity: ${item.quantity})`);
+            
+            let productData = null;
+            if (typeof menuItemsData !== 'undefined' && menuItemsData[item.name]) {
+                productData = menuItemsData[item.name];
+            } else {
+                try {
+                    const productQuery = await db.collection('menu')
+                        .where('name', '==', item.name)
+                        .limit(1)
+                        .get();
+                    if (!productQuery.empty) {
+                        productData = productQuery.docs[0].data();
+                    }
+                } catch (queryError) {
+                    console.warn(`Error fetching product data for ${item.name}:`, queryError);
+                    continue;
+                }
+            }
+            if (!productData) {
+                console.warn(`Product data not found for: ${item.name}`);
+                continue;
+            }
+            if (!productData.ingredients || productData.ingredients.length === 0) {
+                console.warn(`No ingredients found for product: ${item.name}`);
+                continue;
+            }
+            
+            console.log(`Found ${productData.ingredients.length} ingredients for ${item.name}`);
+            
+            // Process each ingredient for this item
+            for (const ingredient of productData.ingredients) {
+                let docId = ingredient.docId;
+                
+                console.log(`Processing ingredient: ${ingredient.name} (quantity per product: ${ingredient.quantity})`);
+                
+                // If docId is missing, try to find it by name
+                    if (!docId) {
+                        try {
+                            const invQuery = await db.collection('inventory').where('name', '==', ingredient.name).limit(1).get();
+                            if (!invQuery.empty) {
+                            docId = invQuery.docs[0].id;
+                            ingredient.docId = docId;
+                            console.log(`Found docId for ${ingredient.name}: ${docId}`);
+                        } else {
+                                console.warn(`No inventory record found for ingredient: ${ingredient.name}`);
+                                continue;
+                            }
+                        } catch (err) {
+                            console.warn(`Error finding inventory docId for ingredient: ${ingredient.name}`, err);
+                            continue;
+                        }
+                    }
+                
+                const ingredientQuantityPerProduct = ingredient.quantity || 0;
+                const totalIngredientQuantity = ingredientQuantityPerProduct * (item.quantity || 0);
+                
+                console.log(`Ingredient validation: ${ingredient.name} - per product: ${ingredientQuantityPerProduct}, total needed: ${totalIngredientQuantity}`);
+                
+                if (ingredientQuantityPerProduct <= 0) {
+                    console.warn(`Skipping ingredient '${ingredient.name}' - no quantity specified in recipe (value: ${ingredient.quantity})`);
+                    continue;
+                }
+                
+                if (totalIngredientQuantity <= 0) {
+                    console.warn(`Skipping ingredient '${ingredient.name}' - total quantity to deduct is zero (item qty: ${item.quantity})`);
+                    continue;
+                }
+                
+                console.log(`Will deduct ${totalIngredientQuantity} units of ${ingredient.name} from inventory`);
+                
+                const inventoryDoc = db.collection('inventory').doc(docId);
+                    try {
+                    const docSnapshot = await inventoryDoc.get();
+                    if (docSnapshot.exists) {
+                        const currentData = docSnapshot.data();
+                        const currentQuantity = currentData.quantity || 0;
+                        const newQuantity = Math.max(0, currentQuantity - totalIngredientQuantity);
+                        
+                        console.log(`Updating inventory for ${ingredient.name}: ${currentQuantity} -> ${newQuantity}`);
+                        
+                        batch.update(inventoryDoc, {
+                            quantity: newQuantity,
+                            lastUpdated: firebase.firestore.Timestamp.now()
+                        });
+                        batchOperations++;
+                        
+                        deductionSummary.push({
+                            name: ingredient.name,
+                            deducted: totalIngredientQuantity,
+                            previousQty: currentQuantity,
+                            newQty: newQuantity,
+                            unit: ingredient.unit || currentData.unitOfMeasure || ''
+                        });
+                    } else {
+                        console.warn(`Inventory document not found for ingredient: ${ingredient.name} (docId: ${docId})`);
+                    }
+                } catch (docError) {
+                    console.warn(`Error accessing inventory document for ${ingredient.name}:`, docError);
+                }
+            }
+        }
+        
+        // Commit all inventory updates
+        console.log(`Total batch operations prepared: ${batchOperations}`);
+        
+        if (batchOperations > 0) {
+            await batch.commit();
+            console.log(`Inventory successfully reduced for ${batchOperations} ingredients`);
+            console.log('Deduction summary:', deductionSummary);
+            
+            // Show deduction summary in UI
+            if (deductionSummary.length > 0) {
+                showIngredientDeductionNotification(deductionSummary);
+            }
+        } else {
+            console.log('No inventory updates to commit - no valid ingredients found');
+        }
+    } catch (error) {
+        console.error('Error reducing inventory:', error);
+        console.warn('Order will continue despite inventory reduction failure');
+    }
+
+    // Helper to show deduction summary in UI
+    function showIngredientDeductionNotification(summaryArr) {
+        let msg = 'Ingredients deducted from inventory:<br>';
+        msg += summaryArr.map(s => `- ${s.name}: ${s.deducted} ${s.unit}`).join('<br>');
+        let notif = document.createElement('div');
+        notif.className = 'ingredient-deduction-notification';
+        notif.style.position = 'fixed';
+        notif.style.bottom = '30px';
+        notif.style.right = '30px';
+        notif.style.background = '#f8f9fa';
+        notif.style.border = '1px solid #28a745';
+        notif.style.color = '#212529';
+        notif.style.padding = '16px 24px';
+        notif.style.borderRadius = '8px';
+        notif.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+        notif.style.zIndex = '9999';
+        notif.innerHTML = `<strong>Inventory Updated</strong><br>${msg}`;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 6000);
+    }
+}
+
+// Initialize everything when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('POS page loaded, waiting for Firebase...');
+    
+    // Initialize order type dropdown state
+    initializeOrderTypeState();
+    
+    
+    waitForFirebase();
+});
+
+// Helper function to calculate time ago
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+}
+
+
+
+
+
+// Find menu item by name
+function findMenuItemByName(itemName) {
+    console.log(`🔍 Looking for menu item: "${itemName}"`);
+    
+    // Get all menu items
+    const menuItems = document.querySelectorAll('.menu-item');
+    
+    for (let item of menuItems) {
+        const nameElement = item.querySelector('.menu-item-name');
+        if (nameElement) {
+            const name = nameElement.textContent.trim().toLowerCase();
+            if (name.includes(itemName.toLowerCase())) {
+                console.log(`✅ Found matching menu item: "${name}"`);
+                return item;
+            }
+        }
+    }
+    
+    console.log(`❌ No matching menu item found for: "${itemName}"`);
+    return null;
+}
+
+// Increase quantity
+function increaseQuantity(button) {
+    const quantityElement = button.parentElement.querySelector('.quantity');
+    let currentQuantity = parseInt(quantityElement.textContent);
+    quantityElement.textContent = currentQuantity + 1;
+}
+
+// Decrease quantity
+function decreaseQuantity(button) {
+    const quantityElement = button.parentElement.querySelector('.quantity');
+    let currentQuantity = parseInt(quantityElement.textContent);
+    if (currentQuantity > 1) {
+        quantityElement.textContent = currentQuantity - 1;
+    }
+}
+
+// Show page
+function showPage() {
+    navLinks.forEach((btn, i) => {
+        btn.classList.remove('active');
+        document.querySelectorAll('.page').forEach(page => {
+            page.style.display = 'none';
+        });
+        
+        if (btn.classList.contains('active')) {
+            document.querySelectorAll('.page')[i].style.display = 'block';
+        }
+    });
+}
+
+// Initialize category filtering functionality
+function initializeCategoryFiltering() {
+    const categoryButtons = document.querySelectorAll('#categoryNav .nav-link[data-category]');
+    const moreCategoriesBtn = document.querySelector('#categoryNav .more-categories');
+    
+    // Store current page state
+    window.currentCategoryPage = 0;
+    window.categoriesPerPage = 9;
+    
+    // Initially show first page
+    showCategoryPage(0);
+    
+    // Add click handlers for category buttons
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all buttons
+            categoryButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Get the category and filter menu items
+            const category = this.getAttribute('data-category');
+            filterMenuGridByCategory(category);
+        });
+    });
+    
+    // Add click handler for "next/prev" button
+    if (moreCategoriesBtn) {
+        moreCategoriesBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleCategoryPage();
+        });
+    }
+}
+
+// Show specific category page
+function showCategoryPage(pageNumber) {
+    const categoryButtons = document.querySelectorAll('#categoryNav .nav-link[data-category]');
+    const moreCategoriesBtn = document.querySelector('#categoryNav .more-categories');
+    const chevronIcon = moreCategoriesBtn.querySelector('i');
+    
+    const startIndex = pageNumber * window.categoriesPerPage;
+    const endIndex = startIndex + window.categoriesPerPage;
+    
+    // Show/hide categories based on current page
+    categoryButtons.forEach((button, index) => {
+        if (index >= startIndex && index < endIndex) {
+            button.style.display = 'block';
+        } else {
+            button.style.display = 'none';
+        }
+    });
+    
+    // Update chevron direction and visibility
+    const totalPages = Math.ceil(categoryButtons.length / window.categoriesPerPage);
+    
+    if (totalPages <= 1) {
+        moreCategoriesBtn.style.display = 'none';
+    } else {
+        moreCategoriesBtn.style.display = 'block';
+        
+        if (pageNumber === 0) {
+            chevronIcon.classList.remove('bi-chevron-left');
+            chevronIcon.classList.add('bi-chevron-right');
+        } else {
+            chevronIcon.classList.remove('bi-chevron-right');
+            chevronIcon.classList.add('bi-chevron-left');
+        }
+    }
+}
+
+// Toggle between category pages
+function toggleCategoryPage() {
+    const totalPages = Math.ceil(document.querySelectorAll('#categoryNav .nav-link[data-category]').length / window.categoriesPerPage);
+    
+    if (window.currentCategoryPage === 0) {
+        // Go to next page
+        window.currentCategoryPage = 1;
+    } else {
+        // Go back to first page
+        window.currentCategoryPage = 0;
+    }
+    
+    showCategoryPage(window.currentCategoryPage);
+}
+
+// Scroll categories horizontally to show more categories
+function scrollCategoriesRight() {
+    const categoryTabs = document.querySelector('.category-tabs');
+    if (categoryTabs) {
+        categoryTabs.scrollBy({
+            left: 200,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Filter menu grid by category
+function filterMenuGridByCategory(category) {
+    const menuGrid = document.querySelector('.menu-items-grid');
+    const menuItems = menuGrid.querySelectorAll('.menu-item-card');
+    
+    menuItems.forEach(item => {
+        const itemCategory = item.getAttribute('data-category');
+        if (category === 'all' || itemCategory === category) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Quantity control functions
+// Increases the quantity of an order item
+function increaseQuantity(button) {
+window.increaseQuantity = increaseQuantity;
+    try {
+        const orderItem = button.closest('.order-item');
+        const quantitySpan = button.parentElement.querySelector('.quantity');
+        if (!quantitySpan) return;
+        
+        // Get item number element to keep it in sync
+        const itemNumberElement = orderItem.querySelector('.item-number');
+        
+        const unitPrice = parseFloat(orderItem.getAttribute('data-unit-price'));
+        let currentQty = parseInt(quantitySpan.textContent) || 0;
+        
+        // Set a reasonable maximum quantity limit
+        if (currentQty >= 99) {
+            button.style.background = '#ff6b6b';
+            setTimeout(() => {
+                button.style.background = '';
+            }, 300);
+            return;
+        }
+        
+        // Increase quantity
+        currentQty += 1;
+        
+        // Update all quantity displays
+        quantitySpan.textContent = currentQty;
+        if (itemNumberElement) {
+            itemNumberElement.textContent = currentQty;
+        }
+        
+        // Calculate new line total
+        const lineTotal = unitPrice * currentQty;
+        
+        // Update item price display
+        const itemPriceElement = orderItem.querySelector('.item-price');
+        if (itemPriceElement) {
+            itemPriceElement.textContent = `₱${lineTotal.toFixed(2)}`;
+        }
+        
+        // Animation feedback
+        button.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            button.style.transform = '';
+        }, 150);
+        
+        // Always update summary after quantity change
+        updateOrderSummary();
+    } catch (error) {
+        console.error('Error increasing quantity:', error);
+    }
+}
+
+
+// Helper function to find menu item by name
+function findMenuItemByName(itemName) {
+    console.log(`🔍 Looking for menu item: "${itemName}"`);
+    console.log('📋 Available menu items:', Object.keys(menuItemsData));
+    
+    // Try to find exact match first
+    for (const [key, item] of Object.entries(menuItemsData)) {
+        if (item.name.toLowerCase() === itemName.toLowerCase()) {
+            console.log(`✅ Found exact match: ${item.name}`);
+            return item;
+        }
+    }
+    
+    // If no exact match, try partial match
+    for (const [key, item] of Object.entries(menuItemsData)) {
+        if (item.name.toLowerCase().includes(itemName.toLowerCase()) || 
+            itemName.toLowerCase().includes(item.name.toLowerCase())) {
+            console.log(`✅ Found partial match: ${item.name}`);
+            return item;
+        }
+    }
+    
+    // No match found
+    console.log(`❌ No matching menu item found for: "${itemName}"`);
+    return null;
+}
+
+// Initializes order type dropdown and input visibility
+function initializeOrderTypeState() {
+    const orderTypeSpan = document.querySelector('.order-type span');
+    const tableInput = document.querySelector('.table-number');
+    const paxInput = document.querySelector('.pax-number');
+    
+    if (orderTypeSpan && tableInput && paxInput) {
+        const currentType = orderTypeSpan.textContent || 'Dine in';
+        
+        if (currentType === 'Dine in') {
+            // Show table and pax inputs for dine in
+            tableInput.style.display = 'block';
+            paxInput.style.display = 'block';
+        } else if (currentType === 'Take out') {
+            // Hide table and pax inputs for take out
+            tableInput.style.display = 'none';
+            paxInput.style.display = 'none';
+        }
+    }
+}
+
+// Quantity control functions
+// Increases the quantity of an order item
+function increaseQuantity(button) {
+window.increaseQuantity = increaseQuantity;
+    try {
+        const orderItem = button.closest('.order-item');
+        const quantitySpan = button.parentElement.querySelector('.quantity');
+        if (!quantitySpan) return;
+        
+        // Get item number element to keep it in sync
+        const itemNumberElement = orderItem.querySelector('.item-number');
+        
+        const unitPrice = parseFloat(orderItem.getAttribute('data-unit-price'));
+        let currentQty = parseInt(quantitySpan.textContent) || 0;
+        
+        // Set a reasonable maximum quantity limit
+        if (currentQty >= 99) {
+            button.style.background = '#ff6b6b';
+            setTimeout(() => {
+                button.style.background = '';
+            }, 300);
+            return;
+        }
+        
+        // Increase quantity
+        currentQty += 1;
+        
+        // Update all quantity displays
+        quantitySpan.textContent = currentQty;
+        if (itemNumberElement) {
+            itemNumberElement.textContent = currentQty;
+        }
+        
+        // Calculate new line total
+        const lineTotal = unitPrice * currentQty;
+        
+        // Update item price display
+        const itemPriceElement = orderItem.querySelector('.item-price');
+        if (itemPriceElement) {
+            itemPriceElement.textContent = `₱${lineTotal.toFixed(2)}`;
+        }
+        
+        // Animation feedback
+        button.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            button.style.transform = '';
+        }, 150);
+        
+    // Always update summary after quantity change
+    updateOrderSummary();
+    } catch (error) {
+        console.error('Error increasing quantity:', error);
+    }
+}
+
+// Decreases the quantity of an order item or removes it
+function decreaseQuantity(button) {
+window.decreaseQuantity = decreaseQuantity;
+    try {
+        const orderItem = button.closest('.order-item');
+        const quantitySpan = button.parentElement.querySelector('.quantity');
+        if (!quantitySpan) return;
+        
+        // Get item number element to keep it in sync
+        const itemNumberElement = orderItem.querySelector('.item-number');
+        
+        const unitPrice = parseFloat(orderItem.getAttribute('data-unit-price'));
+        let currentQty = parseInt(quantitySpan.textContent) || 0;
+        
+        // If quantity is 1 or less, remove the item
+        if (currentQty <= 1) {
+            // Animation feedback before removal
+            orderItem.style.transform = 'scale(0.9)';
+            orderItem.style.opacity = '0.5';
+            
+            setTimeout(() => {
+                orderItem.remove();
+                updateOrderSummary();
+            }, 150);
+            return;
+        }
+        
+        // Decrease quantity
+        currentQty -= 1;
+        
+        // Update all quantity displays
+        quantitySpan.textContent = currentQty;
+        if (itemNumberElement) {
+            itemNumberElement.textContent = currentQty;
+        }
+        
+        // Calculate new line total
+        const lineTotal = unitPrice * currentQty;
+        
+        // Update item price display
+        const itemPriceElement = orderItem.querySelector('.item-price');
+        if (itemPriceElement) {
+            itemPriceElement.textContent = `₱${lineTotal.toFixed(2)}`;
+        }
+        
+        // Animation feedback
+        button.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            button.style.transform = '';
+        }, 150);
+        
+        // Always update summary after quantity change
+        updateOrderSummary();
+    } catch (error) {
+        console.error('Error decreasing quantity:', error);
+    }
+}

@@ -1,0 +1,560 @@
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsLight';
+  src: url('../src/fonts/Poppins-Light.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+.main-content {
+  background: f5f6fa; 
+  min-height: calc(100vh - 40px);
+  padding: 32px;
+}
+
+
+.back-button-container {
+  margin-left: 0;
+}
+
+.edit-product-container {
+  display: flex;
+  gap: 48px; 
+  padding: 8px 24px; 
+  align-items: stretch;
+  margin: 0 auto;
+  max-width: 1200px;
+  flex: 1;
+  min-width: 0;
+  height: calc(100vh - 80px);
+  align-items: flex-start;
+}
+
+.edit-product-panel {
+  flex: 1;
+  min-width: 380px;
+  padding: 2.5rem;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.06);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+.edit-product-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.edit-product-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  margin-top: -1rem;
+  margin-left: -.5rem;
+  font-family: 'PoppinsMedium';
+  color: #000000;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #000000;
+  margin-right: 1rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-back:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+.edit-product-title {
+  font-size: 1.5rem;
+  color: #000000;
+  margin: 0;
+}
+
+.edit-product-form .form-label {
+  color: #919191;
+  margin-bottom: 0.5rem;
+  font-family: 'PoppinsLight';
+  min-width: 140px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.edit-product-form .form-control,
+.edit-product-form .form-select {
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-family: 'PoppinsRegular';
+  background-color: #f8f9fa;
+  color: #495057;
+
+  flex: 1 1 360px;
+  min-width: 0; 
+  max-width: 420px;
+}
+
+.edit-product-form .form-control,
+.edit-product-form .form-select:last-child{
+  text-transform: capitalize;
+}
+
+.edit-product-form .form-control:focus,
+.edit-product-form .form-select:focus {
+  border: none;
+  background-color: #e9ecef;
+  box-shadow: none;
+  outline: none;
+}
+
+
+.price-input-group {
+  display: flex;
+  align-items: center;
+}
+
+.price-input-group .input-group-text {
+  border: none;
+  border-radius: 12px 0 0 12px;
+  background: #f8f9fa;
+  color: #919191;
+  padding: 0.75rem 0.9rem;
+  min-width: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.price-input-group .form-control {
+  border: none;
+  border-radius: 0 12px 12px 0;
+  background-color: #f8f9fa;
+  box-shadow: none;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.ingredients-section {
+  font-family: 'PoppinsRegular' !important;
+  margin-top: 2rem;
+}
+
+.ingredients-title {
+  color: #000000;
+  margin-bottom: 1rem;
+}
+
+.ingredients-table {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.ingredients-table .table {
+  margin: 0;
+}
+
+.ingredients-table th {
+  font-weight: 600;
+  color: #495057;
+  border: none;
+  padding: 0.75rem;
+  background: transparent;
+}
+
+.ingredients-table td {
+  border: none;
+  padding: 0.75rem;
+  color: #6c757d;
+}
+
+.save-button-container {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.save-btn {
+  padding: 0.75rem 3rem;
+  font-size: 1.1rem;
+  font-family: 'PoppinsRegular';
+  border-radius: 15px;
+  background: #28a745;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.delete-btn {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+ font-family: 'PoppinsRegular';
+  border-radius: 15px;
+  background: #dc3545;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+
+.ingredients-panel {
+  flex: 1;
+  font-family: 'PoppinsRegular';
+  min-width: 380px;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.06);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+.ingredients-panel-title {
+  font-size: 1.5rem;
+  color: #000000;
+  margin: 0; 
+}
+
+.ingredients-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.ingredients-search {
+  flex: 0 0 340px; 
+  max-width: 420px;
+}
+
+.ingredients-search .input-group {
+  width: 100%;
+}
+
+.ingredients-search .form-control {
+  height: 46px;
+  border-radius: 28px 0 0 28px;
+  background: #ececec;
+  padding: 0.5rem 1rem;
+}
+
+.ingredients-search .form-control:focus {
+  background: #ececec;
+  box-shadow: none;
+}
+
+.ingredients-search .btn {
+  height: 46px;
+  min-width: 46px;
+  border-radius: 0 28px 28px 0;
+  border: none;
+  border-left: none;
+  background: #ececec;
+  color: #6c757d;
+  font-family: 'PoppinsLight';
+}
+
+.ingredients-search .btn i { 
+  font-size: 1.1rem; 
+}
+
+.ingredients-tags {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 14px 28px;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.ingredient-tag {
+  background: #f6f6f7;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 12px 0;
+  font-size: 1.05rem;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 160px;
+  max-width: 260px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.ingredient-tag:hover {
+  background: #eceff1;
+  border-color: #d1d5db;
+}
+
+.ingredient-tag.active {
+  background: #19c37d;
+  border-color: #19c37d;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(25, 195, 125, 0.25);
+}
+
+.ingredient-detail-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  margin-top: 1rem;
+}
+
+.ingredient-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.ingredient-detail-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.btn-close-ingredient {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.btn-close-ingredient:hover {
+  color: #6b7280;
+}
+
+.ingredient-detail-form .form-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.ingredient-detail-form .form-control {
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 0;
+  padding: 0.5rem 24px 0.5rem 0;
+  background-color: transparent;
+  box-shadow: none;
+  transition: border-color 0.2s;
+}
+
+.ingredient-detail-form .form-control:focus {
+  border-bottom-color: #10b981;
+  box-shadow: none;
+}
+
+.ingredient-detail-form input[type="number"]::-webkit-inner-spin-button,
+.ingredient-detail-form input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quantity-controls {
+  pointer-events: none;
+}
+
+.quantity-controls button {
+  pointer-events: auto;
+  border: none;
+  outline: none;
+  background: transparent;
+  line-height: 1;
+  margin: 0;
+  opacity: 0.6;
+}
+
+.quantity-controls button:hover {
+  opacity: 1;
+}
+
+.unit-measure-dropdown {
+  position: relative;
+  margin-left: auto;
+}
+
+.unit-dropdown-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #c12a3a;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.unit-dropdown-btn:hover {
+  opacity: 0.9;
+}
+
+.unit-dropdown-btn i {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.unit-measure-dropdown .dropdown-menu {
+  min-width: 120px;
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.unit-measure-dropdown .dropdown-item {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+  transition: all 0.2s;
+}
+
+.unit-measure-dropdown .dropdown-item:hover {
+  background-color: #f3f4f6;
+  color: #c12a3a;
+}
+
+.ingredient-detail-form .btn-success {
+  width: 160px;
+  background: #10b981;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-family: 'PoppinsRegular';
+  border-radius: 15px;
+  margin: 1rem auto 0;
+  display: block;
+  transition: all 0.2s;
+}
+
+.ingredient-detail-form .btn-success:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.add-ingredient-btn {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  font-family: 'PoppinsRegular';
+  border-radius: 50px !important;
+  background: #28a745;
+  border: none;
+  transition: all 0.3s ease;
+  margin-top: auto;
+  align-self: center;
+}
+
+.add-ingredient-btn:hover {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+
+@media (max-width: 1200px) {
+  .edit-product-container {
+    margin: 0 1rem;
+  }
+  
+  .edit-product-panel,
+  .ingredients-panel {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .edit-product-container {
+    margin: 0;
+    border-radius: 12px;
+  }
+  
+  .d-flex {
+    flex-direction: column;
+  }
+
+  .ingredients-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .edit-product-panel,
+  .ingredients-panel {
+    border-radius: 12px;
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .edit-product-form .form-control,
+  .edit-product-form .form-select {
+    width: 100%;
+  }
+  
+  .price-input-group .form-control {
+    width: 100%;
+  }
+  
+  .ingredients-search .input-group {
+    max-width: 100%;
+  }
+}

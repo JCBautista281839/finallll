@@ -1,0 +1,2812 @@
+/*=============================================================================
+                            DASHBOARD RESPONSIVE STYLES                        
+=============================================================================*/
+
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsExtraLight';
+  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+body {
+  background: #ececec;
+}
+
+.dashboard-container {
+  min-height: 100vh;
+  overflow-x: hidden;
+  margin-left: 120px; 
+}
+
+/* ================================================================== */
+/*                      MOBILE RESPONSIVE DESIGN                     */
+/* ================================================================== */
+/* ========== SMALL MOBILE (576px and below) ========== */
+@media (max-width: 576px) {
+  .dashboard-container {
+    margin-left: 0 !important;
+    transition: margin-left 0.3s ease;
+    width: 100% !important;
+  }
+  
+  /* Hide dashboard cards on mobile */
+  .mobile-hide-cards {
+    display: none !important;
+  }
+  
+  /* Mobile mobile-friendly layout for Total Revenue and Total Orders */
+  .mini-card .d-flex.justify-content-between {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small1,
+  .mini-card .fw-semibold.text-secondary.small2 {
+    margin-bottom: 0.5rem !important;
+    width: 100%;
+  }
+  
+  /* Add margin bottom specifically for Total Revenue, Total Orders, and Total Guests labels */
+  .mini-card .fw-semibold.text-secondary.small1 {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small2 {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small3 {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  /* Enhanced chart spacing for mobile */
+  .row.g-3 .col-12:first-child {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Chart heights for optimal mobile view */
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 300px !important;
+    overflow: hidden;
+    min-height: 300px;
+  }
+  
+  /* Chart titles visibility on mobile */
+  .chart-section h6.mb-0.text-muted {
+    font-size: 1rem !important;
+    margin-bottom: 1rem !important;
+    color: #555 !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+  }
+  
+  /* Chart section overall container */
+  .chart-section {
+    margin-bottom: 1.5rem !important;
+    padding: 1rem !important;
+  }
+  
+  /* Google Charts container responsive fix */
+  .orders-chart-container div,
+  .profit-chart-container div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  /* Ensure charts respond to container */
+  #ordersChart,
+  #profitChart {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+  
+  /* Chart aria labels for accessibility */
+  .orders-chart-container::before {
+    content: "Monthly Orders Chart";
+    font-size: 0.875rem;
+    color: #666;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .profit-chart-container::before {
+    content: "Monthly Revenue Chart";
+    font-size: 0.875rem;
+    color: #666;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .mini-card .fw-bold.fs-5 {
+    text-align: left !important;
+    margin-top: 0.25rem !important;
+    align-self: flex-start !important;
+  }
+  
+  .mini-card.sales-card-top .d-flex.justify-content-between,
+  .mini-card.sales-card-middle .d-flex.justify-content-between,
+  .mini-card.sales-card-bottom .d-flex.justify-content-between {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  
+  .mini-card.sales-card-top .fw-bold.fs-5,
+  .mini-card.sales-card-middle .fw-bold.fs-5,
+  .mini-card.sales-card-bottom .fw-bold.fs-5 {
+    text-align: right !important;
+    margin-top: 0 !important;
+  }
+  
+  .sidebar {
+    position: fixed !important;
+    left: -250px !important;
+    top: -20px !important;
+    height: calc(100vh + 20px) !important;
+    width: 250px !important;
+    background: #ffffff !important;
+    z-index: 1000 !important;
+    transition: all 0.3s ease !important;
+    overflow-y: auto !important;
+    transform: translateX(-100%) !important;
+    margin-top: 0 !important;
+    padding-top: 20px !important;
+    padding-bottom: 0 !important;
+    border-right: 1px solid #e0e0e0 !important;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
+  }
+  
+  .sidebar.open {
+    left: 0 !important;
+    transform: translateX(0) !important;
+  }
+  
+  /* Ensure sidebar doesn't overlap main content */
+  .sidebar.open {
+    z-index: 1001 !important;
+  }
+  
+  /* Keep main content full screen */
+  .main {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Overlay for mobile sidebar */
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+  }
+  
+  .mobile-overlay.show {
+    display: block;
+  }
+  
+  /* Main content adjustments */
+  .main {
+    padding: 1rem !important;
+    margin-top: 0;
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 !important;
+  }
+  
+  /* Mobile menu button styling */
+  #mobileMenuBtn {
+    background: #b76e79 !important;
+    border-color: #b76e79 !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 1rem !important;
+    box-shadow: 0 2px 4px rgba(183, 110, 121, 0.3) !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  #mobileMenuBtn:hover {
+    background: #a55b68 !important;
+    border-color: #a55b68 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(183, 110, 121, 0.4) !important;
+  }
+  
+  /* Welcome header mobile adjustments - keep burger menu beside welcome text */
+  .d-flex.align-items-center.justify-content-between {
+    flex-direction: row !important;
+    gap: 0.75rem;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Adjust welcome text container for mobile */
+  .d-flex.align-items-center.justify-content-between > div:first-of-type {
+    flex: 1;
+    min-width: 0; /* Allow text to wrap if needed */
+  }
+  
+  /* Hide time display on mobile */
+  .d-flex.align-items-center.justify-content-between > div:last-child {
+    display: none !important;
+  }
+  
+  /* Sales overview - make cards stack vertically */
+  .sales-mini-cards {
+    gap: 1rem;
+  }
+  
+  .mini-card {
+    min-width: auto !important;
+    padding: 1rem !important;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Add spacing between Sales Overview cards */
+  .sales-card-top {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .sales-card-middle {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .sales-card-bottom {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .mini-card .icon,
+  .mini-card .icon-img,
+  .mini-card .cultery-img,
+  .mini-card .team-img {
+    width: 36px !important;
+    height: 36px !important;
+    margin-top: -10px !important;
+  }
+  
+  .mini-card .fw-bold.fs-5 {
+    font-size: 1.1rem !important;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small {
+    font-size: 0.85rem !important;
+  }
+  
+  .trend-revenue,
+  .trend-orders,
+  .trend-customers {
+    font-size: 0.75rem !important;
+  }
+  
+  /* ========== MOBILE RESPONSIVE - ORDERS & REVENUE OVERVIEW ========== */
+  .col-12.col-lg-8 > .bg-white {
+    height: auto !important;
+    min-height: 450px !important;
+    padding: 1.25rem !important;
+  }
+  
+  /* Header adjustments */
+  .col-12.col-lg-8 > .bg-white .d-flex.justify-content-between.align-items-center.mb-3 {
+    margin-bottom: 1rem !important;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .col-12.col-lg-8 > .bg-white h5.mb-0 {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Chart sections */
+  .chart-section {
+    margin-bottom: 0.75rem;
+  }
+  
+  .col-12.col-md-6:first-child .chart-section {
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 180px !important;
+  }
+  
+  /* Chart Toggle Button Styling */
+  .chart-toggle-group {
+    gap: 0;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .chart-toggle-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 0 !important;
+    background: #fff;
+    color: #666;
+    border-color: #dee2e6;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+  }
+  
+  .chart-toggle-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+    border-color: #adb5bd;
+  }
+  
+  .btn-check:checked + .chart-toggle-btn {
+    background: linear-gradient(135deg, #b76e79 0%, #a55b68 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(183, 110, 121, 0.3);
+  }
+  
+  .chart-toggle-btn i {
+    font-size: 1rem;
+    margin-right: 0.25rem;
+  }
+  
+  /* Hide revenue chart initially on mobile by default, show when revenue toggle is selected */
+  .col-12.col-md-6:last-child {
+    display: none;
+  }
+  
+  /* Show orders chart by default */
+  .col-12.col-md-6:first-child {
+    display: block;
+  }
+  
+  /* Form selects mobile */
+  .form-select {
+    font-size: 14px !important;
+    padding: 0.375rem 0.75rem !important;
+  }
+  
+  /* Dashboard cards mobile adjustments */
+  .dashboard-card {
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-card h5 {
+    font-size: 1.1rem !important;
+  }
+  
+  /* Table responsive adjustments */
+  .table-container {
+    max-height: 200px !important;
+    overflow-x: auto;
+  }
+  
+  .table {
+    font-size: 0.85rem !important;
+  }
+  
+  /* Notification dropdown mobile */
+  .notification-dropdown {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90% !important;
+    max-width: 350px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    z-index: 1002 !important;
+  }
+  
+  /* Notification dropdown content mobile */
+  .notification-dropdown .dropdown-body {
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Notification item mobile styling */
+  .notification-dropdown .notification-item {
+    padding: 0.75rem !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Notification dropdown header mobile */
+  .notification-dropdown .dropdown-header {
+    padding: 1rem !important;
+    font-size: 1rem !important;
+  }
+  
+  /* Notification dropdown footer mobile */
+  .notification-dropdown .dropdown-footer {
+    padding: 0.75rem !important;
+  }
+  
+  /* Mobile sidebar navigation styling */
+  .sidebar .brand {
+    margin-bottom: 1.5rem !important;
+    margin-top: 0.5rem !important;
+    text-align: center !important;
+  }
+  
+  .sidebar .brand img {
+    width: 65px !important;
+    height: 65px !important;
+    object-fit: contain !important;
+  }
+  
+  .sidebar .nav {
+    gap: 0.25rem !important;
+    padding-top: 1rem !important;
+    align-items: stretch !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    text-align: left !important;
+  }
+  
+  .sidebar .nav-link {
+    margin: 0 !important;
+    padding: 0.875rem 1rem !important;
+      border-radius: 0px !important;
+    display: flex !important;
+    align-items: center !important;
+    color: #333 !important;
+    font-size: 1rem !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: flex-start !important;
+    position: relative !important;
+  }
+  
+  .sidebar .nav-link:hover {
+    background: #f5f5f5 !important;
+    color: #b76e79 !important;
+    transform: translateX(2px) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  }
+  
+  .sidebar .nav-icon {
+    width: 20px !important;
+    height: 20px !important;
+    margin-right: 0.875rem !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .sidebar .nav-text {
+    color: inherit !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    flex-grow: 1 !important;
+  }
+  
+  /* Ensure all nav links have same height */
+  .sidebar .nav-link.mt-auto {
+    margin-top: 1rem !important;
+  }
+  
+  /* Close button styling */
+  .sidebar #closeSidebarBtn {
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    background: #f0f0f0 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #666 !important;
+    transition: all 0.2s ease !important;
+    font-size: 1.1rem !important;
+  }
+  
+  .sidebar #closeSidebarBtn:hover {
+    background: #e0e0e0 !important;
+    color: #333 !important;
+    transform: rotate(90deg) scale(1.1) !important;
+  }
+  /* Settings and Logout spacing */
+  .sidebar .nav-link.mt-auto {
+    margin-top: 0.5rem !important;
+    border-top: 1px solid #e0e0e0 !important;
+    padding-top: 0.5rem !important;
+  }
+}
+
+/* ========== MID-MOBILE TO TABLET (577px to 768px) ========== */
+@media (min-width: 577px) and (max-width: 768px) {
+  .dashboard-container {
+    margin-left: 100px !important;
+    transition: margin-left 0.3s ease;
+    width: calc(100% - 100px) !important;
+  }
+  
+  /* Hide burger menu on mid-mobile - sidebar is visible */
+  #mobileMenuBtn {
+    display: none !important;
+  }
+  
+  /* Hide dashboard cards on mid-mobile */
+  .mobile-hide-cards {
+    display: none !important;
+  }
+  
+  /* Show both charts side-by-side for mid-mobile to tablet */
+  .col-12.col-md-6:first-child,
+  .col-12.col-md-6:last-child {
+    display: block !important;
+  }
+  
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 200px !important;
+  }
+  
+  /* Hide toggle buttons in mid-mobile to tablet view */
+  .chart-toggle-group {
+    display: none !important;
+  }
+  
+  .mini-card {
+    min-width: 280px !important;
+    padding: 1rem !important;
+  }
+  
+  .mini-card .icon,
+  .mini-card .icon-img,
+  .mini-card .cultery-img,
+  .mini-card .team-img {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  
+  /* Notification dropdown mid-mobile */
+  .notification-dropdown {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 80% !important;
+    max-width: 380px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    z-index: 1002 !important;
+  }
+  
+  /* Notification dropdown content mid-mobile */
+  .notification-dropdown .dropdown-body {
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Notification item mid-mobile styling */
+  .notification-dropdown .notification-item {
+    padding: 0.8rem !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Notification dropdown header mid-mobile */
+  .notification-dropdown .dropdown-header {
+    padding: 1.1rem !important;
+    font-size: 1.05rem !important;
+  }
+  
+  /* Notification dropdown footer mid-mobile */
+  .notification-dropdown .dropdown-footer {
+    padding: 0.9rem !important;
+  }
+  
+  /* Hide time display on mid-mobile */
+  .d-flex.align-items-center.justify-content-between > div:last-child {
+    display: none !important;
+  }
+}
+
+/* ========== TABLET RESPONSIVE (768px to 992px) - MOBILE STYLE OVERLAY ========== */
+@media (min-width: 768px) and (max-width: 992px) {
+  .dashboard-container {
+    margin-left: 0 !important;
+    transition: margin-left 0.3s ease;
+    width: 100% !important;
+  }
+  
+  /* Hide sidebar completely on tablet - make it overlay like mobile */
+  .sidebar {
+    position: fixed !important;
+    left: -250px !important;
+    top: -20px !important;
+    height: calc(100vh + 20px) !important;
+    width: 250px !important;
+    background: #ffffff !important;
+    z-index: 1000 !important;
+    transition: all 0.3s ease !important;
+    overflow-y: auto !important;
+    transform: translateX(-100%) !important;
+    margin-top: 0 !important;
+    padding-top: 20px !important;
+    padding-bottom: 0 !important;
+    border-right: 1px solid #e0e0e0 !important;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
+  }
+  
+  .sidebar.open {
+    left: 0 !important;
+    transform: translateX(0) !important;
+  }
+  
+  /* Ensure sidebar doesn't overlap main content */
+  .sidebar.open {
+    z-index: 1001 !important;
+  }
+  
+  /* Keep main content full screen */
+  .main {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Tablet sidebar navigation styling - icons with labels */
+  .sidebar .nav {
+    gap: 0.25rem !important;
+    padding-top: 1rem !important;
+    align-items: stretch !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    text-align: left !important;
+  }
+  
+  .sidebar .nav-link {
+    margin: 0 !important;
+    padding: 0.875rem 1rem !important;
+    border-radius: 0px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-decoration: none !important;
+    color: #333 !important;
+    transition: all 0.2s ease !important;
+    min-height: 48px !important;
+    position: relative !important;
+    text-align: left !important;
+  }
+  
+  .sidebar .nav-link:hover {
+    background: #f5f5f5 !important;
+    color: #b76e79 !important;
+    transform: translateX(2px) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  }
+  
+  .sidebar .nav-icon {
+    width: 20px !important;
+    height: 20px !important;
+    margin-right: 0.875rem !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .sidebar .nav-text {
+    color: inherit !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    flex-grow: 1 !important;
+  }
+  
+  /* Show burger menu on tablet */
+  #mobileMenuBtn {
+    display: block !important;
+    background: #b76e79 !important;
+    border-color: #b76e79 !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 1rem !important;
+    box-shadow: 0 2px 4px rgba(183, 110, 121, 0.3) !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  #mobileMenuBtn:hover {
+    background: #a55b68 !important;
+    border-color: #a55b68 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(183, 110, 121, 0.4) !important;
+  }
+  
+  /* Overlay for tablet sidebar */
+  .mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+  }
+  
+  .mobile-overlay.show {
+    display: block;
+  }
+  
+  /* Main content adjustments for tablet */
+  .main {
+    padding: 1.5rem !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 !important;
+  }
+  
+  /* Show both charts on tablet - override mobile toggle behavior */
+  .col-12.col-md-6:first-child,
+  .col-12.col-md-6:last-child {
+    display: block !important;
+  }
+  
+  .mini-card {
+    min-width: 280px !important;
+    padding: 1.2rem !important;
+  }
+  
+  .mini-card .icon,
+  .mini-card .icon-img,
+  .mini-card .cultery-img,
+  .mini-card .team-img {
+    width: 42px !important;
+    height: 42px !important;
+  }
+  
+  /* Notification dropdown tablet */
+  .notification-dropdown {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 85% !important;
+    max-width: 400px !important;
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    z-index: 1002 !important;
+  }
+  
+  /* Notification dropdown content tablet */
+  .notification-dropdown .dropdown-body {
+    max-height: 55vh !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Notification item tablet styling */
+  .notification-dropdown .notification-item {
+    padding: 0.875rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Notification dropdown header tablet */
+  .notification-dropdown .dropdown-header {
+    padding: 1.25rem !important;
+    font-size: 1.1rem !important;
+  }
+  
+  /* Notification dropdown footer tablet */
+  .notification-dropdown .dropdown-footer {
+    padding: 1rem !important;
+  }
+  
+  /* Welcome header tablet adjustments - keep burger menu beside welcome text */
+  .d-flex.align-items-center.justify-content-between {
+    flex-direction: row !important;
+    gap: 0.75rem;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  /* Adjust welcome text container for tablet */
+  .d-flex.align-items-center.justify-content-between > div:first-of-type {
+    flex: 1;
+    min-width: 0; /* Allow text to wrap if needed */
+  }
+  
+  /* Hide time display on tablet */
+  .d-flex.align-items-center.justify-content-between > div:last-child {
+    display: none !important;
+  }
+}
+
+/* ========== SMALL MOBILE DEVICES (480px) ========== */
+@media (max-width: 480px) {
+  .main {
+    padding: 0.75rem !important;
+  }
+  
+  .mini-card {
+    padding: 0.8rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  /* Ensure proper spacing for Sales Overview cards on small mobile */
+  .sales-card-top,
+  .sales-card-middle,
+  .sales-card-bottom {
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mini-card .icon,
+  .mini-card .icon-img,
+  .mini-card .cultery-img,
+  .mini-card .team-img {
+    width: 30px !important;
+    height: 30px !important;
+    margin-top: -5px !important;
+  }
+  
+  .mini-card .fw-bold.fs-5 {
+    font-size: 1rem !important;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small {
+    font-size: 0.8rem !important;
+  }
+  
+  /* Ensure Total Revenue, Total Orders, and Total Guests values stay beside labels on small screens */
+  .mini-card.sales-card-top .fw-bold.fs-5,
+  .mini-card.sales-card-middle .fw-bold.fs-5,
+  .mini-card.sales-card-bottom .fw-bold.fs-5 {
+    text-align: right !important;
+    margin-top: 0 !important;
+    font-size: 1rem !important;
+  }
+  
+  .trend-revenue,
+  .trend-orders,
+  .trend-customers {
+    font-size: 0.7rem !important;
+  }
+  
+  /* ========== SMALL MOBILE (575px) - ORDERS & REVENUE OPTIMIZATION ========== */
+  .col-12.col-lg-8 > .bg-white {
+    min-height: 680px !important;
+    padding: 1rem !important;
+  }
+  
+  /* Header adjustments for small mobile */
+  .col-12.col-lg-8 > .bg-white h5.mb-0 {
+    font-size: 1.125rem !important;
+  }
+  
+  .col-12.col-lg-8 > .bg-white .d-flex.align-items-center.gap-2 {
+    flex-wrap: wrap;
+    gap: 0.25rem !important;
+  }
+  
+  /* Chart spacing adjustments */
+  .col-12.col-md-6:first-child .chart-section {
+    margin-bottom: 1.25rem !important;
+  }
+  
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 160px !important;
+  }
+  
+  .dashboard-card h5 {
+    font-size: 1rem !important;
+  }
+  
+  .table {
+    font-size: 0.8rem !important;
+  }
+  
+  .btn-group .form-select {
+    font-size: 12px !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  /* Mobile card spacing */
+  .col-12.col-md-4 {
+    margin-bottom: 1rem;
+  }
+  
+  .col-12.col-lg-4 {
+    margin-bottom: 1.5rem;
+  }
+  
+  .col-12.col-lg-8 {
+    margin-bottom: 1rem;
+  }
+}
+
+#welcomeMessage {
+  font-family: 'PoppinsRegular';
+}
+
+#timeNow{
+  font-family: 'PoppinsRegular';
+  font-size: 19px;
+}
+
+.text-secondary.mb-0 {
+  font-family: 'PoppinsExtraLight';
+  font-size: 0.95rem;
+  color: #666 !important;
+}
+
+/* Orders Overview */
+.col-12.col-lg-8 > .bg-white {
+  background: #fff;
+  border-radius: 15px;
+  padding: 27px;
+  height: 390px !important;
+}
+
+.col-12.col-lg-8 h5.mb-0 {
+  font-family: 'PoppinsRegular';
+  font-weight: bold;
+  color: #000000;
+  font-size: 1.5rem;
+  margin-top: 3px;
+}
+
+.mb-0{
+ font-family: 'PoppinsRegular';
+ font-size: 13px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #b76e79 !important;
+  color: #fff !important;
+  font-weight: bold;
+}
+
+.bg-white {
+  background: #fff !important;
+}
+
+.rounded-4 {
+  border-radius: 30px !important;
+}
+
+.shadow-sm {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04) !important;
+}
+
+.mini-card {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: none;
+  min-width: 320px;
+  min-height: 70px;
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border-radius: 50%;
+  background: #f5f6fa;
+}
+
+.table {
+   background: transparent;
+  margin: 0;
+}
+
+.table th, .table td {
+  border: none;
+  background: transparent !important;
+  vertical-align: middle;
+}
+
+.table thead th {
+  color: #737373;
+  font-family: 'PoppinsRegular';
+  font-weight: 400;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+
+
+.badge.text-bg-warning {
+  background: #ff9292 !important;
+  color: #ffffff !important;
+}
+.badge.text-bg-primary {
+  background: #d650ff !important;
+  color: #ffffff !important;
+}
+
+.btn-success {
+  border-radius: 15px;
+  font-weight: 500;
+  padding: 8px 20px;
+  font-size: 1rem;
+  background: #00c48c !important;
+  border: none;
+}
+
+.sales-overview-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-width: 320px;
+  min-height: 180px;
+}
+
+.sales-mini-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: -20px;
+}
+
+.fw-semibold.text-secondary.small {
+  margin-top: -10px;
+}
+
+
+
+
+.mini-card {
+  background: #f8f9fa;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  border-radius: 30px;
+  margin-bottom: 0;
+  z-index: 1;
+  position: relative;
+  transition: box-shadow 0.2s;
+  border: none;
+  padding: 1.5rem !important;
+}
+
+.mini-card .icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+  border: 2px solid;
+}
+
+.icon.pink {
+  color: #b76e79;
+  border-color: #b76e79;
+  background: #fff;
+}
+
+.icon.purple {
+  color: #a259c6;
+  border-color: #a259c6;
+  background: #fff;
+}
+
+.icon.blue {
+  color: #3b82f6;
+  border-color: #3b82f6;
+  background: #fff;
+}
+
+.mini-card .flex-grow-1 {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.mini-card .d-flex.justify-content-between {
+  margin-bottom: 0.8rem;
+  font-family: 'PoppinsExtraLight';
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mini-card .fw-semibold.text-secondary.small {
+  color: #666;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.mini-card .fw-bold.fs-5 {
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.mini-card .trend-revenue,
+.mini-card .trend-orders{
+  display: inline-flex !important;    
+  align-items: center !important;     
+  justify-content: flex-start !important;
+  gap: 6px !important;               
+  white-space: nowrap !important;     
+  margin-top: -15px !important;
+  margin-bottom: 24px;
+  align-self: flex-start !important;  
+  line-height: 1 !important;
+}
+
+.mini-card .trend-customers{
+  display: inline-flex !important;    
+  align-items: center !important;     
+  justify-content: flex-start !important;
+  gap: 6px !important;               
+  white-space: nowrap !important;     
+  margin-top: -15px !important;
+  align-self: flex-start !important;  
+  line-height: 1 !important;
+}
+
+.trend-revenue img{
+  margin-top: -35px !important;
+  filter: brightness(0) saturate(100%) invert(19%) sepia(86%) saturate(7432%) hue-rotate(318deg) brightness(85%) contrast(96%);
+}
+
+.trend-orders {
+  margin-top: -35px !important;
+  filter: brightness(0) saturate(100%) invert(14%) sepia(96%) saturate(3182%) hue-rotate(276deg) brightness(90%) contrast(96%);
+}
+
+.trend-customers {
+  margin-top: -35px !important;
+  filter: brightness(0) saturate(100%) invert(25%) sepia(83%) saturate(2476%) hue-rotate(202deg) brightness(91%) contrast(101%);
+}
+
+.trend-revenue img,
+.trend-orders img,
+.trend-customers img {
+  width: 16px !important;
+  height: 16px !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.sales-card-top {
+  background-color: #fff;
+  margin-top: -34px;
+  border-radius: 30px 30px 10px 10px;
+  margin-bottom: -25px;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.09); 
+  height: 120px;
+  z-index: 2;
+}
+
+.value-align-up::first-letter {
+  font-family: 'PoppinsMedium', sans-serif;
+  font-size: 1.em; 
+  margin-right: 2px;
+}
+
+
+.trend-revenue {
+  font-family: 'PoppinsExtraLight';
+  font-weight: bold; 
+  color: #c81f7b !important;   
+  font-size: 15px !important;   
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem !important;
+}
+
+.trend-orders {
+  font-family: 'PoppinsExtraLight';
+  font-weight: bold;   
+  font-size: 15px !important;   
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem !important;
+}
+
+.trend-customers {
+  font-family: 'PoppinsExtraLight';
+  font-weight: bold;  
+  font-size: 15px !important;   
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem !important;
+}
+
+.cultery-img {
+  width: 50px;  
+  height: 50px;  
+  margin-top: -20px !important;
+  object-fit: contain; 
+  filter: brightness(0) saturate(100%) invert(14%) sepia(96%) saturate(3182%) hue-rotate(276deg) brightness(90%) contrast(96%);
+}
+
+.icon-img {
+  width: 50px;  
+  height: 50px;  
+  margin-top: -20px !important;
+  object-fit: contain; 
+  filter: brightness(0) saturate(100%) invert(19%) sepia(86%) saturate(7432%) hue-rotate(318deg) brightness(85%) contrast(96%);
+}
+
+.team-img {
+  width: 50px;  
+  height: 50px;  
+  object-fit: contain; 
+  filter: brightness(0) saturate(100%) invert(25%) sepia(83%) saturate(2476%) hue-rotate(202deg) brightness(91%) contrast(101%);
+}
+
+.sales-card-middle {
+  background-color: #fff;
+  margin-top: 0;
+  margin-bottom: -25px;
+  border-radius: 35px;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.09); 
+  height: 120px;
+  z-index: 3;
+}
+
+.sales-card-bottom {
+  background-color: #fff;
+  margin-top: 0;
+  border-radius: 30px 30px 30px 30px;
+  margin-bottom: 0;
+  height: 120px;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.09); 
+  z-index: 4;
+}
+
+.p-4.pb-3.rounded-top-4 {
+  background: #fff;
+  border-radius: 35px !important;
+  margin-bottom: 10px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.text-pink { color: #b76e79 !important; }
+.text-blue { color: #3b82f6 !important; }
+
+
+.col-12.col-lg-4 > .bg-white.rounded-4.shadow-sm.p-3.p-md-4.h-100 {
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+
+.sales-overview-card > .p-4.pb-3 {
+  padding-bottom: 1.2rem !important;
+}
+
+.sales-title {
+  font-size: 1.5rem;
+  font-family: 'PoppinsRegular';
+  color: #333;
+  margin-top: -40px;
+}
+
+.value-margin {
+  margin-left: 16px;
+  margin-top: -4px;
+}
+
+
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 20px;
+  --light: #d8dbe0;
+  --dark: #28292c;
+  --link: rgb(27, 129, 112);
+  --link-hover: rgb(24, 94, 82);
+}
+
+.switch-label {
+  position: absolute;
+  width: 100%;
+  height: 20px;
+  background-color: var(--dark);
+  border-radius: 10px;
+  cursor: pointer;
+  border: 2px solid var(--dark);
+}
+
+.checkbox {
+  position: absolute;
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
+}
+
+.checkbox:checked ~ .slider {
+  background-color: var(--light);
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  -webkit-box-shadow: inset 6px -2px 0px 0px var(--light);
+  box-shadow: inset 6px -2px 0px 0px var(--light);
+  background-color: var(--dark);
+  -webkit-transition: 0.3s;
+  transition: 0.3s;
+}
+
+.checkbox:checked ~ .slider::before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+  background-color: var(--dark);
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+.form-select {
+  font-family: 'PoppinsRegular';
+  font-size: 12px;
+}
+
+.form-select option {
+  font-family: 'PoppinsRegular';
+  font-size: 12px;
+}
+
+
+
+/* ========== LARGE DESKTOP OPTIMIZATIONS ========== */
+@media (min-width: 1800px) {
+  .main {
+    padding: 3rem !important;
+  }
+  
+  .dashboard-container {
+    margin-left: 160px;
+  }
+  
+  .sales-overview-card,
+  .bg-white.rounded-4.shadow-sm {
+    min-width: 400px;
+  }
+  
+  .mini-card {
+    min-width: 400px;
+  }
+  
+  .sales-title {
+    font-size: 1.8rem;
+  }
+  
+  .fw-bold.fs-5, .value-align-up {
+    font-size: 1.4rem;
+  }
+  
+  .icon {
+    width: 56px;
+    height: 56px;
+    font-size: 2.2rem;
+  }
+  
+  .mini-card .icon {
+    width: 56px;
+    height: 56px;
+    font-size: 2.2rem;
+  }
+  
+  .p-4.pb-3.rounded-top-4 {
+    height: 120px;
+    padding: 1.5rem 2rem;
+  }
+  
+  .mini-card {
+    padding: 1.5rem 2rem !important;
+  }
+  
+  .sales-card-top {
+    height: 130px;
+  }
+  
+  .sales-card-middle {
+    height: 130px;
+  }
+  
+  .sales-card-bottom {
+    height: 145px;
+  }
+  
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm {
+    height: 200px;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm h5 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .table-container {
+    max-height: 120px;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .table {
+    font-size: 1rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .text-secondary.small {
+    font-size: 0.9rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm h6 {
+    font-size: 1.2rem;
+  }
+}
+
+
+
+
+@media (width: 1180px) and (height: 820px) {
+  .main {
+    padding: 1.5rem !important;
+  }
+  
+  .dashboard-container {
+    margin-left: 105px;
+  }
+  
+  .sales-overview-card,
+  .bg-white.rounded-4.shadow-sm {
+    min-width: 310px;
+  }
+  
+  .mini-card {
+    min-width: 310px;
+  }
+  
+  .sales-title {
+    font-size: 1.35rem;
+  }
+  
+  .fw-bold.fs-5, .value-align-up {
+    font-size: 1.05rem;
+  }
+  
+  .icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.7rem;
+  }
+  
+  .mini-card .icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.7rem;
+  }
+  
+  .p-4.pb-3.rounded-top-4 {
+    height: 75px;
+    padding: 1rem 1.3rem;
+  }
+  
+  .mini-card {
+    padding: 1rem 1.3rem !important;
+  }
+  
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm {
+    height: 160px;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm h5 {
+    font-size: 1.15rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .table-container {
+    max-height: 90px;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .table {
+    font-size: 0.9rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .text-secondary.small {
+    font-size: 0.8rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm h6 {
+    font-size: 1rem;
+  }
+}
+
+
+
+
+@media (width: 1366px) and (height: 1024px) {
+  .main {
+    padding: 1.8rem !important;
+  }
+  
+  .dashboard-container {
+    margin-left: 115px;
+  }
+  
+  .sales-overview-card,
+  .bg-white.rounded-4.shadow-sm {
+    min-width: 330px;
+  }
+  
+  .mini-card {
+    min-width: 330px;
+  }
+  
+  .sales-title {
+    font-size: 1.45rem;
+  }
+  
+  .fw-bold.fs-5, .value-align-up {
+    font-size: 1.15rem;
+  }
+  
+  .icon {
+    width: 46px;
+    height: 46px;
+    font-size: 1.9rem;
+  }
+  
+  .mini-card .icon {
+    width: 46px;
+    height: 46px;
+    font-size: 1.9rem;
+  }
+  
+  .p-4.pb-3.rounded-top-4 {
+    height: 85px;
+    padding: 1.15rem 1.5rem;
+  }
+  
+  .mini-card {
+    padding: 1.15rem 1.5rem !important;
+  }
+  
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm {
+    height: 180px;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm h5 {
+    font-size: 1.25rem;
+    margin-bottom: 1.3rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .table-container {
+    max-height: 100px;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .table {
+    font-size: 0.95rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm .text-secondary.small {
+    font-size: 0.85rem;
+  }
+  
+  .col-12.col-md-4 .bg-white.rounded-4.shadow-sm h6 {
+    font-size: 1.1rem;
+  }
+}
+
+
+/* ========== MINI-CARD RESPONSIVE BREAKPOINTS ========== */
+@media (max-width: 1399px) and (min-width: 1200px) {
+  .mini-card {
+    padding: 1.2rem !important;
+  }
+  
+  .mini-card .icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.8rem;
+  }
+  
+  .sales-card-top,
+  .sales-card-middle,
+  .sales-card-bottom {
+    height: 130px;
+    margin-top: -35px;
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
+  .mini-card {
+    padding: 1.1rem !important;
+  }
+  
+  .mini-card .icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.7rem;
+  }
+  
+  .sales-card-top,
+  .sales-card-middle,
+  .sales-card-bottom {
+    height: 125px;
+    margin-top: -30px;
+  }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+  .mini-card {
+    padding: 1rem !important;
+  }
+  
+  .mini-card .icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.6rem;
+  }
+  
+  .sales-card-top,
+  .sales-card-middle,
+  .sales-card-bottom {
+    height: 120px;
+    margin-top: -25px;
+  }
+}
+
+/* ========== TABLE-SPECIFIC BURGER MENU ========== */
+.table-burger-menu {
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  transition: all 0.3s ease;
+}
+
+.table-burger-menu:hover {
+  background: rgba(183, 110, 121, 0.1);
+  border-radius: 4px;
+}
+
+.burger-line {
+  width: 18px;
+  height: 2px;
+  background-color: #b76e79;
+  margin: 2px 0;
+  transition: all 0.3s ease;
+  border-radius: 1px;
+}
+
+/* iPad Portrait (768px to 991px) - Enhanced burger menu */
+@media (min-width: 768px) and (max-width: 991px) {
+  .table-burger-menu {
+    width: 40px;
+    height: 40px;
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+  
+  .burger-line {
+    width: 22px;
+    height: 3px;
+    margin: 3px 0;
+    background-color: #b76e79;
+  }
+  
+  .table-menu-dropdown {
+    min-width: 250px;
+    font-size: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    padding: 0.75rem 0;
+  }
+  
+  .table-menu-item {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  
+  .table-menu-item i {
+    margin-right: 0.75rem;
+    width: 18px;
+    font-size: 1.1rem;
+  }
+  
+  /* Adjust table card headers for iPad */
+  .dashboard-card .d-flex.justify-content-between.align-items-center {
+    margin-bottom: 1.25rem;
+    padding: 0.5rem 0;
+  }
+  
+  .dashboard-card h5 {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+  
+  /* Enhanced hover effects for iPad */
+  .table-burger-menu:hover {
+    background: rgba(183, 110, 121, 0.15);
+    transform: scale(1.05);
+  }
+  
+  .table-menu-item:hover {
+    background-color: #f8f9fa;
+    color: #b76e79;
+    transform: translateX(4px);
+  }
+}
+
+.table-burger-menu.active .burger-line:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.table-burger-menu.active .burger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.table-burger-menu.active .burger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* iPad-specific burger menu animations */
+@media (min-width: 768px) and (max-width: 991px) {
+ 
+}
+
+/* Table burger menu dropdown */
+.table-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  min-width: 200px;
+  padding: 0.5rem 0;
+  display: none;
+}
+
+.table-menu-dropdown.show {
+  display: block;
+}
+
+.table-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: #333;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.table-menu-item:hover {
+  background-color: #f8f9fa;
+  color: #b76e79;
+}
+
+.table-menu-item i {
+  margin-right: 0.5rem;
+  width: 16px;
+}
+
+
+@media (max-width: 575px) {
+  .mini-card {
+    padding: 0.8rem !important;
+  }
+  
+  .mini-card .icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+  }
+  
+  .sales-card-top,
+  .sales-card-middle,
+  .sales-card-bottom {
+    height: 100px;
+    margin-top: -15px;
+  }
+  
+  .mini-card .fw-bold.fs-5 {
+    font-size: 1rem;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small {
+    font-size: 0.75rem;
+  }
+  
+  .mini-card .trend-revenue,
+  .mini-card .trend-orders,
+  .mini-card .trend-customers {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .mini-card {
+    padding: 0.6rem !important;
+  }
+  
+  .mini-card .icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+  
+  .sales-card-top,
+  .sales-card-middle,
+  .sales-card-bottom {
+    height: 90px;
+    margin-top: -10px;
+  }
+  
+  .mini-card .fw-bold.fs-5 {
+    font-size: 0.9rem;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small {
+    font-size: 0.7rem;
+  }
+  
+  .mini-card .trend-revenue,
+  .mini-card .trend-orders,
+  .mini-card .trend-customers {
+    font-size: 0.65rem;
+  }
+}
+
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .main {
+    padding: 0.5rem !important;
+  }
+  
+  .sales-overview-card,
+  .bg-white.rounded-4.shadow-sm {
+    min-width: 280px;
+  }
+  
+  .mini-card {
+    min-width: 280px;
+  }
+  
+  .p-4.pb-3.rounded-top-4 {
+    height: 40px;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .mini-card {
+    padding: 0.4rem 0.6rem !important;
+  }
+  
+  .sales-title {
+    font-size: 0.9rem;
+  }
+  
+  .fw-bold.fs-5, .value-align-up {
+    font-size: 0.8rem;
+  }
+  
+  .icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.9rem;
+  }
+  
+  .mini-card .icon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.9rem;
+  }
+  
+  .table-container {
+    max-height: 40px;
+  }
+  
+  .table {
+    font-size: 0.75rem;
+  }
+}
+
+
+@media (max-width: 575.98px) {
+  .mini-card .icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+  }
+  .mini-card {
+    padding: 1rem !important;
+  }
+  .value-margin {
+    margin-left: 8px;
+    margin-top: -2px;
+  }
+}
+
+.table-container {
+  max-height: 75px;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+
+.table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    justify-content: flex-end;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+}
+
+.status-indicator.steady {
+    background: #28a745;
+}
+
+.status-indicator.empty {
+    background: #dc3545;
+    position: relative;
+}
+
+.status-indicator.empty::before {
+    content: '×';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 8px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.status-indicator.restock {
+    background: #ffc107;
+    position: relative;
+}
+
+.status-indicator.restock::before {
+    content: '!';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #333;
+    font-size: 8px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+
+
+.dashboard-card .table-container {
+  width: 100%;
+  padding-right: 4px; 
+  max-height: 120px; 
+  overflow-y: auto;
+}
+
+
+#inventoryStatusBody td:first-child {
+  max-width: 100%;
+  white-space: normal; 
+  overflow: hidden;   
+  text-overflow: ellipsis;
+  word-break: break-word;
+  display: -webkit-box;
+  line-clamp: 2; 
+  -webkit-line-clamp: 2; 
+  -webkit-box-orient: vertical;
+}
+
+
+#inventoryStatusBody td:last-child {
+  white-space: nowrap;
+}
+
+
+#inventoryStatusBody .status-item {
+  flex-wrap: nowrap;
+}
+
+
+#inventoryStatusBody .status-item {
+  gap: 0.35rem;
+}
+
+
+.dashboard-card table.table {
+  table-layout: fixed;
+}
+
+
+.dashboard-card .table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.status-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+
+.inventory-status-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.bottom-panel .table-container { flex:1 1 auto; }
+
+/* Keep base card styling */
+.row .col-12.col-md-4.d-flex > .dashboard-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: 'PoppinsRegular';
+  font-size: 15px;
+}
+
+.mb-3{
+  font-family: 'PoppinsMedium';
+  font-size: 25px;
+  margin-bottom: 1px !important;
+}
+
+/* Sales */
+#topProductsCard .row.g-3 > div {
+  flex: 1;
+}
+
+#topProductsCard .row.g-3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 115%;
+}
+
+.text-center{
+  text-align: left !important;
+  font-size: 20px;
+  margin-top: 7px; 
+}
+
+.text-center .mb-0{
+  font-size: 20px !important;
+  color: #434949;
+  margin-top: 5x;
+  margin-bottom: 15px !important;
+}
+
+#topProductsCard .table-container,
+.inventory-status-card .inventory-status-container {
+  flex: 1 1 auto;
+}
+
+.inventory-status-container {
+  flex: 1 1 auto;
+  max-height: 340px; 
+  overflow-y: auto;
+  margin: 0 -8px -8px -8px; 
+  padding: 0 8px 8px 8px;
+  border-radius: 20px;
+  background:#fff; 
+}
+
+.sticky-header { position: relative; }
+.sticky-header table thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 3;
+}
+body.dark-mode .sticky-header table thead th { background:#2d2d2d !important; }
+
+
+.orders-chart-container {
+  height: 300px;
+  position: relative;
+}
+
+.responsive-table { width:100%; border-collapse:collapse; }
+
+/* ========== MOBILE CHART HEIGHTS CONSOLIDATION ========== */
+@media (max-width: 576px) {
+  .orders-chart-container { height:180px; }
+  .profit-chart-container { height:180px; }
+  .inventory-status-container, .table-container.sticky-header { max-height:260px; }
+}
+
+/* ========== ULTRA-SMALL MOBILE (480px) - ORDERS & REVENUE OPTIMIZATION ========== */
+@media (max-width: 480px) {
+  .col-12.col-lg-8 > .bg-white {
+    min-height: 560px !important;
+    
+  }
+  
+  .col-12.col-lg-8 > .bg-white h5.mb-0 {
+    font-size: 1rem !important;
+  }
+  
+  /* Chart spacing for ultra-small mobile */
+  .col-12.col-md-6:first-child .chart-section {
+    margin-bottom: 1rem !important;
+  }
+  
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 200px !important;
+    min-height: 220px !important;
+  }
+  
+  .chart-section h6.mb-0.text-muted {
+    font-size: 0.875rem !important;
+  }
+}
+
+/* ========== MOBILE RESPONSIVE TABLES ========== */
+@media (max-width: 640px) {
+  .responsive-table thead { 
+    display:block; 
+  }
+  .responsive-table.keep-header thead { 
+    display:block; 
+  }
+  .responsive-table.keep-header thead th { 
+    position:sticky; 
+    top:0; 
+    background: #fff !important;
+    z-index: 2;
+  }
+  .responsive-table tbody tr { 
+    display:block;                
+    padding:0.75rem 0;            
+    border-bottom:1px solid rgba(0,0,0,0.1); 
+    margin-bottom: 0.5rem;
+  }
+  body.dark-mode .responsive-table tbody tr { 
+    border-bottom-color:rgba(255,255,255,0.08); 
+  }
+  .responsive-table tbody tr td { 
+    display:block;                
+    padding:0.25rem 0 !important;  
+    border: none !important;
+    width: 100% !important;
+  }
+  .responsive-table tbody tr td:nth-child(2) { 
+    text-align:left; 
+    font-weight: 600;
+    color: #333;
+  }
+  .responsive-table .status-item { 
+    justify-content:flex-start; 
+    margin-top: 0.25rem;
+  }
+  
+  /* Inventory table mobile layout */
+  .inventory-status-table tbody tr td:first-child {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Top products table mobile layout */
+  .responsive-table tbody tr td:first-child {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .responsive-table tbody tr { 
+    padding:0.5rem 0; 
+  }
+  .responsive-table tbody tr td { 
+    padding:0.2rem 0 !important; 
+  }
+  .responsive-table tbody tr td:nth-child(2) { 
+    font-size: 0.85rem;
+  }
+}
+
+/* ========== CHART CONTAINER MOBILE OPTIMIZATION ========== */
+@media (max-width: 640px) {
+  .chart-section {
+    margin-bottom: 1.5rem;
+  }
+  
+  .chart-section h6 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+
+.inventory-status-table tbody tr td {
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+
+.inventory-status-table #inventoryStatusBody td:first-child {
+  line-height: 1.1rem;
+}
+
+
+.inventory-status-container::-webkit-scrollbar {
+  width: 6px;
+}
+.inventory-status-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.inventory-status-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+/* Mobile Floating Action Button */
+.fab-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #b76e79 0%, #a55b68 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 20px rgba(183, 110, 121, 0.4);
+  cursor: pointer;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 1.5rem;
+}
+
+.fab-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(183, 110, 121, 0.6);
+  background: linear-gradient(135deg, #a55b68 0%, #944d5a 100%);
+}
+
+.fab-button:active {
+  transform: scale(0.95);
+}
+
+/* Dashboard Modal Overlay */
+.dashboard-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1003;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dashboard-modal-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+
+.dashboard-modal-content {
+  position: relative;
+  width: 95%;
+  max-width: 450px;
+  max-height: 85vh;
+  margin: auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+
+.dashboard-modal-overlay.show .dashboard-modal-content {
+  transform: translateY(0);
+}
+
+.dashboard-modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+}
+
+.dashboard-modal-header h5 {
+  font-family: 'PoppinsMedium';
+  font-size: 1.3rem;
+  color: #333;
+  margin: 0;
+}
+
+.btn-close-modal {
+  width: 35px;
+  height: 35px;
+  border: none;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+}
+
+.btn-close-modal:hover {
+  background: #dc3545;
+  color: white;
+  transform: rotate(90deg);
+}
+
+.dashboard-modal-body {
+  padding: 1.5rem;
+  max-height: calc(85vh - 100px);
+  overflow-y: auto;
+}
+
+.mobile-dashboard-card {
+  background: #fff;
+  border-radius: 15px;
+  padding: 1.25rem;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-dashboard-card h6 {
+  font-family: 'PoppinsMedium';
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.mobile-dashboard-card .col-6 {
+  flex: 0 0 48%;
+  max-width: 48%;
+}
+
+.mobile-dashboard-card .row.g-3 {
+  margin: 0;
+}
+
+.mobile-dashboard-card .row.g-3 .col-12,
+.mobile-dashboard-card .row.g-3 .col-6 {
+  padding: 0;
+}
+
+/* Mobile sales stats layout - beside alignment */
+.mobile-sales-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mobile-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mobile-stat-item .text-secondary {
+  margin-bottom: 0;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.mobile-stat-item .fw-bold {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Mobile table alignment for Top Products and Inventory */
+.mobile-dashboard-card .table td {
+  padding: 0.5rem 0.75rem !important;
+  border-bottom: 1px solid #f1f1f1 !important;
+}
+
+.mobile-dashboard-card .table td:first-child {
+  text-align: left !important;
+}
+
+.mobile-dashboard-card .table td:last-child {
+  text-align: right !important;
+  font-weight: 600;
+}
+
+.mobile-table-container {
+  max-height: 150px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.mobile-dashboard-card .table {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.mobile-dashboard-card .table td {
+  padding: 0.5rem 0.75rem !important;
+  border-bottom: 1px solid #f1f1f1 !important;
+}
+
+.mobile-dashboard-card .text-success {
+  color: #28a745 !important;
+  font-size: 0.85rem;
+}
+
+/* Mobile scrollbar styling */
+.dashboard-modal-body::-webkit-scrollbar,
+.mobile-table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-modal-body::-webkit-scrollbar-track,
+.mobile-table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dashboard-modal-body::-webkit-scrollbar-thumb,
+.mobile-table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dashboard-modal-body::-webkit-scrollbar-thumb:hover,
+.mobile-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ========== IPHONE 13 SPECIFIC RESPONSIVE (390px x 844px) ========== */
+@media (max-width: 390px) and (max-height: 844px) {
+  .dashboard-container {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* iPhone 13 chart optimizations */
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 200px !important;
+    min-height: 200px !important;
+    overflow: visible !important;
+  }
+  
+  /* iPhone 13 chart container improvements */
+  #ordersChart,
+  #profitChart {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+    min-height: 200px !important;
+  }
+  
+  /* iPhone 13 chart section spacing */
+  .chart-section {
+    margin-bottom: 1rem !important;
+    padding: 0.75rem !important;
+  }
+  
+  /* iPhone 13 chart titles */
+  .chart-section h6.mb-0.text-muted {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.75rem !important;
+    color: #555 !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+  }
+  
+  /* iPhone 13 Orders & Revenue Overview container */
+  .col-12.col-lg-8 > .bg-white {
+    min-height: 450px !important;
+    padding: 1rem !important;
+  }
+  
+  /* iPhone 13 mini-cards adjustments */
+  .mini-card {
+    padding: 0.9rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .mini-card .icon,
+  .mini-card .icon-img,
+  .mini-card .cultery-img,
+  .mini-card .team-img {
+    width: 32px !important;
+    height: 32px !important;
+    margin-top: -8px !important;
+  }
+  
+  .mini-card .fw-bold.fs-5 {
+    font-size: 1rem !important;
+  }
+  
+  .mini-card .fw-semibold.text-secondary.small {
+    font-size: 0.8rem !important;
+  }
+  
+  /* iPhone 13 chart toggle buttons */
+  .chart-toggle-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+  
+  /* iPhone 13 form selects */
+  .form-select {
+    font-size: 13px !important;
+    padding: 0.3rem 0.6rem !important;
+  }
+}
+
+/* ========== IPHONE 13 PRO MAX (428px x 926px) ========== */
+@media (max-width: 428px) and (max-height: 926px) {
+  .orders-chart-container,
+  .profit-chart-container {
+    height: 220px !important;
+    min-height: 220px !important;
+    overflow: visible !important;
+  }
+  
+  #ordersChart,
+  #profitChart {
+    min-height: 220px !important;
+  }
+  
+  .col-12.col-lg-8 > .bg-white {
+    min-height: 480px !important;
+    padding: 1.1rem !important;
+  }
+  
+  .chart-section {
+    margin-bottom: 1.1rem !important;
+    padding: 0.85rem !important;
+  }
+}
+
+/* Show hidden cards and hide FAB on mid-mobile/desktop */
+@media (min-width: 577px) {
+  .mobile-hide-cards {
+    display: block !important;
+  }
+  
+  .fab-button,
+  .dashboard-modal-overlay {
+    display: none !important;
+  }
+}
+
+/* ========== GENERAL NOTIFICATION DROPDOWN STYLES ========== */
+.notification-dropdown {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  border: 1px solid #e9ecef;
+  font-family: 'PoppinsRegular', sans-serif;
+}
+
+.notification-dropdown .dropdown-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 600;
+}
+
+.notification-dropdown .dropdown-body {
+  background: #fff;
+}
+
+.notification-dropdown .dropdown-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.notification-dropdown .notification-item {
+  border-bottom: 1px solid #f1f1f1;
+  transition: background-color 0.2s ease;
+}
+
+.notification-dropdown .notification-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notification-dropdown .notification-item:last-child {
+  border-bottom: none;
+}
+
+/* Notification scrollbar styling */
+.notification-dropdown .dropdown-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-dropdown .dropdown-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.notification-dropdown .dropdown-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.notification-dropdown .dropdown-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ========== DESKTOP NOTIFICATION DROPDOWN (993px+) ========== */
+@media (min-width: 993px) {
+  /* Notification dropdown desktop */
+  .notification-dropdown {
+    position: absolute !important;
+    top: 80px !important;
+    left: 120px !important;
+    transform: none !important;
+    width: 370px !important;
+    max-width: 370px !important;
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important;
+  }
+  
+  /* Notification dropdown content desktop */
+  .notification-dropdown .dropdown-body {
+    max-height: 45vh !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Notification item desktop styling */
+  .notification-dropdown .notification-item {
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Notification dropdown header desktop */
+  .notification-dropdown .dropdown-header {
+    padding: 1.5rem !important;
+    font-size: 1.1rem !important;
+  }
+  
+  /* Notification dropdown footer desktop */
+  .notification-dropdown .dropdown-footer {
+    padding: 1rem !important;
+  }
+}

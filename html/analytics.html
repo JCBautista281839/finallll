@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Analytics</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/nav.css">
+  <link rel="stylesheet" href="../css/analytics.css">
+</head>
+<body class="bg-light">
+  <div class="dashboard-container d-flex">
+        <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
+      <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="brand mb-1">
+        <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
+      </div>
+      <nav class="nav flex-column w-100 text-center">
+        <a href="../html/Dashboard.html" class="nav-link text-white" title="Home">
+          <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
+          <div class="nav-text">Home</div>
+        </a>
+                
+        <a  class="nav-link text-white" title="Notifications" style="position:relative;">
+          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon" >
+          <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+          <div class="nav-text">Notifications</div>
+        </a>
+                
+        <a href="../html/Order.html" class="nav-link text-white" title="Orders">
+          <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
+          <div class="nav-text">Orders</div>
+        </a>
+        <a href="../html/pos.html" class="nav-link text-white" title="POS">
+          <img src="../src/Icons/cashier-machine.png" alt="POS" class="nav-icon">
+          <div class="nav-text">POS</div>
+        </a>
+        <a href="../html/menu.html" class="nav-link text-white" title="Menu">
+          <img src="../src/Icons/menu (1).png" alt="Menu" class="nav-icon">
+          <div class="nav-text">Menu</div>
+        </a>
+        <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
+          <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
+          <div class="nav-text">Inventory</div>
+        </a>
+        <a href="../html/analytics.html" class="nav-link text-white" title="Reports">
+          <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
+          <div class="nav-text">Reports</div>
+        </a>
+        <a href="../html/user.html" class="nav-link text-white" title="Users">
+          <img src="../src/Icons/user.png" alt="user" class="nav-icon">
+          <div class="nav-text">Users</div>
+        </a>
+        <br>
+        <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+          <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
+          <div class="nav-text">Settings</div>
+        </a>
+        <a href="#" class="nav-link text-white" title="Logout">
+          <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
+          <div class="nav-text">Logout</div>
+        </a>
+      </nav>
+     <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+      <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+          <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+              <img src="../src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+              <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+              <img src="../src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+          </div>
+          <div class="dropdown-body p-2" id="dropdownNotificationsList">
+              <!-- Notifications will be loaded here dynamically -->
+              <div class="text-center text-muted py-3">No notifications</div>
+          </div>
+          <div class="dropdown-footer p-2 text-center border-top">
+              <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+          </div>
+      </div>
+        </aside>
+        
+    <main class="main p-3 p-md-4 flex-grow-1">
+      <div class="container-fluid py-4">
+        <div class="analytics-card">
+      <div class="analytics-header">
+  <div class="analytics-header-left">
+    <div class="analytics-title">Sales Analytics</div>
+    <!-- Replace hardcoded date with dynamic text -->
+    <div id="date-range-text" class="analytics-date">Loading...</div>
+  </div>
+  <div class="analytics-controls">
+    <!-- Add IDs so JS can detect -->
+    <select id="date-range" class="form-select w-auto">
+      <option value="week">Last 7 days</option>
+      <option value="month">Last 30 days</option>
+      <option value="year">Last Year</option>
+      <option value="today">Today</option>
+      <option value="yesterday">Yesterday</option>
+    </select>
+
+    <select id="time-range" class="form-select w-auto">
+      <option value="all">All Day</option>
+      <option value="morning">Morning</option>
+      <option value="afternoon">Afternoon</option>
+      <option value="evening">Evening</option>
+    </select>
+
+    <button id="exportExcel" class="btn btn-outline-secondary"> <i class="fa fa-download"></i> Export </button>
+  </div>
+</div>
+      <div class="analytics-charts" style="flex-direction:column; gap:0;">
+        <div class="analytics-main-chart">
+          <canvas id="salesLineChart"></canvas>
+        </div>
+        <div class="analytics-side-charts" style="flex-direction:row; gap:2rem; margin-top:2rem;">
+          <div class="analytics-side-chart" style="flex:1;">
+            <div style="font-weight:600; margin-bottom:8px;">Day of week</div>
+            <canvas id="salesBarChart"></canvas>
+          </div>
+          <div class="analytics-side-chart" style="flex:1;">
+            <div style="font-weight:600; margin-bottom:8px;">Time of day</div>
+            <canvas id="salesTimeChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="analytics-summary-row">
+        <div class="analytics-summary-card">
+          <h6>Sales</h6>
+          <ul class="analytics-summary-list">
+            <li><span style="margin-left: 30px;">Dishes</span><span>₱0.00</span></li>
+            <li><span style="margin-left: 30px;">Discount</span><span>₱500.00</span></li>
+            <li><span style="margin-left: 30px;">Tax</span><span>₱500.00</span></li>
+          </ul>
+          <div class="analytics-summary-total">Net Sales <span class="float-end">₱500.00</span></div>
+        </div>
+        <div class="analytics-summary-card">
+          <h6>Payment Methods</h6>
+          <ul class="analytics-summary-list">
+            <li><span style="font-weight: 600; color: #000;">Total Collection</span><span style="font-weight: 600; color: #000;">₱500.00</span></li>
+            <li><span style="margin-left: 30px;">GCash</span><span>₱500.00</span></li>
+            <li><span style="margin-left: 30px;">Cash</span><span>₱500.00</span></li>
+            <li><span style="margin-left: 30px;">Card</span><span>₱500.00</span></li>
+          </ul>
+          <div class="analytics-summary-total">Total <span class="float-end">₱500.00</span></div>
+        </div>
+
+        <div class="analytics-summary-card">
+          <h6 style="font-weight:700;">Top Products</h6>
+          <div style="overflow-x:auto;">
+            <table class="table table-borderless mb-0" style="font-size:15px;">
+              <thead>
+                <tr style="color:#888; font-size:13px;">
+                  <th style="font-weight:600; letter-spacing:1px;">PRODUCTS</th>
+                  <th style="font-weight:600; letter-spacing:1px; text-align:right;">ORDERS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="2" style="padding:0;">
+                    <div id="topProductsScroll" style="max-height:180px;overflow-y:auto;">
+                      <table style="width:100%;margin:0;">
+                        <tbody id="topProductsBody">
+                          <tr><td colspan="2">Loading...</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+            
+      <!-- Daily Calendar Section -->
+      <div class="calendar-section" style="margin-top: 2rem;">
+        <div class="calendar-container" style="background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 style="margin: 0; font-weight: 600;">Daily Sales Calendar</h6>
+            <div class="d-flex align-items-center gap-3">
+              <!-- Calendar Navigation -->
+              <div class="calendar-nav-compact" style="display: flex; align-items: center; gap: 0.5rem;">
+                <button id="prevMonth" class="btn btn-outline-secondary btn-sm">
+                  <i class="fa fa-chevron-left"></i>
+                </button>
+                <span id="currentMonth" style="font-weight: 600; min-width: 120px; text-align: center; font-size: 0.875rem;">
+                  September 2025
+                </span>
+                <button id="nextMonth" class="btn btn-outline-secondary btn-sm">
+                  <i class="fa fa-chevron-right"></i>
+                </button>
+              </div>
+              <!-- Calendar Legend -->
+              <div class="calendar-legend" style="display: flex; gap: 1rem; font-size: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <div style="width: 12px; height: 12px; background: #28a745; border-radius: 2px;"></div>
+                  <span>High</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <div style="width: 12px; height: 12px; background: #ffc107; border-radius: 2px;"></div>
+                  <span>Medium</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <div style="width: 12px; height: 12px; background: #dc3545; border-radius: 2px;"></div>
+                  <span>Low</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="calendar-grid" id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e9ecef;">
+            <!-- Calendar will be populated by JavaScript -->
+          </div>
+        </div>
+        
+        <!-- Daily Details Modal -->
+        <div class="modal fade" id="dailyDetailsModal" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="modalDate">Daily Sales Details</h5>
+                <div class="d-flex gap-2">
+                  <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-success btn-sm" id="downloadDailySales">
+                      <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" id="downloadDailySalesPDF">
+                      <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+              </div>
+              <div class="modal-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card">
+                      <div class="card-header">
+                        <h6 class="mb-0">Sales Summary</h6>
+                      </div>
+                      <div class="card-body">
+                        <ul class="list-unstyled mb-0" id="dailySalesSummary">
+                          <!-- Sales data will be populated here -->
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card">
+                      <div class="card-header">
+                        <h6 class="mb-0">Payment Methods</h6>
+                      </div>
+                      <div class="card-body">
+                        <ul class="list-unstyled mb-0" id="dailyPaymentMethods">
+                          <!-- Payment method data will be populated here -->
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mt-3">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">
+                        <h6 class="mb-0">Orders</h6>
+                      </div>
+                      <div class="card-body">
+                        <div class="table-responsive">
+                          <table class="table table-sm">
+                            <thead>
+                              <tr>
+                                <th>Order #</th>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Payment</th>
+                                <th>Total</th>
+                              </tr>
+                            </thead>
+                            <tbody id="dailyOrdersList">
+                              <!-- Orders will be populated here -->
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+</div>
+
+
+  <!-- Load Firebase scripts first -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+  <!-- Option 1: Use Chart.js v2 (most compatible) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+
+  <!-- Load your scripts after dependencies -->
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../main.js"></script>
+  <script src="../javascript/auth-shared.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="../javascript/SalesAnalyticsCopy.js"></script>
+  <script src="../javascript/navnotifi.js"></script>
+  <script src="../javascript/notifications.js"></script>
+  <script src="../javascript/analytics-calendarCopy.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var notifLink = document.querySelector('.nav-link[title="Notifications"]');
+      if (notifLink) {
+        notifLink.addEventListener('click', function() {
+          if (typeof loadNotifications === 'function') {
+            loadNotifications();
+          }
+        });
+      }
+    });
+    </script>
+</body>
+</html>
