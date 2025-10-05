@@ -138,15 +138,8 @@ if (typeof AuthManager === 'undefined') {
         }
       });
       
-      // Detect form submissions (navigation) - exclude login forms
-      document.addEventListener('submit', (event) => {
-        // Don't treat login forms as navigation
-        const form = event.target;
-        if (form && (form.id === 'loginForm' || form.classList.contains('login-form'))) {
-          console.log('[AuthManager] Login form submission detected - not treating as navigation');
-          return;
-        }
-        
+      // Detect form submissions (navigation)
+      document.addEventListener('submit', () => {
         this.isNavigating = true;
         console.log('[AuthManager] Navigation detected - form submission');
         

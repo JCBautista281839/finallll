@@ -13,14 +13,10 @@
   
 </head>
 <body>
-  <!-- Mobile overlay for sidebar -->
-  <div class="mobile-overlay" id="mobileOverlay"></div>
-  
-  <div class="dashboard-container d-flex" id="dashboardContainer">
+  <div class="dashboard-container d-flex">
         <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
-      <!-- Close button for mobile -->
-      <button id="closeSidebarBtn" class="btn btn-outline-light d-md-none mb-3" style="align-self: flex-start; margin-left: 1rem;">
-        <i class="bi bi-x-lg"></i>
+      <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
+        <i class="bi bi-list"></i>
       </button>
       <div class="brand mb-1">
         <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
@@ -90,20 +86,6 @@
       
       <main class="main-content flex-grow-1">
         <div class="container-fluid">
-          <!-- Header section with mobile menu button -->
-          <div class="d-flex align-items-center justify-content-between bg-white rounded-4 p-3 p-md-4 shadow-sm mb-4">
-            <!-- Mobile menu button -->
-            <button id="mobileMenuBtn" class="btn btn-outline-secondary d-md-none me-3 mobile-burger-btn">
-              <i class="bi bi-list"></i>
-            </button>
-            <div>
-              <h2 class="fw-bold text-primary-emphasis mb-1">Orders Management</h2>
-              <p class="text-secondary mb-0">View and manage all restaurant orders.</p>
-            </div>
-            <div class="d-flex flex-column align-items-end gap-2">
-              <!-- Optional: Add time or other info here -->
-            </div>
-          </div>
           
           <div class="row mb-4 filters-row">
             <div class="col-md-6">
@@ -172,113 +154,8 @@
   <script src="../javascript/order.js"></script>
   <script src="../javascript/notifications.js"></script>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Mobile sidebar functionality
-      const sidebar = document.getElementById('sidebar');
-      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-      const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-      const mobileOverlay = document.getElementById('mobileOverlay');
-      const dashboardContainer = document.getElementById('dashboardContainer');
-      
-      // Toggle sidebar functions
-      function toggleSidebar() {
-        if (sidebar && sidebar.classList.contains('open')) {
-          closeSidebar();
-        } else {
-          openSidebar();
-        }
-      }
-      
-      function openSidebar() {
-        if (sidebar) {
-          sidebar.classList.add('open');
-        }
-        if (mobileOverlay) {
-          mobileOverlay.classList.add('show');
-        }
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-        
-        // Hide the burger button when sidebar opens
-        if (mobileMenuBtn) {
-          mobileMenuBtn.style.display = 'none';
-        }
-      }
-      
-      function closeSidebar() {
-        if (sidebar) {
-          sidebar.classList.remove('open');
-        }
-        if (mobileOverlay) {
-          mobileOverlay.classList.remove('show');
-        }
-        document.body.style.overflow = ''; // Restore scrolling
-        
-        // Show the burger button when sidebar closes
-        if (mobileMenuBtn) {
-          mobileMenuBtn.style.display = 'block';
-        }
-      }
-      
-      // Event listeners
-      if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', toggleSidebar);
-      }
-      
-      if (closeSidebarBtn) {
-        closeSidebarBtn.addEventListener('click', closeSidebar);
-      }
-      
-      if (mobileOverlay) {
-        mobileOverlay.addEventListener('click', closeSidebar);
-      }
-      
-      // Close sidebar when clicking on nav links on mobile
-      document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-         link.addEventListener('click', () => {
-           if (window.innerWidth <= 576) {
-             closeSidebar();
-           }
-         });
-      });
-      
-       // Handle window resize
-       window.addEventListener('resize', function() {
-         if (window.innerWidth > 992) {
-           closeSidebar();
-         }
-       });
-      
-      // Handle responsive behavior for burger menu
-      window.addEventListener('resize', function() {
-        if (window.innerWidth > 992) {
-          // Desktop - hide burger menu and close sidebar
-          sidebar.classList.remove('open');
-          mobileOverlay.classList.remove('show');
-          document.body.style.overflow = '';
-          if (mobileMenuBtn) {
-            mobileMenuBtn.style.display = 'none';
-          }
-        } else {
-          // Tablet and mobile - show burger menu
-          if (mobileMenuBtn) {
-            mobileMenuBtn.style.display = 'flex';
-          }
-        }
-      });
-      
-      // Initialize burger menu visibility on page load
-      if (window.innerWidth <= 992) {
-        if (mobileMenuBtn) {
-          mobileMenuBtn.style.display = 'flex';
-        }
-      } else {
-        if (mobileMenuBtn) {
-          mobileMenuBtn.style.display = 'none';
-        }
-      }
-    });
-  </script>
+
+  
     
 </body>
 </html>
