@@ -4,8 +4,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
 const admin = require('firebase-admin');
-const nodemailer = require('nodemailer');
-require('dotenv').config({ path: './config.env' }); // Load environment variables from config.env file
+require('dotenv').config(); // Load environment variables from .env file
 
 const { spawn, exec } = require('child_process');
 const multer = require('multer');
@@ -138,130 +137,6 @@ function makeSignature(secret, timestamp, method, path, body) {
 // OTP Functions
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Gmail SMTP Email Functions
-async function sendOTPEmailViaGmail(email, userName, otp) {
-    try {
-        // Check if Gmail is configured
-        if (!GMAIL_USER || !GMAIL_APP_PASSWORD || GMAIL_USER === 'your_gmail@gmail.com') {
-            console.log('⚠️ Gmail SMTP not configured, skipping email send');
-            console.log('📝 To enable Gmail email sending:');
-            console.log('   1. Enable 2-Factor Authentication on your Gmail account');
-            console.log('   2. Generate App Password: Google Account > Security > 2-Step Verification > App passwords');
-            console.log('   3. Update GMAIL_USER and GMAIL_APP_PASSWORD in config.env file');
-            console.log('   4. Restart the server');
-            return { 
-                success: false, 
-                message: 'Gmail SMTP not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD in config.env file.' 
-            };
-        }
-        
-        console.log(`📧 Sending OTP email to ${email} via Gmail SMTP`);
-        
-        // Create transporter
-        const transporter = nodemailer.createTransporter({
-            service: 'gmail',
-            auth: {
-                user: GMAIL_USER,
-                pass: GMAIL_APP_PASSWORD
-            }
-        });
-        
-        const subject = `Your Viktoria's Bistro Verification Code - ${otp}`;
-        
-        const htmlContent = `
-            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
-                <!-- Header with Logo and Background -->
-                <div style="background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%); color: white; padding: 30px 20px; text-align: center; position: relative; overflow: hidden;">
-                    <!-- Background Pattern -->
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"food\" patternUnits=\"userSpaceOnUse\" width=\"20\" height=\"20\"><circle cx=\"10\" cy=\"10\" r=\"2\" fill=\"white\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23food)\"/></svg>');"></div>
-                    
-                    <!-- Logo -->
-                    <div style="position: relative; z-index: 1;">
-                        <div style="display: inline-block; background: rgba(255,255,255,0.2); border-radius: 50%; padding: 15px; margin-bottom: 15px; backdrop-filter: blur(10px);">
-                            <img src="http://localhost:5001/src/IMG/Logo.png" alt="Viktoria's Bistro Logo" style="width: 60px; height: 60px; border-radius: 50%;">
-                        </div>
-                        <h1 style="margin: 0; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🍽️ Viktoria's Bistro</h1>
-                        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Fine Dining Experience</p>
-                    </div>
-                </div>
-                
-                <!-- Main Content -->
-                <div style="padding: 40px 30px; background: white; margin: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                    <!-- Welcome Message -->
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h2 style="color: #8B2E20; margin: 0 0 10px 0; font-size: 24px;">Hello ${userName}!</h2>
-                        <p style="color: #666; margin: 0; font-size: 16px; line-height: 1.5;">Thank you for signing up with Viktoria's Bistro. Please use the verification code below to complete your registration:</p>
-                    </div>
-                    
-                    <!-- OTP Code Box -->
-                    <div style="background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%); color: white; padding: 30px; text-align: center; margin: 30px 0; border-radius: 15px; box-shadow: 0 5px 15px rgba(139, 46, 32, 0.3); position: relative; overflow: hidden;">
-                        <!-- Background Pattern -->
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"dots\" patternUnits=\"userSpaceOnUse\" width=\"10\" height=\"10\"><circle cx=\"5\" cy=\"5\" r=\"1\" fill=\"white\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23dots)\"/></svg>');"></div>
-                        
-                        <div style="position: relative; z-index: 1;">
-                            <p style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Your Verification Code</p>
-                            <h1 style="margin: 0; font-size: 48px; letter-spacing: 8px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${otp}</h1>
-                        </div>
-                    </div>
-                    
-                    <!-- Important Information -->
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #8B2E20;">
-                        <p style="margin: 0 0 10px 0; color: #8B2E20; font-weight: bold; font-size: 16px;">⏰ This code will expire in 10 minutes.</p>
-                        <p style="margin: 0; color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
-                    </div>
-                    
-                    <!-- Footer -->
-                    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #f0f0f0; text-align: center;">
-                        <p style="color: #8B2E20; font-weight: bold; margin: 0 0 5px 0;">Best regards,<br>The Viktoria's Bistro Team</p>
-                        <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">
-                            📍 123 Restaurant Street, City, Country<br>
-                            📞 +1 (555) 123-4567 | 📧 info@viktoriasbistro.com
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- Bottom Background -->
-                <div style="height: 30px; background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%);"></div>
-            </div>
-        `;
-
-        const textContent = `
-            Hello ${userName}!
-            
-            Thank you for signing up with Viktoria's Bistro. Please use the verification code below to complete your registration:
-            
-            VERIFICATION CODE: ${otp}
-            
-            This code will expire in 10 minutes.
-            
-            If you didn't request this code, please ignore this email.
-            
-            Best regards,
-            The Viktoria's Bistro Team
-        `;
-
-        const mailOptions = {
-            from: {
-                name: GMAIL_FROM_NAME,
-                address: GMAIL_USER
-            },
-            to: email,
-            subject: subject,
-            text: textContent,
-            html: htmlContent
-        };
-
-        const result = await transporter.sendMail(mailOptions);
-        
-        console.log(`📧 Gmail email sent successfully to ${email}`);
-        return { success: true, messageId: result.messageId };
-
-    } catch (error) {
-        console.error('📧 Gmail email sending error:', error.message);
-        return { success: false, message: error.message };
-    }
 }
 
 // SendGrid Email Functions
@@ -410,14 +285,8 @@ async function sendEmailOTP(email, userName) {
             createdAt: Date.now()
         });
         
-        // Try Gmail SMTP first, then SendGrid
-        let emailResult = await sendOTPEmailViaGmail(email, userName, otp);
-        
-        // If Gmail fails, try SendGrid
-        if (!emailResult.success) {
-            console.log('📧 Gmail SMTP failed, trying SendGrid...');
-            emailResult = await sendOTPEmail(email, userName, otp);
-        }
+        // Send email via SendGrid
+        const emailResult = await sendOTPEmail(email, userName, otp);
         
         if (emailResult.success) {
             console.log(`[OTP] SendGrid OTP sent successfully: ${otp} for ${email}`);
@@ -1123,20 +992,44 @@ async function updateOrderStatus(orderId, statusData) {
     // Initialize Firebase Admin SDK if not already initialized
     if (!admin.apps.length) {
         try {
-            // Try to load service account key
-            const serviceAccount = require('./firebase-service-account.json');
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount)
-            });
-            console.log('✅ Firebase Admin SDK initialized successfully');
+            // Try to initialize with environment variables first
+            if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+                console.log('🔐 Initializing Firebase Admin SDK with environment variables...');
+                
+                const serviceAccount = {
+                    type: "service_account",
+                    project_id: process.env.FIREBASE_PROJECT_ID,
+                    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+                    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+                    client_id: process.env.FIREBASE_CLIENT_ID,
+                    auth_uri: process.env.FIREBASE_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
+                    token_uri: process.env.FIREBASE_TOKEN_URI || "https://oauth2.googleapis.com/token",
+                    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL || "https://www.googleapis.com/oauth2/v1/certs",
+                    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
+                };
+                
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                    projectId: serviceAccount.project_id
+                });
+                console.log('✅ Firebase Admin SDK initialized successfully with environment variables');
+            } else {
+                // Fallback to JSON file
+                console.log('🔐 Initializing Firebase Admin SDK with service account file...');
+                const serviceAccount = require('./firebase-service-account.json');
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                    projectId: serviceAccount.project_id
+                });
+                console.log('✅ Firebase Admin SDK initialized successfully with service account file');
+            }
         } catch (error) {
             console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
-            console.log('📝 To enable Firebase Admin features for password reset:');
-            console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
-            console.log('   2. Generate new private key and download JSON file');
-            console.log('   3. Save as firebase-service-account.json in project root');
-            console.log('   4. Restart the server');
-            console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
+            console.log('📝 To enable Firebase Admin features:');
+            console.log('   Option 1: Set environment variables (recommended for production)');
+            console.log('   Option 2: Place firebase-service-account.json in project root');
+            console.log('   See env.template for environment variable setup');
         }
     }
     
@@ -1441,14 +1334,8 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
         
         console.log(`[SendGrid API] OTP generated: ${otp} for ${email}`);
         
-        // Try Gmail SMTP first, then SendGrid
-        let emailResult = await sendOTPEmailViaGmail(email, userName, otp);
-        
-        // If Gmail fails, try SendGrid
-        if (!emailResult.success) {
-            console.log('📧 Gmail SMTP failed, trying SendGrid...');
-            emailResult = await sendOTPEmail(email, userName, otp);
-        }
+        // Try to send email via SendGrid
+        const emailResult = await sendOTPEmail(email, userName, otp);
         
         if (emailResult.success) {
             console.log(`📧 SendGrid email sent successfully to ${email}`);
@@ -1580,14 +1467,8 @@ app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
         
         console.log(`[SendGrid API] New OTP generated: ${otp} for ${email}`);
         
-        // Try Gmail SMTP first, then SendGrid
-        let emailResult = await sendOTPEmailViaGmail(email, userName, otp);
-        
-        // If Gmail fails, try SendGrid
-        if (!emailResult.success) {
-            console.log('📧 Gmail SMTP failed, trying SendGrid...');
-            emailResult = await sendOTPEmail(email, userName, otp);
-        }
+        // Try to send email via SendGrid
+        const emailResult = await sendOTPEmail(email, userName, otp);
         
         if (emailResult.success) {
             console.log(`📧 SendGrid email resent successfully to ${email}`);
@@ -1883,15 +1764,57 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             // Initialize Firebase Admin SDK if not already initialized
             if (!admin.apps.length) {
                 try {
-                    // Try to load service account key
-                    const serviceAccount = require('./firebase-service-account.json');
-                    admin.initializeApp({
-                        credential: admin.credential.cert(serviceAccount)
-                    });
-                    console.log('✅ Firebase Admin SDK initialized successfully for password reset');
+                    // Try to initialize with environment variables first
+                    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+                        console.log('🔐 Initializing Firebase Admin SDK with environment variables...');
+                        
+                        const serviceAccount = {
+                            type: "service_account",
+                            project_id: process.env.FIREBASE_PROJECT_ID,
+                            private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+                            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                            client_email: process.env.FIREBASE_CLIENT_EMAIL,
+                            client_id: process.env.FIREBASE_CLIENT_ID,
+                            auth_uri: process.env.FIREBASE_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
+                            token_uri: process.env.FIREBASE_TOKEN_URI || "https://oauth2.googleapis.com/token",
+                            auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL || "https://www.googleapis.com/oauth2/v1/certs",
+                            client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
+                        };
+                        
+                        admin.initializeApp({
+                            credential: admin.credential.cert(serviceAccount),
+                            projectId: serviceAccount.project_id
+                        });
+                        console.log('✅ Firebase Admin SDK initialized successfully with environment variables');
+                    } else {
+                        // Fallback to JSON file
+                        console.log('🔐 Initializing Firebase Admin SDK with service account file...');
+                        const serviceAccount = require('./firebase-service-account.json');
+                        
+                        // Validate service account data
+                        if (!serviceAccount.private_key || !serviceAccount.client_email) {
+                            throw new Error('Invalid service account file: missing required fields');
+                        }
+                        
+                        admin.initializeApp({
+                            credential: admin.credential.cert(serviceAccount),
+                            projectId: serviceAccount.project_id
+                        });
+                        console.log('✅ Firebase Admin SDK initialized successfully with service account file');
+                    }
                 } catch (initError) {
                     console.error('❌ Firebase Admin SDK initialization failed:', initError.message);
-                    throw new Error('Firebase Admin SDK not configured');
+                    console.error('❌ Full error:', initError);
+                    
+                    // Clear the OTP storage anyway since verification was successful (if it exists)
+                    if (passwordResetOTPStorage.has(email)) {
+                        passwordResetOTPStorage.delete(email);
+                    }
+                    
+                    return res.status(500).json({ 
+                        success: false, 
+                        message: 'Firebase Admin SDK initialization failed. Please contact support.' 
+                    });
                 }
             }
             
@@ -1907,27 +1830,34 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             
         } catch (firebaseError) {
             console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
+            console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
             
-            // If Firebase Admin SDK is not available, provide helpful message
-            if (firebaseError.message.includes('not configured') || firebaseError.code === 'app/no-app') {
-                console.log('[Password Reset OTP] Firebase Admin SDK not configured');
-                
-                // Clear the OTP storage anyway since verification was successful (if it exists)
-                if (passwordResetOTPStorage.has(email)) {
-                    passwordResetOTPStorage.delete(email);
-                }
-                
-                return res.json({ 
-                    success: true, 
-                    message: 'Password reset verification completed. Please contact support to complete the password reset process.' 
-                });
-            } else if (firebaseError.code === 'auth/user-not-found') {
+            // Clear the OTP storage anyway since verification was successful (if it exists)
+            if (passwordResetOTPStorage.has(email)) {
+                passwordResetOTPStorage.delete(email);
+            }
+            
+            if (firebaseError.code === 'auth/user-not-found') {
                 return res.status(400).json({ 
                     success: false, 
                     message: 'No account found with this email address' 
                 });
+            } else if (firebaseError.code === 'auth/invalid-email') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Invalid email address' 
+                });
+            } else if (firebaseError.code === 'auth/weak-password') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Password is too weak. Please choose a stronger password.' 
+                });
             } else {
-                throw firebaseError;
+                console.error('[Password Reset OTP] Unexpected Firebase error:', firebaseError);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Failed to update password. Please try again or contact support.' 
+                });
             }
         }
         

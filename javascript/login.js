@@ -49,6 +49,41 @@ function showToast(message, type = 'info') {
 // Global variable to track selected user type
 let selectedUserType = 'customer'; // Default to customer
 
+// Test function to create a test user (for debugging)
+async function createTestUser() {
+    try {
+        console.log('Creating test user...');
+        const email = 'test@viktoriasbistro.com';
+        const password = 'testpassword123';
+        
+        // Create user account
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Create user document
+        await firebase.firestore().collection('users').doc(user.uid).set({
+            email: user.email,
+            role: 'admin',
+            userType: 'admin',
+            isActive: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('Test user created successfully:', email);
+        console.log('Password:', password);
+        
+        // Sign out after creation
+        await firebase.auth().signOut();
+        
+        return { email, password };
+    } catch (error) {
+        console.error('Error creating test user:', error);
+        return null;
+    }
+}
+
 async function handleLogin(email, password) {
     try {
         // Show loading state
@@ -58,6 +93,10 @@ async function handleLogin(email, password) {
             loginButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Logging in...';
         }
 
+        // Debug: Check Firebase initialization
+        console.log('Firebase initialized:', firebase.apps.length > 0);
+        console.log('Attempting login with email:', email);
+        
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
         
@@ -152,7 +191,27 @@ async function handleLogin(email, password) {
             }
     } catch (error) {
         console.error('Login error:', error);
-        showToast(error.message, 'error');
+        
+        // Better error handling for different Firebase auth errors
+        let errorMessage = error.message;
+        
+        if (error.code === 'auth/user-not-found') {
+            errorMessage = 'No account found with this email address. Please check your email or create a new account.';
+        } else if (error.code === 'auth/wrong-password') {
+            errorMessage = 'Incorrect password. Please try again.';
+        } else if (error.code === 'auth/invalid-email') {
+            errorMessage = 'Please enter a valid email address.';
+        } else if (error.code === 'auth/user-disabled') {
+            errorMessage = 'This account has been disabled. Please contact support.';
+        } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = 'Too many failed login attempts. Please try again later.';
+        } else if (error.code === 'auth/network-request-failed') {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (error.code === 'auth/internal-error') {
+            errorMessage = 'Authentication service error. Please try again or contact support.';
+        }
+        
+        showToast(errorMessage, 'error');
         
         // Reset login button
         const loginButton = document.querySelector('button[type="submit"]');
@@ -179,6 +238,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const adminBtn = document.getElementById('adminBtn');
     const customerBtn = document.getElementById('customerBtn');
     const noAccountDiv = document.querySelector('.no-account');
+    
+    // Add debug button for creating test user (only in development)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const debugBtn = document.createElement('button');
+        debugBtn.textContent = 'Create Test User';
+        debugBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px;';
+        debugBtn.onclick = async () => {
+            const result = await createTestUser();
+            if (result) {
+                alert(`Test user created!\nEmail: ${result.email}\nPassword: ${result.password}`);
+            } else {
+                alert('Failed to create test user. Check console for details.');
+            }
+        };
+        document.body.appendChild(debugBtn);
+    }
     
     // Handle Admin button click
     if (adminBtn) {
