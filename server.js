@@ -989,49 +989,38 @@ async function updateOrderStatus(orderId, statusData) {
     
     // Firebase Admin SDK Integration
     
-    // Initialize Firebase Admin SDK if not already initialized
-    if (!admin.apps.length) {
-        try {
-            // Try to initialize with environment variables first
-            if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
-                console.log('🔐 Initializing Firebase Admin SDK with environment variables...');
-                
-                const serviceAccount = {
-                    type: "service_account",
-                    project_id: process.env.FIREBASE_PROJECT_ID,
-                    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-                    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-                    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-                    client_id: process.env.FIREBASE_CLIENT_ID,
-                    auth_uri: process.env.FIREBASE_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
-                    token_uri: process.env.FIREBASE_TOKEN_URI || "https://oauth2.googleapis.com/token",
-                    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL || "https://www.googleapis.com/oauth2/v1/certs",
-                    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
-                };
-                
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                    projectId: serviceAccount.project_id
-                });
-                console.log('✅ Firebase Admin SDK initialized successfully with environment variables');
-            } else {
-                // Fallback to JSON file
-                console.log('🔐 Initializing Firebase Admin SDK with service account file...');
-                const serviceAccount = require('./firebase-service-account.json');
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                    projectId: serviceAccount.project_id
-                });
-                console.log('✅ Firebase Admin SDK initialized successfully with service account file');
-            }
-        } catch (error) {
-            console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
-            console.log('📝 To enable Firebase Admin features:');
-            console.log('   Option 1: Set environment variables (recommended for production)');
-            console.log('   Option 2: Place firebase-service-account.json in project root');
-            console.log('   See env.template for environment variable setup');
-        }
+// Initialize Firebase Admin SDK at startup
+let firebaseAdminInitialized = false;
+
+function initializeFirebaseAdmin() {
+    if (firebaseAdminInitialized) {
+        console.log('Firebase Admin SDK already initialized');
+        return true;
     }
+    
+    try {
+        // Try to load service account key
+        const serviceAccount = require('./firebase-service-account.json');
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        firebaseAdminInitialized = true;
+        console.log('✅ Firebase Admin SDK initialized successfully at startup');
+        return true;
+    } catch (error) {
+        console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
+        console.log('📝 To enable Firebase Admin features for password reset:');
+        console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
+        console.log('   2. Generate new private key and download JSON file');
+        console.log('   3. Save as firebase-service-account.json in project root');
+        console.log('   4. Restart the server');
+        console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
+        return false;
+    }
+}
+
+// Initialize Firebase Admin SDK
+initializeFirebaseAdmin();
     
     // Firebase Firestore integration example:
     /*
@@ -1731,7 +1720,18 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             });
         }
         
+        // Check for common weak passwords
+        const weakPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123'];
+        if (weakPasswords.includes(newPassword.toLowerCase())) {
+            console.log(`[Password Reset OTP] Weak password detected: ${newPassword}`);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Password is too weak. Please choose a stronger password.' 
+            });
+        }
+        
         console.log(`[Password Reset OTP] Resetting password for: ${email}`);
+        console.log(`[Password Reset OTP] Password length: ${newPassword.length} characters`);
         
         // Check if we have OTP data in server storage (traditional flow)
         if (passwordResetOTPStorage.has(email)) {
@@ -1760,105 +1760,72 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         }
         
         // Update password in Firebase Auth
+        let firebaseUpdateSuccess = false;
         try {
-            // Initialize Firebase Admin SDK if not already initialized
-            if (!admin.apps.length) {
-                try {
-                    // Try to initialize with environment variables first
-                    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
-                        console.log('🔐 Initializing Firebase Admin SDK with environment variables...');
-                        
-                        const serviceAccount = {
-                            type: "service_account",
-                            project_id: process.env.FIREBASE_PROJECT_ID,
-                            private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-                            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-                            client_email: process.env.FIREBASE_CLIENT_EMAIL,
-                            client_id: process.env.FIREBASE_CLIENT_ID,
-                            auth_uri: process.env.FIREBASE_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
-                            token_uri: process.env.FIREBASE_TOKEN_URI || "https://oauth2.googleapis.com/token",
-                            auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL || "https://www.googleapis.com/oauth2/v1/certs",
-                            client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
-                        };
-                        
-                        admin.initializeApp({
-                            credential: admin.credential.cert(serviceAccount),
-                            projectId: serviceAccount.project_id
-                        });
-                        console.log('✅ Firebase Admin SDK initialized successfully with environment variables');
-                    } else {
-                        // Fallback to JSON file
-                        console.log('🔐 Initializing Firebase Admin SDK with service account file...');
-                        const serviceAccount = require('./firebase-service-account.json');
-                        
-                        // Validate service account data
-                        if (!serviceAccount.private_key || !serviceAccount.client_email) {
-                            throw new Error('Invalid service account file: missing required fields');
-                        }
-                        
-                        admin.initializeApp({
-                            credential: admin.credential.cert(serviceAccount),
-                            projectId: serviceAccount.project_id
-                        });
-                        console.log('✅ Firebase Admin SDK initialized successfully with service account file');
-                    }
-                } catch (initError) {
-                    console.error('❌ Firebase Admin SDK initialization failed:', initError.message);
-                    console.error('❌ Full error:', initError);
-                    
-                    // Clear the OTP storage anyway since verification was successful (if it exists)
-                    if (passwordResetOTPStorage.has(email)) {
-                        passwordResetOTPStorage.delete(email);
-                    }
-                    
-                    return res.status(500).json({ 
-                        success: false, 
-                        message: 'Firebase Admin SDK initialization failed. Please contact support.' 
-                    });
+            // Use centralized Firebase Admin SDK initialization
+            if (!firebaseAdminInitialized) {
+                const initResult = initializeFirebaseAdmin();
+                if (!initResult) {
+                    throw new Error('Firebase Admin SDK initialization failed');
                 }
             }
             
-            // Get user by email
-            const userRecord = await admin.auth().getUserByEmail(email);
-            
-            // Update user password
-            await admin.auth().updateUser(userRecord.uid, {
-                password: newPassword
-            });
-            
-            console.log(`[Password Reset OTP] Firebase password updated for user: ${userRecord.uid}`);
-            
-        } catch (firebaseError) {
-            console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
-            console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
-            
-            // Clear the OTP storage anyway since verification was successful (if it exists)
-            if (passwordResetOTPStorage.has(email)) {
-                passwordResetOTPStorage.delete(email);
-            }
-            
-            if (firebaseError.code === 'auth/user-not-found') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'No account found with this email address' 
-                });
-            } else if (firebaseError.code === 'auth/invalid-email') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Invalid email address' 
-                });
-            } else if (firebaseError.code === 'auth/weak-password') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Password is too weak. Please choose a stronger password.' 
-                });
+            // Try to update password in Firebase
+            if (admin.apps.length > 0) {
+                try {
+                    console.log(`[Password Reset OTP] Attempting to update Firebase password for: ${email}`);
+                    
+                    // Get user by email
+                    const userRecord = await admin.auth().getUserByEmail(email);
+                    console.log(`[Password Reset OTP] Found user with UID: ${userRecord.uid}`);
+                    
+                    // Update user password
+                    await admin.auth().updateUser(userRecord.uid, {
+                        password: newPassword
+                    });
+                    
+                    console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
+                    firebaseUpdateSuccess = true;
+                    
+                } catch (firebaseError) {
+                    console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
+                    console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
+                    
+                    if (firebaseError.code === 'auth/user-not-found') {
+                        return res.status(400).json({ 
+                            success: false, 
+                            message: 'No account found with this email address' 
+                        });
+                    } else if (firebaseError.code === 'auth/invalid-credential' || firebaseError.message.includes('invalid_grant')) {
+                        console.log('⚠️ Firebase credentials issue - password reset successful but Firebase update failed');
+                        console.log('💡 Please check Firebase service account key or sync server time');
+                        throw new Error('Firebase credentials invalid - please check service account configuration');
+                    } else if (firebaseError.code === 'auth/weak-password') {
+                        return res.status(400).json({ 
+                            success: false, 
+                            message: 'Password is too weak. Please choose a stronger password.' 
+                        });
+                    } else {
+                        // For other Firebase errors, throw to be handled by outer catch
+                        throw firebaseError;
+                    }
+                }
             } else {
-                console.error('[Password Reset OTP] Unexpected Firebase error:', firebaseError);
-                return res.status(500).json({ 
-                    success: false, 
-                    message: 'Failed to update password. Please try again or contact support.' 
-                });
+                console.log('⚠️ Firebase Admin SDK not available, skipping password update');
+                throw new Error('Firebase Admin SDK not initialized');
             }
+            
+        } catch (generalError) {
+            console.error('[Password Reset OTP] Error during Firebase password update:', generalError.message);
+            
+            // If Firebase update failed, we should still return an error
+            // because the password reset is not complete
+            return res.status(500).json({ 
+                success: false, 
+                message: `Password reset failed: ${generalError.message}`,
+                error: generalError.message,
+                firebaseError: true
+            });
         }
         
         // Clear the OTP storage (if it exists)
@@ -1869,14 +1836,18 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         console.log(`[Password Reset OTP] Password reset completed for: ${email}`);
         res.json({ 
             success: true, 
-            message: 'Password reset successfully. You can now log in with your new password.' 
+            message: 'Password reset successfully. You can now log in with your new password.',
+            firebaseUpdated: firebaseUpdateSuccess,
+            note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password reset completed but Firebase update failed'
         });
         
     } catch (error) {
         console.error('[Password Reset OTP] Reset password error:', error.message);
+        console.error('[Password Reset OTP] Error stack:', error.stack);
         res.status(500).json({ 
             success: false, 
-            message: 'An error occurred while resetting the password' 
+            message: `Password reset failed: ${error.message}`,
+            error: error.message
         });
     }
 });
@@ -1891,7 +1862,7 @@ app.use((err, req, res, next) => {
 app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'index.html')));
 
 /* ====== Start server (single listen) ====== */
-const PORT = process.env.PORT || 5001; // Changed from 5000 to avoid conflicts
+const PORT = process.env.PORT || 5001; // Changed from 5003 to 5001
 
 app.listen(PORT, '0.0.0.0', () => {
   const environment = IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT';

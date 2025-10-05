@@ -116,9 +116,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     sessionStorage.removeItem('passwordResetVerified');
                     
                     console.log('✅ Password reset successfully completed via server');
+                    console.log('Firebase updated:', result.firebaseUpdated);
+                    console.log('Note:', result.note);
                     
-                    // Show success message
-                    showSuccess();
+                    // Show success message with Firebase status
+                    if (result.firebaseUpdated) {
+                        showSuccess('Password reset successfully! You can now log in with your new password.');
+                    } else {
+                        showSuccess('Password reset completed, but there was an issue updating Firebase. Please contact support if you cannot log in.');
+                    }
                     
                     // Redirect to login after 3 seconds
                     setTimeout(() => {
@@ -255,7 +261,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show success message
-    function showSuccess() {
+    function showSuccess(message = 'Password reset successfully! Redirecting to login...') {
+        successMessage.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
         successMessage.style.display = 'block';
         errorMessage.style.display = 'none';
     }

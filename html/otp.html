@@ -187,6 +187,13 @@
 
     <!-- Custom JavaScript -->
     <script>
+        // Generate referral code for customer
+        function generateReferralCode(name) {
+            const namePart = name.replace(/\s+/g, '').toUpperCase().substring(0, 3);
+            const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return `${namePart}${randomPart}`;
+        }
+
         // Wait for Firebase to be ready
         function waitForFirebase() {
             return new Promise((resolve) => {
@@ -299,17 +306,21 @@
                     throw new Error('Firebase not loaded. Please refresh the page and try again.');
                 }
                 
-                // Get email from localStorage (from signup process)
-                const email = localStorage.getItem('signupEmail');
-                const userName = localStorage.getItem('signupName');
-                
-                if (!email) {
-                    throw new Error('No signup data found. Please sign up again.');
+                // Get current user
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    // No Firebase user yet - this is normal for OTP verification flow
+                    console.log('No Firebase user found - proceeding with OTP verification only');
+                } else {
+                    console.log('Firebase user found:', user.email);
                 }
                 
-                console.log('Verifying Email OTP for:', email);
+                // Get email from localStorage first
+                const email = localStorage.getItem('signupEmail');
                 
-                // Verify Email OTP
+                console.log('Verifying Email OTP for email:', email);
+                
+                // Verify Email OTP using Firebase
                 let verificationSuccess = false;
                 
                 // Try Firebase OTP verification first
@@ -337,7 +348,7 @@
                     try {
                         console.log('🔄 Attempting server OTP verification...');
                         
-                        const response = await fetch('/api/verify-otp', {
+                        const response = await fetch('http://localhost:5001/api/sendgrid-verify-otp', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -390,98 +401,57 @@
                 }
                 
                 // Create Firebase user account after successful OTP verification
-                try {
-                    console.log('🔥 Creating Firebase user account...');
+                if (verificationSuccess) {
+                    console.log('🔐 Creating Firebase user account...');
                     
-                    // Get stored signup data
-                    const storedName = localStorage.getItem('signupName');
-                    const storedPhone = localStorage.getItem('signupPhone');
-                    const storedPassword = localStorage.getItem('signupPassword');
+                    const signupEmail = localStorage.getItem('signupEmail');
+                    const signupPassword = localStorage.getItem('signupPassword');
+                    const signupName = localStorage.getItem('signupName');
+                    const signupPhone = localStorage.getItem('signupPhone');
                     
-                    if (!storedPassword) {
-                        throw new Error('Signup data not found. Please sign up again.');
-                    }
-                    
-                    // Create Firebase user account
-                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, storedPassword);
-                    const user = userCredential.user;
-                    
-                    // Update user profile
-                    await user.updateProfile({
-                        displayName: storedName || userName
-                    });
-                    
-                    // Create user document in Firestore (for authentication)
-                    await firebase.firestore().collection('users').doc(user.uid).set({
-                        name: storedName || userName,
-                        email: email,
-                        phone: storedPhone || '',
-                        role: 'customer', // Set as customer role
-                        userType: 'customer',
-                        isEmailVerified: true,
-                        verificationMethod: 'otp',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                        isActive: true
-                    });
-                    
-                    // Create customer document in customers collection (for customer data)
-                    await firebase.firestore().collection('customers').doc(user.uid).set({
-                        customerId: user.uid,
-                        name: storedName || userName,
-                        email: email,
-                        phone: storedPhone || '',
-                        displayName: storedName || userName,
-                        firstName: (storedName || userName).split(' ')[0] || (storedName || userName),
-                        lastName: (storedName || userName).split(' ').slice(1).join(' ') || '',
-                        role: 'customer',
-                        userType: 'customer',
-                        isActive: true,
-                        isEmailVerified: true,
-                        isPhoneVerified: false,
-                        accountStatus: 'verified',
-                        verificationMethod: 'otp',
-                        address: {
-                            street: '',
-                            city: '',
-                            state: '',
-                            zipCode: '',
-                            country: 'Philippines',
-                            isDefault: true
-                        },
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    console.log('✅ Firebase user account created successfully');
-                    
-                    // Store verification status
-                    localStorage.setItem('emailVerified', 'true');
-                    localStorage.setItem('verifiedEmail', email);
-                    
-                    // Clear stored signup data
-                    localStorage.removeItem('signupEmail');
-                    localStorage.removeItem('signupName');
-                    localStorage.removeItem('signupPhone');
-                    localStorage.removeItem('signupPassword');
-                    
-                    // Show success message
-                    alert('Email verified successfully! Your customer account has been created. You can now log in.');
-                    
-                    // Redirect to login page
-                    window.location.href = 'login.html';
-                    
-                } catch (firebaseError) {
-                    console.error('❌ Firebase user creation error:', firebaseError);
-                    
-                    // If user already exists, just show success message
-                    if (firebaseError.code === 'auth/email-already-in-use') {
-                        alert('Email verified successfully! You can now log in.');
-                        window.location.href = 'login.html';
-                    } else {
-                        throw new Error('Failed to create account: ' + firebaseError.message);
+                    if (signupEmail && signupPassword) {
+                        try {
+                            // Create Firebase user account
+                            const userCredential = await firebase.auth().createUserWithEmailAndPassword(signupEmail, signupPassword);
+                            const user = userCredential.user;
+                            
+                            // Update user profile
+                            await user.updateProfile({
+                                displayName: signupName
+                            });
+                            
+                            // Store user data in Firestore
+                            await firebase.firestore().collection('customers').doc(user.uid).set({
+                                name: signupName,
+                                email: signupEmail,
+                                phone: signupPhone,
+                                isEmailVerified: true,
+                                referralCode: generateReferralCode(signupName),
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            console.log('✅ Firebase user account created successfully');
+                            
+                        } catch (firebaseError) {
+                            console.error('❌ Error creating Firebase user:', firebaseError);
+                            // Don't fail the entire process if Firebase user creation fails
+                            console.log('⚠️ Continuing without Firebase user creation');
+                        }
                     }
                 }
+                
+                // Clear stored data
+                localStorage.removeItem('signupEmail');
+                localStorage.removeItem('signupName');
+                localStorage.removeItem('signupPassword');
+                localStorage.removeItem('signupPhone');
+                
+                 // Show success message
+                 alert('Email verified successfully! You are now logged in.');
+                 
+                 // Redirect to main page for automatic login
+                 window.location.href = '../index.html';
                 
             } catch (error) {
                 console.error('OTP verification error:', error);
@@ -512,7 +482,8 @@
                 // Get current user
                 const user = firebase.auth().currentUser;
                 if (!user) {
-                    throw new Error('No user found. Please sign up again.');
+                    // No Firebase user yet - this is normal for OTP verification flow
+                    console.log('No Firebase user found - proceeding with OTP resend');
                 }
                 
                 // Resend Email OTP via Firebase
@@ -551,7 +522,7 @@
                     try {
                         console.log('🔄 Attempting server OTP resend...');
                         
-                        const response = await fetch('/api/resend-otp', {
+                        const response = await fetch('http://localhost:5001/api/sendgrid-resend-otp', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -608,9 +579,9 @@
             window.history.back();
         }
         
-        function goToLogin() {
-            window.location.href = 'login.html';
-        }
+         function goToLogin() {
+             window.location.href = '../html/login.html';
+         }
 
         
         // Add some visual feedback
