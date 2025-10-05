@@ -42,6 +42,16 @@ if (Test-Path "firebase-service-account.json") {
     Write-Host "firebase-service-account.json not found - using .env only" -ForegroundColor Green
 }
 
+# Check for placeholder values in .env
+if (Test-Path ".env") {
+    $envContent = Get-Content ".env" -Raw
+    if ($envContent -match "your_.*_here") {
+        Write-Host "WARNING: .env contains placeholder values - update with real API keys" -ForegroundColor Red
+    } else {
+        Write-Host ".env contains real API keys (no placeholders found)" -ForegroundColor Green
+    }
+}
+
 Write-Host ""
 Write-Host "Security Status Summary:" -ForegroundColor Yellow
 Write-Host "   - Environment variables: Configured" -ForegroundColor White
