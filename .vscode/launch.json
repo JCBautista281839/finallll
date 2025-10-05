@@ -1,0 +1,89 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Launch Viktoria's Bistro Server",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/server.js",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "NODE_ENV": "development",
+                "PORT": "5001"
+            },
+            "console": "integratedTerminal",
+            "restart": true,
+            "runtimeExecutable": "node",
+            "runtimeArgs": [],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outputCapture": "std",
+            "autoAttachChildProcesses": true,
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ],
+            "preLaunchTask": "npm: install",
+            "postDebugTask": "Stop Server"
+        },
+        {
+            "name": "Launch Server with PM2",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/server.js",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "NODE_ENV": "development",
+                "PORT": "5001"
+            },
+            "console": "integratedTerminal",
+            "restart": true,
+            "runtimeExecutable": "pm2",
+            "runtimeArgs": ["start", "ecosystem.config.json"],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outputCapture": "std",
+            "autoAttachChildProcesses": true,
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ],
+            "preLaunchTask": "npm: install",
+            "postDebugTask": "Stop Server"
+        },
+        {
+            "name": "Attach to PM2 Process",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "restart": true,
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "sourceMaps": true,
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Server + Debug",
+            "configurations": [
+                "Launch Viktoria's Bistro Server"
+            ],
+            "stopAll": true,
+            "preLaunchTask": "npm: install"
+        }
+    ]
+}
