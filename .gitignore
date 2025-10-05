@@ -105,3 +105,7 @@ OMR/T-omr_2/uploads/
 # Test files
 test-*.html
 test-*.js
+
+# Setup scripts with sensitive data (if any)
+create-secure-env.bat
+create-secure-env.ps1
