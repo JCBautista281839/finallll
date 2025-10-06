@@ -5,63 +5,212 @@
   font-family: "Poppins", sans-serif;
 }
 
+/* Header Styles - Matching Menu Design */
+.menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 50px;
+  background-color: #ffffff;
+  font-family: 'Poppins', sans-serif !important;
+  border-bottom: none;
+}
+
+.menu-header .left-section {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
+.back-to-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #000;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.back-to-menu i {
+  font-size: 20px;
+}
+
+.menu-header .right-section {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin: 0;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #000;
+  font-weight: 500;
+  font-size: 18px;
+  transition: color 0.3s ease;
+}
+
+.nav-link.active,
+.nav-link:hover {
+  color: #96392d;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: flex-end;
+}
+
+.search-img {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  right: 15px;
+}
+
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  padding: 10px 40px 10px 15px;
+  border: 1px solid #eeeeee;
+  border-radius: 25px;
+  width: 300px;
+  font-size: 15px;
+  font-family: 'Poppins';
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #8B2E20;
+  transition: .3s;
+}
+
+.search-icon {
+  position: absolute;
+  right: 15px;
+  color: #8B2E20;
+}
+
+.user-img {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  padding: 10px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  margin-right: -10px;
+  margin-left: -10px;
+}
+
+.user-img img,
+.user-img svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  margin: auto;
+}
+
+.bag-img {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  padding: 5px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  margin-right: 50px;
+}
+
+.bag-img img,
+.bag-img svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+  margin: auto;
+}
+
+.user-img:hover {
+  filter: invert(27%) sepia(80%) saturate(475%) hue-rotate(335deg) brightness(85%) contrast(95%);
+  transition: .3s;
+}
+
+.bag-img:hover {
+  filter: invert(27%) sepia(80%) saturate(475%) hue-rotate(335deg) brightness(85%) contrast(95%);
+  transition: .3s;
+}
+
+.header-icons {
+  margin-right: 50px;
+  display: flex;
+  gap: 20px;
+}
+
+.icon-link {
+  font-size: 20px;
+  color: #333;
+}
+
+/* Shopping Bag Counter Styles */
+.bag-container {
+  position: relative;
+}
+
+.item-counter {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  font-family: 'Poppins', sans-serif;
+  text-align: center;
+  line-height: 1;
+  z-index: 10;
+  opacity: 1;
+  transition: all 0.3s ease;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.item-counter.hidden {
+  opacity: 0;
+}
+
+/* Container */
 .container {
   padding: 20px 50px;
-}
-
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.back-btn {
-  font-size: 20px;
-  font-weight: 600;
-  text-decoration: none;
-  color: #000;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: nowrap;
-}
-
-.nav-links a {
-  text-decoration: none;
-  font-weight: 500;
-  color: #000;
-}
-
-.nav-links a.active {
-  color: #8b1d1d;
-}
-
-.search-box {
-  position: relative;
-  flex-shrink: 1;
-  min-width: 200px;
-  max-width: 250px;
-}
-
-.search-box input {
-  padding: 8px 30px 8px 10px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  width: 100%;
-}
-
-.search-box .search-icon {
-  position: absolute;
-  right: 8px;
-  top: 6px;
-}
-
-.icon {
-  font-size: 20px;
-  cursor: pointer;
 }
 
 .checkout {
@@ -160,7 +309,8 @@ h3 {
 }
 
 .order-summary {
-  width: 450px; /* Match the width of details.html */
+  width: 450px;
+  /* Match the width of details.html */
   background: #f9f9f9;
   padding: 20px;
   border-radius: 20px;
@@ -184,7 +334,8 @@ hr {
   border-top: 1px solid #ddd;
 }
 
-.subtotal, .shipping-fee {
+.subtotal,
+.shipping-fee {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -203,7 +354,8 @@ hr {
   padding-bottom: 15px;
 }
 
-.subtotal .price, .shipping-fee .price {
+.subtotal .price,
+.shipping-fee .price {
   color: #666;
   font-weight: 500;
 }
@@ -263,7 +415,7 @@ hr {
   transform: scale(1.2);
 }
 
-.payment-option input[type="radio"]:checked + span {
+.payment-option input[type="radio"]:checked+span {
   color: #8b1d1d;
   font-weight: 600;
 }
@@ -276,12 +428,14 @@ hr {
 
 /* Order Form Sidebar */
 .order-form {
-  width: 450px;           /* keep the same width */
+  width: 450px;
+  /* keep the same width */
   background: #f9f9f9;
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;         /* prevent shrinking */
+  flex-shrink: 0;
+  /* prevent shrinking */
 }
 
 /* Align main content + order form */
@@ -323,6 +477,7 @@ hr {
     opacity: 0;
     transform: translateY(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -444,15 +599,15 @@ hr {
     margin: 20px;
     padding: 20px;
   }
-  
+
   .modal-title {
     font-size: 20px;
   }
-  
+
   .modal-buttons {
     flex-direction: column;
   }
-  
+
   .btn-cancel,
   .btn-continue {
     width: 100%;
@@ -707,15 +862,15 @@ hr {
     width: 95%;
     margin: 10px;
   }
-  
+
   .qr-code-image {
     max-width: 200px;
   }
-  
+
   .modal-buttons {
     flex-direction: column;
   }
-  
+
   .btn-secondary,
   .btn-primary {
     width: 100%;

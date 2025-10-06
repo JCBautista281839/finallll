@@ -7,25 +7,46 @@
   <title>Shipping Options</title>
   <link rel="stylesheet" href="../css/shipping.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
   <div class="container">
 
-    <!-- Top Nav -->
-    <div class="top-nav">
-      <a href="../html/details.html" class="back-btn">← BACK</a>
-      <div class="nav-links">
-        <a href="#">Home</a>
-        <a href="../html/menu.html" class="active">Menu</a>
-        <div class="search-box">
-          <input type="text" placeholder="Search">
-          <span class="search-icon">🔍</span>
-        </div>
-        <span class="icon">👤</span>
-        <span class="icon">🛒</span>
+    <!-- Header -->
+    <header class="menu-header">
+      <div class="left-section">
+        <a href="../html/details.html" class="back-to-menu" id="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          <span>SHIPPING</span>
+        </a>
+        <nav class="main-nav">
+          <ul class="nav-list">
+            <li><a href="/index.html" class="nav-link">Home</a></li>
+            <li><a href="../html/menucustomer.html" class="nav-link active">Menu</a></li>
+          </ul>
+        </nav>
       </div>
-    </div>
+
+      <div class="right-section">
+        <div class="search-bar">
+          <input type="text" placeholder="Search" class="search-input">
+          <img class="search-img" src="/src/Icons/search.png" alt="Search Icon">
+        </div>
+        <div class="header-icons">
+          <a href="../html/login.html">
+            <img class="user-img" src="/src/Icons/user (1).png" alt="User Icon">
+          </a>
+          <a href="#" id="shopping-bag-btn" class="bag-container">
+            <img class="bag-img" src="/src/Icons/bag (1).png" alt="Bag Icon">
+            <span class="item-counter" id="item-counter">0</span>
+          </a>
+        </div>
+      </div>
+    </header>
 
     <!-- Main Layout -->
     <div class="checkout">
@@ -226,7 +247,17 @@
       </div>
     </div>
   </div>
-
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const backBtn = document.getElementById('back-btn');
+      if (backBtn) {
+        backBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          window.location.href = '../html/menucustomer.html';
+        });
+      }
+    });
+  </script>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
