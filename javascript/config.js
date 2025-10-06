@@ -32,3 +32,18 @@ window.API_CONFIG = API_CONFIG;
 window.getApiUrl = getApiUrl;
 
 console.log('🔧 API Configuration loaded:', API_CONFIG.BASE_URL);
+console.log('🌐 Current window.location.origin:', window.location.origin);
+console.log('🔍 API_CONFIG object:', API_CONFIG);
+
+// Debug function to test configuration
+window.testApiConfig = function() {
+    console.log('🧪 Testing API Configuration:');
+    console.log('  - API_CONFIG.BASE_URL:', window.API_CONFIG?.BASE_URL);
+    console.log('  - window.location.origin:', window.location.origin);
+    console.log('  - getApiUrl test:', getApiUrl('/api/test'));
+    return {
+        baseUrl: window.API_CONFIG?.BASE_URL,
+        origin: window.location.origin,
+        testUrl: getApiUrl('/api/test')
+    };
+};
