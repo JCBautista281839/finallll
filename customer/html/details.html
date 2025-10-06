@@ -141,12 +141,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="../firebase-config.js"></script>
-  
+
   <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
   <script src="../javascript/maps.js"></script>
   <script src="../javascript/details.js"></script>
-  
+
   <script>
     // Back button functionality
     document.addEventListener('DOMContentLoaded', function () {
@@ -160,133 +161,133 @@
     });
 
     // Wait for Firebase to be ready before initializing cart system
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       console.log('[details.html] Page loaded, waiting for Firebase...');
-      
+
       // Function to wait for Firebase to be ready
       function waitForFirebase() {
         return new Promise((resolve) => {
           const checkFirebase = () => {
-            if (typeof firebase !== 'undefined' && 
-                firebase.apps && 
-                firebase.apps.length > 0 && 
-                firebase.auth && 
-                firebase.firestore) {
+            if (typeof firebase !== 'undefined' &&
+              firebase.apps &&
+              firebase.apps.length > 0 &&
+              firebase.auth &&
+              firebase.firestore) {
               console.log('[details.html] ✅ Firebase is ready');
               resolve();
             } else {
-                console.log('[details.html] ⏳ Waiting for Firebase...');
-                setTimeout(checkFirebase, 100);
-              }
-            };
-            checkFirebase();
-          });
-        }
-
-        // Initialize cart system after Firebase is ready
-        waitForFirebase().then(() => {
-          console.log('[details.html] Initializing cart system...');
-          initializeCartSystem();
-        }).catch(error => {
-          console.error('[details.html] Error waiting for Firebase:', error);
-          // Initialize with fallback to sessionStorage
-          initializeCartSystem();
-        });
-      });
-
-      // Initialize cart system
-      function initializeCartSystem() {
-        // Load cart data from sessionStorage (matching cart.js format)
-        let cartData = JSON.parse(sessionStorage.getItem('cartData')) || {};
-        let cartItems = Object.values(cartData);
-
-        // Debug function to show cart data
-        function debugCartData() {
-          console.log('=== CART DEBUG INFO ===');
-          console.log('Raw cartData from sessionStorage:', cartData);
-          console.log('Cart items array:', cartItems);
-          console.log('Cart items length:', cartItems.length);
-          console.log('SessionStorage cartData:', sessionStorage.getItem('cartData'));
-
-          // Show cart data in alert for easy viewing
-          if (cartItems.length === 0) {
-            alert('Cart is empty!\n\nTo test the cart:\n1. Go to the menu page\n2. Add items to cart\n3. Return to this page');
-          } else {
-            let cartInfo = 'CART DATA:\n\n';
-            cartItems.forEach((item, index) => {
-              const price = window.parsePrice(item.price);
-
-              cartInfo += `${index + 1}. ${item.name}\n`;
-              cartInfo += `   Price: ${item.price}\n`;
-              cartInfo += `   Quantity: ${item.quantity}\n`;
-              cartInfo += `   Total: Php ${(price * item.quantity).toFixed(0)}\n\n`;
-            });
-            alert(cartInfo);
-          }
-        }
-
-        // Add sample cart data for testing
-        function addSampleCartData() {
-          const sampleCart = {
-            "Crispy Kare-Kare": {
-              name: "Crispy Kare-Kare",
-              price: "Php 500",
-              quantity: 2
-            },
-            "Adobo Rice": {
-              name: "Adobo Rice",
-              price: "Php 250",
-              quantity: 1
-            },
-            "Sinigang na Baboy": {
-              name: "Sinigang na Baboy",
-              price: "Php 350",
-              quantity: 1
+              console.log('[details.html] ⏳ Waiting for Firebase...');
+              setTimeout(checkFirebase, 100);
             }
           };
-          
-          sessionStorage.setItem('cartData', JSON.stringify(sampleCart));
-          cartData = sampleCart;
-          cartItems = Object.values(cartData);
-          updateOrderSummary().catch(error => {
-            console.error('[details.html] Error updating order summary:', error);
-          });
-          saveCartDataForFirebase();
+          checkFirebase();
+        });
+      }
 
-          console.log('[details.html] Sample cart data added:', sampleCart);
-          alert('Sample cart data added!\n\nItems added:\n- Crispy Kare-Kare (2x) - Php 500 each\n- Adobo Rice (1x) - Php 250\n- Sinigang na Baboy (1x) - Php 350\n\nTotal: Php 1,600');
+      // Initialize cart system after Firebase is ready
+      waitForFirebase().then(() => {
+        console.log('[details.html] Initializing cart system...');
+        initializeCartSystem();
+      }).catch(error => {
+        console.error('[details.html] Error waiting for Firebase:', error);
+        // Initialize with fallback to sessionStorage
+        initializeCartSystem();
+      });
+    });
+
+    // Initialize cart system
+    function initializeCartSystem() {
+      // Load cart data from sessionStorage (matching cart.js format)
+      let cartData = JSON.parse(sessionStorage.getItem('cartData')) || {};
+      let cartItems = Object.values(cartData);
+
+      // Debug function to show cart data
+      function debugCartData() {
+        console.log('=== CART DEBUG INFO ===');
+        console.log('Raw cartData from sessionStorage:', cartData);
+        console.log('Cart items array:', cartItems);
+        console.log('Cart items length:', cartItems.length);
+        console.log('SessionStorage cartData:', sessionStorage.getItem('cartData'));
+
+        // Show cart data in alert for easy viewing
+        if (cartItems.length === 0) {
+          alert('Cart is empty!\n\nTo test the cart:\n1. Go to the menu page\n2. Add items to cart\n3. Return to this page');
+        } else {
+          let cartInfo = 'CART DATA:\n\n';
+          cartItems.forEach((item, index) => {
+            const price = window.parsePrice(item.price);
+
+            cartInfo += `${index + 1}. ${item.name}\n`;
+            cartInfo += `   Price: ${item.price}\n`;
+            cartInfo += `   Quantity: ${item.quantity}\n`;
+            cartInfo += `   Total: Php ${(price * item.quantity).toFixed(0)}\n\n`;
+          });
+          alert(cartInfo);
+        }
+      }
+
+      // Add sample cart data for testing
+      function addSampleCartData() {
+        const sampleCart = {
+          "Crispy Kare-Kare": {
+            name: "Crispy Kare-Kare",
+            price: "Php 500",
+            quantity: 2
+          },
+          "Adobo Rice": {
+            name: "Adobo Rice",
+            price: "Php 250",
+            quantity: 1
+          },
+          "Sinigang na Baboy": {
+            name: "Sinigang na Baboy",
+            price: "Php 350",
+            quantity: 1
+          }
+        };
+
+        sessionStorage.setItem('cartData', JSON.stringify(sampleCart));
+        cartData = sampleCart;
+        cartItems = Object.values(cartData);
+        updateOrderSummary().catch(error => {
+          console.error('[details.html] Error updating order summary:', error);
+        });
+        saveCartDataForFirebase();
+
+        console.log('[details.html] Sample cart data added:', sampleCart);
+        alert('Sample cart data added!\n\nItems added:\n- Crispy Kare-Kare (2x) - Php 500 each\n- Adobo Rice (1x) - Php 250\n- Sinigang na Baboy (1x) - Php 350\n\nTotal: Php 1,600');
+      }
+
+      // Update order summary with cart items from Firebase
+      async function updateOrderSummary() {
+        const orderMenuDiv = document.getElementById('order-menu');
+        const totalPriceDiv = document.getElementById('total-price');
+
+        // Try to get cart data from sessionStorage
+        let cartItems = [];
+
+        try {
+          console.log('[details.html] Attempting to load cart from sessionStorage');
+
+          const savedCart = sessionStorage.getItem('cartData');
+          if (savedCart) {
+            const cartData = JSON.parse(savedCart);
+            cartItems = Object.values(cartData);
+            console.log('[details.html] ✅ Successfully loaded cart from sessionStorage:', cartItems);
+            console.log('[details.html] SessionStorage cart data structure:', cartData);
+          } else {
+            console.log('[details.html] ⚠️ No cart data found in sessionStorage');
+          }
+        } catch (error) {
+          console.error('[details.html] ❌ SessionStorage cart loading error:', error);
+          console.error('[details.html] Error details:', error.message);
         }
 
-        // Update order summary with cart items from Firebase
-        async function updateOrderSummary() {
-          const orderMenuDiv = document.getElementById('order-menu');
-          const totalPriceDiv = document.getElementById('total-price');
+        console.log('[details.html] Updating order summary with cart items:', cartItems);
 
-          // Try to get cart data from sessionStorage
-          let cartItems = [];
-
-          try {
-            console.log('[details.html] Attempting to load cart from sessionStorage');
-
-            const savedCart = sessionStorage.getItem('cartData');
-            if (savedCart) {
-              const cartData = JSON.parse(savedCart);
-              cartItems = Object.values(cartData);
-              console.log('[details.html] ✅ Successfully loaded cart from sessionStorage:', cartItems);
-              console.log('[details.html] SessionStorage cart data structure:', cartData);
-            } else {
-              console.log('[details.html] ⚠️ No cart data found in sessionStorage');
-            }
-          } catch (error) {
-            console.error('[details.html] ❌ SessionStorage cart loading error:', error);
-            console.error('[details.html] Error details:', error.message);
-          }
-
-          console.log('[details.html] Updating order summary with cart items:', cartItems);
-
-          if (cartItems.length === 0) {
-            // Show empty cart message with debug info
-            orderMenuDiv.innerHTML = `
+        if (cartItems.length === 0) {
+          // Show empty cart message with debug info
+          orderMenuDiv.innerHTML = `
             <div class="order-item" style="text-align: center; padding: 20px; color: #666;">
               <span>No items in cart</span>
               <br><br>
@@ -301,16 +302,16 @@
               ">Add Sample Items</button>
             </div>
           `;
-            totalPriceDiv.textContent = 'Php 0';
-          } else {
-            let orderItemsHTML = '';
-            let total = 0;
+          totalPriceDiv.textContent = 'Php 0';
+        } else {
+          let orderItemsHTML = '';
+          let total = 0;
 
-            cartItems.forEach(item => {
-              const price = window.parsePrice(item.price);
-              const itemTotal = price * item.quantity;
-              total += itemTotal;
-              orderItemsHTML += `
+          cartItems.forEach(item => {
+            const price = window.parsePrice(item.price);
+            const itemTotal = price * item.quantity;
+            total += itemTotal;
+            orderItemsHTML += `
               <div class="order-item" style="
                 display: flex; 
                 justify-content: space-between; 
@@ -331,170 +332,170 @@
                 </div>
               </div>
             `;
-            });
-
-            orderMenuDiv.innerHTML = orderItemsHTML;
-            totalPriceDiv.textContent = `Php ${total.toFixed(0)}`;
-
-            console.log('[details.html] Order summary updated. Total:', total);
-          }
-        }
-
-        // Save cart data to sessionStorage for Firebase integration
-        function saveCartDataForFirebase() {
-          const cartData = JSON.parse(sessionStorage.getItem('cartData')) || {};
-          const cartItems = Object.values(cartData);
-
-          // Calculate totals
-          let subtotal = 0;
-          cartItems.forEach(item => {
-            const price = window.parsePrice(item.price);
-            subtotal += price * item.quantity;
           });
 
-          // Store cart summary for Firebase
-          const cartSummary = {
-            items: cartItems,
-            subtotal: subtotal,
-            itemCount: cartItems.length,
-            totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0)
-          };
+          orderMenuDiv.innerHTML = orderItemsHTML;
+          totalPriceDiv.textContent = `Php ${total.toFixed(0)}`;
 
-          sessionStorage.setItem('cartSummary', JSON.stringify(cartSummary));
-          console.log('[details.html] Cart summary saved for Firebase:', cartSummary);
+          console.log('[details.html] Order summary updated. Total:', total);
         }
+      }
 
-        // Function to load cart data from sessionStorage
-        window.loadCartFromSessionStorage = async function () {
-          try {
-            console.log('[details.html] Loading cart from sessionStorage');
+      // Save cart data to sessionStorage for Firebase integration
+      function saveCartDataForFirebase() {
+        const cartData = JSON.parse(sessionStorage.getItem('cartData')) || {};
+        const cartItems = Object.values(cartData);
 
-            const savedCart = sessionStorage.getItem('cartData');
+        // Calculate totals
+        let subtotal = 0;
+        cartItems.forEach(item => {
+          const price = window.parsePrice(item.price);
+          subtotal += price * item.quantity;
+        });
 
-            if (savedCart) {
-              const cartData = JSON.parse(savedCart);
-              const cartItems = Object.values(cartData);
+        // Store cart summary for Firebase
+        const cartSummary = {
+          items: cartItems,
+          subtotal: subtotal,
+          itemCount: cartItems.length,
+          totalItems: cartItems.reduce((sum, item) => sum + item.quantity, 0)
+        };
 
-              console.log('[details.html] SessionStorage cart data loaded:', cartData);
-              console.log('[details.html] Cart items from sessionStorage:', cartItems);
+        sessionStorage.setItem('cartSummary', JSON.stringify(cartSummary));
+        console.log('[details.html] Cart summary saved for Firebase:', cartSummary);
+      }
 
-              // Calculate totals
-              let total = 0;
-              cartItems.forEach(item => {
-                const price = window.parsePrice(item.price);
-                total += price * item.quantity;
-                console.log(`[details.html] Item: ${item.name}, Qty: ${item.quantity}, Price: ${price}, Total: ${price * item.quantity}`);
-              });
+      // Function to load cart data from sessionStorage
+      window.loadCartFromSessionStorage = async function () {
+        try {
+          console.log('[details.html] Loading cart from sessionStorage');
 
-              console.log('[details.html] Cart total calculated:', total);
+          const savedCart = sessionStorage.getItem('cartData');
 
-              return {
-                items: cartItems,
-                total: total,
-                userEmail: 'guest@example.com',
-                userName: 'Guest User',
-                createdAt: new Date(),
-                lastUpdated: new Date(),
-                userId: null
-              };
-            } else {
-              console.log('[details.html] No cart found in sessionStorage');
-              return null;
-            }
-          } catch (error) {
-            console.error('[details.html] Error loading cart from sessionStorage:', error);
-            console.error('[details.html] Error details:', error.message);
+          if (savedCart) {
+            const cartData = JSON.parse(savedCart);
+            const cartItems = Object.values(cartData);
+
+            console.log('[details.html] SessionStorage cart data loaded:', cartData);
+            console.log('[details.html] Cart items from sessionStorage:', cartItems);
+
+            // Calculate totals
+            let total = 0;
+            cartItems.forEach(item => {
+              const price = window.parsePrice(item.price);
+              total += price * item.quantity;
+              console.log(`[details.html] Item: ${item.name}, Qty: ${item.quantity}, Price: ${price}, Total: ${price * item.quantity}`);
+            });
+
+            console.log('[details.html] Cart total calculated:', total);
+
+            return {
+              items: cartItems,
+              total: total,
+              userEmail: 'guest@example.com',
+              userName: 'Guest User',
+              createdAt: new Date(),
+              lastUpdated: new Date(),
+              userId: null
+            };
+          } else {
+            console.log('[details.html] No cart found in sessionStorage');
             return null;
           }
-        };
+        } catch (error) {
+          console.error('[details.html] Error loading cart from sessionStorage:', error);
+          console.error('[details.html] Error details:', error.message);
+          return null;
+        }
+      };
 
-        // Function to test Firebase connection and display cart data
-        window.testFirebaseConnection = async function () {
-          console.log('[details.html] Testing Firebase connection...');
+      // Function to test Firebase connection and display cart data
+      window.testFirebaseConnection = async function () {
+        console.log('[details.html] Testing Firebase connection...');
 
-          try {
-            // Check if Firebase is available
-            if (typeof firebase === 'undefined') {
-              console.error('❌ Firebase is not loaded');
-              return false;
-            }
-
-            // Check if Firebase auth is available
-            if (!firebase.auth || typeof firebase.auth !== 'function') {
-              console.error('❌ Firebase auth is not available');
-              return false;
-            }
-
-            // Check if user is authenticated
-            const currentUser = firebase.auth().currentUser;
-            if (!currentUser) {
-              console.error('❌ User not authenticated');
-              return false;
-            }
-
-            console.log('✅ Firebase is loaded');
-            console.log('✅ User is authenticated:', currentUser.uid);
-
-            // Test sessionStorage connection
-            const savedCart = sessionStorage.getItem('cartData');
-
-            if (savedCart) {
-              const cartData = JSON.parse(savedCart);
-              console.log('✅ SessionStorage connection successful');
-              console.log('✅ Cart data exists:', cartData);
-
-              // Display cart data in order summary
-              await updateOrderSummary();
-
-              return true;
-            } else {
-              console.log('⚠️ No cart data found in sessionStorage');
-              return false;
-            }
-
-          } catch (error) {
-            console.error('❌ Firebase connection test failed:', error);
+        try {
+          // Check if Firebase is available
+          if (typeof firebase === 'undefined') {
+            console.error('❌ Firebase is not loaded');
             return false;
           }
-        };
 
-        // Make functions globally available
-        window.debugCartData = debugCartData;
-        window.addSampleCartData = addSampleCartData;
-        window.loadCartFromSessionStorage = window.loadCartFromSessionStorage;
-        window.testFirebaseConnection = window.testFirebaseConnection;
-
-        // Update order summary on page load
-        updateOrderSummary().catch(error => {
-          console.error('[details.html] Error updating order summary:', error);
-        });
-
-        // Save cart data when page loads
-        saveCartDataForFirebase();
-
-        // Listen for cart changes (if cart is updated on this page)
-        window.addEventListener('storage', function (e) {
-          if (e.key === 'cartData') {
-            console.log('[details.html] Cart data changed, updating summary...');
-            updateOrderSummary().catch(error => {
-              console.error('[details.html] Error updating order summary:', error);
-            });
-            saveCartDataForFirebase();
+          // Check if Firebase auth is available
+          if (!firebase.auth || typeof firebase.auth !== 'function') {
+            console.error('❌ Firebase auth is not available');
+            return false;
           }
-        });
 
-        console.log('[details.html] Cart system initialized');
-      }
-    </script>
+          // Check if user is authenticated
+          const currentUser = firebase.auth().currentUser;
+          if (!currentUser) {
+            console.error('❌ User not authenticated');
+            return false;
+          }
 
-    <!-- Authentication Manager for Auto Logout -->
-    <script src="../javascript/auth-manager.js"></script>
+          console.log('✅ Firebase is loaded');
+          console.log('✅ User is authenticated:', currentUser.uid);
 
-    <!-- Firebase Order Functions -->
-    <script src="../javascript/firebase-orders.js"></script>
+          // Test sessionStorage connection
+          const savedCart = sessionStorage.getItem('cartData');
 
-    <!-- Price Utilities -->
-    <script src="../javascript/price-utils.js"></script>
+          if (savedCart) {
+            const cartData = JSON.parse(savedCart);
+            console.log('✅ SessionStorage connection successful');
+            console.log('✅ Cart data exists:', cartData);
+
+            // Display cart data in order summary
+            await updateOrderSummary();
+
+            return true;
+          } else {
+            console.log('⚠️ No cart data found in sessionStorage');
+            return false;
+          }
+
+        } catch (error) {
+          console.error('❌ Firebase connection test failed:', error);
+          return false;
+        }
+      };
+
+      // Make functions globally available
+      window.debugCartData = debugCartData;
+      window.addSampleCartData = addSampleCartData;
+      window.loadCartFromSessionStorage = window.loadCartFromSessionStorage;
+      window.testFirebaseConnection = window.testFirebaseConnection;
+
+      // Update order summary on page load
+      updateOrderSummary().catch(error => {
+        console.error('[details.html] Error updating order summary:', error);
+      });
+
+      // Save cart data when page loads
+      saveCartDataForFirebase();
+
+      // Listen for cart changes (if cart is updated on this page)
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'cartData') {
+          console.log('[details.html] Cart data changed, updating summary...');
+          updateOrderSummary().catch(error => {
+            console.error('[details.html] Error updating order summary:', error);
+          });
+          saveCartDataForFirebase();
+        }
+      });
+
+      console.log('[details.html] Cart system initialized');
+    }
+  </script>
+
+  <!-- Authentication Manager for Auto Logout -->
+  <script src="../javascript/auth-manager.js"></script>
+
+  <!-- Firebase Order Functions -->
+  <script src="../javascript/firebase-orders.js"></script>
+
+  <!-- Price Utilities -->
+  <script src="../javascript/price-utils.js"></script>
 
 </body>
 
