@@ -83,7 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Show OTP if email failed to send
                     if (!result.emailSent && result.otp) {
-                        alert(`Password Reset OTP Code: ${result.otp}\n\nUse this code to verify your email and reset your password.\nExpires in 10 minutes.`);
+                        // OTP popup removed - OTP is now handled server-side
+                        console.log(`Password Reset OTP Code: ${result.otp} (Email not sent)`);
                     }
                     
                     // Show success message
