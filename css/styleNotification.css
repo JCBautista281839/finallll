@@ -1,29 +1,29 @@
 @font-face {
-  font-family: 'PoppinsMedium';
-  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsMedium';
+    src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsBlack';
-  src: url('../src/fonts/Poppins-Black.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsBlack';
+    src: url('../src/fonts/Poppins-Black.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsRegular';
-  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsRegular';
+    src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsExtraLight';
-  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsExtraLight';
+    src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 .main-content {
@@ -40,6 +40,59 @@
     border-radius: 0;
     box-shadow: none;
     margin-bottom: 0.75rem;
+}
+
+/* Payment verification notification styles */
+.payment-verification-row {
+    background-color: #fff3cd;
+    border-left: 4px solid #ff9800;
+}
+
+.payment-notification-content {
+    max-width: 100%;
+}
+
+.customer-details {
+    margin: 8px 0;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.receipt-preview {
+    margin: 8px 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    transition: all 0.2s ease;
+    font-size: 12px !important;
+}
+
+.action-buttons button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments for payment verification */
+@media (max-width: 768px) {
+    .customer-details {
+        font-size: 11px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-buttons button {
+        width: 100%;
+        margin-bottom: 4px;
+    }
 }
 
 .inventory-header {
@@ -131,9 +184,11 @@
         gap: 1.5rem;
         align-items: stretch;
     }
+
     .inventory-title {
         font-size: 2rem;
     }
+
     .inventory-table th,
     .inventory-table td {
         padding: 1rem;
@@ -146,12 +201,15 @@
         margin-left: 0;
         border-radius: 0;
     }
+
     .header-action-row {
         padding: 1.5rem;
     }
+
     .inventory-title {
         font-size: 2rem;
     }
+
     .inventory-table th,
     .inventory-table td {
         padding: 1rem;
@@ -163,15 +221,19 @@
     .header-action-row {
         padding: 1rem;
     }
+
     .inventory-title {
         font-size: 1.75rem;
     }
+
     .inventory-subtitle {
         font-size: 1rem;
     }
+
     .inventory-table-container {
         border-radius: 8px;
     }
+
     .inventory-table th,
     .inventory-table td {
         padding: 0.75rem;
