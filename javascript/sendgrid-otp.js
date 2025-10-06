@@ -30,7 +30,14 @@ class SendGridOTPService {
         if (newBaseUrl !== this.baseUrl) {
             console.log('🔄 Updating baseUrl from', this.baseUrl, 'to', newBaseUrl);
             this.baseUrl = newBaseUrl;
+        } else {
+            console.log('🔧 BaseUrl is already correct:', this.baseUrl);
         }
+    }
+    
+    // Method to get current baseUrl (always fresh)
+    getCurrentBaseUrl() {
+        return this.getBaseUrl();
     }
 
     /**
@@ -51,17 +58,17 @@ class SendGridOTPService {
                 throw new Error('Email and user name are required');
             }
 
-            // Update baseUrl in case config loaded after initialization
-            this.updateBaseUrl();
+            // Always get fresh baseUrl to ensure we use the latest config
+            const currentBaseUrl = this.getCurrentBaseUrl();
             
             // Debug: Show current configuration
             console.log('🔧 Current API_CONFIG:', window.API_CONFIG);
-            console.log('🔧 Current baseUrl:', this.baseUrl);
+            console.log('🔧 Current baseUrl:', currentBaseUrl);
             console.log('🔧 Window location origin:', window.location.origin);
             
-            console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-send-otp`);
+            console.log(`🌐 Making request to: ${currentBaseUrl}/api/sendgrid-send-otp`);
 
-            const response = await fetch(`${this.baseUrl}/api/sendgrid-send-otp`, {
+            const response = await fetch(`${currentBaseUrl}/api/sendgrid-send-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,21 +134,21 @@ class SendGridOTPService {
                 throw new Error('Email and OTP are required');
             }
 
-            // Update baseUrl in case config loaded after initialization
-            this.updateBaseUrl();
+            // Always get fresh baseUrl to ensure we use the latest config
+            const currentBaseUrl = this.getCurrentBaseUrl();
             
             // Debug: Show current configuration
             console.log('🔧 Current API_CONFIG:', window.API_CONFIG);
-            console.log('🔧 Current baseUrl:', this.baseUrl);
+            console.log('🔧 Current baseUrl:', currentBaseUrl);
             console.log('🔧 Window location origin:', window.location.origin);
             
-            console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-verify-otp`);
+            console.log(`🌐 Making request to: ${currentBaseUrl}/api/sendgrid-verify-otp`);
 
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
 
-            const response = await fetch(`${this.baseUrl}/api/sendgrid-verify-otp`, {
+            const response = await fetch(`${currentBaseUrl}/api/sendgrid-verify-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -199,17 +206,17 @@ class SendGridOTPService {
                 throw new Error('Email and user name are required');
             }
 
-            // Update baseUrl in case config loaded after initialization
-            this.updateBaseUrl();
+            // Always get fresh baseUrl to ensure we use the latest config
+            const currentBaseUrl = this.getCurrentBaseUrl();
             
             // Debug: Show current configuration
             console.log('🔧 Current API_CONFIG:', window.API_CONFIG);
-            console.log('🔧 Current baseUrl:', this.baseUrl);
+            console.log('🔧 Current baseUrl:', currentBaseUrl);
             console.log('🔧 Window location origin:', window.location.origin);
             
-            console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-resend-otp`);
+            console.log(`🌐 Making request to: ${currentBaseUrl}/api/sendgrid-resend-otp`);
 
-            const response = await fetch(`${this.baseUrl}/api/sendgrid-resend-otp`, {
+            const response = await fetch(`${currentBaseUrl}/api/sendgrid-resend-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
