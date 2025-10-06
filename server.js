@@ -1571,6 +1571,208 @@ app.post('/api/payment', (req, res) => {
 // Password Reset OTP Storage (in-memory for development, replace with database in production)
 const passwordResetOTPStorage = new Map(); // email -> { otp, expiry, attempts, verified }
 
+// Security Audit Logging Functions
+async function logPasswordChangeEvent(email, firebaseUpdateSuccess, eventType = 'password_reset') {
+    try {
+        const eventDetails = {
+            'password_reset': {
+                source: 'password_reset_otp',
+                method: 'forgot_password_flow'
+            },
+            'password_change': {
+                source: 'profile_settings',
+                method: 'regular_password_update'
+            }
+        };
+        
+        const details = eventDetails[eventType] || eventDetails['password_reset'];
+        
+        const logEntry = {
+            event: eventType,
+            email: email,
+            timestamp: new Date().toISOString(),
+            firebaseUpdated: firebaseUpdateSuccess,
+            ipAddress: 'server-side', // Could be enhanced to capture actual IP
+            userAgent: 'server-side',
+            success: firebaseUpdateSuccess,
+            metadata: details
+        };
+        
+        console.log(`[Security Audit] Password change logged for: ${email}`, logEntry);
+        
+        // Store in Firestore if available
+        if (admin.apps && admin.apps.length > 0) {
+            try {
+                await admin.firestore().collection('security_audit_logs').add(logEntry);
+                console.log(`[Security Audit] ✅ Log entry saved to Firestore for: ${email}`);
+            } catch (firestoreError) {
+                console.error(`[Security Audit] ❌ Failed to save log to Firestore:`, firestoreError.message);
+            }
+        }
+        
+    } catch (error) {
+        console.error(`[Security Audit] Error logging password change for ${email}:`, error.message);
+    }
+}
+
+// Send password change notification email to user
+async function sendPasswordChangeNotification(email, eventType = 'password_reset') {
+    try {
+        const eventDetails = {
+            'password_reset': {
+                subject: '🔒 Password Reset - Victoria\'s Bistro',
+                title: '🔒 Password Successfully Reset',
+                description: 'This is a security notification to confirm that your password has been successfully reset for your Victoria\'s Bistro account.',
+                actionText: 'If you did NOT request this password reset, please contact us immediately'
+            },
+            'password_change': {
+                subject: '🔒 Password Changed - Victoria\'s Bistro',
+                title: '🔒 Password Successfully Changed',
+                description: 'This is a security notification to confirm that your password has been successfully changed for your Victoria\'s Bistro account.',
+                actionText: 'If you did NOT make this change, please contact us immediately'
+            }
+        };
+        
+        const event = eventDetails[eventType] || eventDetails['password_reset'];
+        
+        const emailData = {
+            to: email,
+            subject: event.subject,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
+                        <h1 style="color: white; margin: 0;">Victoria's Bistro</h1>
+                    </div>
+                    
+                    <div style="padding: 30px; background: #f9f9f9;">
+                        <h2 style="color: #333; margin-top: 0;">${event.title}</h2>
+                        
+                        <p>Hello,</p>
+                        
+                        <p>${event.description}</p>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745; margin: 20px 0;">
+                            <p><strong>Account:</strong> ${email}</p>
+                            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                            <p><strong>Status:</strong> ✅ Password updated successfully</p>
+                        </div>
+                        
+                        <p><strong>What you should do:</strong></p>
+                        <ul>
+                            <li>If you made this change, you can safely ignore this email</li>
+                            <li>${event.actionText}</li>
+                            <li>Consider enabling two-factor authentication for additional security</li>
+                        </ul>
+                        
+                        <p>If you have any concerns about your account security, please contact our support team immediately.</p>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="mailto:support@victoriasbistro.com" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Contact Support</a>
+                        </div>
+                        
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                        
+                        <p style="color: #666; font-size: 12px;">
+                            This is an automated security notification from Victoria's Bistro. 
+                            If you have any questions, please contact our support team.
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+        
+        const result = await sendEmail(emailData);
+        if (result.success) {
+            console.log(`[Security Notification] ✅ Password change notification sent to: ${email}`);
+        } else {
+            console.error(`[Security Notification] ❌ Failed to send notification to ${email}:`, result.message);
+        }
+        
+    } catch (error) {
+        console.error(`[Security Notification] Error sending password change notification to ${email}:`, error.message);
+    }
+}
+
+// Send admin security alert
+async function sendAdminSecurityAlert(email, eventType) {
+    try {
+        const adminEmails = [
+            'admin@victoriasbistro.com',
+            'security@victoriasbistro.com'
+        ]; // Add your admin emails here
+        
+        const eventDetails = {
+            'password_reset': {
+                title: '🔒 Password Reset Alert',
+                description: 'A user has successfully reset their password',
+                severity: 'medium'
+            },
+            'password_change': {
+                title: '🔒 Password Change Alert',
+                description: 'A user has successfully changed their password',
+                severity: 'low'
+            }
+        };
+        
+        const event = eventDetails[eventType] || {
+            title: '🔒 Security Event',
+            description: 'A security event has occurred',
+            severity: 'low'
+        };
+        
+        for (const adminEmail of adminEmails) {
+            const emailData = {
+                to: adminEmail,
+                subject: `${event.title} - Victoria's Bistro`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
+                            <h1 style="color: white; margin: 0;">Victoria's Bistro - Security Alert</h1>
+                        </div>
+                        
+                        <div style="padding: 30px; background: #f9f9f9;">
+                            <h2 style="color: #333; margin-top: 0;">${event.title}</h2>
+                            
+                            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+                                <p><strong>Event Type:</strong> ${eventType}</p>
+                                <p><strong>User Email:</strong> ${email}</p>
+                                <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+                                <p><strong>Severity:</strong> ${event.severity}</p>
+                                <p><strong>Description:</strong> ${event.description}</p>
+                            </div>
+                            
+                            <p>This is an automated security alert. Please review the event and take appropriate action if necessary.</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="https://console.firebase.google.com/u/0/project/victoria-s-bistro/authentication/users" 
+                                   style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                                    View Firebase Console
+                                </a>
+                            </div>
+                            
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                            
+                            <p style="color: #666; font-size: 12px;">
+                                This is an automated security alert from Victoria's Bistro monitoring system.
+                            </p>
+                        </div>
+                    </div>
+                `
+            };
+            
+            const result = await sendEmail(emailData);
+            if (result.success) {
+                console.log(`[Admin Alert] ✅ Security alert sent to admin: ${adminEmail}`);
+            } else {
+                console.error(`[Admin Alert] ❌ Failed to send alert to ${adminEmail}:`, result.message);
+            }
+        }
+        
+    } catch (error) {
+        console.error(`[Admin Alert] Error sending security alert:`, error.message);
+    }
+}
+
 // Send Password Reset OTP endpoint
 app.post('/api/send-password-reset-otp', rateLimitMiddleware, async (req, res) => {
     try {
@@ -1851,6 +2053,15 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             passwordResetOTPStorage.delete(email);
         }
         
+        // Log password change event for security audit
+        await logPasswordChangeEvent(email, firebaseUpdateSuccess);
+        
+        // Send security notification email to user
+        await sendPasswordChangeNotification(email);
+        
+        // Send admin security alert
+        await sendAdminSecurityAlert(email, 'password_reset');
+        
         console.log(`[Password Reset OTP] Password reset completed for: ${email}`);
         res.json({ 
             success: true, 
@@ -1868,6 +2079,113 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             success: false, 
             message: `Password reset failed: ${error.message}`,
             error: error.message
+        });
+    }
+});
+
+// Regular Password Change endpoint (for profile updates)
+app.post('/api/change-password', async (req, res) => {
+    try {
+        const { email, newPassword, currentPassword } = req.body;
+        
+        if (!email || !newPassword) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email and new password are required' 
+            });
+        }
+        
+        // Validate password strength
+        if (newPassword.length < 6) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Password must be at least 6 characters long' 
+            });
+        }
+        
+        // Check for common weak passwords
+        const weakPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123'];
+        if (weakPasswords.includes(newPassword.toLowerCase())) {
+            console.log(`[Password Change] Weak password detected: ${newPassword}`);
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Password is too weak. Please choose a stronger password.' 
+            });
+        }
+        
+        console.log(`[Password Change] Changing password for: ${email}`);
+        console.log(`[Password Change] Password length: ${newPassword.length} characters`);
+        
+        let firebaseUpdateSuccess = false;
+        
+        // Try to update password in Firebase using Admin SDK
+        try {
+            if (admin.apps && admin.apps.length > 0) {
+                console.log(`[Password Change] Attempting to update Firebase password for: ${email}`);
+                
+                // Get user by email
+                const userRecord = await admin.auth().getUserByEmail(email);
+                console.log(`[Password Change] Found user with UID: ${userRecord.uid}`);
+                
+                // Update user password
+                await admin.auth().updateUser(userRecord.uid, {
+                    password: newPassword
+                });
+                
+                console.log(`[Password Change] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
+                firebaseUpdateSuccess = true;
+                
+            } else {
+                console.log('⚠️ Firebase Admin SDK not available for password change');
+                firebaseUpdateSuccess = false;
+            }
+            
+        } catch (firebaseError) {
+            console.error('[Password Change] Firebase password update error:', firebaseError.message);
+            console.error('[Password Change] Firebase error code:', firebaseError.code);
+            
+            if (firebaseError.code === 'auth/user-not-found') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'No account found with this email address' 
+                });
+            } else if (firebaseError.code === 'auth/weak-password') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Password is too weak. Please choose a stronger password.' 
+                });
+            } else {
+                // For other Firebase errors, log and continue
+                console.log('⚠️ Firebase update failed, will use client-side update');
+                firebaseUpdateSuccess = false;
+            }
+        }
+        
+        // Log password change event for security audit
+        await logPasswordChangeEvent(email, firebaseUpdateSuccess, 'password_change');
+        
+        // Send security notification email to user
+        await sendPasswordChangeNotification(email, 'password_change');
+        
+        // Send admin security alert
+        await sendAdminSecurityAlert(email, 'password_change');
+        
+        console.log(`[Password Change] Password change completed for: ${email}`);
+        res.json({ 
+            success: true, 
+            message: 'Password changed successfully.',
+            firebaseUpdated: firebaseUpdateSuccess,
+            clientSideUpdate: !firebaseUpdateSuccess,
+            firebaseUpdateFailed: !firebaseUpdateSuccess,
+            note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password change completed but Firebase update failed'
+        });
+        
+    } catch (error) {
+        console.error('[Password Change] Change password error:', error.message);
+        console.error('[Password Change] Error stack:', error.stack);
+        res.status(500).json({ 
+            success: false, 
+            message: 'An error occurred while changing your password' 
         });
     }
 });
@@ -1915,6 +2233,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   Send OTP: POST /api/send-password-reset-otp`);
   console.log(`   Verify OTP: POST /api/verify-password-reset-otp`);
   console.log(`   Reset Password: POST /api/reset-password-with-otp`);
+  console.log(`   Change Password: POST /api/change-password`);
   console.log(`\n📧 SendGrid Email Service:`);
   console.log(`   API Key: ${SENDGRID_API_KEY ? '✅ Configured (' + maskApiKey(SENDGRID_API_KEY) + ')' : '❌ Not Found'}`);
   console.log(`   From Email: ${SENDGRID_FROM_EMAIL}`);
