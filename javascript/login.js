@@ -58,74 +58,111 @@ async function handleLogin(email, password) {
             loginButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Logging in...';
         }
 
-        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
+        console.log('🔍 Searching for user by email:', email);
         
-        // Get user data to determine role - check both users and customers collections
-        let userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-        let customerDoc = await firebase.firestore().collection('customers').doc(user.uid).get();
-        let userRole = 'customer'; // Default role
+        // First, try to find user by email in Firestore collections
+        let userFound = false;
+        let userRole = 'customer';
+        let userData = null;
         
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            userRole = userData.role || 'customer';
+        // Search in users collection by email
+        const usersQuery = await firebase.firestore()
+            .collection('users')
+            .where('email', '==', email)
+            .limit(1)
+            .get();
             
-            // Check if the selected type matches the user's actual role
-            if (selectedUserType === 'admin') {
-                // Admin login - only allow admin, manager, server, kitchen roles
-                if (!['admin', 'manager', 'server', 'kitchen'].includes(userRole)) {
-                    // If user doesn't have admin role, try to update it
-                    console.log('User role is:', userRole, 'Updating to admin role...');
-                    try {
-                        await firebase.firestore().collection('users').doc(user.uid).update({
+        if (!usersQuery.empty) {
+            const userDoc = usersQuery.docs[0];
+            userData = userDoc.data();
+            userRole = userData.role || 'customer';
+            userFound = true;
+            console.log('✅ User found in users collection:', userData.email, 'Role:', userRole);
+        } else {
+            // Search in customers collection by email
+            const customersQuery = await firebase.firestore()
+                .collection('customers')
+                .where('email', '==', email)
+                .limit(1)
+                .get();
+                
+            if (!customersQuery.empty) {
+                const customerDoc = customersQuery.docs[0];
+                userData = customerDoc.data();
+                userRole = 'customer';
+                userFound = true;
+                console.log('✅ User found in customers collection:', userData.email);
+            }
+        }
+        
+        if (!userFound) {
+            throw new Error('Email account not found. Please sign up first.');
+        }
+        
+        // Now try to sign in with Firebase Auth
+        let user;
+        try {
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            user = userCredential.user;
+            console.log('✅ Firebase Auth sign-in successful');
+        } catch (authError) {
+            console.log('⚠️ Firebase Auth sign-in failed:', authError.message);
+            
+            // If Firebase Auth fails but user exists in Firestore, create Firebase Auth account
+            if (authError.code === 'auth/user-not-found') {
+                console.log('🔄 Creating Firebase Auth account for existing Firestore user...');
+                try {
+                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                    user = userCredential.user;
+                    console.log('✅ Firebase Auth account created successfully');
+                } catch (createError) {
+                    console.error('❌ Failed to create Firebase Auth account:', createError);
+                    throw new Error('Unable to create account. Please try signing up again.');
+                }
+            } else {
+                throw authError;
+            }
+        }
+        
+        // Check if the selected type matches the user's actual role
+        if (selectedUserType === 'admin') {
+            // Admin login - only allow admin, manager, server, kitchen roles
+            if (!['admin', 'manager', 'server', 'kitchen'].includes(userRole)) {
+                // If user doesn't have admin role, try to update it
+                console.log('User role is:', userRole, 'Updating to admin role...');
+                try {
+                    // Update the user document in Firestore
+                    if (userData) {
+                        await firebase.firestore().collection('users').doc(user.uid).set({
+                            ...userData,
                             role: 'admin',
                             userType: 'admin',
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                    } else {
+                        await firebase.firestore().collection('users').doc(user.uid).set({
+                            email: email,
+                            role: 'admin',
+                            userType: 'admin',
+                            isActive: true,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        console.log('User role updated to admin successfully');
-                        userRole = 'admin'; // Update local variable
-                    } catch (updateError) {
-                        console.error('Error updating user role:', updateError);
-                        await firebase.auth().signOut(); // Sign out the user
-                        throw new Error('Access denied. This account is not authorized for admin access. Please contact administrator.');
                     }
-                }
-            } else {
-                // Customer login - only allow customer role
-                if (userRole !== 'customer' && userRole !== 'user') {
+                    console.log('User role updated to admin successfully');
+                    userRole = 'admin'; // Update local variable
+                } catch (updateError) {
+                    console.error('Error updating user role:', updateError);
                     await firebase.auth().signOut(); // Sign out the user
-                    throw new Error('Access denied. Please use admin login for staff accounts.');
+                    throw new Error('Access denied. This account is not authorized for admin access. Please contact administrator.');
                 }
             }
-        } else if (customerDoc.exists) {
-            // Customer document exists in customers collection
-            const customerData = customerDoc.data();
-            userRole = 'customer';
-            console.log('Customer account found:', customerData.email);
         } else {
-            // Neither user nor customer document exists
-            if (selectedUserType === 'admin') {
-                console.log('User document not found, creating with admin role...');
-                try {
-                    await firebase.firestore().collection('users').doc(user.uid).set({
-                        email: user.email,
-                        role: 'admin',
-                        userType: 'admin',
-                        isActive: true,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    console.log('User document created with admin role successfully');
-                    userRole = 'admin';
-                } catch (createError) {
-                    console.error('Error creating user document:', createError);
-                    await firebase.auth().signOut();
-                    throw new Error('Error creating user account. Please try again.');
-                }
-            } else {
-                await firebase.auth().signOut();
-                throw new Error('Email account not found. Please sign up first.');
+            // Customer login - only allow customer role
+            if (userRole !== 'customer' && userRole !== 'user') {
+                await firebase.auth().signOut(); // Sign out the user
+                throw new Error('Access denied. Please use admin login for staff accounts.');
             }
         }
         
