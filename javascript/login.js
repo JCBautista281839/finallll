@@ -58,12 +58,20 @@ async function handleLogin(email, password) {
             loginButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Logging in...';
         }
 
-        // First, try to find user by email in Firestore collections before attempting Firebase Auth
+        console.log('🔍 Attempting Firebase Auth login for:', email);
+        
+        // First, attempt Firebase Auth login
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        console.log('✅ Firebase Auth successful for:', user.email);
+        
+        // Now search for user in Firestore collections to get role and data
         let userRole = 'customer'; // Default role
         let userFound = false;
         let userData = null;
         
-        console.log('🔍 Searching for user by email:', email);
+        console.log('🔍 Searching for user in Firestore collections...');
         
         // Search in users collection by email
         try {
@@ -105,34 +113,22 @@ async function handleLogin(email, password) {
             }
         }
         
-        // If user not found in Firestore, create admin account if admin login is selected
+        // If user not found in Firestore but Firebase Auth succeeded, create the account
         if (!userFound) {
-            if (selectedUserType === 'admin') {
-                console.log('🔧 Admin user not found, will create account after Firebase Auth...');
-                // We'll create the account after successful Firebase Auth
-            } else {
-                throw new Error('User account not found. Please sign up first.');
-            }
-        }
-
-        // Now attempt Firebase Auth login
-        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        console.log('✅ Firebase Auth successful for:', user.email);
-        
-        // If user wasn't found in Firestore but admin login was selected, create the account
-        if (!userFound && selectedUserType === 'admin') {
-            console.log('🔧 Creating admin account in Firestore...');
+            console.log('🔧 User authenticated but not found in Firestore, creating account...');
             try {
+                const defaultRole = selectedUserType === 'admin' ? 'admin' : 'customer';
+                const defaultName = user.displayName || (selectedUserType === 'admin' ? 'Admin User' : 'Customer User');
+                
+                // Create in users collection
                 await firebase.firestore().collection('users').doc(user.uid).set({
                     email: user.email,
-                    name: user.displayName || 'Admin User',
-                    displayName: user.displayName || 'Admin User',
-                    firstName: user.displayName ? user.displayName.split(' ')[0] : 'Admin',
-                    lastName: user.displayName ? user.displayName.split(' ').slice(1).join(' ') : 'User',
-                    role: 'admin',
-                    userType: 'admin',
+                    name: defaultName,
+                    displayName: defaultName,
+                    firstName: defaultName.split(' ')[0] || 'User',
+                    lastName: defaultName.split(' ').slice(1).join(' ') || '',
+                    role: defaultRole,
+                    userType: defaultRole,
                     isActive: true,
                     isEmailVerified: user.emailVerified,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -143,13 +139,13 @@ async function handleLogin(email, password) {
                 // Also create in customers collection for compatibility
                 await firebase.firestore().collection('customers').doc(user.uid).set({
                     customerId: user.uid,
-                    name: user.displayName || 'Admin User',
+                    name: defaultName,
                     email: user.email,
-                    displayName: user.displayName || 'Admin User',
-                    firstName: user.displayName ? user.displayName.split(' ')[0] : 'Admin',
-                    lastName: user.displayName ? user.displayName.split(' ').slice(1).join(' ') : 'User',
-                    role: 'admin',
-                    userType: 'admin',
+                    displayName: defaultName,
+                    firstName: defaultName.split(' ')[0] || 'User',
+                    lastName: defaultName.split(' ').slice(1).join(' ') || '',
+                    role: defaultRole,
+                    userType: defaultRole,
                     isActive: true,
                     isEmailVerified: user.emailVerified,
                     accountStatus: 'verified',
@@ -158,13 +154,13 @@ async function handleLogin(email, password) {
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                userRole = 'admin';
+                userRole = defaultRole;
                 userFound = true;
-                console.log('✅ Admin account created successfully in Firestore');
+                console.log('✅ User account created successfully in Firestore with role:', defaultRole);
             } catch (createError) {
-                console.error('❌ Error creating admin account:', createError);
+                console.error('❌ Error creating user account:', createError);
                 await firebase.auth().signOut();
-                throw new Error('Error creating admin account. Please try again.');
+                throw new Error('Error creating user account. Please try again.');
             }
         }
         
