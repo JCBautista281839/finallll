@@ -1723,73 +1723,72 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             console.log(`[Password Reset OTP] No server-side OTP data found for ${email}, assuming SendGrid OTP verification`);
         }
         
-        // Update password in Firebase Auth
+        // Update password in Firebase Auth automatically
         let firebaseUpdateSuccess = false;
         try {
-            // Use centralized Firebase Admin SDK initialization
+            console.log(`[Password Reset OTP] 🔄 Starting automatic Firebase password update for: ${email}`);
+            
+            // Ensure Firebase Admin SDK is initialized
             if (!firebaseAdminInitialized) {
+                console.log(`[Password Reset OTP] 🔧 Initializing Firebase Admin SDK...`);
                 const initResult = initializeFirebaseAdmin();
                 if (!initResult) {
-                    throw new Error('Firebase Admin SDK initialization failed');
+                    throw new Error('Firebase Admin SDK initialization failed - check service account file');
                 }
             }
             
-            // Try to update password in Firebase
-            if (admin.apps.length > 0) {
-                try {
-                    console.log(`[Password Reset OTP] Attempting to update Firebase password for: ${email}`);
-                    
-                    // Get user by email
-                    const userRecord = await admin.auth().getUserByEmail(email);
-                    console.log(`[Password Reset OTP] Found user with UID: ${userRecord.uid}`);
-                    
-                    // Update user password
-                    await admin.auth().updateUser(userRecord.uid, {
-                        password: newPassword
-                    });
-                    
-                    console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
-                    firebaseUpdateSuccess = true;
-                    
-                } catch (firebaseError) {
-                    console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
-                    console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
-                    
-                    if (firebaseError.code === 'auth/user-not-found') {
-                        return res.status(400).json({ 
-                            success: false, 
-                            message: 'No account found with this email address' 
-                        });
-                    } else if (firebaseError.code === 'auth/invalid-credential' || firebaseError.message.includes('invalid_grant')) {
-                        console.log('⚠️ Firebase credentials issue - password reset successful but Firebase update failed');
-                        console.log('💡 Please check Firebase service account key or sync server time');
-                        throw new Error('Firebase credentials invalid - please check service account configuration');
-                    } else if (firebaseError.code === 'auth/weak-password') {
-                        return res.status(400).json({ 
-                            success: false, 
-                            message: 'Password is too weak. Please choose a stronger password.' 
-                        });
-                    } else {
-                        // For other Firebase errors, throw to be handled by outer catch
-                        throw firebaseError;
-                    }
-                }
-            } else {
-                console.log('⚠️ Firebase Admin SDK not available, skipping password update');
-                throw new Error('Firebase Admin SDK not initialized');
+            // Verify admin is available
+            if (!admin.apps || admin.apps.length === 0) {
+                throw new Error('Firebase Admin SDK not properly initialized');
             }
             
-        } catch (generalError) {
-            console.error('[Password Reset OTP] Error during Firebase password update:', generalError.message);
+            console.log(`[Password Reset OTP] 🔍 Looking up user by email: ${email}`);
             
-            // If Firebase update failed, we should still return an error
-            // because the password reset is not complete
-            return res.status(500).json({ 
-                success: false, 
-                message: `Password reset failed: ${generalError.message}`,
-                error: generalError.message,
-                firebaseError: true
+            // Get user by email
+            const userRecord = await admin.auth().getUserByEmail(email);
+            console.log(`[Password Reset OTP] ✅ Found user with UID: ${userRecord.uid}`);
+            
+            // Update user password automatically
+            console.log(`[Password Reset OTP] 🔄 Updating password for user: ${userRecord.uid}`);
+            await admin.auth().updateUser(userRecord.uid, {
+                password: newPassword
             });
+            
+            console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
+            firebaseUpdateSuccess = true;
+            
+        } catch (firebaseError) {
+            console.error('[Password Reset OTP] ❌ Firebase password update error:', firebaseError.message);
+            console.error('[Password Reset OTP] ❌ Firebase error code:', firebaseError.code);
+            
+            // Handle specific Firebase errors
+            if (firebaseError.code === 'auth/user-not-found') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'No account found with this email address' 
+                });
+            } else if (firebaseError.code === 'auth/invalid-credential' || firebaseError.message.includes('invalid_grant')) {
+                console.error('❌ Firebase credentials issue - check service account configuration');
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Firebase credentials invalid - please check service account configuration',
+                    error: firebaseError.message,
+                    firebaseError: true
+                });
+            } else if (firebaseError.code === 'auth/weak-password') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Password is too weak. Please choose a stronger password.' 
+                });
+            } else {
+                // For other Firebase errors, return error
+                return res.status(500).json({ 
+                    success: false, 
+                    message: `Password reset failed: ${firebaseError.message}`,
+                    error: firebaseError.message,
+                    firebaseError: true
+                });
+            }
         }
         
         // Clear the OTP storage (if it exists)
@@ -1797,12 +1796,13 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             passwordResetOTPStorage.delete(email);
         }
         
-        console.log(`[Password Reset OTP] Password reset completed for: ${email}`);
+        console.log(`[Password Reset OTP] ✅ Password reset completed automatically for: ${email}`);
         res.json({ 
             success: true, 
-            message: 'Password reset approved. Please complete the process on the client side.',
-            clientSideUpdate: true,
-            note: 'Password reset token generated - client will handle Firebase update'
+            message: 'Password reset successfully! You can now log in with your new password.',
+            firebaseUpdated: firebaseUpdateSuccess,
+            automatic: true,
+            note: firebaseUpdateSuccess ? 'Password updated automatically in Firebase Authentication' : 'Password reset completed but Firebase update failed'
         });
         
     } catch (error) {

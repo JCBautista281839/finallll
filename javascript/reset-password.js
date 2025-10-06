@@ -115,12 +115,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     sessionStorage.removeItem('passwordResetEmail');
                     sessionStorage.removeItem('passwordResetVerified');
                     
-                    console.log('✅ Password reset successfully completed via server');
+                    console.log('✅ Password reset completed automatically via server');
                     console.log('Firebase updated:', result.firebaseUpdated);
+                    console.log('Automatic update:', result.automatic);
                     console.log('Note:', result.note);
                     
-                    // Show success message with Firebase status
-                    if (result.firebaseUpdated) {
+                    // Show success message - password was updated automatically
+                    if (result.firebaseUpdated && result.automatic) {
+                        showSuccess('Password reset successfully! Your password has been updated automatically. You can now log in with your new password.');
+                    } else if (result.firebaseUpdated) {
                         showSuccess('Password reset successfully! You can now log in with your new password.');
                     } else {
                         showSuccess('Password reset completed, but there was an issue updating Firebase. Please contact support if you cannot log in.');
