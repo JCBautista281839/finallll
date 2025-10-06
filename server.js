@@ -143,14 +143,16 @@ async function sendOTPEmail(email, userName, otp) {
     try {
         // Check if SendGrid is configured
         if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
-            console.log('⚠️ SendGrid API key not configured, skipping email send');
+            console.log('⚠️ SendGrid API key not configured, using local OTP generation');
             console.log('📝 To enable email sending:');
             console.log('   1. Get API key from: https://app.sendgrid.com/settings/api_keys');
-            console.log('   2. Update SENDGRID_API_KEY in config.env file');
+            console.log('   2. Create .env file with SENDGRID_API_KEY');
             console.log('   3. Restart the server');
+            // Return success with emailSent: false to allow OTP generation to continue
             return { 
-                success: false, 
-                message: 'SendGrid API key not configured. Please set SENDGRID_API_KEY in config.env file.' 
+                success: true, 
+                emailSent: false,
+                message: 'SendGrid not configured - OTP generated locally' 
             };
         }
         
@@ -1291,14 +1293,26 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
         const emailResult = await sendOTPEmail(email, userName, otp);
         
         if (emailResult.success) {
-            console.log(`📧 SendGrid email sent successfully to ${email}`);
-            res.json({ 
-                success: true, 
-                otp: otp,
-                expiry: expiry,
-                message: 'SendGrid OTP generated and email sent successfully',
-                emailSent: true
-            });
+            if (emailResult.emailSent) {
+                console.log(`📧 SendGrid email sent successfully to ${email}`);
+                res.json({ 
+                    success: true, 
+                    otp: otp,
+                    expiry: expiry,
+                    message: 'SendGrid OTP generated and email sent successfully',
+                    emailSent: true
+                });
+            } else {
+                console.log(`📧 SendGrid not configured, OTP generated locally: ${emailResult.message}`);
+                res.json({ 
+                    success: true, 
+                    otp: otp,
+                    expiry: expiry,
+                    message: 'OTP generated successfully (SendGrid not configured)',
+                    emailSent: false,
+                    emailError: emailResult.message
+                });
+            }
         } else {
             console.log(`📧 SendGrid email failed to send: ${emailResult.message}`);
             res.json({ 
@@ -1424,14 +1438,26 @@ app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
         const emailResult = await sendOTPEmail(email, userName, otp);
         
         if (emailResult.success) {
-            console.log(`📧 SendGrid email resent successfully to ${email}`);
-            res.json({ 
-                success: true, 
-                otp: otp,
-                expiry: expiry,
-                message: 'SendGrid OTP resent successfully',
-                emailSent: true
-            });
+            if (emailResult.emailSent) {
+                console.log(`📧 SendGrid email resent successfully to ${email}`);
+                res.json({ 
+                    success: true, 
+                    otp: otp,
+                    expiry: expiry,
+                    message: 'SendGrid OTP resent successfully',
+                    emailSent: true
+                });
+            } else {
+                console.log(`📧 SendGrid not configured, OTP regenerated locally: ${emailResult.message}`);
+                res.json({ 
+                    success: true, 
+                    otp: otp,
+                    expiry: expiry,
+                    message: 'OTP regenerated successfully (SendGrid not configured)',
+                    emailSent: false,
+                    emailError: emailResult.message
+                });
+            }
         } else {
             console.log(`📧 SendGrid email resend failed: ${emailResult.message}`);
             res.json({ 
@@ -1562,14 +1588,26 @@ app.post('/api/send-password-reset-otp', rateLimitMiddleware, async (req, res) =
         const emailResult = await sendOTPEmail(email, 'User', otp);
         
         if (emailResult.success) {
-            console.log(`📧 Password reset OTP sent successfully to ${email}`);
-            res.json({ 
-                success: true, 
-                otp: otp, // For development/testing
-                expiry: expiry,
-                message: 'Password reset OTP sent successfully',
-                emailSent: true
-            });
+            if (emailResult.emailSent) {
+                console.log(`📧 Password reset OTP sent successfully to ${email}`);
+                res.json({ 
+                    success: true, 
+                    otp: otp, // For development/testing
+                    expiry: expiry,
+                    message: 'Password reset OTP sent successfully',
+                    emailSent: true
+                });
+            } else {
+                console.log(`📧 SendGrid not configured, password reset OTP generated locally: ${emailResult.message}`);
+                res.json({ 
+                    success: true, 
+                    otp: otp, // For development/testing
+                    expiry: expiry,
+                    message: 'Password reset OTP generated (SendGrid not configured)',
+                    emailSent: false,
+                    emailError: emailResult.message
+                });
+            }
         } else {
             console.log(`📧 Password reset OTP email failed to send: ${emailResult.message}`);
             res.json({ 
@@ -1780,23 +1818,10 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
                 throw new Error('Firebase Admin SDK not initialized - using client-side fallback');
             }
             
-        // Skip Firebase Admin SDK for deployed websites - use client-side only
-        console.log(`[Password Reset OTP] ✅ OTP verified for password reset: ${email}`);
-        console.log(`[Password Reset OTP] Using client-side Firebase update (server-side SDK not configured)`);
-        
-        // Clear the OTP storage (if it exists)
-        if (passwordResetOTPStorage.has(email)) {
-            passwordResetOTPStorage.delete(email);
+        } catch (firebaseError) {
+            console.log('⚠️ Firebase Admin SDK not available, providing client-side fallback');
+            console.log(`[Password Reset OTP] Firebase error: ${firebaseError.message}`);
         }
-        
-        console.log(`[Password Reset OTP] ✅ Password reset approved for: ${email}`);
-        res.json({ 
-            success: true, 
-            message: 'Password reset approved. Please complete the process on the client side.',
-            clientSideUpdate: true,
-            firebaseUpdateFailed: true,
-            note: 'Using client-side Firebase update for better compatibility'
-        });
         
         // Clear the OTP storage (if it exists)
         if (passwordResetOTPStorage.has(email)) {
@@ -1821,6 +1846,7 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         });
     }
 });
+
 
 /* ====== Error handlers & 404 ====== */
 app.use((err, req, res, next) => {
