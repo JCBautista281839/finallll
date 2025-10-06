@@ -552,9 +552,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // Load cart data from sessionStorage
   function loadCartData() {
     const cartData = sessionStorage.getItem('cartData');
+    console.log('[shipping.js] Loading cart data from sessionStorage:', cartData);
     if (cartData) {
-      return JSON.parse(cartData);
+      const parsedData = JSON.parse(cartData);
+      console.log('[shipping.js] Parsed cart data:', parsedData);
+      return parsedData;
     }
+    console.log('[shipping.js] No cart data found in sessionStorage');
     return {};
   }
 
@@ -649,22 +653,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Update order form with cart data
   function updateOrderForm(cartData) {
-    const orderItemsContainer = document.querySelector('.order-item');
+    console.log('[shipping.js] updateOrderForm called with cartData:', cartData);
+
+    const orderItemsContainer = document.querySelector('.order-menu');
     const totalElement = document.querySelector('.total .price');
+
+    console.log('[shipping.js] Found elements:', {
+      orderItemsContainer: !!orderItemsContainer,
+      totalElement: !!totalElement
+    });
 
     if (!orderItemsContainer || !totalElement) return;
 
     const cartItems = Object.values(cartData);
     let totalPrice = 0;
 
+    console.log('[shipping.js] Cart items:', cartItems);
+
     // Clear existing items
     orderItemsContainer.innerHTML = '';
 
     if (cartItems.length === 0) {
+      console.log('[shipping.js] No cart items, showing empty message');
       orderItemsContainer.innerHTML = `
-        <div style="text-align: center; padding: 20px; color: #666;">
-          <span>No items in cart</span>
-        </div>
+        <p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>
       `;
       totalElement.textContent = '₱0';
       return;
