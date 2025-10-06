@@ -1,3 +1,53 @@
+// Function to update password using Firebase Auth client-side
+async function updatePasswordWithFirebaseClient(email, newPassword) {
+    try {
+        console.log('🔄 Attempting client-side Firebase password update for:', email);
+        
+        // Try to sign in the user first (this is the tricky part)
+        // Since we don't have the old password, we'll use Firebase's built-in password reset
+        console.log('📧 Sending Firebase password reset email as fallback');
+        
+        await firebase.auth().sendPasswordResetEmail(email);
+        
+        console.log('✅ Firebase password reset email sent successfully');
+        
+        // Show success message with instructions
+        showSuccess('Password Reset Instructions:\n\n1. Your OTP verification was successful\n2. Check your email for a password reset link from Firebase\n3. Click the link in the email to set your new password\n4. Use your new password to log in\n\nThis is the most secure way to reset your password.');
+        
+        // Clear session storage
+        sessionStorage.removeItem('passwordResetEmail');
+        sessionStorage.removeItem('passwordResetVerified');
+        
+        // Redirect to login after 5 seconds
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 5000);
+        
+    } catch (error) {
+        console.error('❌ Client-side Firebase password update error:', error);
+        
+        // Show error message
+        let errorMsg = 'Password update failed. Please try again.';
+        
+        if (error.code === 'auth/user-not-found') {
+            errorMsg = 'No account found with this email address.';
+        } else if (error.code === 'auth/invalid-email') {
+            errorMsg = 'Invalid email address.';
+        } else if (error.code === 'auth/too-many-requests') {
+            errorMsg = 'Too many password reset requests. Please try again later.';
+        }
+        
+        showError(errorMsg);
+        
+        // Reset button state
+        const resetButton = document.querySelector('button[type="submit"]');
+        if (resetButton) {
+            resetButton.disabled = false;
+            resetButton.innerHTML = 'Reset Password';
+        }
+    }
+}
+
 // Reset Password JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reset Password page loaded');
@@ -111,25 +161,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Clear session storage
-                    sessionStorage.removeItem('passwordResetEmail');
-                    sessionStorage.removeItem('passwordResetVerified');
-                    
-                    console.log('✅ Password reset successfully completed via server');
-                    console.log('Firebase updated:', result.firebaseUpdated);
+                    console.log('✅ Server approved password reset');
+                    console.log('Client-side update required:', result.clientSideUpdate);
+                    console.log('Firebase update failed:', result.firebaseUpdateFailed);
                     console.log('Note:', result.note);
                     
-                    // Show success message with Firebase status
-                    if (result.firebaseUpdated) {
-                        showSuccess('Password reset successfully! You can now log in with your new password.');
-                    } else {
-                        showSuccess('Password reset completed, but there was an issue updating Firebase. Please contact support if you cannot log in.');
+                    // If server-side Firebase update failed, do client-side update
+                    if (result.clientSideUpdate && result.firebaseUpdateFailed) {
+                        console.log('🔄 Server-side Firebase update failed, attempting client-side update');
+                        await updatePasswordWithFirebaseClient(email, newPassword);
+                    } else if (result.firebaseUpdated) {
+                        // Server-side update was successful
+                        console.log('✅ Password reset completed automatically via server');
+                        showSuccess('Password reset successfully! Your password has been updated automatically. You can now log in with your new password.');
+                        
+                        // Clear session storage
+                        sessionStorage.removeItem('passwordResetEmail');
+                        sessionStorage.removeItem('passwordResetVerified');
+                        
+                        // Redirect to login after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 3000);
                     }
-                    
-                    // Redirect to login after 3 seconds
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 3000);
                     
                     return; // Exit successfully
                 } else {
