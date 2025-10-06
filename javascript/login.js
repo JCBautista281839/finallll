@@ -58,92 +58,122 @@ async function handleLogin(email, password) {
             loginButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Logging in...';
         }
 
+        // First, try to find user by email in Firestore collections before attempting Firebase Auth
+        let userRole = 'customer'; // Default role
+        let userFound = false;
+        let userData = null;
+        
+        console.log('🔍 Searching for user by email:', email);
+        
+        // Search in users collection by email
+        try {
+            const usersQuery = await firebase.firestore()
+                .collection('users')
+                .where('email', '==', email)
+                .limit(1)
+                .get();
+            
+            if (!usersQuery.empty) {
+                const userDoc = usersQuery.docs[0];
+                userData = userDoc.data();
+                userRole = userData.role || 'customer';
+                userFound = true;
+                console.log('✅ User found in users collection:', userData.email, 'Role:', userRole);
+            }
+        } catch (error) {
+            console.log('⚠️ Error searching users collection:', error.message);
+        }
+        
+        // If not found in users collection, search in customers collection
+        if (!userFound) {
+            try {
+                const customersQuery = await firebase.firestore()
+                    .collection('customers')
+                    .where('email', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (!customersQuery.empty) {
+                    const customerDoc = customersQuery.docs[0];
+                    userData = customerDoc.data();
+                    userRole = 'customer';
+                    userFound = true;
+                    console.log('✅ User found in customers collection:', userData.email);
+                }
+            } catch (error) {
+                console.log('⚠️ Error searching customers collection:', error.message);
+            }
+        }
+        
+        // If user not found in Firestore, show error
+        if (!userFound) {
+            throw new Error('User account not found. Please sign up first.');
+        }
+
+        // Now attempt Firebase Auth login
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
         
-        // Get user data to determine role - check both users and customers collections
-        let userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-        let customerDoc = await firebase.firestore().collection('customers').doc(user.uid).get();
-        let userRole = 'customer'; // Default role
+        console.log('✅ Firebase Auth successful for:', user.email);
         
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            userRole = userData.role || 'customer';
-            
-            // Check if the selected type matches the user's actual role
-            if (selectedUserType === 'admin') {
-                // Admin login - only allow admin, manager, server, kitchen roles
-                if (!['admin', 'manager', 'server', 'kitchen'].includes(userRole)) {
-                    // If user doesn't have admin role, try to update it
-                    console.log('User role is:', userRole, 'Updating to admin role...');
-                    try {
-                        await firebase.firestore().collection('users').doc(user.uid).update({
+        // Check if the selected type matches the user's actual role
+        if (selectedUserType === 'admin') {
+            // Admin login - only allow admin, manager, server, kitchen roles
+            if (!['admin', 'manager', 'server', 'kitchen'].includes(userRole)) {
+                // If user doesn't have admin role, try to update it
+                console.log('User role is:', userRole, 'Updating to admin role...');
+                try {
+                    // Update the user document found by email search
+                    const usersQuery = await firebase.firestore()
+                        .collection('users')
+                        .where('email', '==', email)
+                        .limit(1)
+                        .get();
+                    
+                    if (!usersQuery.empty) {
+                        const userDoc = usersQuery.docs[0];
+                        await userDoc.ref.update({
                             role: 'admin',
                             userType: 'admin',
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                         });
                         console.log('User role updated to admin successfully');
                         userRole = 'admin'; // Update local variable
-                    } catch (updateError) {
-                        console.error('Error updating user role:', updateError);
-                        await firebase.auth().signOut(); // Sign out the user
-                        throw new Error('Access denied. This account is not authorized for admin access. Please contact administrator.');
                     }
-                }
-            } else {
-                // Customer login - only allow customer role
-                if (userRole !== 'customer' && userRole !== 'user') {
+                } catch (updateError) {
+                    console.error('Error updating user role:', updateError);
                     await firebase.auth().signOut(); // Sign out the user
-                    throw new Error('Access denied. Please use admin login for staff accounts.');
+                    throw new Error('Access denied. This account is not authorized for admin access. Please contact administrator.');
                 }
             }
-        } else if (customerDoc.exists) {
-            // Customer document exists in customers collection
-            const customerData = customerDoc.data();
-            userRole = 'customer';
-            console.log('Customer account found:', customerData.email);
         } else {
-            // Neither user nor customer document exists
-            if (selectedUserType === 'admin') {
-                console.log('User document not found, creating with admin role...');
-                try {
-                    await firebase.firestore().collection('users').doc(user.uid).set({
-                        email: user.email,
-                        role: 'admin',
-                        userType: 'admin',
-                        isActive: true,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            // Customer login - only allow customer role
+            if (userRole !== 'customer' && userRole !== 'user') {
+                await firebase.auth().signOut(); // Sign out the user
+                throw new Error('Access denied. Please use admin login for staff accounts.');
+            }
+        }
+        
+        // Update last login timestamp
+        try {
+            if (userData) {
+                // Update the document we found
+                const usersQuery = await firebase.firestore()
+                    .collection('users')
+                    .where('email', '==', email)
+                    .limit(1)
+                    .get();
+                
+                if (!usersQuery.empty) {
+                    const userDoc = usersQuery.docs[0];
+                    await userDoc.ref.update({
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    console.log('User document created with admin role successfully');
-                    userRole = 'admin';
-                } catch (createError) {
-                    console.error('Error creating user document:', createError);
-                    await firebase.auth().signOut();
-                    throw new Error('Error creating user account. Please try again.');
-                }
-            } else {
-                // For customer login, also create the user document automatically
-                console.log('Customer document not found, creating with customer role...');
-                try {
-                    await firebase.firestore().collection('users').doc(user.uid).set({
-                        email: user.email,
-                        role: 'customer',
-                        userType: 'customer',
-                        isActive: true,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    console.log('User document created with customer role successfully');
-                    userRole = 'customer';
-                } catch (createError) {
-                    console.error('Error creating customer document:', createError);
-                    await firebase.auth().signOut();
-                    throw new Error('Error creating user account. Please try again.');
                 }
             }
+        } catch (updateError) {
+            console.log('⚠️ Could not update last login timestamp:', updateError.message);
         }
         
         // Set role in localStorage to prevent redirect glitch
@@ -223,6 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const usernameInput = document.getElementById('username');
             if (usernameInput) {
                 usernameInput.placeholder = 'Admin Email Address';
+                usernameInput.type = 'email';
             }
         });
     }
@@ -246,7 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update placeholder text
             const usernameInput = document.getElementById('username');
             if (usernameInput) {
-                usernameInput.placeholder = 'Email Address or Username';
+                usernameInput.placeholder = 'Email Address';
+                usernameInput.type = 'email';
             }
         });
     }
