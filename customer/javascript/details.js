@@ -1,5 +1,5 @@
-document.addEventListener('DOMContentLoaded', function() {
-  
+document.addEventListener('DOMContentLoaded', function () {
+
   // Utility function to display order summary notification
   function showOrderSummary(orderData, callback) {
     // Remove existing notification if any
@@ -139,11 +139,11 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
       document.body.appendChild(statusEl);
     }
-    
+
     statusEl.textContent = message;
     statusEl.style.borderLeftColor = isError ? '#e74c3c' : '#00c853';
     statusEl.style.display = 'block';
-    
+
     // Auto-hide after 5 seconds
     setTimeout(() => {
       if (statusEl) statusEl.style.display = 'none';
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Get quotation with addresses - REAL API ONLY
   async function getQuotationWithAddresses(pickupAddress, deliveryAddress) {
     console.log('[details.js] Getting quotation for:', { pickup: pickupAddress, delivery: deliveryAddress });
-    
+
     try {
       // Geocode both addresses
       console.log('[details.js] Geocoding addresses...');
@@ -201,12 +201,12 @@ document.addEventListener('DOMContentLoaded', function() {
           specialRequests: [],
           language: 'en_PH',
           stops: [
-            { 
-              coordinates: pickupResult.coordinates, 
+            {
+              coordinates: pickupResult.coordinates,
               address: pickupResult.address
             },
-            { 
-              coordinates: deliveryResult.coordinates, 
+            {
+              coordinates: deliveryResult.coordinates,
               address: deliveryResult.address
             }
           ],
@@ -232,50 +232,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const errorText = await response.text();
         throw new Error(`Quotation API failed: ${response.status} ${errorText}`);
       }
-      
+
       const data = await response.json();
       console.log('[details.js] ✅ Lalamove quotation received:', data);
       return data;
-      
+
     } catch (error) {
       console.error('[details.js] ❌ Quotation failed:', error);
-      alert(`Failed to get quotation: ${error.message}`);
       throw error;
     }
-  }
-
-  // Mock quotation function for fallback
-  function getMockQuotation(pickupAddress, deliveryAddress) {
-    return {
-      data: {
-        quotationId: "MOCK_" + Date.now(),
-        scheduleAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes from now
-        expiresAt: new Date(Date.now() + 35 * 60 * 1000).toISOString(),   // 35 minutes from now
-        serviceType: "MOTORCYCLE",
-        language: "en_PH",
-        stops: [
-          {
-            stopId: "1",
-            coordinates: { lat: "14.4457549030656", lng: "120.92354136968974" },
-            address: pickupAddress
-          },
-          {
-            stopId: "2", 
-            coordinates: { lat: "14.554729", lng: "121.024445" },
-            address: deliveryAddress
-          }
-        ],
-        isRouteOptimized: false,
-        priceBreakdown: {
-          base: "150",
-          totalBeforeOptimization: "150",
-          totalExcludePriorityFee: "150",
-          total: "150",
-          currency: "PHP"
-        },
-        distance: { value: "5000", unit: "m" }
-      }
-    };
   }
 
   // Collect form data
@@ -302,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ].filter(part => part.length > 0);
 
     formData.fullAddress = addressParts.join(', ');
-    
+
     return formData;
   }
 
@@ -310,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function validateForm(formData) {
     const requiredFields = ['email', 'phone', 'firstName', 'lastName', 'address', 'city', 'province'];
     const missing = requiredFields.filter(field => !formData[field]);
-    
+
     if (missing.length > 0) {
       throw new Error(`Please fill in required fields: ${missing.join(', ')}`);
     }
@@ -333,47 +298,38 @@ document.addEventListener('DOMContentLoaded', function() {
   // Main continue button handler
   async function handleContinue(event) {
     event.preventDefault();
-    
+
     try {
       showStatus('Processing your order...', false);
-      
+
       // Collect and validate form data
       const formData = collectFormData();
       validateForm(formData);
-      
+
       console.log('[details.js] Form data collected:', formData);
-      
+
       // Default pickup address (restaurant/store location)
       const pickupAddress = "Viktoria's Bistro, Philippines"; // Updated to actual restaurant location
       const deliveryAddress = formData.fullAddress;
-      
+
       if (!deliveryAddress) {
         throw new Error('Please provide a complete delivery address');
       }
 
       console.log('[details.js] Attempting to get quotation for delivery from:', pickupAddress, 'to:', deliveryAddress);
 
-      // Get quotation
-      let quotationResult;
-      try {
-        // Try real API first
-        quotationResult = await getQuotationWithAddresses(pickupAddress, deliveryAddress);
-        showStatus('Quotation received successfully!', false);
-        console.log('[details.js] Real API quotation successful:', quotationResult);
-      } catch (error) {
-        console.warn('[details.js] Real API failed, using mock quotation:', error.message);
-        // Fallback to mock quotation
-        quotationResult = getMockQuotation(pickupAddress, deliveryAddress);
-        showStatus('Using estimated delivery cost (server unavailable)', false);
-        console.log('[details.js] Using mock quotation:', quotationResult);
-      }
-      
+      // Get quotation from real API
+      console.log('[details.js] Getting quotation from Lalamove API...');
+      const quotationResult = await getQuotationWithAddresses(pickupAddress, deliveryAddress);
+      showStatus('Quotation received successfully!', false);
+      console.log('[details.js] Real API quotation successful:', quotationResult);
+
       // Store quotation data for next page
       sessionStorage.setItem('orderFormData', JSON.stringify(formData));
       sessionStorage.setItem('quotationData', JSON.stringify(quotationResult));
       sessionStorage.setItem('pickupAddress', pickupAddress);
       sessionStorage.setItem('deliveryAddress', deliveryAddress);
-      
+
       console.log('[details.js] Data stored in session:', {
         formData,
         quotationResult,
@@ -384,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Show quotation summary before proceeding
       const price = quotationResult.data.priceBreakdown.total;
       const currency = quotationResult.data.priceBreakdown.currency;
-      
+
       // Show modern order summary modal
       const orderData = {
         customerName: `${formData.firstName} ${formData.lastName}`,
@@ -400,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
           window.location.href = 'shipping.html';
         }
       });
-      
+
     } catch (error) {
       console.error('[details.js] Continue process failed:', error);
       showStatus('Error: ' + error.message, true);
@@ -410,22 +366,22 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize the page
   function init() {
     console.log('[details.js] Initializing details page');
-    
+
     // Find and modify the continue button
     const continueBtn = document.querySelector('.continue-btn');
     if (continueBtn) {
       // Remove the onclick attribute
       continueBtn.removeAttribute('onclick');
-      
+
       // Add our custom handler
       continueBtn.addEventListener('click', handleContinue);
-      
+
       console.log('[details.js] Continue button handler attached');
-      
+
       // Add visual feedback for button state
       continueBtn.style.position = 'relative';
       continueBtn.style.overflow = 'hidden';
-      
+
     } else {
       console.error('[details.js] Continue button not found');
       // Create error message if button not found
@@ -437,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const testBtn = document.createElement('button');
       testBtn.textContent = 'Test Quotation (Debug)';
       testBtn.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 9999; padding: 10px; background: #3498db; color: white; border: none; border-radius: 5px;';
-      testBtn.addEventListener('click', function() {
+      testBtn.addEventListener('click', function () {
         console.log('[details.js] Debug test button clicked');
         const testData = {
           email: 'test@example.com',
@@ -450,13 +406,13 @@ document.addEventListener('DOMContentLoaded', function() {
           province: 'Metro Manila',
           postalCode: '1000'
         };
-        
+
         // Fill form with test data
         Object.keys(testData).forEach(key => {
           const element = document.getElementById(key);
           if (element) element.value = testData[key];
         });
-        
+
         showStatus('Test data filled in form', false);
       });
       document.body.appendChild(testBtn);
@@ -465,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add input validation helpers
     const emailInput = document.getElementById('email');
     if (emailInput) {
-      emailInput.addEventListener('blur', function() {
+      emailInput.addEventListener('blur', function () {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (this.value && !emailRegex.test(this.value)) {
           this.style.borderColor = '#e74c3c';
@@ -482,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
       try {
         const formData = JSON.parse(savedData);
         console.log('[details.js] Restoring form data:', formData);
-        
+
         if (document.getElementById('email')) document.getElementById('email').value = formData.email || '';
         if (document.getElementById('phone')) document.getElementById('phone').value = formData.phone || '';
         if (document.getElementById('firstName')) document.getElementById('firstName').value = formData.firstName || '';
@@ -492,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('postalCode')) document.getElementById('postalCode').value = formData.postalCode || '';
         if (document.getElementById('city')) document.getElementById('city').value = formData.city || '';
         if (document.getElementById('province')) document.getElementById('province').value = formData.province || '';
-        
+
       } catch (error) {
         console.error('[details.js] Error restoring form data:', error);
       }
