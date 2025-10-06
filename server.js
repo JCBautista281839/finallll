@@ -11,52 +11,52 @@ var firebaseAdminInitialized = false;
 
 // Firebase Admin SDK initialization function
 function initializeFirebaseAdmin() {
-    if (firebaseAdminInitialized) {
-        console.log('Firebase Admin SDK already initialized');
-        return true;
+  if (firebaseAdminInitialized) {
+    console.log('Firebase Admin SDK already initialized');
+    return true;
+  }
+
+  try {
+    // Try to load service account key from file or environment variables
+    let serviceAccount;
+
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      // Use environment variable if available
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      console.log('Using Firebase service account from environment variable');
+    } else {
+      // Try to load from file
+      serviceAccount = require('./firebase-service-account.json');
+      console.log('Using Firebase service account from file');
     }
-    
-    try {
-        // Try to load service account key from file or environment variables
-        let serviceAccount;
-        
-        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-            // Use environment variable if available
-            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-            console.log('Using Firebase service account from environment variable');
-        } else {
-            // Try to load from file
-            serviceAccount = require('./firebase-service-account.json');
-            console.log('Using Firebase service account from file');
-        }
-        
-        // Check if Firebase Admin is already initialized
-        if (admin.apps && admin.apps.length > 0) {
-            console.log('Firebase Admin SDK already has apps initialized');
-            firebaseAdminInitialized = true;
-            return true;
-        }
-        
-        // Initialize Firebase Admin SDK
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            projectId: serviceAccount.project_id
-        });
-        
-        firebaseAdminInitialized = true;
-        console.log('✅ Firebase Admin SDK initialized successfully');
-        return true;
-        
-    } catch (error) {
-        console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
-        console.log('📝 To enable Firebase Admin features for password reset:');
-        console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
-        console.log('   2. Generate new private key and download JSON file');
-        console.log('   3. Save as firebase-service-account.json in project root');
-        console.log('   4. Restart the server');
-        console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
-        return false;
+
+    // Check if Firebase Admin is already initialized
+    if (admin.apps && admin.apps.length > 0) {
+      console.log('Firebase Admin SDK already has apps initialized');
+      firebaseAdminInitialized = true;
+      return true;
     }
+
+    // Initialize Firebase Admin SDK
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: serviceAccount.project_id
+    });
+
+    firebaseAdminInitialized = true;
+    console.log('✅ Firebase Admin SDK initialized successfully');
+    return true;
+
+  } catch (error) {
+    console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
+    console.log('📝 To enable Firebase Admin features for password reset:');
+    console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
+    console.log('   2. Generate new private key and download JSON file');
+    console.log('   3. Save as firebase-service-account.json in project root');
+    console.log('   4. Restart the server');
+    console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
+    return false;
+  }
 }
 
 // Initialize Firebase Admin SDK at startup
@@ -75,8 +75,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Add permissive CSP headers for development
 app.use((req, res, next) => {
-    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src 'self' *; img-src 'self' data: blob: *;");
-    next();
+  res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src 'self' *; img-src 'self' data: blob: *;");
+  next();
 });
 
 // Configuration (use environment variables)
@@ -100,31 +100,31 @@ const SENDGRID_FROM_NAME = process.env.SENDGRID_FROM_NAME || "Viktoria's Bistro"
 
 // Validate SendGrid configuration
 if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
-    console.warn('⚠️  WARNING: SENDGRID_API_KEY not found in environment variables');
-    console.warn('📝 Please create a .env file with your SendGrid API key');
-    console.warn('📖 See SETUP_INSTRUCTIONS.md for details');
+  console.warn('⚠️  WARNING: SENDGRID_API_KEY not found in environment variables');
+  console.warn('📝 Please create a .env file with your SendGrid API key');
+  console.warn('📖 See SETUP_INSTRUCTIONS.md for details');
 }
 
 // Multer configuration for file uploads
 const upload = multer({
-    dest: 'uploads/',
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
-    },
-    fileFilter: (req, file, cb) => {
-        // Accept only image files
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only image files are allowed'), false);
-        }
+  dest: 'uploads/',
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
     }
+  }
 });
 
 // Mask API key for security (only show first 8 and last 4 characters)
 function maskApiKey(apiKey) {
-    if (!apiKey || apiKey.length < 12) return '***';
-    return apiKey.substring(0, 8) + '***' + apiKey.substring(apiKey.length - 4);
+  if (!apiKey || apiKey.length < 12) return '***';
+  return apiKey.substring(0, 8) + '***' + apiKey.substring(apiKey.length - 4);
 }
 
 // OTP Storage (in-memory for development, replace with database in production)
@@ -139,48 +139,48 @@ const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per window per IP (increased 
 
 // Rate limiting middleware
 function rateLimitMiddleware(req, res, next) {
-    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-    const now = Date.now();
-    
-    if (!rateLimitStorage.has(clientIP)) {
-        rateLimitStorage.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-        return next();
-    }
-    
-    const limitData = rateLimitStorage.get(clientIP);
-    
-    // Reset if window expired
-    if (now > limitData.resetTime) {
-        rateLimitStorage.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-        return next();
-    }
-    
-    // Check if limit exceeded
-    if (limitData.count >= RATE_LIMIT_MAX_REQUESTS) {
-        return res.status(429).json({
-            success: false,
-            message: 'Too many requests. Please try again later.',
-            retryAfter: Math.ceil((limitData.resetTime - now) / 1000)
-        });
-    }
-    
-    // Increment counter
-    limitData.count++;
-    rateLimitStorage.set(clientIP, limitData);
-    
-    next();
+  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+
+  if (!rateLimitStorage.has(clientIP)) {
+    rateLimitStorage.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+
+  const limitData = rateLimitStorage.get(clientIP);
+
+  // Reset if window expired
+  if (now > limitData.resetTime) {
+    rateLimitStorage.set(clientIP, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+
+  // Check if limit exceeded
+  if (limitData.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many requests. Please try again later.',
+      retryAfter: Math.ceil((limitData.resetTime - now) / 1000)
+    });
+  }
+
+  // Increment counter
+  limitData.count++;
+  rateLimitStorage.set(clientIP, limitData);
+
+  next();
 }
 
 // Clear rate limit for specific IP (for testing)
 function clearRateLimit(clientIP) {
-    rateLimitStorage.delete(clientIP);
-    console.log(`🔄 Rate limit cleared for IP: ${clientIP}`);
+  rateLimitStorage.delete(clientIP);
+  console.log(`🔄 Rate limit cleared for IP: ${clientIP}`);
 }
 
 // Clear all rate limits (for testing)
 function clearAllRateLimits() {
-    rateLimitStorage.clear();
-    console.log('🔄 All rate limits cleared');
+  rateLimitStorage.clear();
+  console.log('🔄 All rate limits cleared');
 }
 
 // helper to sign requests
@@ -191,32 +191,32 @@ function makeSignature(secret, timestamp, method, path, body) {
 
 // OTP Functions
 function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 // SendGrid Email Functions
 async function sendOTPEmail(email, userName, otp) {
-    try {
-        // Check if SendGrid is configured
-        if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
-            console.log('⚠️ SendGrid API key not configured, using local OTP generation');
-            console.log('📝 To enable email sending:');
-            console.log('   1. Get API key from: https://app.sendgrid.com/settings/api_keys');
-            console.log('   2. Create .env file with SENDGRID_API_KEY');
-            console.log('   3. Restart the server');
-            // Return success with emailSent: false to allow OTP generation to continue
-            return { 
-                success: true, 
-                emailSent: false,
-                message: 'SendGrid not configured - OTP generated locally' 
-            };
-        }
-        
-        console.log(`📧 Sending OTP email to ${email} via SendGrid`);
-        
-        const subject = `Your Viktoria's Bistro Verification Code - ${otp}`;
-        
-        const htmlContent = `
+  try {
+    // Check if SendGrid is configured
+    if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
+      console.log('⚠️ SendGrid API key not configured, using local OTP generation');
+      console.log('📝 To enable email sending:');
+      console.log('   1. Get API key from: https://app.sendgrid.com/settings/api_keys');
+      console.log('   2. Create .env file with SENDGRID_API_KEY');
+      console.log('   3. Restart the server');
+      // Return success with emailSent: false to allow OTP generation to continue
+      return {
+        success: true,
+        emailSent: false,
+        message: 'SendGrid not configured - OTP generated locally'
+      };
+    }
+
+    console.log(`📧 Sending OTP email to ${email} via SendGrid`);
+
+    const subject = `Your Viktoria's Bistro Verification Code - ${otp}`;
+
+    const htmlContent = `
             <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
                 <!-- Header with Logo and Background -->
                 <div style="background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%); color: white; padding: 30px 20px; text-align: center; position: relative; overflow: hidden;">
@@ -273,7 +273,7 @@ async function sendOTPEmail(email, userName, otp) {
             </div>
         `;
 
-        const textContent = `
+    const textContent = `
             Hello ${userName}!
             
             Thank you for signing up with Viktoria's Bistro. Please use the verification code below to complete your registration:
@@ -288,151 +288,151 @@ async function sendOTPEmail(email, userName, otp) {
             The Viktoria's Bistro Team
         `;
 
-        const emailData = {
-            personalizations: [{
-                to: [{ email: email, name: userName }],
-                subject: subject
-            }],
-            from: {
-                email: SENDGRID_FROM_EMAIL,
-                name: SENDGRID_FROM_NAME
-            },
-            content: [
-                {
-                    type: 'text/plain',
-                    value: textContent
-                },
-                {
-                    type: 'text/html',
-                    value: htmlContent
-                }
-            ]
-        };
+    const emailData = {
+      personalizations: [{
+        to: [{ email: email, name: userName }],
+        subject: subject
+      }],
+      from: {
+        email: SENDGRID_FROM_EMAIL,
+        name: SENDGRID_FROM_NAME
+      },
+      content: [
+        {
+          type: 'text/plain',
+          value: textContent
+        },
+        {
+          type: 'text/html',
+          value: htmlContent
+        }
+      ]
+    };
 
-        const response = await axios.post('https://api.sendgrid.com/v3/mail/send', emailData, {
-            headers: {
-                'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
+    const response = await axios.post('https://api.sendgrid.com/v3/mail/send', emailData, {
+      headers: {
+        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-        console.log(`📧 SendGrid email sent successfully to ${email}`);
-        return { success: true, messageId: response.headers['x-message-id'] };
+    console.log(`📧 SendGrid email sent successfully to ${email}`);
+    return { success: true, messageId: response.headers['x-message-id'] };
 
-    } catch (error) {
-        console.error('📧 SendGrid email sending error:', error.message);
-        return { success: false, message: error.message };
-    }
+  } catch (error) {
+    console.error('📧 SendGrid email sending error:', error.message);
+    return { success: false, message: error.message };
+  }
 }
 
 // SendGrid OTP Functions
 async function sendEmailOTP(email, userName) {
-    try {
-        console.log(`[OTP] Generating SendGrid OTP for: ${email}`);
-        
-        // Generate 6-digit OTP
-        const otp = generateOTP();
-        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
-        
-        // Store OTP
-        otpStorage.set(email, {
-            otp: otp,
-            expiry: expiry,
-            attempts: 0,
-            createdAt: Date.now()
-        });
-        
-        // Send email via SendGrid
-        const emailResult = await sendOTPEmail(email, userName, otp);
-        
-        if (emailResult.success) {
-            console.log(`[OTP] SendGrid OTP sent successfully: ${otp} for ${email}`);
-            return { 
-                success: true, 
-                otp: otp,
-                expiry: expiry,
-                message: 'SendGrid OTP sent successfully',
-                emailSent: true
-            };
-        } else {
-            console.log(`[OTP] SendGrid email failed: ${emailResult.message}`);
-            return { 
-                success: true, 
-                otp: otp,
-                expiry: expiry,
-                message: 'OTP generated successfully (email failed to send)',
-                emailSent: false,
-                emailError: emailResult.message
-            };
-        }
-        
-    } catch (error) {
-        console.error('[OTP] Error generating SendGrid OTP:', error.message);
-        
-        // Fallback to local generation
-        console.log('[OTP] Falling back to local OTP generation');
-        const otp = generateOTP();
-        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
-        
-        otpStorage.set(email, {
-            otp: otp,
-            expiry: expiry,
-            attempts: 0,
-            createdAt: Date.now()
-        });
-        
-        return { 
-            success: true, 
-            otp: otp,
-            expiry: expiry,
-            message: 'Local OTP generated (SendGrid unavailable)' 
-        };
+  try {
+    console.log(`[OTP] Generating SendGrid OTP for: ${email}`);
+
+    // Generate 6-digit OTP
+    const otp = generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store OTP
+    otpStorage.set(email, {
+      otp: otp,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now()
+    });
+
+    // Send email via SendGrid
+    const emailResult = await sendOTPEmail(email, userName, otp);
+
+    if (emailResult.success) {
+      console.log(`[OTP] SendGrid OTP sent successfully: ${otp} for ${email}`);
+      return {
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'SendGrid OTP sent successfully',
+        emailSent: true
+      };
+    } else {
+      console.log(`[OTP] SendGrid email failed: ${emailResult.message}`);
+      return {
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'OTP generated successfully (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      };
     }
+
+  } catch (error) {
+    console.error('[OTP] Error generating SendGrid OTP:', error.message);
+
+    // Fallback to local generation
+    console.log('[OTP] Falling back to local OTP generation');
+    const otp = generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    otpStorage.set(email, {
+      otp: otp,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now()
+    });
+
+    return {
+      success: true,
+      otp: otp,
+      expiry: expiry,
+      message: 'Local OTP generated (SendGrid unavailable)'
+    };
+  }
 }
 
 async function verifyEmailOTP(email, otp) {
-    try {
-        console.log(`[OTP] Verifying SendGrid OTP for: ${email}`);
-        
-        if (!otpStorage.has(email)) {
-            return { success: false, message: 'No OTP found for this email' };
-        }
-        
-        const storedData = otpStorage.get(email);
-        
-        // Check if OTP has expired
-        if (Date.now() > storedData.expiry) {
-            otpStorage.delete(email);
-            return { success: false, message: 'OTP has expired' };
-        }
-        
-        // Check attempt limit
-        if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
-            otpStorage.delete(email);
-            return { success: false, message: 'Too many failed attempts' };
-        }
-        
-        // Verify OTP
-        if (storedData.otp === otp) {
-            otpStorage.delete(email); // Remove OTP after successful verification
-            console.log(`[OTP] SendGrid OTP verified successfully for: ${email}`);
-            return { success: true, message: 'SendGrid OTP verified successfully' };
-        } else {
-            // Increment attempt count
-            storedData.attempts++;
-            otpStorage.set(email, storedData);
-            
-            const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
-            return { 
-                success: false, 
-                message: `Invalid OTP. ${remainingAttempts} attempts remaining.` 
-            };
-        }
-        
-    } catch (error) {
-        console.error('[OTP] Error verifying SendGrid OTP:', error.message);
-        return { success: false, message: 'Verification failed' };
+  try {
+    console.log(`[OTP] Verifying SendGrid OTP for: ${email}`);
+
+    if (!otpStorage.has(email)) {
+      return { success: false, message: 'No OTP found for this email' };
     }
+
+    const storedData = otpStorage.get(email);
+
+    // Check if OTP has expired
+    if (Date.now() > storedData.expiry) {
+      otpStorage.delete(email);
+      return { success: false, message: 'OTP has expired' };
+    }
+
+    // Check attempt limit
+    if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+      otpStorage.delete(email);
+      return { success: false, message: 'Too many failed attempts' };
+    }
+
+    // Verify OTP
+    if (storedData.otp === otp) {
+      otpStorage.delete(email); // Remove OTP after successful verification
+      console.log(`[OTP] SendGrid OTP verified successfully for: ${email}`);
+      return { success: true, message: 'SendGrid OTP verified successfully' };
+    } else {
+      // Increment attempt count
+      storedData.attempts++;
+      otpStorage.set(email, storedData);
+
+      const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+      return {
+        success: false,
+        message: `Invalid OTP. ${remainingAttempts} attempts remaining.`
+      };
+    }
+
+  } catch (error) {
+    console.error('[OTP] Error verifying SendGrid OTP:', error.message);
+    return { success: false, message: 'Verification failed' };
+  }
 }
 
 /* ====== Geocoding API ====== */
@@ -442,17 +442,17 @@ app.post('/api/geocode', async (req, res) => {
   console.log('[geocode] Geocoding request received');
   try {
     const { address } = req.body;
-    
+
     if (!address) {
       return res.status(400).json({ error: 'Address is required' });
     }
-    
+
     if (!GOOGLE_MAPS_API_KEY) {
       return res.status(500).json({ error: 'Google Maps API key not configured' });
     }
-    
+
     console.log(`[geocode] Geocoding address: ${address}`);
-    
+
     const url = `https://maps.googleapis.com/maps/api/geocode/json`;
     const params = {
       address: address,
@@ -460,26 +460,26 @@ app.post('/api/geocode', async (req, res) => {
       region: 'ph', // Bias results to Philippines
       components: 'country:PH' // Restrict to Philippines only
     };
-    
+
     const response = await axios.get(url, { params });
     const data = response.data;
-    
+
     if (data.status !== 'OK') {
       console.error('[geocode] Geocoding failed:', data.status, data.error_message);
-      return res.status(400).json({ 
-        error: 'Geocoding failed', 
+      return res.status(400).json({
+        error: 'Geocoding failed',
         status: data.status,
-        message: data.error_message 
+        message: data.error_message
       });
     }
-    
+
     if (!data.results || data.results.length === 0) {
       return res.status(404).json({ error: 'No results found for this address' });
     }
-    
+
     const result = data.results[0];
     const location = result.geometry.location;
-    
+
     const geocodeResult = {
       success: true,
       address: result.formatted_address,
@@ -490,15 +490,15 @@ app.post('/api/geocode', async (req, res) => {
       place_id: result.place_id,
       types: result.types
     };
-    
+
     console.log('[geocode] Geocoding successful:', geocodeResult);
     res.json(geocodeResult);
-    
+
   } catch (error) {
     console.error('[geocode] Error:', error.message);
-    res.status(500).json({ 
-      error: 'Internal server error', 
-      message: error.message 
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
     });
   }
 });
@@ -508,41 +508,41 @@ app.post('/api/reverse-geocode', async (req, res) => {
   console.log('[reverse-geocode] Reverse geocoding request received');
   try {
     const { lat, lng } = req.body;
-    
+
     if (!lat || !lng) {
       return res.status(400).json({ error: 'Latitude and longitude are required' });
     }
-    
+
     if (!GOOGLE_MAPS_API_KEY) {
       return res.status(500).json({ error: 'Google Maps API key not configured' });
     }
-    
+
     console.log(`[reverse-geocode] Reverse geocoding coordinates: ${lat}, ${lng}`);
-    
+
     const url = `https://maps.googleapis.com/maps/api/geocode/json`;
     const params = {
       latlng: `${lat},${lng}`,
       key: GOOGLE_MAPS_API_KEY,
       region: 'ph'
     };
-    
+
     const response = await axios.get(url, { params });
     const data = response.data;
-    
+
     if (data.status !== 'OK') {
       console.error('[reverse-geocode] Reverse geocoding failed:', data.status);
-      return res.status(400).json({ 
-        error: 'Reverse geocoding failed', 
-        status: data.status 
+      return res.status(400).json({
+        error: 'Reverse geocoding failed',
+        status: data.status
       });
     }
-    
+
     if (!data.results || data.results.length === 0) {
       return res.status(404).json({ error: 'No address found for these coordinates' });
     }
-    
+
     const result = data.results[0];
-    
+
     const reverseGeocodeResult = {
       success: true,
       address: result.formatted_address,
@@ -553,15 +553,15 @@ app.post('/api/reverse-geocode', async (req, res) => {
       place_id: result.place_id,
       types: result.types
     };
-    
+
     console.log('[reverse-geocode] Reverse geocoding successful:', reverseGeocodeResult);
     res.json(reverseGeocodeResult);
-    
+
   } catch (error) {
     console.error('[reverse-geocode] Error:', error.message);
-    res.status(500).json({ 
-      error: 'Internal server error', 
-      message: error.message 
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
     });
   }
 });
@@ -582,8 +582,8 @@ app.post('/api/test', (req, res) => {
 // Clear rate limits endpoint (for testing)
 app.post('/api/clear-rate-limits', (req, res) => {
   clearAllRateLimits();
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'All rate limits cleared',
     timestamp: new Date().toISOString()
   });
@@ -612,7 +612,7 @@ app.post('/api/quotation', async (req, res) => {
     // Send the body exactly as received from frontend (with data wrapper)
     // Lalamove API expects { data: { ... } } format
     let bodyObj = req.body;
-    
+
     // Validate the nested data structure
     if (!bodyObj || !bodyObj.data || !Array.isArray(bodyObj.data.stops)) {
       console.error('[proxy] invalid payload: missing data.stops array');
@@ -710,7 +710,7 @@ app.post('/api/place-order', async (req, res) => {
     // Keep the data wrapper for Lalamove API (same as quotation endpoint)
     let bodyObj = req.body;
     console.log('[proxy] Place order request body:', JSON.stringify(bodyObj, null, 2));
-    
+
     const body = JSON.stringify(bodyObj);
     const ts = Date.now().toString();
     const signature = makeSignature(API_SECRET, ts, 'POST', '/v3/orders', body);
@@ -737,80 +737,80 @@ app.post('/api/webhook/lalamove', (req, res) => {
   console.log('[webhook] Lalamove webhook received');
   console.log('[webhook] Headers:', JSON.stringify(req.headers, null, 2));
   console.log('[webhook] Body:', JSON.stringify(req.body, null, 2));
-  
+
   try {
     // Webhook security validation
     const signature = req.headers['x-lalamove-signature'];
     const timestamp = req.headers['x-timestamp'];
-    
+
     if (!validateWebhookSignature(req.body, signature, timestamp)) {
       console.warn('[webhook] Invalid webhook signature');
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Invalid webhook signature' 
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid webhook signature'
       });
     }
-    
+
     const webhookData = req.body;
-    
+
     // Extract key information from webhook
     const orderId = webhookData?.data?.orderId;
     const orderState = webhookData?.data?.orderState;
     const driverId = webhookData?.data?.driverId;
     const driverInfo = webhookData?.data?.driver;
     const eventTime = webhookData?.eventTime || new Date().toISOString();
-    
+
     console.log(`[webhook] Order ${orderId} status: ${orderState}`);
-    
+
     // Handle different webhook events
     switch (orderState) {
       case 'ASSIGNING_DRIVER':
         console.log('[webhook] Driver assignment in progress...');
         handleDriverAssigning(orderId, webhookData);
         break;
-        
+
       case 'ON_GOING':
         console.log(`[webhook] Order ${orderId} is ongoing with driver ${driverId}`);
         handleOrderOngoing(orderId, driverId, driverInfo, webhookData);
         break;
-        
+
       case 'PICKED_UP':
         console.log(`[webhook] Order ${orderId} has been picked up`);
         handleOrderPickedUp(orderId, driverId, webhookData);
         break;
-        
+
       case 'COMPLETED':
         console.log(`[webhook] Order ${orderId} has been completed`);
         handleOrderCompleted(orderId, webhookData);
         break;
-        
+
       case 'CANCELED':
         console.log(`[webhook] Order ${orderId} has been canceled`);
         handleOrderCanceled(orderId, webhookData);
         break;
-        
+
       default:
         console.log(`[webhook] Unknown order state: ${orderState}`);
         handleUnknownState(orderId, orderState, webhookData);
     }
-    
+
     // Store webhook data for future reference
     storeWebhookEvent(webhookData);
-    
+
     // Respond to Lalamove that webhook was received successfully
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: 'Webhook received successfully',
       orderId: orderId,
       processedAt: new Date().toISOString()
     });
-    
+
   } catch (error) {
     console.error('[webhook] Error processing webhook:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Internal server error processing webhook',
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -821,7 +821,7 @@ function validateWebhookSignature(body, signature, timestamp) {
     // TEMPORARILY SKIP VALIDATION FOR TESTING
     console.log('[webhook] Temporarily skipping signature validation for testing');
     return true;
-    
+
   } catch (error) {
     console.error('[webhook] Error validating signature:', error);
     return false;
@@ -831,7 +831,7 @@ function validateWebhookSignature(body, signature, timestamp) {
 // Webhook event handlers with Firebase integration
 async function handleDriverAssigning(orderId, webhookData) {
   console.log(`[webhook-handler] Processing driver assignment for order ${orderId}`);
-  
+
   try {
     // Update order status in database/storage
     await updateOrderStatus(orderId, {
@@ -840,7 +840,7 @@ async function handleDriverAssigning(orderId, webhookData) {
       message: 'Looking for a driver for your order...',
       webhookData: webhookData
     });
-    
+
     // You can add customer notification here
     console.log(`[webhook-handler] Order ${orderId} status updated to DRIVER_ASSIGNING`);
   } catch (error) {
@@ -850,7 +850,7 @@ async function handleDriverAssigning(orderId, webhookData) {
 
 async function handleOrderOngoing(orderId, driverId, driverInfo, webhookData) {
   console.log(`[webhook-handler] Order ${orderId} started with driver ${driverId}`);
-  
+
   try {
     const updateData = {
       status: 'ON_GOING',
@@ -860,22 +860,22 @@ async function handleOrderOngoing(orderId, driverId, driverInfo, webhookData) {
       message: 'Your order is on the way!',
       webhookData: webhookData
     };
-    
+
     if (driverInfo) {
       console.log(`[webhook-handler] Driver details:`, driverInfo);
       updateData.driverName = driverInfo.name;
       updateData.driverPhone = driverInfo.phone;
       updateData.vehicleInfo = driverInfo.plateNumber;
     }
-    
+
     await updateOrderStatus(orderId, updateData);
-    
+
     // Notify customer
     await notifyCustomer(orderId, 'Your order is on the way!', {
       driverInfo: driverInfo,
       status: 'ON_GOING'
     });
-    
+
     console.log(`[webhook-handler] Order ${orderId} status updated to ON_GOING`);
   } catch (error) {
     console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
@@ -884,7 +884,7 @@ async function handleOrderOngoing(orderId, driverId, driverInfo, webhookData) {
 
 async function handleOrderPickedUp(orderId, driverId, webhookData) {
   console.log(`[webhook-handler] Order ${orderId} picked up by driver ${driverId}`);
-  
+
   try {
     await updateOrderStatus(orderId, {
       status: 'PICKED_UP',
@@ -894,13 +894,13 @@ async function handleOrderPickedUp(orderId, driverId, webhookData) {
       message: 'Your order has been picked up and is on the way to you!',
       webhookData: webhookData
     });
-    
+
     // Notify customer
     await notifyCustomer(orderId, 'Your order has been picked up!', {
       status: 'PICKED_UP',
       estimatedDelivery: 'Expected delivery in 15-30 minutes'
     });
-    
+
     console.log(`[webhook-handler] Order ${orderId} status updated to PICKED_UP`);
   } catch (error) {
     console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
@@ -909,7 +909,7 @@ async function handleOrderPickedUp(orderId, driverId, webhookData) {
 
 async function handleOrderCompleted(orderId, webhookData) {
   console.log(`[webhook-handler] Order ${orderId} completed successfully`);
-  
+
   try {
     await updateOrderStatus(orderId, {
       status: 'COMPLETED',
@@ -918,13 +918,13 @@ async function handleOrderCompleted(orderId, webhookData) {
       message: 'Your order has been delivered successfully! Thank you for choosing Viktoria\'s Bistro!',
       webhookData: webhookData
     });
-    
+
     // Notify customer
     await notifyCustomer(orderId, 'Order delivered successfully!', {
       status: 'COMPLETED',
       thankYouMessage: 'Thank you for choosing Viktoria\'s Bistro!'
     });
-    
+
     console.log(`[webhook-handler] Order ${orderId} status updated to COMPLETED`);
   } catch (error) {
     console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
@@ -934,7 +934,7 @@ async function handleOrderCompleted(orderId, webhookData) {
 async function handleOrderCanceled(orderId, webhookData) {
   console.log(`[webhook-handler] Order ${orderId} was canceled`);
   const reason = webhookData?.data?.cancelReason || 'No reason provided';
-  
+
   try {
     await updateOrderStatus(orderId, {
       status: 'CANCELED',
@@ -944,14 +944,14 @@ async function handleOrderCanceled(orderId, webhookData) {
       message: `Your order has been canceled. Reason: ${reason}`,
       webhookData: webhookData
     });
-    
+
     // Notify customer about cancellation
     await notifyCustomer(orderId, 'Order canceled', {
       status: 'CANCELED',
       reason: reason,
       refundMessage: 'If you were charged, a refund will be processed within 3-5 business days.'
     });
-    
+
     console.log(`[webhook-handler] Order ${orderId} status updated to CANCELED`);
   } catch (error) {
     console.error(`[webhook-handler] Error updating order ${orderId}:`, error);
@@ -962,7 +962,7 @@ function handleUnknownState(orderId, orderState, webhookData) {
   console.log(`[webhook-handler] Unknown state ${orderState} for order ${orderId}`);
   // Log for debugging
   console.log('[webhook-handler] Full webhook data:', JSON.stringify(webhookData, null, 2));
-  
+
   // Still try to update with unknown state for tracking
   updateOrderStatus(orderId, {
     status: orderState,
@@ -986,14 +986,14 @@ function storeWebhookEvent(webhookData) {
     receivedAt: new Date().toISOString(),
     data: webhookData
   };
-  
+
   webhookEvents.push(event);
-  
+
   // Keep only last 100 events in memory
   if (webhookEvents.length > 100) {
     webhookEvents.shift();
   }
-  
+
   console.log(`[webhook-storage] Stored webhook event ${event.id}`);
 }
 
@@ -1001,16 +1001,16 @@ function storeWebhookEvent(webhookData) {
 async function updateOrderStatus(orderId, statusData) {
   try {
     console.log(`[order-status] Updating order ${orderId}:`, statusData);
-    
+
     // Store in memory (you can replace this with Firebase/database call)
     orderStatuses.set(orderId, {
       orderId: orderId,
       ...statusData,
       lastUpdated: new Date().toISOString()
     });
-    
+
     // Firebase Admin SDK Integration
-    
+
     // Firebase Firestore integration example:
     /*
     const db = admin.firestore();
@@ -1019,7 +1019,7 @@ async function updateOrderStatus(orderId, statusData) {
       lastUpdated: admin.firestore.FieldValue.serverTimestamp()
     });
     */
-    
+
     console.log(`[order-status] Successfully updated order ${orderId}`);
     return true;
   } catch (error) {
@@ -1031,10 +1031,10 @@ async function updateOrderStatus(orderId, statusData) {
 async function notifyCustomer(orderId, message, additionalData = {}) {
   try {
     console.log(`[customer-notification] Sending notification for order ${orderId}: ${message}`);
-    
+
     // Get order details to find customer contact info
     const orderStatus = orderStatuses.get(orderId);
-    
+
     // Store notification for retrieval by frontend
     const notification = {
       orderId: orderId,
@@ -1043,20 +1043,20 @@ async function notifyCustomer(orderId, message, additionalData = {}) {
       data: additionalData,
       type: 'order_update'
     };
-    
+
     // Store notification (in production, use proper notification service)
     if (!global.customerNotifications) {
       global.customerNotifications = [];
     }
     global.customerNotifications.push(notification);
-    
+
     // TODO: Implement actual notification methods
     // Examples:
     // - Send SMS via Twilio
     // - Send email via SendGrid
     // - Push notification via Firebase Cloud Messaging
     // - WebSocket notification for real-time updates
-    
+
     console.log(`[customer-notification] Notification stored for order ${orderId}`);
     return true;
   } catch (error) {
@@ -1078,7 +1078,7 @@ app.get('/api/order/:orderId/status', (req, res) => {
   try {
     const orderId = req.params.orderId;
     const orderStatus = orderStatuses.get(orderId);
-    
+
     if (!orderStatus) {
       return res.status(404).json({
         success: false,
@@ -1086,7 +1086,7 @@ app.get('/api/order/:orderId/status', (req, res) => {
         orderId: orderId
       });
     }
-    
+
     res.json({
       success: true,
       orderId: orderId,
@@ -1109,7 +1109,7 @@ app.get('/api/notifications/:orderId', (req, res) => {
     const notifications = (global.customerNotifications || [])
       .filter(n => n.orderId === orderId)
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
+
     res.json({
       success: true,
       orderId: orderId,
@@ -1133,7 +1133,7 @@ app.get('/api/orders/status', (req, res) => {
       orderId,
       ...status
     }));
-    
+
     res.json({
       success: true,
       orders: allOrders,
@@ -1152,7 +1152,7 @@ app.get('/api/orders/status', (req, res) => {
 // Test webhook endpoint (for development/testing)
 app.post('/api/webhook/test', (req, res) => {
   console.log('[webhook-test] Simulating Lalamove webhook...');
-  
+
   // Create a sample webhook payload
   const testWebhook = {
     eventTime: new Date().toISOString(),
@@ -1168,15 +1168,15 @@ app.post('/api/webhook/test', (req, res) => {
       cancelReason: req.body.cancelReason || null
     }
   };
-  
+
   console.log('[webhook-test] Sending test webhook:', JSON.stringify(testWebhook, null, 2));
-  
+
   // Call our own webhook endpoint
   const axios = require('axios');
-  const baseUrl = process.env.NODE_ENV === 'production' 
-    ? process.env.BASE_URL || 'https://viktoriasbistro.restaurant' 
+  const baseUrl = process.env.NODE_ENV === 'production'
+    ? process.env.BASE_URL || 'https://viktoriasbistro.restaurant'
     : `http://localhost:${PORT}`;
-  
+
   axios.post(`${baseUrl}/api/webhook/lalamove`, testWebhook)
     .then(response => {
       res.json({
@@ -1199,307 +1199,307 @@ app.post('/api/webhook/test', (req, res) => {
 
 // Send OTP endpoint
 app.post('/api/send-otp', async (req, res) => {
-    console.log('[API] Send OTP endpoint hit - Method:', req.method);
-    console.log('[API] Request headers:', req.headers);
-    console.log('[API] Request body:', req.body);
-    
-    try {
-        const { email, userName } = req.body;
-        
-        if (!email || !userName) {
-            console.log('[API] Missing email or userName');
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and user name are required' 
-            });
-        }
-        
-        console.log(`[API] Send OTP request for: ${email}`);
-        const result = await sendEmailOTP(email, userName);
-        
-        console.log('[API] Sending response:', result);
-        res.json(result);
-        
-    } catch (error) {
-        console.error('[API] Send OTP error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to send OTP' 
-        });
+  console.log('[API] Send OTP endpoint hit - Method:', req.method);
+  console.log('[API] Request headers:', req.headers);
+  console.log('[API] Request body:', req.body);
+
+  try {
+    const { email, userName } = req.body;
+
+    if (!email || !userName) {
+      console.log('[API] Missing email or userName');
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
     }
+
+    console.log(`[API] Send OTP request for: ${email}`);
+    const result = await sendEmailOTP(email, userName);
+
+    console.log('[API] Sending response:', result);
+    res.json(result);
+
+  } catch (error) {
+    console.error('[API] Send OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP'
+    });
+  }
 });
 
 // Verify OTP endpoint
 app.post('/api/verify-otp', async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        
-        if (!email || !otp) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and OTP are required' 
-            });
-        }
-        
-        console.log(`[API] Verify OTP request for: ${email}`);
-        const result = await verifyEmailOTP(email, otp);
-        
-        res.json(result);
-        
-    } catch (error) {
-        console.error('[API] Verify OTP error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to verify OTP' 
-        });
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
     }
+
+    console.log(`[API] Verify OTP request for: ${email}`);
+    const result = await verifyEmailOTP(email, otp);
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('[API] Verify OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify OTP'
+    });
+  }
 });
 
 // Resend OTP endpoint
 app.post('/api/resend-otp', async (req, res) => {
-    try {
-        const { email, userName } = req.body;
-        
-        if (!email || !userName) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and user name are required' 
-            });
-        }
-        
-        console.log(`[API] Resend OTP request for: ${email}`);
-        const result = await sendEmailOTP(email, userName);
-        
-        res.json(result);
-        
-    } catch (error) {
-        console.error('[API] Resend OTP error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to resend OTP' 
-        });
+  try {
+    const { email, userName } = req.body;
+
+    if (!email || !userName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
     }
+
+    console.log(`[API] Resend OTP request for: ${email}`);
+    const result = await sendEmailOTP(email, userName);
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('[API] Resend OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend OTP'
+    });
+  }
 });
 
 /* ====== SendGrid OTP API Endpoints ====== */
 
 // SendGrid Send OTP endpoint
 app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
-    try {
-        const { email, userName } = req.body;
-        
-        if (!email || !userName) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and user name are required' 
-            });
-        }
-        
-        console.log(`[SendGrid API] Send OTP request for: ${email}`);
-        
-        // Generate 6-digit OTP
-        const otp = generateOTP();
-        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
-        
-        // Store OTP locally
-        otpStorage.set(email, {
-            otp: otp,
-            expiry: expiry,
-            attempts: 0,
-            createdAt: Date.now(),
-            source: 'sendgrid'
-        });
-        
-        console.log(`[SendGrid API] OTP generated: ${otp} for ${email}`);
-        
-        // Try to send email via SendGrid
-        const emailResult = await sendOTPEmail(email, userName, otp);
-        
-        if (emailResult.success) {
-            if (emailResult.emailSent) {
-                console.log(`📧 SendGrid email sent successfully to ${email}`);
-                res.json({ 
-                    success: true, 
-                    otp: otp,
-                    expiry: expiry,
-                    message: 'SendGrid OTP generated and email sent successfully',
-                    emailSent: true
-                });
-            } else {
-                console.log(`📧 SendGrid not configured, OTP generated locally: ${emailResult.message}`);
-                res.json({ 
-                    success: true, 
-                    otp: otp,
-                    expiry: expiry,
-                    message: 'OTP generated successfully (SendGrid not configured)',
-                    emailSent: false,
-                    emailError: emailResult.message
-                });
-            }
-        } else {
-            console.log(`📧 SendGrid email failed to send: ${emailResult.message}`);
-            res.json({ 
-                success: true, 
-                otp: otp,
-                expiry: expiry,
-                message: 'SendGrid OTP generated successfully (email failed to send)',
-                emailSent: false,
-                emailError: emailResult.message
-            });
-        }
-        
-    } catch (error) {
-        console.error('[SendGrid API] Send OTP error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to generate SendGrid OTP' 
-        });
+  try {
+    const { email, userName } = req.body;
+
+    if (!email || !userName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
     }
+
+    console.log(`[SendGrid API] Send OTP request for: ${email}`);
+
+    // Generate 6-digit OTP
+    const otp = generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store OTP locally
+    otpStorage.set(email, {
+      otp: otp,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now(),
+      source: 'sendgrid'
+    });
+
+    console.log(`[SendGrid API] OTP generated: ${otp} for ${email}`);
+
+    // Try to send email via SendGrid
+    const emailResult = await sendOTPEmail(email, userName, otp);
+
+    if (emailResult.success) {
+      if (emailResult.emailSent) {
+        console.log(`📧 SendGrid email sent successfully to ${email}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'SendGrid OTP generated and email sent successfully',
+          emailSent: true
+        });
+      } else {
+        console.log(`📧 SendGrid not configured, OTP generated locally: ${emailResult.message}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'OTP generated successfully (SendGrid not configured)',
+          emailSent: false,
+          emailError: emailResult.message
+        });
+      }
+    } else {
+      console.log(`📧 SendGrid email failed to send: ${emailResult.message}`);
+      res.json({
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'SendGrid OTP generated successfully (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[SendGrid API] Send OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate SendGrid OTP'
+    });
+  }
 });
 
 // SendGrid Verify OTP endpoint
 app.post('/api/sendgrid-verify-otp', rateLimitMiddleware, async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        
-        if (!email || !otp) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and OTP are required' 
-            });
-        }
-        
-        console.log(`[SendGrid API] Verify OTP request for: ${email}`);
-        
-        // Check local storage for SendGrid OTP
-        if (!otpStorage.has(email)) {
-            return res.json({ 
-                success: false, 
-                message: 'No OTP found for this email' 
-            });
-        }
-        
-        const storedData = otpStorage.get(email);
-        
-        // Check if OTP has expired
-        if (Date.now() > storedData.expiry) {
-            otpStorage.delete(email);
-            return res.json({ 
-                success: false, 
-                message: 'OTP has expired' 
-            });
-        }
-        
-        // Check attempt limit
-        if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
-            otpStorage.delete(email);
-            return res.json({ 
-                success: false, 
-                message: 'Too many failed attempts' 
-            });
-        }
-        
-        // Verify OTP
-        if (storedData.otp === otp) {
-            otpStorage.delete(email); // Remove OTP after successful verification
-            console.log(`[SendGrid API] OTP verified successfully for: ${email}`);
-            return res.json({ 
-                success: true, 
-                message: 'SendGrid OTP verified successfully' 
-            });
-        } else {
-            // Increment attempt count
-            storedData.attempts++;
-            otpStorage.set(email, storedData);
-            
-            const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
-            return res.json({ 
-                success: false, 
-                message: `Invalid OTP. ${remainingAttempts} attempts remaining.` 
-            });
-        }
-        
-    } catch (error) {
-        console.error('[SendGrid API] Verify OTP error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to verify SendGrid OTP' 
-        });
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
     }
+
+    console.log(`[SendGrid API] Verify OTP request for: ${email}`);
+
+    // Check local storage for SendGrid OTP
+    if (!otpStorage.has(email)) {
+      return res.json({
+        success: false,
+        message: 'No OTP found for this email'
+      });
+    }
+
+    const storedData = otpStorage.get(email);
+
+    // Check if OTP has expired
+    if (Date.now() > storedData.expiry) {
+      otpStorage.delete(email);
+      return res.json({
+        success: false,
+        message: 'OTP has expired'
+      });
+    }
+
+    // Check attempt limit
+    if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+      otpStorage.delete(email);
+      return res.json({
+        success: false,
+        message: 'Too many failed attempts'
+      });
+    }
+
+    // Verify OTP
+    if (storedData.otp === otp) {
+      otpStorage.delete(email); // Remove OTP after successful verification
+      console.log(`[SendGrid API] OTP verified successfully for: ${email}`);
+      return res.json({
+        success: true,
+        message: 'SendGrid OTP verified successfully'
+      });
+    } else {
+      // Increment attempt count
+      storedData.attempts++;
+      otpStorage.set(email, storedData);
+
+      const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+      return res.json({
+        success: false,
+        message: `Invalid OTP. ${remainingAttempts} attempts remaining.`
+      });
+    }
+
+  } catch (error) {
+    console.error('[SendGrid API] Verify OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify SendGrid OTP'
+    });
+  }
 });
 
 // SendGrid Resend OTP endpoint
 app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
-    try {
-        const { email, userName } = req.body;
-        
-        if (!email || !userName) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and user name are required' 
-            });
-        }
-        
-        console.log(`[SendGrid API] Resend OTP request for: ${email}`);
-        
-        // Generate new OTP
-        const otp = generateOTP();
-        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
-        
-        // Store new OTP
-        otpStorage.set(email, {
-            otp: otp,
-            expiry: expiry,
-            attempts: 0,
-            createdAt: Date.now(),
-            source: 'sendgrid'
-        });
-        
-        console.log(`[SendGrid API] New OTP generated: ${otp} for ${email}`);
-        
-        // Try to send email via SendGrid
-        const emailResult = await sendOTPEmail(email, userName, otp);
-        
-        if (emailResult.success) {
-            if (emailResult.emailSent) {
-                console.log(`📧 SendGrid email resent successfully to ${email}`);
-                res.json({ 
-                    success: true, 
-                    otp: otp,
-                    expiry: expiry,
-                    message: 'SendGrid OTP resent successfully',
-                    emailSent: true
-                });
-            } else {
-                console.log(`📧 SendGrid not configured, OTP regenerated locally: ${emailResult.message}`);
-                res.json({ 
-                    success: true, 
-                    otp: otp,
-                    expiry: expiry,
-                    message: 'OTP regenerated successfully (SendGrid not configured)',
-                    emailSent: false,
-                    emailError: emailResult.message
-                });
-            }
-        } else {
-            console.log(`📧 SendGrid email resend failed: ${emailResult.message}`);
-            res.json({ 
-                success: true, 
-                otp: otp,
-                expiry: expiry,
-                message: 'SendGrid OTP resent successfully (email failed to send)',
-                emailSent: false,
-                emailError: emailResult.message
-            });
-        }
-        
-    } catch (error) {
-        console.error('[SendGrid API] Resend OTP error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to resend SendGrid OTP' 
-        });
+  try {
+    const { email, userName } = req.body;
+
+    if (!email || !userName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
     }
+
+    console.log(`[SendGrid API] Resend OTP request for: ${email}`);
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store new OTP
+    otpStorage.set(email, {
+      otp: otp,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now(),
+      source: 'sendgrid'
+    });
+
+    console.log(`[SendGrid API] New OTP generated: ${otp} for ${email}`);
+
+    // Try to send email via SendGrid
+    const emailResult = await sendOTPEmail(email, userName, otp);
+
+    if (emailResult.success) {
+      if (emailResult.emailSent) {
+        console.log(`📧 SendGrid email resent successfully to ${email}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'SendGrid OTP resent successfully',
+          emailSent: true
+        });
+      } else {
+        console.log(`📧 SendGrid not configured, OTP regenerated locally: ${emailResult.message}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'OTP regenerated successfully (SendGrid not configured)',
+          emailSent: false,
+          emailError: emailResult.message
+        });
+      }
+    } else {
+      console.log(`📧 SendGrid email resend failed: ${emailResult.message}`);
+      res.json({
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'SendGrid OTP resent successfully (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[SendGrid API] Resend OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend SendGrid OTP'
+    });
+  }
 });
 
 /* ====== Simple OTP System (No Email Sending) ====== */
@@ -1573,72 +1573,72 @@ const passwordResetOTPStorage = new Map(); // email -> { otp, expiry, attempts, 
 
 // Security Audit Logging Functions
 async function logPasswordChangeEvent(email, firebaseUpdateSuccess, eventType = 'password_reset') {
-    try {
-        const eventDetails = {
-            'password_reset': {
-                source: 'password_reset_otp',
-                method: 'forgot_password_flow'
-            },
-            'password_change': {
-                source: 'profile_settings',
-                method: 'regular_password_update'
-            }
-        };
-        
-        const details = eventDetails[eventType] || eventDetails['password_reset'];
-        
-        const logEntry = {
-            event: eventType,
-            email: email,
-            timestamp: new Date().toISOString(),
-            firebaseUpdated: firebaseUpdateSuccess,
-            ipAddress: 'server-side', // Could be enhanced to capture actual IP
-            userAgent: 'server-side',
-            success: firebaseUpdateSuccess,
-            metadata: details
-        };
-        
-        console.log(`[Security Audit] Password change logged for: ${email}`, logEntry);
-        
-        // Store in Firestore if available
-        if (admin.apps && admin.apps.length > 0) {
-            try {
-                await admin.firestore().collection('security_audit_logs').add(logEntry);
-                console.log(`[Security Audit] ✅ Log entry saved to Firestore for: ${email}`);
-            } catch (firestoreError) {
-                console.error(`[Security Audit] ❌ Failed to save log to Firestore:`, firestoreError.message);
-            }
-        }
-        
-    } catch (error) {
-        console.error(`[Security Audit] Error logging password change for ${email}:`, error.message);
+  try {
+    const eventDetails = {
+      'password_reset': {
+        source: 'password_reset_otp',
+        method: 'forgot_password_flow'
+      },
+      'password_change': {
+        source: 'profile_settings',
+        method: 'regular_password_update'
+      }
+    };
+
+    const details = eventDetails[eventType] || eventDetails['password_reset'];
+
+    const logEntry = {
+      event: eventType,
+      email: email,
+      timestamp: new Date().toISOString(),
+      firebaseUpdated: firebaseUpdateSuccess,
+      ipAddress: 'server-side', // Could be enhanced to capture actual IP
+      userAgent: 'server-side',
+      success: firebaseUpdateSuccess,
+      metadata: details
+    };
+
+    console.log(`[Security Audit] Password change logged for: ${email}`, logEntry);
+
+    // Store in Firestore if available
+    if (admin.apps && admin.apps.length > 0) {
+      try {
+        await admin.firestore().collection('security_audit_logs').add(logEntry);
+        console.log(`[Security Audit] ✅ Log entry saved to Firestore for: ${email}`);
+      } catch (firestoreError) {
+        console.error(`[Security Audit] ❌ Failed to save log to Firestore:`, firestoreError.message);
+      }
     }
+
+  } catch (error) {
+    console.error(`[Security Audit] Error logging password change for ${email}:`, error.message);
+  }
 }
 
 // Send password change notification email to user
 async function sendPasswordChangeNotification(email, eventType = 'password_reset') {
-    try {
-        const eventDetails = {
-            'password_reset': {
-                subject: '🔒 Password Reset - Victoria\'s Bistro',
-                title: '🔒 Password Successfully Reset',
-                description: 'This is a security notification to confirm that your password has been successfully reset for your Victoria\'s Bistro account.',
-                actionText: 'If you did NOT request this password reset, please contact us immediately'
-            },
-            'password_change': {
-                subject: '🔒 Password Changed - Victoria\'s Bistro',
-                title: '🔒 Password Successfully Changed',
-                description: 'This is a security notification to confirm that your password has been successfully changed for your Victoria\'s Bistro account.',
-                actionText: 'If you did NOT make this change, please contact us immediately'
-            }
-        };
-        
-        const event = eventDetails[eventType] || eventDetails['password_reset'];
-        
-        const emailData = {
-            to: email,
-            subject: event.subject,
-            html: `
+  try {
+    const eventDetails = {
+      'password_reset': {
+        subject: '🔒 Password Reset - Victoria\'s Bistro',
+        title: '🔒 Password Successfully Reset',
+        description: 'This is a security notification to confirm that your password has been successfully reset for your Victoria\'s Bistro account.',
+        actionText: 'If you did NOT request this password reset, please contact us immediately'
+      },
+      'password_change': {
+        subject: '🔒 Password Changed - Victoria\'s Bistro',
+        title: '🔒 Password Successfully Changed',
+        description: 'This is a security notification to confirm that your password has been successfully changed for your Victoria\'s Bistro account.',
+        actionText: 'If you did NOT make this change, please contact us immediately'
+      }
+    };
+
+    const event = eventDetails[eventType] || eventDetails['password_reset'];
+
+    const emailData = {
+      to: email,
+      subject: event.subject,
+      html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
                         <h1 style="color: white; margin: 0;">Victoria's Bistro</h1>
@@ -1679,52 +1679,52 @@ async function sendPasswordChangeNotification(email, eventType = 'password_reset
                     </div>
                 </div>
             `
-        };
-        
-        const result = await sendEmail(emailData);
-        if (result.success) {
-            console.log(`[Security Notification] ✅ Password change notification sent to: ${email}`);
-        } else {
-            console.error(`[Security Notification] ❌ Failed to send notification to ${email}:`, result.message);
-        }
-        
-    } catch (error) {
-        console.error(`[Security Notification] Error sending password change notification to ${email}:`, error.message);
+    };
+
+    const result = await sendEmail(emailData);
+    if (result.success) {
+      console.log(`[Security Notification] ✅ Password change notification sent to: ${email}`);
+    } else {
+      console.error(`[Security Notification] ❌ Failed to send notification to ${email}:`, result.message);
     }
+
+  } catch (error) {
+    console.error(`[Security Notification] Error sending password change notification to ${email}:`, error.message);
+  }
 }
 
 // Send admin security alert
 async function sendAdminSecurityAlert(email, eventType) {
-    try {
-        const adminEmails = [
-            'admin@victoriasbistro.com',
-            'security@victoriasbistro.com'
-        ]; // Add your admin emails here
-        
-        const eventDetails = {
-            'password_reset': {
-                title: '🔒 Password Reset Alert',
-                description: 'A user has successfully reset their password',
-                severity: 'medium'
-            },
-            'password_change': {
-                title: '🔒 Password Change Alert',
-                description: 'A user has successfully changed their password',
-                severity: 'low'
-            }
-        };
-        
-        const event = eventDetails[eventType] || {
-            title: '🔒 Security Event',
-            description: 'A security event has occurred',
-            severity: 'low'
-        };
-        
-        for (const adminEmail of adminEmails) {
-            const emailData = {
-                to: adminEmail,
-                subject: `${event.title} - Victoria's Bistro`,
-                html: `
+  try {
+    const adminEmails = [
+      'admin@victoriasbistro.com',
+      'security@victoriasbistro.com'
+    ]; // Add your admin emails here
+
+    const eventDetails = {
+      'password_reset': {
+        title: '🔒 Password Reset Alert',
+        description: 'A user has successfully reset their password',
+        severity: 'medium'
+      },
+      'password_change': {
+        title: '🔒 Password Change Alert',
+        description: 'A user has successfully changed their password',
+        severity: 'low'
+      }
+    };
+
+    const event = eventDetails[eventType] || {
+      title: '🔒 Security Event',
+      description: 'A security event has occurred',
+      severity: 'low'
+    };
+
+    for (const adminEmail of adminEmails) {
+      const emailData = {
+        to: adminEmail,
+        subject: `${event.title} - Victoria's Bistro`,
+        html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
                             <h1 style="color: white; margin: 0;">Victoria's Bistro - Security Alert</h1>
@@ -1758,444 +1758,437 @@ async function sendAdminSecurityAlert(email, eventType) {
                         </div>
                     </div>
                 `
-            };
-            
-            const result = await sendEmail(emailData);
-            if (result.success) {
-                console.log(`[Admin Alert] ✅ Security alert sent to admin: ${adminEmail}`);
-            } else {
-                console.error(`[Admin Alert] ❌ Failed to send alert to ${adminEmail}:`, result.message);
-            }
-        }
-        
-    } catch (error) {
-        console.error(`[Admin Alert] Error sending security alert:`, error.message);
+      };
+
+      const result = await sendEmail(emailData);
+      if (result.success) {
+        console.log(`[Admin Alert] ✅ Security alert sent to admin: ${adminEmail}`);
+      } else {
+        console.error(`[Admin Alert] ❌ Failed to send alert to ${adminEmail}:`, result.message);
+      }
     }
+
+  } catch (error) {
+    console.error(`[Admin Alert] Error sending security alert:`, error.message);
+  }
 }
 
 // Send Password Reset OTP endpoint
 app.post('/api/send-password-reset-otp', rateLimitMiddleware, async (req, res) => {
-    try {
-        const { email } = req.body;
-        
-        if (!email) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email is required' 
-            });
-        }
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Please enter a valid email address' 
-            });
-        }
-        
-        console.log(`[Password Reset OTP] Request for: ${email}`);
-        
-        // Generate 6-digit OTP
-        const otp = generateOTP();
-        const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
-        
-        // Store OTP
-        passwordResetOTPStorage.set(email, {
-            otp: otp,
-            expiry: expiry,
-            attempts: 0,
-            verified: false,
-            createdAt: Date.now()
-        });
-        
-        // Send OTP email via SendGrid
-        const emailResult = await sendOTPEmail(email, 'User', otp);
-        
-        if (emailResult.success) {
-            if (emailResult.emailSent) {
-                console.log(`📧 Password reset OTP sent successfully to ${email}`);
-                res.json({ 
-                    success: true, 
-                    otp: otp, // For development/testing
-                    expiry: expiry,
-                    message: 'Password reset OTP sent successfully',
-                    emailSent: true
-                });
-            } else {
-                console.log(`📧 SendGrid not configured, password reset OTP generated locally: ${emailResult.message}`);
-                res.json({ 
-                    success: true, 
-                    otp: otp, // For development/testing
-                    expiry: expiry,
-                    message: 'Password reset OTP generated (SendGrid not configured)',
-                    emailSent: false,
-                    emailError: emailResult.message
-                });
-            }
-        } else {
-            console.log(`📧 Password reset OTP email failed to send: ${emailResult.message}`);
-            res.json({ 
-                success: true, 
-                otp: otp, // For development/testing
-                expiry: expiry,
-                message: 'Password reset OTP generated (email failed to send)',
-                emailSent: false,
-                emailError: emailResult.message
-            });
-        }
-        
-    } catch (error) {
-        console.error('[Password Reset OTP] Send error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'An error occurred while processing your request' 
-        });
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
     }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address'
+      });
+    }
+
+    console.log(`[Password Reset OTP] Request for: ${email}`);
+
+    // Generate 6-digit OTP
+    const otp = generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store OTP
+    passwordResetOTPStorage.set(email, {
+      otp: otp,
+      expiry: expiry,
+      attempts: 0,
+      verified: false,
+      createdAt: Date.now()
+    });
+
+    // Send OTP email via SendGrid
+    const emailResult = await sendOTPEmail(email, 'User', otp);
+
+    if (emailResult.success) {
+      if (emailResult.emailSent) {
+        console.log(`📧 Password reset OTP sent successfully to ${email}`);
+        res.json({
+          success: true,
+          otp: otp, // For development/testing
+          expiry: expiry,
+          message: 'Password reset OTP sent successfully',
+          emailSent: true
+        });
+      } else {
+        console.log(`📧 SendGrid not configured, password reset OTP generated locally: ${emailResult.message}`);
+        res.json({
+          success: true,
+          otp: otp, // For development/testing
+          expiry: expiry,
+          message: 'Password reset OTP generated (SendGrid not configured)',
+          emailSent: false,
+          emailError: emailResult.message
+        });
+      }
+    } else {
+      console.log(`📧 Password reset OTP email failed to send: ${emailResult.message}`);
+      res.json({
+        success: true,
+        otp: otp, // For development/testing
+        expiry: expiry,
+        message: 'Password reset OTP generated (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[Password Reset OTP] Send error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while processing your request'
+    });
+  }
 });
 
 // Verify Password Reset OTP endpoint
 app.post('/api/verify-password-reset-otp', async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        
-        if (!email || !otp) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and OTP are required' 
-            });
-        }
-        
-        console.log(`[Password Reset OTP] Verifying OTP for: ${email}`);
-        
-        if (!passwordResetOTPStorage.has(email)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'No password reset OTP found for this email' 
-            });
-        }
-        
-        const storedData = passwordResetOTPStorage.get(email);
-        
-        // Check if OTP has expired
-        if (Date.now() > storedData.expiry) {
-            passwordResetOTPStorage.delete(email);
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Password reset OTP has expired' 
-            });
-        }
-        
-        // Check attempt limit
-        if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
-            passwordResetOTPStorage.delete(email);
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Too many failed attempts' 
-            });
-        }
-        
-        // Verify OTP
-        if (storedData.otp === otp) {
-            // Mark as verified
-            storedData.verified = true;
-            passwordResetOTPStorage.set(email, storedData);
-            
-            console.log(`[Password Reset OTP] OTP verified successfully for: ${email}`);
-            res.json({ 
-                success: true, 
-                message: 'Password reset OTP verified successfully' 
-            });
-        } else {
-            // Increment attempt count
-            storedData.attempts++;
-            passwordResetOTPStorage.set(email, storedData);
-            
-            const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
-            return res.status(400).json({ 
-                success: false, 
-                message: `Invalid OTP. ${remainingAttempts} attempts remaining.` 
-            });
-        }
-        
-    } catch (error) {
-        console.error('[Password Reset OTP] Verify error:', error.message);
-        res.status(500).json({ 
-            success: false, 
-            message: 'An error occurred while verifying the OTP' 
-        });
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
     }
+
+    console.log(`[Password Reset OTP] Verifying OTP for: ${email}`);
+
+    if (!passwordResetOTPStorage.has(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'No password reset OTP found for this email'
+      });
+    }
+
+    const storedData = passwordResetOTPStorage.get(email);
+
+    // Check if OTP has expired
+    if (Date.now() > storedData.expiry) {
+      passwordResetOTPStorage.delete(email);
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset OTP has expired'
+      });
+    }
+
+    // Check attempt limit
+    if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+      passwordResetOTPStorage.delete(email);
+      return res.status(400).json({
+        success: false,
+        message: 'Too many failed attempts'
+      });
+    }
+
+    // Verify OTP
+    if (storedData.otp === otp) {
+      // Mark as verified
+      storedData.verified = true;
+      passwordResetOTPStorage.set(email, storedData);
+
+      console.log(`[Password Reset OTP] OTP verified successfully for: ${email}`);
+      res.json({
+        success: true,
+        message: 'Password reset OTP verified successfully'
+      });
+    } else {
+      // Increment attempt count
+      storedData.attempts++;
+      passwordResetOTPStorage.set(email, storedData);
+
+      const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+      return res.status(400).json({
+        success: false,
+        message: `Invalid OTP. ${remainingAttempts} attempts remaining.`
+      });
+    }
+
+  } catch (error) {
+    console.error('[Password Reset OTP] Verify error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while verifying the OTP'
+    });
+  }
 });
 
 // Reset Password with OTP endpoint
 app.post('/api/reset-password-with-otp', async (req, res) => {
-    try {
-        const { email, newPassword } = req.body;
-        
-        if (!email || !newPassword) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and new password are required' 
-            });
-        }
-        
-        // Validate password strength
-        if (newPassword.length < 6) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Password must be at least 6 characters long' 
-            });
-        }
-        
-        // Check for common weak passwords
-        const weakPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123'];
-        if (weakPasswords.includes(newPassword.toLowerCase())) {
-            console.log(`[Password Reset OTP] Weak password detected: ${newPassword}`);
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Password is too weak. Please choose a stronger password.' 
-            });
-        }
-        
-        console.log(`[Password Reset OTP] Resetting password for: ${email}`);
-        console.log(`[Password Reset OTP] Password length: ${newPassword.length} characters`);
-        
-        // Check if we have OTP data in server storage (traditional flow)
-        if (passwordResetOTPStorage.has(email)) {
-            const storedData = passwordResetOTPStorage.get(email);
-            
-            // Check if OTP has expired
-            if (Date.now() > storedData.expiry) {
-                passwordResetOTPStorage.delete(email);
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Password reset OTP has expired' 
-                });
-            }
-            
-            // Check if OTP has been verified
-            if (!storedData.verified) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'OTP must be verified before password reset' 
-                });
-            }
-        } else {
-            // If no server-side OTP data, assume this is from SendGrid OTP verification
-            // The verification was already done on the client side
-            console.log(`[Password Reset OTP] No server-side OTP data found for ${email}, assuming SendGrid OTP verification`);
-        }
-        
-        // Update password in Firebase Auth
-        let firebaseUpdateSuccess = false;
-        
-        // Force Firebase Admin SDK initialization if not already done
-        console.log('🔍 Checking Firebase Admin SDK status...');
-        console.log('firebaseAdminInitialized:', firebaseAdminInitialized);
-        console.log('admin.apps length:', admin.apps ? admin.apps.length : 'admin.apps is undefined');
-        
-        if (!firebaseAdminInitialized) {
-            console.log('🔄 Attempting to initialize Firebase Admin SDK...');
-            const initResult = initializeFirebaseAdmin();
-            if (!initResult) {
-                console.log('❌ Firebase Admin SDK initialization failed');
-                firebaseUpdateSuccess = false;
-            } else {
-                console.log('✅ Firebase Admin SDK initialized successfully');
-            }
-        }
-        
-        // Try to update password in Firebase
-        try {
-            if (admin.apps && admin.apps.length > 0) {
-                console.log(`[Password Reset OTP] Attempting to update Firebase password for: ${email}`);
-                
-                // Get user by email
-                const userRecord = await admin.auth().getUserByEmail(email);
-                console.log(`[Password Reset OTP] Found user with UID: ${userRecord.uid}`);
-                
-                // Update user password
-                await admin.auth().updateUser(userRecord.uid, {
-                    password: newPassword
-                });
-                
-                console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
-                firebaseUpdateSuccess = true;
-                
-            } else {
-                console.log('⚠️ Firebase Admin SDK not available, will use client-side update');
-                firebaseUpdateSuccess = false;
-            }
-            
-        } catch (firebaseError) {
-            console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
-            console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
-            
-            if (firebaseError.code === 'auth/user-not-found') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'No account found with this email address' 
-                });
-            } else if (firebaseError.code === 'auth/weak-password') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Password is too weak. Please choose a stronger password.' 
-                });
-            } else {
-                // For other Firebase errors, log and continue with client-side update
-                console.log('⚠️ Firebase update failed, will use client-side update');
-                firebaseUpdateSuccess = false;
-            }
-        }
-        
-        // Clear the OTP storage (if it exists)
-        if (passwordResetOTPStorage.has(email)) {
-            passwordResetOTPStorage.delete(email);
-        }
-        
-        // Log password change event for security audit
-        await logPasswordChangeEvent(email, firebaseUpdateSuccess);
-        
-        // Send security notification email to user
-        await sendPasswordChangeNotification(email);
-        
-        // Send admin security alert
-        await sendAdminSecurityAlert(email, 'password_reset');
-        
-        console.log(`[Password Reset OTP] Password reset completed for: ${email}`);
-        res.json({ 
-            success: true, 
-            message: 'Password reset successfully. You can now log in with your new password.',
-            firebaseUpdated: firebaseUpdateSuccess,
-            clientSideUpdate: !firebaseUpdateSuccess,
-            firebaseUpdateFailed: !firebaseUpdateSuccess,
-            note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password reset completed but Firebase update failed'
-        });
-        
-    } catch (error) {
-        console.error('[Password Reset OTP] Reset password error:', error.message);
-        console.error('[Password Reset OTP] Error stack:', error.stack);
-        res.status(500).json({ 
-            success: false, 
-            message: `Password reset failed: ${error.message}`,
-            error: error.message
-        });
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and new password are required'
+      });
     }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    // Check for common weak passwords
+    const weakPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123'];
+    if (weakPasswords.includes(newPassword.toLowerCase())) {
+      console.log(`[Password Reset OTP] Weak password detected: ${newPassword}`);
+      return res.status(400).json({
+        success: false,
+        message: 'Password is too weak. Please choose a stronger password.'
+      });
+    }
+
+    console.log(`[Password Reset OTP] Resetting password for: ${email}`);
+    console.log(`[Password Reset OTP] Password length: ${newPassword.length} characters`);
+
+    // Check if we have OTP data in server storage (traditional flow)
+    if (passwordResetOTPStorage.has(email)) {
+      const storedData = passwordResetOTPStorage.get(email);
+
+      // Check if OTP has expired
+      if (Date.now() > storedData.expiry) {
+        passwordResetOTPStorage.delete(email);
+        return res.status(400).json({
+          success: false,
+          message: 'Password reset OTP has expired'
+        });
+      }
+
+      // Check if OTP has been verified
+      if (!storedData.verified) {
+        return res.status(400).json({
+          success: false,
+          message: 'OTP must be verified before password reset'
+        });
+      }
+    } else {
+      // If no server-side OTP data, assume this is from SendGrid OTP verification
+      // The verification was already done on the client side
+      console.log(`[Password Reset OTP] No server-side OTP data found for ${email}, assuming SendGrid OTP verification`);
+    }
+
+    // Update password in Firebase Auth
+    let firebaseUpdateSuccess = false;
+
+    // Force Firebase Admin SDK initialization if not already done
+    console.log('🔍 Checking Firebase Admin SDK status...');
+    console.log('firebaseAdminInitialized:', firebaseAdminInitialized);
+    console.log('admin.apps length:', admin.apps ? admin.apps.length : 'admin.apps is undefined');
+
+    if (!firebaseAdminInitialized) {
+      console.log('🔄 Attempting to initialize Firebase Admin SDK...');
+      const initResult = initializeFirebaseAdmin();
+      if (!initResult) {
+        console.log('❌ Firebase Admin SDK initialization failed');
+        firebaseUpdateSuccess = false;
+      } else {
+        console.log('✅ Firebase Admin SDK initialized successfully');
+      }
+    }
+
+    // Try to update password in Firebase
+    try {
+      if (admin.apps && admin.apps.length > 0) {
+        console.log(`[Password Reset OTP] Attempting to update Firebase password for: ${email}`);
+
+        // Get user by email
+        const userRecord = await admin.auth().getUserByEmail(email);
+        console.log(`[Password Reset OTP] Found user with UID: ${userRecord.uid}`);
+
+        // Update user password
+        await admin.auth().updateUser(userRecord.uid, {
+          password: newPassword
+        });
+
+        console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
+        firebaseUpdateSuccess = true;
+
+      } else {
+        console.log('⚠️ Firebase Admin SDK not available, will use client-side update');
+        firebaseUpdateSuccess = false;
+      }
+
+    } catch (firebaseError) {
+      console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
+      console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
+
+      if (firebaseError.code === 'auth/user-not-found') {
+        return res.status(400).json({
+          success: false,
+          message: 'No account found with this email address'
+        });
+      } else if (firebaseError.code === 'auth/weak-password') {
+        return res.status(400).json({
+          success: false,
+          message: 'Password is too weak. Please choose a stronger password.'
+        });
+      } else {
+        // For other Firebase errors, log and continue with client-side update
+        console.log('⚠️ Firebase update failed, will use client-side update');
+        firebaseUpdateSuccess = false;
+      }
+    }
+
+    // Clear the OTP storage (if it exists)
+    if (passwordResetOTPStorage.has(email)) {
+      passwordResetOTPStorage.delete(email);
+    }
+
+    // Log password change event for security audit
+    await logPasswordChangeEvent(email, firebaseUpdateSuccess);
+
+    // Send security notification email to user
+    await sendPasswordChangeNotification(email);
+
+    // Send admin security alert
+    await sendAdminSecurityAlert(email, 'password_reset');
+
+    console.log(`[Password Reset OTP] Password reset completed for: ${email}`);
+    res.json({
+      success: true,
+      message: 'Password reset successfully. You can now log in with your new password.',
+      firebaseUpdated: firebaseUpdateSuccess,
+      clientSideUpdate: !firebaseUpdateSuccess,
+      firebaseUpdateFailed: !firebaseUpdateSuccess,
+      note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password reset completed but Firebase update failed'
+    });
+
+  } catch (error) {
+    console.error('[Password Reset OTP] Reset password error:', error.message);
+    console.error('[Password Reset OTP] Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: `Password reset failed: ${error.message}`,
+      error: error.message
+    });
+  }
 });
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 // Regular Password Change endpoint (for profile updates)
 app.post('/api/change-password', async (req, res) => {
-    try {
-        const { email, newPassword, currentPassword } = req.body;
-        
-        if (!email || !newPassword) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and new password are required' 
-            });
-        }
-        
-        // Validate password strength
-        if (newPassword.length < 6) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Password must be at least 6 characters long' 
-            });
-        }
-        
-        // Check for common weak passwords
-        const weakPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123'];
-        if (weakPasswords.includes(newPassword.toLowerCase())) {
-            console.log(`[Password Change] Weak password detected: ${newPassword}`);
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Password is too weak. Please choose a stronger password.' 
-            });
-        }
-        
-        console.log(`[Password Change] Changing password for: ${email}`);
-        console.log(`[Password Change] Password length: ${newPassword.length} characters`);
-        
-        let firebaseUpdateSuccess = false;
-        
-        // Try to update password in Firebase using Admin SDK
-        try {
-            if (admin.apps && admin.apps.length > 0) {
-                console.log(`[Password Change] Attempting to update Firebase password for: ${email}`);
-                
-                // Get user by email
-                const userRecord = await admin.auth().getUserByEmail(email);
-                console.log(`[Password Change] Found user with UID: ${userRecord.uid}`);
-                
-                // Update user password
-                await admin.auth().updateUser(userRecord.uid, {
-                    password: newPassword
-                });
-                
-                console.log(`[Password Change] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
-                firebaseUpdateSuccess = true;
-                
-            } else {
-                console.log('⚠️ Firebase Admin SDK not available for password change');
-                firebaseUpdateSuccess = false;
-            }
-            
-        } catch (firebaseError) {
-            console.error('[Password Change] Firebase password update error:', firebaseError.message);
-            console.error('[Password Change] Firebase error code:', firebaseError.code);
-            
-            if (firebaseError.code === 'auth/user-not-found') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'No account found with this email address' 
-                });
-            } else if (firebaseError.code === 'auth/weak-password') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Password is too weak. Please choose a stronger password.' 
-                });
-            } else {
-                // For other Firebase errors, log and continue
-                console.log('⚠️ Firebase update failed, will use client-side update');
-                firebaseUpdateSuccess = false;
-            }
-        }
-        
-        // Log password change event for security audit
-        await logPasswordChangeEvent(email, firebaseUpdateSuccess, 'password_change');
-        
-        // Send security notification email to user
-        await sendPasswordChangeNotification(email, 'password_change');
-        
-        // Send admin security alert
-        await sendAdminSecurityAlert(email, 'password_change');
-        
-        console.log(`[Password Change] Password change completed for: ${email}`);
-        res.json({ 
-            success: true, 
-            message: 'Password changed successfully.',
-            firebaseUpdated: firebaseUpdateSuccess,
-            clientSideUpdate: !firebaseUpdateSuccess,
-            firebaseUpdateFailed: !firebaseUpdateSuccess,
-            note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password change completed but Firebase update failed'
-        });
-        
-    } catch (error) {
-        console.error('[Password Change] Change password error:', error.message);
-        console.error('[Password Change] Error stack:', error.stack);
-        res.status(500).json({ 
-            success: false, 
-            message: 'An error occurred while changing your password' 
-        });
-    }
-});
+  try {
+    const { email, newPassword, currentPassword } = req.body;
 
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+    if (!email || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and new password are required'
+      });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    // Check for common weak passwords
+    const weakPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123'];
+    if (weakPasswords.includes(newPassword.toLowerCase())) {
+      console.log(`[Password Change] Weak password detected: ${newPassword}`);
+      return res.status(400).json({
+        success: false,
+        message: 'Password is too weak. Please choose a stronger password.'
+      });
+    }
+
+    console.log(`[Password Change] Changing password for: ${email}`);
+    console.log(`[Password Change] Password length: ${newPassword.length} characters`);
+
+    let firebaseUpdateSuccess = false;
+
+    // Try to update password in Firebase using Admin SDK
+    try {
+      if (admin.apps && admin.apps.length > 0) {
+        console.log(`[Password Change] Attempting to update Firebase password for: ${email}`);
+
+        // Get user by email
+        const userRecord = await admin.auth().getUserByEmail(email);
+        console.log(`[Password Change] Found user with UID: ${userRecord.uid}`);
+
+        // Update user password
+        await admin.auth().updateUser(userRecord.uid, {
+          password: newPassword
+        });
+
+        console.log(`[Password Change] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
+        firebaseUpdateSuccess = true;
+
+      } else {
+        console.log('⚠️ Firebase Admin SDK not available for password change');
+        firebaseUpdateSuccess = false;
+      }
+
+    } catch (firebaseError) {
+      console.error('[Password Change] Firebase password update error:', firebaseError.message);
+      console.error('[Password Change] Firebase error code:', firebaseError.code);
+
+      if (firebaseError.code === 'auth/user-not-found') {
+        return res.status(400).json({
+          success: false,
+          message: 'No account found with this email address'
+        });
+      } else if (firebaseError.code === 'auth/weak-password') {
+        return res.status(400).json({
+          success: false,
+          message: 'Password is too weak. Please choose a stronger password.'
+        });
+      } else {
+        // For other Firebase errors, log and continue
+        console.log('⚠️ Firebase update failed, will use client-side update');
+        firebaseUpdateSuccess = false;
+      }
+    }
+
+    // Log password change event for security audit
+    await logPasswordChangeEvent(email, firebaseUpdateSuccess, 'password_change');
+
+    // Send security notification email to user
+    await sendPasswordChangeNotification(email, 'password_change');
+
+    // Send admin security alert
+    await sendAdminSecurityAlert(email, 'password_change');
+
+    console.log(`[Password Change] Password change completed for: ${email}`);
+    res.json({
+      success: true,
+      message: 'Password changed successfully.',
+      firebaseUpdated: firebaseUpdateSuccess,
+      clientSideUpdate: !firebaseUpdateSuccess,
+      firebaseUpdateFailed: !firebaseUpdateSuccess,
+      note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password change completed but Firebase update failed'
+    });
+
+  } catch (error) {
+    console.error('[Password Change] Change password error:', error.message);
+    console.error('[Password Change] Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while changing your password'
+    });
+  }
+});
 
 /* ====== Error handlers & 404 ====== */
 app.use((err, req, res, next) => {
