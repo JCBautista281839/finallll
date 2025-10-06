@@ -162,8 +162,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (result.success) {
                     console.log('✅ Server approved password reset');
+                    console.log('Server response:', result);
                     console.log('Client-side update required:', result.clientSideUpdate);
                     console.log('Firebase update failed:', result.firebaseUpdateFailed);
+                    console.log('Firebase updated:', result.firebaseUpdated);
                     console.log('Note:', result.note);
                     
                     // If server-side Firebase update failed, do client-side update
@@ -183,6 +185,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(() => {
                             window.location.href = 'login.html';
                         }, 3000);
+                    } else {
+                        // Fallback case - neither server nor client update worked as expected
+                        console.log('⚠️ Unexpected server response, attempting client-side update as fallback');
+                        await updatePasswordWithFirebaseClient(email, newPassword);
                     }
                     
                     return; // Exit successfully

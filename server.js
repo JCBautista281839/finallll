@@ -1833,6 +1833,8 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
             success: true, 
             message: 'Password reset successfully. You can now log in with your new password.',
             firebaseUpdated: firebaseUpdateSuccess,
+            clientSideUpdate: !firebaseUpdateSuccess,
+            firebaseUpdateFailed: !firebaseUpdateSuccess,
             note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password reset completed but Firebase update failed'
         });
         
