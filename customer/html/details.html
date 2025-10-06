@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -175,24 +175,24 @@
               console.log('[details.html] ✅ Firebase is ready');
               resolve();
             } else {
-              console.log('[details.html] ⏳ Waiting for Firebase...');
-              setTimeout(checkFirebase, 100);
-            }
-          };
-          checkFirebase();
+                console.log('[details.html] ⏳ Waiting for Firebase...');
+                setTimeout(checkFirebase, 100);
+              }
+            };
+            checkFirebase();
+          });
+        }
+
+        // Initialize cart system after Firebase is ready
+        waitForFirebase().then(() => {
+          console.log('[details.html] Initializing cart system...');
+          initializeCartSystem();
+        }).catch(error => {
+          console.error('[details.html] Error waiting for Firebase:', error);
+          // Initialize with fallback to sessionStorage
+          initializeCartSystem();
         });
-      }
-      
-      // Initialize cart system after Firebase is ready
-      waitForFirebase().then(() => {
-        console.log('[details.html] Initializing cart system...');
-        initializeCartSystem();
-      }).catch(error => {
-        console.error('[details.html] Error waiting for Firebase:', error);
-        // Initialize with fallback to sessionStorage
-        initializeCartSystem();
       });
-    });
 
       // Initialize cart system
       function initializeCartSystem() {
@@ -244,7 +244,7 @@
               quantity: 1
             }
           };
-
+          
           sessionStorage.setItem('cartData', JSON.stringify(sampleCart));
           cartData = sampleCart;
           cartItems = Object.values(cartData);
