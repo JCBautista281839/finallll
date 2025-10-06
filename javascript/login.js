@@ -125,7 +125,7 @@ async function handleLogin(email, password) {
                 }
             } else {
                 await firebase.auth().signOut();
-                throw new Error('User account not found. Please sign up first.');
+                throw new Error('Email account not found. Please sign up first.');
             }
         }
         
