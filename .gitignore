@@ -84,3 +84,7 @@ config.env.secure.backup
 .env
 .env.*
 !env.example
+
+# Firebase service account credentials
+firebase-service-account.json
+firebase-adminsdk-*.json
