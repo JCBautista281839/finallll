@@ -193,6 +193,26 @@
             const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
             return `${namePart}${randomPart}`;
         }
+        
+        // Check if user has signup data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔍 Checking signup data on page load...');
+            const signupEmail = localStorage.getItem('signupEmail');
+            const signupName = localStorage.getItem('signupName');
+            const signupPassword = localStorage.getItem('signupPassword');
+            
+            console.log('📋 Page load localStorage check:');
+            console.log('  - signupEmail:', signupEmail);
+            console.log('  - signupName:', signupName);
+            console.log('  - signupPassword:', signupPassword ? '[SET]' : '[NOT SET]');
+            console.log('  - All keys:', Object.keys(localStorage));
+            
+            if (!signupEmail || !signupPassword) {
+                console.warn('⚠️ Missing signup data on page load - user may need to sign up again');
+            } else {
+                console.log('✅ Signup data found on page load');
+            }
+        });
 
         // Wait for Firebase to be ready
         function waitForFirebase() {
@@ -325,9 +345,19 @@
                 console.log('  - signupPhone:', localStorage.getItem('signupPhone'));
                 console.log('  - signupPassword:', localStorage.getItem('signupPassword') ? '[SET]' : '[NOT SET]');
                 
+                // Also check for OTP-related localStorage data
+                console.log('📋 All localStorage OTP data:');
+                console.log('  - emailOTP:', localStorage.getItem('emailOTP'));
+                console.log('  - emailOTPEmail:', localStorage.getItem('emailOTPEmail'));
+                console.log('  - emailOTPExpiry:', localStorage.getItem('emailOTPExpiry'));
+                
+                // Check all localStorage keys for debugging
+                console.log('📋 All localStorage keys:', Object.keys(localStorage));
+                
                 if (!email) {
                     console.error('❌ No signup email found in localStorage');
-                    alert('No signup data found. Please go back and sign up again.');
+                    console.error('❌ Available localStorage keys:', Object.keys(localStorage));
+                    alert('No signup data found. Please go back and sign up again.\n\nDebug info: Check console for localStorage details.');
                     return;
                 }
                 
@@ -500,11 +530,28 @@
                         }
                     } else {
                         console.error('❌ Missing signup data in localStorage');
-                        alert('Signup data not found. Please try signing up again.');
+                        console.error('❌ Available localStorage keys:', Object.keys(localStorage));
+                        
+                        // Provide more helpful error message
+                        let errorMessage = 'Signup data not found. This can happen if:\n\n';
+                        errorMessage += '• You refreshed the page after signing up\n';
+                        errorMessage += '• Your browser cleared the data\n';
+                        errorMessage += '• You\'re using a different browser/tab\n\n';
+                        errorMessage += 'Please go back to the signup page and try again.';
+                        
+                        alert(errorMessage);
                         
                         // Reset button state
                         verifyButton.innerHTML = 'Verify Email';
                         verifyButton.disabled = false;
+                        
+                        // Auto-redirect to signup page after 3 seconds
+                        setTimeout(() => {
+                            if (confirm('Would you like to go back to the signup page?')) {
+                                window.location.href = 'signup.html';
+                            }
+                        }, 1000);
+                        
                         return;
                     }
                 } else {
