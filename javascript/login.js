@@ -105,9 +105,14 @@ async function handleLogin(email, password) {
             }
         }
         
-        // If user not found in Firestore, show error
+        // If user not found in Firestore, create admin account if admin login is selected
         if (!userFound) {
-            throw new Error('User account not found. Please sign up first.');
+            if (selectedUserType === 'admin') {
+                console.log('🔧 Admin user not found, will create account after Firebase Auth...');
+                // We'll create the account after successful Firebase Auth
+            } else {
+                throw new Error('User account not found. Please sign up first.');
+            }
         }
 
         // Now attempt Firebase Auth login
@@ -115,6 +120,53 @@ async function handleLogin(email, password) {
         const user = userCredential.user;
         
         console.log('✅ Firebase Auth successful for:', user.email);
+        
+        // If user wasn't found in Firestore but admin login was selected, create the account
+        if (!userFound && selectedUserType === 'admin') {
+            console.log('🔧 Creating admin account in Firestore...');
+            try {
+                await firebase.firestore().collection('users').doc(user.uid).set({
+                    email: user.email,
+                    name: user.displayName || 'Admin User',
+                    displayName: user.displayName || 'Admin User',
+                    firstName: user.displayName ? user.displayName.split(' ')[0] : 'Admin',
+                    lastName: user.displayName ? user.displayName.split(' ').slice(1).join(' ') : 'User',
+                    role: 'admin',
+                    userType: 'admin',
+                    isActive: true,
+                    isEmailVerified: user.emailVerified,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Also create in customers collection for compatibility
+                await firebase.firestore().collection('customers').doc(user.uid).set({
+                    customerId: user.uid,
+                    name: user.displayName || 'Admin User',
+                    email: user.email,
+                    displayName: user.displayName || 'Admin User',
+                    firstName: user.displayName ? user.displayName.split(' ')[0] : 'Admin',
+                    lastName: user.displayName ? user.displayName.split(' ').slice(1).join(' ') : 'User',
+                    role: 'admin',
+                    userType: 'admin',
+                    isActive: true,
+                    isEmailVerified: user.emailVerified,
+                    accountStatus: 'verified',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                userRole = 'admin';
+                userFound = true;
+                console.log('✅ Admin account created successfully in Firestore');
+            } catch (createError) {
+                console.error('❌ Error creating admin account:', createError);
+                await firebase.auth().signOut();
+                throw new Error('Error creating admin account. Please try again.');
+            }
+        }
         
         // Check if the selected type matches the user's actual role
         if (selectedUserType === 'admin') {
