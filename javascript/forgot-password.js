@@ -8,12 +8,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const errorMessage = document.getElementById('errorMessage');
     const errorText = document.getElementById('errorText');
     
-    // Initialize Firebase
-    if (typeof firebase === 'undefined') {
-        console.error('Firebase not loaded');
-        showError('Firebase not loaded. Please refresh the page.');
-        return;
+    // Robust Firebase initialization (from debug tool)
+    function initializeFirebase() {
+        if (typeof window.firebaseConfig !== 'undefined') {
+            try {
+                // Check if Firebase is already initialized
+                if (firebase.apps && firebase.apps.length > 0) {
+                    console.log('✅ Firebase already initialized');
+                    return true;
+                }
+                
+                firebase.initializeApp(window.firebaseConfig);
+                console.log('✅ Firebase initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('❌ Firebase initialization failed:', error);
+                return false;
+            }
+        } else {
+            console.error('❌ firebaseConfig not found');
+            return false;
+        }
     }
+    
+    // Initialize Firebase when page loads
+    setTimeout(() => {
+        if (!initializeFirebase()) {
+            showError('Firebase initialization failed. Please refresh the page.');
+            return;
+        } else {
+            console.log('✅ Firebase ready for forgot password flow');
+        }
+    }, 100);
     
     // Wait for Firebase to be ready
     function waitForFirebase() {
@@ -54,6 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Hide previous messages
             hideMessages();
+            
+            console.log(`📤 Sending OTP to ${email}...`);
             
             // Use SendGrid OTP service to send OTP
             if (window.sendGridOTPService) {

@@ -124,8 +124,25 @@ async function handleLogin(email, password) {
                     throw new Error('Error creating user account. Please try again.');
                 }
             } else {
-                await firebase.auth().signOut();
-                throw new Error('User account not found. Please sign up first.');
+                // For customer login, also create the user document automatically
+                console.log('Customer document not found, creating with customer role...');
+                try {
+                    await firebase.firestore().collection('users').doc(user.uid).set({
+                        email: user.email,
+                        role: 'customer',
+                        userType: 'customer',
+                        isActive: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('User document created with customer role successfully');
+                    userRole = 'customer';
+                } catch (createError) {
+                    console.error('Error creating customer document:', createError);
+                    await firebase.auth().signOut();
+                    throw new Error('Error creating user account. Please try again.');
+                }
             }
         }
         
