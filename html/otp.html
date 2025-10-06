@@ -318,37 +318,72 @@
                 // Get email from localStorage first
                 const email = localStorage.getItem('signupEmail');
                 
-                console.log('Verifying Email OTP for email:', email);
+                console.log('📧 Verifying Email OTP for email:', email);
+                console.log('📋 All localStorage signup data:');
+                console.log('  - signupEmail:', localStorage.getItem('signupEmail'));
+                console.log('  - signupName:', localStorage.getItem('signupName'));
+                console.log('  - signupPhone:', localStorage.getItem('signupPhone'));
+                console.log('  - signupPassword:', localStorage.getItem('signupPassword') ? '[SET]' : '[NOT SET]');
                 
-                // Verify Email OTP using Firebase
-                let verificationSuccess = false;
-                
-                // Try Firebase OTP verification first
-                if (window.firebaseOTPService) {
-                    try {
-                        console.log('🔥 Attempting Firebase OTP verification...');
-                        const firebaseResult = await window.firebaseOTPService.verifyEmailOTP(email, otp);
-                        
-                        if (firebaseResult.success) {
-                            console.log('✅ Firebase OTP verified successfully');
-                            verificationSuccess = true;
-                        } else {
-                            console.log('❌ Firebase OTP verification failed:', firebaseResult.message);
-                            alert(firebaseResult.message);
-                            return;
-                        }
-                    } catch (firebaseError) {
-                        console.log('🔄 Firebase verification failed:', firebaseError.message);
-                        // Continue to fallback methods
-                    }
+                if (!email) {
+                    console.error('❌ No signup email found in localStorage');
+                    alert('No signup data found. Please go back and sign up again.');
+                    return;
                 }
                 
-                // Fallback to server API verification
-                if (!verificationSuccess) {
+                // Verify Email OTP - Try local verification first (more reliable)
+                let verificationSuccess = false;
+                
+                // Try local OTP verification first (most reliable)
+                try {
+                    console.log('🔄 Attempting local OTP verification first...');
+                    const storedOTP = localStorage.getItem('emailOTP');
+                    const storedExpiry = localStorage.getItem('emailOTPExpiry');
+                    const storedEmail = localStorage.getItem('emailOTPEmail');
+                    
+                    console.log('📋 Local OTP data:');
+                    console.log('  - Stored OTP:', storedOTP);
+                    console.log('  - Stored Email:', storedEmail);
+                    console.log('  - Current Email:', email);
+                    console.log('  - Entered OTP:', otp);
+                    
+                    if (!storedOTP) {
+                        throw new Error('No local OTP found. Please request a new verification code.');
+                    }
+                    
+                    if (storedEmail !== email) {
+                        console.log('⚠️ Email mismatch - stored:', storedEmail, 'current:', email);
+                        throw new Error('Email mismatch. Please use the same email you signed up with.');
+                    }
+                    
+                    if (Date.now() > parseInt(storedExpiry)) {
+                        localStorage.removeItem('emailOTP');
+                        localStorage.removeItem('emailOTPExpiry');
+                        localStorage.removeItem('emailOTPEmail');
+                        throw new Error('OTP has expired. Please request a new verification code.');
+                    }
+                    
+                    if (storedOTP === otp) {
+                        localStorage.removeItem('emailOTP');
+                        localStorage.removeItem('emailOTPExpiry');
+                        localStorage.removeItem('emailOTPEmail');
+                        console.log('✅ Local OTP verified successfully');
+                        verificationSuccess = true;
+                    } else {
+                        throw new Error('Invalid OTP code. Please check and try again.');
+                    }
+                } catch (localError) {
+                    console.log('❌ Local OTP verification failed:', localError.message);
+                    
+                    // Try server verification as fallback
                     try {
-                        console.log('🔄 Attempting server OTP verification...');
+                        console.log('🔄 Attempting server OTP verification as fallback...');
                         
-                        const response = await fetch(`${window.location.origin}/api/sendgrid-verify-otp`, {
+                        // Use proper API configuration
+                        const apiBaseUrl = (window.API_CONFIG && window.API_CONFIG.BASE_URL) || window.location.origin;
+                        console.log('🌐 Using API base URL:', apiBaseUrl);
+                        
+                        const response = await fetch(`${apiBaseUrl}/api/sendgrid-verify-otp`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -357,46 +392,20 @@
                         });
                         
                         const result = await response.json();
+                        console.log('📋 Server OTP verification response:', result);
                         
                         if (result.success) {
                             console.log('✅ Server OTP verified successfully');
                             verificationSuccess = true;
                         } else {
                             console.log('❌ Server OTP verification failed:', result.message);
-                            alert(result.message);
+                            alert('Verification failed: ' + localError.message + '\n\nServer error: ' + result.message);
                             return;
                         }
                     } catch (serverError) {
-                        console.log('🔄 Server verification failed, trying local fallback...');
-                        
-                        // Fallback to local OTP verification
-                        try {
-                            const storedOTP = localStorage.getItem('emailOTP');
-                            const storedExpiry = localStorage.getItem('emailOTPExpiry');
-                            
-                            if (!storedOTP) {
-                                throw new Error('No OTP found. Please request a new verification code.');
-                            }
-                            
-                            if (Date.now() > parseInt(storedExpiry)) {
-                                localStorage.removeItem('emailOTP');
-                                localStorage.removeItem('emailOTPExpiry');
-                                throw new Error('OTP has expired. Please request a new verification code.');
-                            }
-                            
-                            if (storedOTP === otp) {
-                                localStorage.removeItem('emailOTP');
-                                localStorage.removeItem('emailOTPExpiry');
-                                console.log('✅ Local OTP verified successfully');
-                                verificationSuccess = true;
-                            } else {
-                                throw new Error('Invalid OTP code. Please check and try again.');
-                            }
-                        } catch (localError) {
-                            console.log('❌ Local OTP verification failed:', localError.message);
-                            alert(localError.message);
-                            return;
-                        }
+                        console.log('❌ Server verification also failed:', serverError.message);
+                        alert('Verification failed: ' + localError.message);
+                        return;
                     }
                 }
                 
