@@ -729,11 +729,18 @@ hr {
   border-radius: 10px;
   transition: all 0.3s ease;
   background: #fafafa;
+  cursor: pointer;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .file-upload-area:hover {
   border-color: #8b1d1d;
   background: #fff8f8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 29, 29, 0.1);
 }
 
 .file-upload-area.dragover {
@@ -854,6 +861,56 @@ hr {
   border-color: #ccc;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* Upload loading state */
+.file-upload-area.uploading {
+  border-color: #007bff;
+  background: #f0f8ff;
+  pointer-events: none;
+}
+
+.upload-loading {
+  display: none;
+  text-align: center;
+  padding: 20px;
+  color: #007bff;
+}
+
+.upload-loading.show {
+  display: block;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Upload success state */
+.file-upload-area.success {
+  border-color: #28a745;
+  background: #f8fff9;
+}
+
+.upload-success {
+  color: #28a745;
+  font-weight: 500;
 }
 
 /* Mobile Responsiveness for Payment Modal */
