@@ -53,6 +53,12 @@ class SendGridOTPService {
 
             // Update baseUrl in case config loaded after initialization
             this.updateBaseUrl();
+            
+            // Debug: Show current configuration
+            console.log('🔧 Current API_CONFIG:', window.API_CONFIG);
+            console.log('🔧 Current baseUrl:', this.baseUrl);
+            console.log('🔧 Window location origin:', window.location.origin);
+            
             console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-send-otp`);
 
             const response = await fetch(`${this.baseUrl}/api/sendgrid-send-otp`, {
@@ -123,6 +129,12 @@ class SendGridOTPService {
 
             // Update baseUrl in case config loaded after initialization
             this.updateBaseUrl();
+            
+            // Debug: Show current configuration
+            console.log('🔧 Current API_CONFIG:', window.API_CONFIG);
+            console.log('🔧 Current baseUrl:', this.baseUrl);
+            console.log('🔧 Window location origin:', window.location.origin);
+            
             console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-verify-otp`);
 
             // Add timeout to prevent hanging requests
@@ -189,6 +201,12 @@ class SendGridOTPService {
 
             // Update baseUrl in case config loaded after initialization
             this.updateBaseUrl();
+            
+            // Debug: Show current configuration
+            console.log('🔧 Current API_CONFIG:', window.API_CONFIG);
+            console.log('🔧 Current baseUrl:', this.baseUrl);
+            console.log('🔧 Window location origin:', window.location.origin);
+            
             console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-resend-otp`);
 
             const response = await fetch(`${this.baseUrl}/api/sendgrid-resend-otp`, {
@@ -349,6 +367,20 @@ function initializeSendGridOTPService() {
     
     window.sendGridOTPService = new SendGridOTPService();
     console.log('📧 SendGrid OTP Service initialized');
+    
+    // Force update baseUrl after initialization
+    window.sendGridOTPService.updateBaseUrl();
+}
+
+// Wait for config to be available before initializing
+function waitForConfigAndInitialize() {
+    if (window.API_CONFIG && window.API_CONFIG.BASE_URL) {
+        console.log('✅ API_CONFIG available, initializing SendGrid OTP Service');
+        initializeSendGridOTPService();
+    } else {
+        console.log('⏳ Waiting for API_CONFIG to be available...');
+        setTimeout(waitForConfigAndInitialize, 50);
+    }
 }
 
 // Try to initialize immediately
@@ -361,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update baseUrl in case config loaded after initial initialization
         window.sendGridOTPService.updateBaseUrl();
     } else {
-        initializeSendGridOTPService();
+        waitForConfigAndInitialize();
     }
 });
 
@@ -370,6 +402,14 @@ setTimeout(function() {
     if (window.sendGridOTPService) {
         window.sendGridOTPService.updateBaseUrl();
     } else {
-        initializeSendGridOTPService();
+        waitForConfigAndInitialize();
     }
 }, 100);
+
+// Also try after a longer delay to ensure config is definitely loaded
+setTimeout(function() {
+    if (window.sendGridOTPService) {
+        window.sendGridOTPService.updateBaseUrl();
+        console.log('🔧 Final baseUrl check:', window.sendGridOTPService.baseUrl);
+    }
+}, 500);
