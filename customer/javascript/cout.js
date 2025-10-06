@@ -11,7 +11,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
   };
 
   // Step 1: Get quotation
-  const pickup = { lat: 14.5995, lng: 120.9842, address: "Restaurant Manila" };
+  const pickup = { lat: 14.44585, lng: 120.92352, address: "Viktoria's Bistro" };
   const dropoff = { lat: 14.6091, lng: 121.0223, address: customer.address };
 
   try {
