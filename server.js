@@ -967,12 +967,24 @@ function initializeFirebaseAdmin() {
     try {
         // Try to load service account key
         const serviceAccount = require('./firebase-service-account.json');
+        
+        // Check if Firebase Admin is already initialized
+        if (admin.apps && admin.apps.length > 0) {
+            console.log('Firebase Admin SDK already has apps initialized');
+            firebaseAdminInitialized = true;
+            return true;
+        }
+        
+        // Initialize Firebase Admin SDK
         admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount)
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id
         });
+        
         firebaseAdminInitialized = true;
-        console.log('✅ Firebase Admin SDK initialized successfully at startup');
+        console.log('✅ Firebase Admin SDK initialized successfully');
         return true;
+        
     } catch (error) {
         console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
         console.log('📝 To enable Firebase Admin features for password reset:');
@@ -1764,52 +1776,58 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         // Update password in Firebase Auth
         let firebaseUpdateSuccess = false;
         
-        // Check if Firebase Admin SDK is available
+        // Force Firebase Admin SDK initialization if not already done
         if (!firebaseAdminInitialized) {
-            console.log('⚠️ Firebase Admin SDK not initialized, will use client-side update');
-            firebaseUpdateSuccess = false;
-        } else {
-            try {
-                // Try to update password in Firebase
-                if (admin.apps.length > 0) {
-                    console.log(`[Password Reset OTP] Attempting to update Firebase password for: ${email}`);
-                    
-                    // Get user by email
-                    const userRecord = await admin.auth().getUserByEmail(email);
-                    console.log(`[Password Reset OTP] Found user with UID: ${userRecord.uid}`);
-                    
-                    // Update user password
-                    await admin.auth().updateUser(userRecord.uid, {
-                        password: newPassword
-                    });
-                    
-                    console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
-                    firebaseUpdateSuccess = true;
-                    
-                } else {
-                    console.log('⚠️ Firebase Admin SDK not available, will use client-side update');
-                    firebaseUpdateSuccess = false;
-                }
+            console.log('🔄 Attempting to initialize Firebase Admin SDK...');
+            const initResult = initializeFirebaseAdmin();
+            if (!initResult) {
+                console.log('❌ Firebase Admin SDK initialization failed');
+                firebaseUpdateSuccess = false;
+            } else {
+                console.log('✅ Firebase Admin SDK initialized successfully');
+            }
+        }
+        
+        // Try to update password in Firebase
+        try {
+            if (admin.apps && admin.apps.length > 0) {
+                console.log(`[Password Reset OTP] Attempting to update Firebase password for: ${email}`);
                 
-            } catch (firebaseError) {
-                console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
-                console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
+                // Get user by email
+                const userRecord = await admin.auth().getUserByEmail(email);
+                console.log(`[Password Reset OTP] Found user with UID: ${userRecord.uid}`);
                 
-                if (firebaseError.code === 'auth/user-not-found') {
-                    return res.status(400).json({ 
-                        success: false, 
-                        message: 'No account found with this email address' 
-                    });
-                } else if (firebaseError.code === 'auth/weak-password') {
-                    return res.status(400).json({ 
-                        success: false, 
-                        message: 'Password is too weak. Please choose a stronger password.' 
-                    });
-                } else {
-                    // For other Firebase errors, log and continue with client-side update
-                    console.log('⚠️ Firebase update failed, will use client-side update');
-                    firebaseUpdateSuccess = false;
-                }
+                // Update user password
+                await admin.auth().updateUser(userRecord.uid, {
+                    password: newPassword
+                });
+                
+                console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
+                firebaseUpdateSuccess = true;
+                
+            } else {
+                console.log('⚠️ Firebase Admin SDK not available, will use client-side update');
+                firebaseUpdateSuccess = false;
+            }
+            
+        } catch (firebaseError) {
+            console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
+            console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
+            
+            if (firebaseError.code === 'auth/user-not-found') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'No account found with this email address' 
+                });
+            } else if (firebaseError.code === 'auth/weak-password') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Password is too weak. Please choose a stronger password.' 
+                });
+            } else {
+                // For other Firebase errors, log and continue with client-side update
+                console.log('⚠️ Firebase update failed, will use client-side update');
+                firebaseUpdateSuccess = false;
             }
         }
         
