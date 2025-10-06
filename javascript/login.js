@@ -58,69 +58,112 @@ async function handleLogin(email, password) {
             loginButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Logging in...';
         }
 
-        console.log('🔍 Searching for user by email:', email);
+        console.log('🔍 Attempting login for email:', email);
         
-        // First, try to find user by email in Firestore collections
-        let userFound = false;
-        let userRole = 'customer';
-        let userData = null;
-        
-        // Search in users collection by email
-        const usersQuery = await firebase.firestore()
-            .collection('users')
-            .where('email', '==', email)
-            .limit(1)
-            .get();
-            
-        if (!usersQuery.empty) {
-            const userDoc = usersQuery.docs[0];
-            userData = userDoc.data();
-            userRole = userData.role || 'customer';
-            userFound = true;
-            console.log('✅ User found in users collection:', userData.email, 'Role:', userRole);
-        } else {
-            // Search in customers collection by email
-            const customersQuery = await firebase.firestore()
-                .collection('customers')
-                .where('email', '==', email)
-                .limit(1)
-                .get();
-                
-            if (!customersQuery.empty) {
-                const customerDoc = customersQuery.docs[0];
-                userData = customerDoc.data();
-                userRole = 'customer';
-                userFound = true;
-                console.log('✅ User found in customers collection:', userData.email);
-            }
-        }
-        
-        if (!userFound) {
-            throw new Error('Email account not found. Please sign up first.');
-        }
-        
-        // Now try to sign in with Firebase Auth
+        // First, try to authenticate with Firebase Auth
         let user;
+        let userCredential;
+        
         try {
-            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
             user = userCredential.user;
             console.log('✅ Firebase Auth sign-in successful');
         } catch (authError) {
             console.log('⚠️ Firebase Auth sign-in failed:', authError.message);
             
-            // If Firebase Auth fails but user exists in Firestore, create Firebase Auth account
+            // If user not found, try to create account
             if (authError.code === 'auth/user-not-found') {
-                console.log('🔄 Creating Firebase Auth account for existing Firestore user...');
+                console.log('🔄 User not found in Firebase Auth, attempting to create account...');
                 try {
-                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                    userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
                     user = userCredential.user;
                     console.log('✅ Firebase Auth account created successfully');
                 } catch (createError) {
                     console.error('❌ Failed to create Firebase Auth account:', createError);
-                    throw new Error('Unable to create account. Please try signing up again.');
+                    throw new Error('Email account not found. Please sign up first.');
                 }
             } else {
                 throw authError;
+            }
+        }
+        
+        // Now that user is authenticated, search for user data in Firestore
+        console.log('🔍 Searching for user data in Firestore...');
+        
+        let userFound = false;
+        let userRole = 'customer';
+        let userData = null;
+        
+        // Search in users collection by email (now that user is authenticated)
+        try {
+            const usersQuery = await firebase.firestore()
+                .collection('users')
+                .where('email', '==', email)
+                .limit(1)
+                .get();
+                
+            if (!usersQuery.empty) {
+                const userDoc = usersQuery.docs[0];
+                userData = userDoc.data();
+                userRole = userData.role || 'customer';
+                userFound = true;
+                console.log('✅ User found in users collection:', userData.email, 'Role:', userRole);
+            } else {
+                // Search in customers collection by email
+                const customersQuery = await firebase.firestore()
+                    .collection('customers')
+                    .where('email', '==', email)
+                    .limit(1)
+                    .get();
+                    
+                if (!customersQuery.empty) {
+                    const customerDoc = customersQuery.docs[0];
+                    userData = customerDoc.data();
+                    userRole = 'customer';
+                    userFound = true;
+                    console.log('✅ User found in customers collection:', userData.email);
+                }
+            }
+        } catch (firestoreError) {
+            console.error('❌ Firestore query error:', firestoreError);
+            // If Firestore query fails, assume customer role and continue
+            console.log('⚠️ Firestore query failed, assuming customer role');
+            userRole = 'customer';
+            userFound = true;
+        }
+        
+        if (!userFound) {
+            // If no user data found in Firestore, create basic user data
+            console.log('🔄 No user data found in Firestore, creating basic user data...');
+            try {
+                if (selectedUserType === 'admin') {
+                    await firebase.firestore().collection('users').doc(user.uid).set({
+                        email: email,
+                        role: 'admin',
+                        userType: 'admin',
+                        isActive: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    userRole = 'admin';
+                    console.log('✅ Admin user data created in Firestore');
+                } else {
+                    await firebase.firestore().collection('customers').doc(user.uid).set({
+                        email: email,
+                        name: email.split('@')[0], // Use email prefix as name
+                        isEmailVerified: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    userRole = 'customer';
+                    console.log('✅ Customer user data created in Firestore');
+                }
+            } catch (createError) {
+                console.error('❌ Failed to create user data in Firestore:', createError);
+                // Continue anyway with default role
+                userRole = selectedUserType === 'admin' ? 'admin' : 'customer';
             }
         }
         
