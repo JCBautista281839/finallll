@@ -793,8 +793,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let shippingText = 'FREE';
 
     if (isLalamoveSelected && savedData?.quotationData?.data?.priceBreakdown) {
-      shippingCost = parseInt(savedData.quotationData.data.priceBreakdown.total);
-      shippingText = `Php ${shippingCost}`;
+      shippingCost = parseFloat(savedData.quotationData.data.priceBreakdown.total) || 0;
+      shippingText = `Php ${shippingCost.toFixed(2)}`;
     }
 
     // Update shipping fee
@@ -805,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Calculate and update total
     const newTotal = basePrice + shippingCost;
     if (totalElement) {
-      totalElement.textContent = `Php ${newTotal}`;
+      totalElement.textContent = `Php ${newTotal.toFixed(2)}`;
     }
 
     console.log('[shipping.js] Order total updated:', {

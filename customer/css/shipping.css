@@ -460,8 +460,21 @@ hr {
   z-index: 1000;
 }
 
+/* Ensure all modal elements have white background */
+.modal-overlay * {
+  background-color: transparent;
+}
+
+.modal-content,
+.modal-content *,
+.payment-modal,
+.payment-modal * {
+  background-color: white !important;
+}
+
 .modal-content {
-  background: white;
+  background: white !important;
+  background-color: #ffffff !important;
   border-radius: 15px;
   padding: 30px;
   max-width: 500px;
@@ -620,6 +633,8 @@ hr {
   width: 95%;
   max-height: 90vh;
   overflow-y: auto;
+  background: white !important;
+  background-color: #ffffff !important;
 }
 
 .modal-header {
@@ -629,6 +644,13 @@ hr {
   margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 2px solid #f0f0f0;
+  background: white !important;
+  background-color: #ffffff !important;
+}
+
+.modal-body {
+  background: white !important;
+  background-color: #ffffff !important;
 }
 
 .modal-close {
