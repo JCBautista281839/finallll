@@ -2084,6 +2084,7 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
 });
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // Regular Password Change endpoint (for profile updates)
 app.post('/api/change-password', async (req, res) => {
     try {
@@ -2191,6 +2192,8 @@ app.post('/api/change-password', async (req, res) => {
     }
 });
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 
