@@ -1763,18 +1763,15 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         
         // Update password in Firebase Auth
         let firebaseUpdateSuccess = false;
-        try {
-            // Use centralized Firebase Admin SDK initialization
-            if (!firebaseAdminInitialized) {
-                const initResult = initializeFirebaseAdmin();
-                if (!initResult) {
-                    throw new Error('Firebase Admin SDK initialization failed');
-                }
-            }
-            
-            // Try to update password in Firebase
-            if (admin.apps.length > 0) {
-                try {
+        
+        // Check if Firebase Admin SDK is available
+        if (!firebaseAdminInitialized) {
+            console.log('⚠️ Firebase Admin SDK not initialized, will use client-side update');
+            firebaseUpdateSuccess = false;
+        } else {
+            try {
+                // Try to update password in Firebase
+                if (admin.apps.length > 0) {
                     console.log(`[Password Reset OTP] Attempting to update Firebase password for: ${email}`);
                     
                     // Get user by email
@@ -1789,38 +1786,31 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
                     console.log(`[Password Reset OTP] ✅ Firebase password updated successfully for user: ${userRecord.uid}`);
                     firebaseUpdateSuccess = true;
                     
-                } catch (firebaseError) {
-                    console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
-                    console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
-                    
-                    if (firebaseError.code === 'auth/user-not-found') {
-                        return res.status(400).json({ 
-                            success: false, 
-                            message: 'No account found with this email address' 
-                        });
-                    } else if (firebaseError.code === 'auth/invalid-credential' || firebaseError.message.includes('invalid_grant')) {
-                        console.log('⚠️ Firebase credentials issue - providing client-side fallback');
-                        console.log('💡 Firebase Admin SDK not properly configured, using client-side update');
-                        // Don't throw error, let it be handled by the general catch
-                        throw new Error('Firebase credentials invalid - using client-side fallback');
-                    } else if (firebaseError.code === 'auth/weak-password') {
-                        return res.status(400).json({ 
-                            success: false, 
-                            message: 'Password is too weak. Please choose a stronger password.' 
-                        });
-                    } else {
-                        // For other Firebase errors, throw to be handled by outer catch
-                        throw firebaseError;
-                    }
+                } else {
+                    console.log('⚠️ Firebase Admin SDK not available, will use client-side update');
+                    firebaseUpdateSuccess = false;
                 }
-            } else {
-                console.log('⚠️ Firebase Admin SDK not available, providing client-side fallback');
-                throw new Error('Firebase Admin SDK not initialized - using client-side fallback');
+                
+            } catch (firebaseError) {
+                console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
+                console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
+                
+                if (firebaseError.code === 'auth/user-not-found') {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'No account found with this email address' 
+                    });
+                } else if (firebaseError.code === 'auth/weak-password') {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Password is too weak. Please choose a stronger password.' 
+                    });
+                } else {
+                    // For other Firebase errors, log and continue with client-side update
+                    console.log('⚠️ Firebase update failed, will use client-side update');
+                    firebaseUpdateSuccess = false;
+                }
             }
-            
-        } catch (firebaseError) {
-            console.log('⚠️ Firebase Admin SDK not available, providing client-side fallback');
-            console.log(`[Password Reset OTP] Firebase error: ${firebaseError.message}`);
         }
         
         // Clear the OTP storage (if it exists)
