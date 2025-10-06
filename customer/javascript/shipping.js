@@ -39,77 +39,6 @@ function formatPhoneNumber(phone) {
   }
 }
 
-// Function to send payment verification notification to admin
-window.sendPaymentVerificationNotification = async function (paymentInfo) {
-  console.log('🔔 Starting payment verification notification process...');
-  console.log('Payment info received:', paymentInfo);
-
-  try {
-    // Check if Firebase is available
-    if (typeof firebase === 'undefined') {
-      console.error('❌ Firebase is not loaded!');
-      alert('Firebase connection error. Please refresh the page and try again.');
-      return;
-    }
-
-    // Get customer data from session storage
-    const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
-    console.log('Customer form data:', formData);
-
-    const customerName = formData.name || 'Unknown Customer';
-    const customerPhone = formData.phone || 'Unknown Phone';
-
-    // Initialize Firestore
-    console.log('📊 Initializing Firestore...');
-    const db = firebase.firestore();
-
-    if (!db) {
-      console.error('❌ Failed to initialize Firestore!');
-      alert('Database connection error. Please refresh the page and try again.');
-      return;
-    }
-
-    // Create notification data
-    const notificationData = {
-      type: 'payment_verification',
-      message: `Payment verification required for ${customerName} (${paymentInfo.type.toUpperCase()}) - Reference: ${paymentInfo.reference}`,
-      customerInfo: {
-        name: customerName,
-        phone: customerPhone,
-        email: formData.email || 'No email provided'
-      },
-      paymentInfo: {
-        type: paymentInfo.type,
-        reference: paymentInfo.reference,
-        receiptName: paymentInfo.receiptName,
-        receiptData: paymentInfo.receiptData,
-        receiptUrl: paymentInfo.receiptUrl || null,
-        timestamp: paymentInfo.timestamp
-      },
-      status: 'pending', // pending, approved, declined
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      seen: false,
-      requiresAction: true // Flag to show this needs admin action
-    };
-
-    console.log('📝 Notification data to be sent:', notificationData);
-
-    // Add to notifications collection
-    console.log('💾 Adding notification to Firestore...');
-    const docRef = await db.collection('notifications').add(notificationData);
-    console.log('✅ Payment verification notification sent successfully! Document ID:', docRef.id);
-
-    // Show success message to user
-    alert('Payment verification request sent to admin successfully!');
-
-  } catch (error) {
-    console.error('❌ Error sending payment verification notification:', error);
-    console.error('Error details:', error.message);
-    console.error('Error stack:', error.stack);
-    alert('Failed to send notification to admin. Error: ' + error.message);
-  }
-}
-
 document.addEventListener('DOMContentLoaded', function () {
 
   // Utility function to display messages/status
@@ -534,9 +463,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Enable the Place Order button
         enablePlaceOrderButton();
 
-        // Send notification to admin for payment verification
-        sendPaymentVerificationNotification(paymentInfo);
-
         console.log('Payment confirmation saved:', { type: currentPaymentType, reference: refCode, receiptUrl: paymentInfo.receiptUrl });
 
       } catch (error) {
@@ -565,9 +491,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Enable the Place Order button
             enablePlaceOrderButton();
-
-            // Send notification to admin for payment verification
-            sendPaymentVerificationNotification(paymentInfo);
 
             console.log('Payment confirmation saved with base64 fallback:', { type: currentPaymentType, reference: refCode });
 
@@ -1057,19 +980,6 @@ document.addEventListener('DOMContentLoaded', function () {
       // Both reference code and receipt are absolutely required
       if (!payment.reference || payment.reference.trim().length < 5) {
         alert('Payment reference code is required (minimum 5 characters). Please complete the payment modal first.');
-        sessionStorage.removeItem('paymentInfo');
-        return;
-      }
-
-      if (!payment.receiptData) {
-        alert('Payment receipt screenshot is required. Please complete the payment modal first.');
-        sessionStorage.removeItem('paymentInfo');
-        return;
-      }
-
-      // Verify payment method matches
-      if (payment.type !== selectedPaymentMethod) {
-        alert('Payment method mismatch. Please complete the payment process for the selected method.');
         sessionStorage.removeItem('paymentInfo');
         return;
       }
