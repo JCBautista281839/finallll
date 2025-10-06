@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -134,58 +134,65 @@
         <div id="map"></div>
       </div>
     </div>
-    <!-- Firebase SDK -->
+  </div>
 
-    <!-- Google Maps API -->
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
-    <script src="../javascript/maps.js"></script>
-    <script src="../javascript/details.js"></script>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const backBtn = document.getElementById('back-btn');
-        if (backBtn) {
-          backBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.href = '../html/menucustomer.html';
-          });
-        }
-      });
-      // Wait for Firebase to be ready before initializing cart system
-      document.addEventListener('DOMContentLoaded', function () {
-        console.log('[details.html] Page loaded, waiting for Firebase...');
-
-        // Function to wait for Firebase to be ready
-        function waitForFirebase() {
-          return new Promise((resolve) => {
-            const checkFirebase = () => {
-              if (typeof firebase !== 'undefined' &&
-                firebase.apps &&
-                firebase.apps.length > 0 &&
-                firebase.auth &&
-                firebase.firestore) {
-                console.log('[details.html] ✅ Firebase is ready');
-                resolve();
-              } else {
-                console.log('[details.html] ⏳ Waiting for Firebase...');
-                setTimeout(checkFirebase, 100);
-              }
-            };
-            checkFirebase();
-          });
-        }
-
-        // Initialize cart system after Firebase is ready
-        waitForFirebase().then(() => {
-          console.log('[details.html] Initializing cart system...');
-          initializeCartSystem();
-        }).catch(error => {
-          console.error('[details.html] Error waiting for Firebase:', error);
-          // Initialize with fallback to sessionStorage
-          initializeCartSystem();
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+  
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
+  <script src="../javascript/maps.js"></script>
+  <script src="../javascript/details.js"></script>
+  
+  <script>
+    // Back button functionality
+    document.addEventListener('DOMContentLoaded', function () {
+      const backBtn = document.getElementById('back-btn');
+      if (backBtn) {
+        backBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          window.location.href = '../html/menucustomer.html';
         });
+      }
+    });
+
+    // Wait for Firebase to be ready before initializing cart system
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('[details.html] Page loaded, waiting for Firebase...');
+      
+      // Function to wait for Firebase to be ready
+      function waitForFirebase() {
+        return new Promise((resolve) => {
+          const checkFirebase = () => {
+            if (typeof firebase !== 'undefined' && 
+                firebase.apps && 
+                firebase.apps.length > 0 && 
+                firebase.auth && 
+                firebase.firestore) {
+              console.log('[details.html] ✅ Firebase is ready');
+              resolve();
+            } else {
+              console.log('[details.html] ⏳ Waiting for Firebase...');
+              setTimeout(checkFirebase, 100);
+            }
+          };
+          checkFirebase();
+        });
+      }
+      
+      // Initialize cart system after Firebase is ready
+      waitForFirebase().then(() => {
+        console.log('[details.html] Initializing cart system...');
+        initializeCartSystem();
+      }).catch(error => {
+        console.error('[details.html] Error waiting for Firebase:', error);
+        // Initialize with fallback to sessionStorage
+        initializeCartSystem();
       });
+    });
 
       // Initialize cart system
       function initializeCartSystem() {
@@ -479,14 +486,6 @@
         console.log('[details.html] Cart system initialized');
       }
     </script>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-    <!-- Firebase Configuration -->
-    <script src="../firebase-config.js"></script>
 
     <!-- Authentication Manager for Auto Logout -->
     <script src="../javascript/auth-manager.js"></script>
