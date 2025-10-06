@@ -551,7 +551,8 @@ class OTPVerificationManager {
                         
                         // Show OTP if email failed to send
                         if (!result.emailSent && result.otp) {
-                            alert(`New OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                            // OTP popup removed - OTP is now handled server-side
+                            console.log(`New OTP Code: ${result.otp} (Email not sent)`);
                         }
                         
                         return { success: true, method: 'SendGrid' };
@@ -567,8 +568,8 @@ class OTPVerificationManager {
             localStorage.setItem('emailOTP', newOTP);
             localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000));
             
-            // Show OTP in alert
-            alert(`New OTP Code: ${newOTP}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+            // OTP popup removed - OTP is now handled server-side
+            console.log(`New OTP Code: ${newOTP} (Generated locally)`);
             
             console.log('✅ Local OTP resent successfully');
             return { success: true, method: 'Local' };

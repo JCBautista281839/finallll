@@ -54,8 +54,8 @@ async function sendEmailOTP(email, userName) {
                         console.log('⏰ Expires in: 10 minutes');
                         console.log('=============================');
                         
-                        // Also show an alert for immediate visibility
-                        alert(`OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                        // OTP popup removed - OTP is now handled server-side
+                        console.log(`OTP Code: ${result.otp} (Email not sent)`);
                         
                         return {
                             success: true,
@@ -105,8 +105,8 @@ async function sendLocalEmailOTP(email, userName) {
         console.log('⏰ Expires in: 10 minutes');
         console.log('=============================');
         
-        // Also show an alert for immediate visibility
-        alert(`OTP Code: ${otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+        // OTP popup removed - OTP is now handled server-side
+        console.log(`OTP Code: ${otp} (Generated locally)`);
         
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
