@@ -78,13 +78,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Main Firebase Config -->
-    <script src="../main.js"></script>
+    <script src="../main.js?v=2.0"></script>
     
     <!-- SendGrid OTP Service -->
-    <script src="../javascript/sendgrid-otp.js"></script>
+    <script src="../javascript/sendgrid-otp.js?v=2.0"></script>
     
     <!-- OTP Verification Functions -->
-    <script src="../javascript/otp.js"></script>
+    <script src="../javascript/otp.js?v=2.0"></script>
     
     <!-- Signup Functions for SMS OTP -->
     
@@ -417,6 +417,13 @@
                     
                     if (signupEmail && signupPassword) {
                         try {
+                            // Check if Firebase is initialized
+                            if (!firebase || !firebase.apps || firebase.apps.length === 0) {
+                                console.error('❌ Firebase not initialized');
+                                alert('System error: Firebase not initialized. Please refresh the page and try again.');
+                                return;
+                            }
+                            
                             console.log('📧 Creating user with email:', signupEmail);
                             console.log('👤 User name:', signupName);
                             
