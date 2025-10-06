@@ -409,16 +409,29 @@
                     const signupName = localStorage.getItem('signupName');
                     const signupPhone = localStorage.getItem('signupPhone');
                     
+                    console.log('📋 Retrieved signup data:');
+                    console.log('  - Email:', signupEmail);
+                    console.log('  - Name:', signupName);
+                    console.log('  - Phone:', signupPhone);
+                    console.log('  - Password:', signupPassword ? '[SET]' : '[NOT SET]');
+                    
                     if (signupEmail && signupPassword) {
                         try {
+                            console.log('📧 Creating user with email:', signupEmail);
+                            console.log('👤 User name:', signupName);
+                            
                             // Create Firebase user account
                             const userCredential = await firebase.auth().createUserWithEmailAndPassword(signupEmail, signupPassword);
                             const user = userCredential.user;
+                            
+                            console.log('✅ Firebase user created with UID:', user.uid);
                             
                             // Update user profile
                             await user.updateProfile({
                                 displayName: signupName
                             });
+                            
+                            console.log('✅ User profile updated');
                             
                             // Store user data in Firestore
                             await firebase.firestore().collection('customers').doc(user.uid).set({
@@ -431,30 +444,65 @@
                                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                             });
                             
-                            console.log('✅ Firebase user account created successfully');
+                            console.log('✅ User data stored in Firestore');
+                            
+                            // Clear stored data only after successful user creation
+                            localStorage.removeItem('signupEmail');
+                            localStorage.removeItem('signupName');
+                            localStorage.removeItem('signupPassword');
+                            localStorage.removeItem('signupPhone');
+                            
+                            // Show success message
+                            alert('Email verified successfully! You are now logged in.');
+                            
+                            // Redirect to main page for automatic login
+                            window.location.href = '../index.html';
                             
                         } catch (firebaseError) {
                             console.error('❌ Error creating Firebase user:', firebaseError);
-                            // Don't fail the entire process if Firebase user creation fails
-                            console.log('⚠️ Continuing without Firebase user creation');
+                            console.error('❌ Firebase error code:', firebaseError.code);
+                            console.error('❌ Firebase error message:', firebaseError.message);
+                            
+                            // Show specific error message
+                            let errorMessage = 'Signup failed: ';
+                            if (firebaseError.code === 'auth/email-already-in-use') {
+                                errorMessage += 'This email is already registered. Please try logging in instead.';
+                            } else if (firebaseError.code === 'auth/weak-password') {
+                                errorMessage += 'Password is too weak. Please choose a stronger password.';
+                            } else if (firebaseError.code === 'auth/invalid-email') {
+                                errorMessage += 'Invalid email address.';
+                            } else {
+                                errorMessage += firebaseError.message;
+                            }
+                            
+                            alert(errorMessage);
+                            
+                            // Reset button state
+                            verifyButton.innerHTML = 'Verify Email';
+                            verifyButton.disabled = false;
+                            return; // Don't proceed with success flow
                         }
+                    } else {
+                        console.error('❌ Missing signup data in localStorage');
+                        alert('Signup data not found. Please try signing up again.');
+                        
+                        // Reset button state
+                        verifyButton.innerHTML = 'Verify Email';
+                        verifyButton.disabled = false;
+                        return;
                     }
+                } else {
+                    console.error('❌ OTP verification failed');
+                    alert('OTP verification failed. Please try again.');
+                    
+                    // Reset button state
+                    verifyButton.innerHTML = 'Verify Email';
+                    verifyButton.disabled = false;
+                    return;
                 }
                 
-                // Clear stored data
-                localStorage.removeItem('signupEmail');
-                localStorage.removeItem('signupName');
-                localStorage.removeItem('signupPassword');
-                localStorage.removeItem('signupPhone');
-                
-                 // Show success message
-                 alert('Email verified successfully! You are now logged in.');
-                 
-                 // Redirect to main page for automatic login
-                 window.location.href = '../index.html';
-                
             } catch (error) {
-                console.error('OTP verification error:', error);
+                console.error('❌ OTP verification error:', error);
                 alert('Verification failed: ' + error.message);
                 
                 // Reset button state
