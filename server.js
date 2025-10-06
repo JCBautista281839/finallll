@@ -6,6 +6,62 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config(); // Load environment variables from .env file
 
+// Firebase Admin SDK global variables
+var firebaseAdminInitialized = false;
+
+// Firebase Admin SDK initialization function
+function initializeFirebaseAdmin() {
+    if (firebaseAdminInitialized) {
+        console.log('Firebase Admin SDK already initialized');
+        return true;
+    }
+    
+    try {
+        // Try to load service account key from file or environment variables
+        let serviceAccount;
+        
+        if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            // Use environment variable if available
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            console.log('Using Firebase service account from environment variable');
+        } else {
+            // Try to load from file
+            serviceAccount = require('./firebase-service-account.json');
+            console.log('Using Firebase service account from file');
+        }
+        
+        // Check if Firebase Admin is already initialized
+        if (admin.apps && admin.apps.length > 0) {
+            console.log('Firebase Admin SDK already has apps initialized');
+            firebaseAdminInitialized = true;
+            return true;
+        }
+        
+        // Initialize Firebase Admin SDK
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id
+        });
+        
+        firebaseAdminInitialized = true;
+        console.log('✅ Firebase Admin SDK initialized successfully');
+        return true;
+        
+    } catch (error) {
+        console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
+        console.log('📝 To enable Firebase Admin features for password reset:');
+        console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
+        console.log('   2. Generate new private key and download JSON file');
+        console.log('   3. Save as firebase-service-account.json in project root');
+        console.log('   4. Restart the server');
+        console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
+        return false;
+    }
+}
+
+// Initialize Firebase Admin SDK at startup
+initializeFirebaseAdmin();
+
 const { spawn, exec } = require('child_process');
 const multer = require('multer');
 const fs = require('fs');
@@ -955,51 +1011,6 @@ async function updateOrderStatus(orderId, statusData) {
     
     // Firebase Admin SDK Integration
     
-// Initialize Firebase Admin SDK at startup
-let firebaseAdminInitialized = false;
-
-function initializeFirebaseAdmin() {
-    if (firebaseAdminInitialized) {
-        console.log('Firebase Admin SDK already initialized');
-        return true;
-    }
-    
-    try {
-        // Try to load service account key
-        const serviceAccount = require('./firebase-service-account.json');
-        
-        // Check if Firebase Admin is already initialized
-        if (admin.apps && admin.apps.length > 0) {
-            console.log('Firebase Admin SDK already has apps initialized');
-            firebaseAdminInitialized = true;
-            return true;
-        }
-        
-        // Initialize Firebase Admin SDK
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            projectId: serviceAccount.project_id
-        });
-        
-        firebaseAdminInitialized = true;
-        console.log('✅ Firebase Admin SDK initialized successfully');
-        return true;
-        
-    } catch (error) {
-        console.warn('⚠️ Firebase Admin SDK not configured:', error.message);
-        console.log('📝 To enable Firebase Admin features for password reset:');
-        console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
-        console.log('   2. Generate new private key and download JSON file');
-        console.log('   3. Save as firebase-service-account.json in project root');
-        console.log('   4. Restart the server');
-        console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
-        return false;
-    }
-}
-
-// Initialize Firebase Admin SDK
-initializeFirebaseAdmin();
-    
     // Firebase Firestore integration example:
     /*
     const db = admin.firestore();
@@ -1777,6 +1788,10 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         let firebaseUpdateSuccess = false;
         
         // Force Firebase Admin SDK initialization if not already done
+        console.log('🔍 Checking Firebase Admin SDK status...');
+        console.log('firebaseAdminInitialized:', firebaseAdminInitialized);
+        console.log('admin.apps length:', admin.apps ? admin.apps.length : 'admin.apps is undefined');
+        
         if (!firebaseAdminInitialized) {
             console.log('🔄 Attempting to initialize Firebase Admin SDK...');
             const initResult = initializeFirebaseAdmin();
