@@ -5,9 +5,32 @@
 class SendGridOTPService {
     constructor() {
         // Use dynamic base URL - defaults to current domain if config not available
-        this.baseUrl = (window.API_CONFIG && window.API_CONFIG.BASE_URL) || window.location.origin;
+        this.baseUrl = this.getBaseUrl();
         this.otpExpiryMinutes = 10;
         this.maxAttempts = 5;
+        console.log('🔧 SendGrid OTP Service initialized with baseUrl:', this.baseUrl);
+    }
+    
+    getBaseUrl() {
+        // Check for API_CONFIG first
+        if (window.API_CONFIG && window.API_CONFIG.BASE_URL) {
+            console.log('✅ Using API_CONFIG.BASE_URL:', window.API_CONFIG.BASE_URL);
+            return window.API_CONFIG.BASE_URL;
+        }
+        
+        // Fallback to current origin
+        const origin = window.location.origin;
+        console.log('⚠️ API_CONFIG not found, using window.location.origin:', origin);
+        return origin;
+    }
+    
+    // Method to update baseUrl when config becomes available
+    updateBaseUrl() {
+        const newBaseUrl = this.getBaseUrl();
+        if (newBaseUrl !== this.baseUrl) {
+            console.log('🔄 Updating baseUrl from', this.baseUrl, 'to', newBaseUrl);
+            this.baseUrl = newBaseUrl;
+        }
     }
 
     /**
@@ -27,6 +50,10 @@ class SendGridOTPService {
             if (!email || !userName) {
                 throw new Error('Email and user name are required');
             }
+
+            // Update baseUrl in case config loaded after initialization
+            this.updateBaseUrl();
+            console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-send-otp`);
 
             const response = await fetch(`${this.baseUrl}/api/sendgrid-send-otp`, {
                 method: 'POST',
@@ -94,6 +121,10 @@ class SendGridOTPService {
                 throw new Error('Email and OTP are required');
             }
 
+            // Update baseUrl in case config loaded after initialization
+            this.updateBaseUrl();
+            console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-verify-otp`);
+
             // Add timeout to prevent hanging requests
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
@@ -155,6 +186,10 @@ class SendGridOTPService {
             if (!email || !userName) {
                 throw new Error('Email and user name are required');
             }
+
+            // Update baseUrl in case config loaded after initialization
+            this.updateBaseUrl();
+            console.log(`🌐 Making request to: ${this.baseUrl}/api/sendgrid-resend-otp`);
 
             const response = await fetch(`${this.baseUrl}/api/sendgrid-resend-otp`, {
                 method: 'POST',
@@ -306,12 +341,35 @@ class SendGridOTPService {
     }
 }
 
-// Initialize SendGrid OTP service
-window.sendGridOTPService = new SendGridOTPService();
+// Initialize SendGrid OTP service with delay to ensure config loads
+function initializeSendGridOTPService() {
+    if (window.sendGridOTPService) {
+        return; // Already initialized
+    }
+    
+    window.sendGridOTPService = new SendGridOTPService();
+    console.log('📧 SendGrid OTP Service initialized');
+}
 
-// Cleanup expired OTPs on page load
+// Try to initialize immediately
+initializeSendGridOTPService();
+
+// Also try after DOM is loaded (in case config loads later)
 document.addEventListener('DOMContentLoaded', function() {
-    window.sendGridOTPService.cleanupExpiredOTPs();
+    if (window.sendGridOTPService) {
+        window.sendGridOTPService.cleanupExpiredOTPs();
+        // Update baseUrl in case config loaded after initial initialization
+        window.sendGridOTPService.updateBaseUrl();
+    } else {
+        initializeSendGridOTPService();
+    }
 });
 
-console.log('📧 SendGrid OTP Service initialized');
+// Also try after a short delay to ensure all scripts are loaded
+setTimeout(function() {
+    if (window.sendGridOTPService) {
+        window.sendGridOTPService.updateBaseUrl();
+    } else {
+        initializeSendGridOTPService();
+    }
+}, 100);
