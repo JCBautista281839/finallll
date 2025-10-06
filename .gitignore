@@ -84,3 +84,8 @@ config.env.secure.backup
 .env
 .env.*
 !env.example
+
+# Firebase service account keys (sensitive)
+firebase-service-account.json
+firebase-adminsdk-*.json
+service-account-key.json
