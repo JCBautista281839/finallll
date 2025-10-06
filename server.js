@@ -168,7 +168,7 @@ async function sendOTPEmail(email, userName, otp) {
                     <!-- Logo -->
                     <div style="position: relative; z-index: 1;">
                         <div style="display: inline-block; background: rgba(255,255,255,0.2); border-radius: 50%; padding: 15px; margin-bottom: 15px; backdrop-filter: blur(10px);">
-                            <img src="http://localhost:5001/src/IMG/Logo.png" alt="Viktoria's Bistro Logo" style="width: 60px; height: 60px; border-radius: 50%;">
+                            <img src="${BASE_URL}/src/IMG/Logo.png" alt="Viktoria's Bistro Logo" style="width: 60px; height: 60px; border-radius: 50%;">
                         </div>
                         <h1 style="margin: 0; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🍽️ Viktoria's Bistro</h1>
                         <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Fine Dining Experience</p>
