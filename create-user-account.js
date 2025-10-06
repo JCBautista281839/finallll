@@ -8,7 +8,7 @@
 const admin = require('firebase-admin');
 
 // Configuration
-const USER_EMAIL = 'gradelljbautista@gmail.com';
+const USER_EMAIL = 'christianbautista265853@gmail.com';
 const USER_PASSWORD = 'Password123!'; // Change this to a secure password
 const USER_ROLE = 'admin'; // or 'customer' depending on what you need
 
