@@ -4,7 +4,8 @@
  */
 class SendGridOTPService {
     constructor() {
-        this.baseUrl = 'http://localhost:5001';
+        // Use dynamic base URL - defaults to current domain if config not available
+        this.baseUrl = (window.API_CONFIG && window.API_CONFIG.BASE_URL) || window.location.origin;
         this.otpExpiryMinutes = 10;
         this.maxAttempts = 5;
     }

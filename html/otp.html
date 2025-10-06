@@ -348,7 +348,7 @@
                     try {
                         console.log('🔄 Attempting server OTP verification...');
                         
-                        const response = await fetch('http://localhost:5001/api/sendgrid-verify-otp', {
+                        const response = await fetch(`${window.location.origin}/api/sendgrid-verify-otp`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -522,7 +522,7 @@
                     try {
                         console.log('🔄 Attempting server OTP resend...');
                         
-                        const response = await fetch('http://localhost:5001/api/sendgrid-resend-otp', {
+                        const response = await fetch(`${window.location.origin}/api/sendgrid-resend-otp`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

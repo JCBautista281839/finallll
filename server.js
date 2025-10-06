@@ -24,8 +24,7 @@ app.use((req, res, next) => {
 });
 
 // Configuration (use environment variables)
-// IMPORTANT: Using SANDBOX mode for testing
-const IS_PRODUCTION = false; // Force sandbox mode
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const LALA_HOST = IS_PRODUCTION ? 'rest.lalamove.com' : 'rest.sandbox.lalamove.com';
 const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
 const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
@@ -765,41 +764,6 @@ function validateWebhookSignature(body, signature, timestamp) {
     console.log('[webhook] Temporarily skipping signature validation for testing');
     return true;
     
-    // Skip validation in development mode
-    if (!IS_PRODUCTION) {
-      console.log('[webhook] Skipping signature validation in development mode');
-      return true;
-    }
-    
-    if (!signature || !timestamp) {
-      console.log('[webhook] Missing signature or timestamp');
-      return false;
-    }
-    
-    // Check timestamp is within 5 minutes
-    const now = Date.now();
-    const webhookTime = parseInt(timestamp) * 1000;
-    const timeDiff = Math.abs(now - webhookTime);
-    
-    if (timeDiff > 5 * 60 * 1000) { // 5 minutes
-      console.log('[webhook] Webhook timestamp too old');
-      return false;
-    }
-    
-    // Validate signature using Lalamove webhook secret
-    const webhookSecret = process.env.LALAMOVE_WEBHOOK_SECRET || API_SECRET;
-    const bodyString = JSON.stringify(body);
-    const expectedSignature = crypto.createHmac('sha256', webhookSecret)
-      .update(timestamp + bodyString)
-      .digest('hex');
-    
-    const isValid = signature === expectedSignature;
-    
-    if (!isValid) {
-      console.log('[webhook] Signature mismatch - expected:', expectedSignature, 'received:', signature);
-    }
-    
-    return isValid;
   } catch (error) {
     console.error('[webhook] Error validating signature:', error);
     return false;

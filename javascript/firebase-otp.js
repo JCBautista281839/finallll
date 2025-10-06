@@ -7,6 +7,9 @@ class FirebaseOTPService {
         this.maxAttempts = 5;
         this.otpExpiryMinutes = 10;
         
+        // Use dynamic base URL - defaults to current domain if config not available
+        this.baseUrl = (window.API_CONFIG && window.API_CONFIG.BASE_URL) || window.location.origin;
+        
         console.log('🔥 Firebase OTP Service initialized');
     }
 
@@ -21,7 +24,7 @@ class FirebaseOTPService {
             console.log(`🔥 Storing OTP via server API for ${email}`);
             
             // Store OTP via server API instead of direct Firestore
-            const response = await fetch('http://localhost:5001/api/firebase-send-otp', {
+            const response = await fetch(`${this.baseUrl}/api/firebase-send-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -62,7 +65,7 @@ class FirebaseOTPService {
             console.log(`🔥 Getting OTP via server API for ${email}`);
             
             // Get OTP via server API instead of direct Firestore
-            const response = await fetch('http://localhost:5001/api/firebase-verify-otp', {
+            const response = await fetch(`${this.baseUrl}/api/firebase-verify-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -135,7 +138,7 @@ class FirebaseOTPService {
             }
 
             // Use server API to generate and store OTP
-            const response = await fetch('http://localhost:5001/api/firebase-send-otp', {
+            const response = await fetch(`${this.baseUrl}/api/firebase-send-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -193,7 +196,7 @@ class FirebaseOTPService {
             console.log(`🔍 Firebase OTP: Verifying OTP for ${email}`);
             
             // Use server API to verify OTP
-            const response = await fetch('http://localhost:5001/api/firebase-verify-otp', {
+            const response = await fetch(`${this.baseUrl}/api/firebase-verify-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -255,7 +258,7 @@ class FirebaseOTPService {
             console.log(`🔄 Firebase OTP: Resending OTP to ${email}`);
             
             // Use server API to resend OTP
-            const response = await fetch('http://localhost:5001/api/firebase-resend-otp', {
+            const response = await fetch(`${this.baseUrl}/api/firebase-resend-otp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

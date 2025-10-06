@@ -6,10 +6,10 @@
 // API Base URL Configuration
 const API_CONFIG = {
     // Development
-    BASE_URL: 'http://localhost:5001',
+    // BASE_URL: 'http://localhost:5001',
     
-    // Production (uncomment and update for production)
-    // BASE_URL: 'https://your-production-domain.com',
+    // Production
+    BASE_URL: 'https://viktoriasbistro.restaurant',
     
     // API Endpoints
     ENDPOINTS: {
