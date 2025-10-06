@@ -1800,9 +1800,9 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         console.log(`[Password Reset OTP] Password reset completed for: ${email}`);
         res.json({ 
             success: true, 
-            message: 'Password reset successfully. You can now log in with your new password.',
-            firebaseUpdated: firebaseUpdateSuccess,
-            note: firebaseUpdateSuccess ? 'Password updated successfully in Firebase Authentication' : 'Password reset completed but Firebase update failed'
+            message: 'Password reset approved. Please complete the process on the client side.',
+            clientSideUpdate: true,
+            note: 'Password reset token generated - client will handle Firebase update'
         });
         
     } catch (error) {
