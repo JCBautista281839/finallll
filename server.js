@@ -1761,9 +1761,10 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
                             message: 'No account found with this email address' 
                         });
                     } else if (firebaseError.code === 'auth/invalid-credential' || firebaseError.message.includes('invalid_grant')) {
-                        console.log('⚠️ Firebase credentials issue - password reset successful but Firebase update failed');
-                        console.log('💡 Please check Firebase service account key or sync server time');
-                        throw new Error('Firebase credentials invalid - please check service account configuration');
+                        console.log('⚠️ Firebase credentials issue - providing client-side fallback');
+                        console.log('💡 Firebase Admin SDK not properly configured, using client-side update');
+                        // Don't throw error, let it be handled by the general catch
+                        throw new Error('Firebase credentials invalid - using client-side fallback');
                     } else if (firebaseError.code === 'auth/weak-password') {
                         return res.status(400).json({ 
                             success: false, 
@@ -1775,20 +1776,21 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
                     }
                 }
             } else {
-                console.log('⚠️ Firebase Admin SDK not available, skipping password update');
-                throw new Error('Firebase Admin SDK not initialized');
+                console.log('⚠️ Firebase Admin SDK not available, providing client-side fallback');
+                throw new Error('Firebase Admin SDK not initialized - using client-side fallback');
             }
             
         } catch (generalError) {
             console.error('[Password Reset OTP] Error during Firebase password update:', generalError.message);
             
-            // If Firebase update failed, we should still return an error
-            // because the password reset is not complete
-            return res.status(500).json({ 
-                success: false, 
-                message: `Password reset failed: ${generalError.message}`,
-                error: generalError.message,
-                firebaseError: true
+            // Instead of failing completely, provide client-side fallback
+            console.log('🔄 Firebase Admin SDK failed, providing client-side fallback');
+            return res.json({ 
+                success: true, 
+                message: 'Password reset approved. Please complete the process on the client side.',
+                clientSideUpdate: true,
+                firebaseUpdateFailed: true,
+                note: `Server-side Firebase update failed: ${generalError.message}. OTP was verified successfully.`
             });
         }
         
