@@ -18,10 +18,10 @@
 // Utility function to format Philippine phone numbers to E.164 format
 function formatPhoneNumber(phone) {
   if (!phone) return '+639189876543'; // Default fallback
-  
+
   // Remove all non-digit characters
   const digits = phone.replace(/\D/g, '');
-  
+
   // Handle different Philippine number formats
   if (digits.startsWith('63')) {
     // Already has country code (63)
@@ -39,8 +39,79 @@ function formatPhoneNumber(phone) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  
+// Function to send payment verification notification to admin
+window.sendPaymentVerificationNotification = async function (paymentInfo) {
+  console.log('🔔 Starting payment verification notification process...');
+  console.log('Payment info received:', paymentInfo);
+
+  try {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+      console.error('❌ Firebase is not loaded!');
+      alert('Firebase connection error. Please refresh the page and try again.');
+      return;
+    }
+
+    // Get customer data from session storage
+    const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
+    console.log('Customer form data:', formData);
+
+    const customerName = formData.name || 'Unknown Customer';
+    const customerPhone = formData.phone || 'Unknown Phone';
+
+    // Initialize Firestore
+    console.log('📊 Initializing Firestore...');
+    const db = firebase.firestore();
+
+    if (!db) {
+      console.error('❌ Failed to initialize Firestore!');
+      alert('Database connection error. Please refresh the page and try again.');
+      return;
+    }
+
+    // Create notification data
+    const notificationData = {
+      type: 'payment_verification',
+      message: `Payment verification required for ${customerName} (${paymentInfo.type.toUpperCase()}) - Reference: ${paymentInfo.reference}`,
+      customerInfo: {
+        name: customerName,
+        phone: customerPhone,
+        email: formData.email || 'No email provided'
+      },
+      paymentInfo: {
+        type: paymentInfo.type,
+        reference: paymentInfo.reference,
+        receiptName: paymentInfo.receiptName,
+        receiptData: paymentInfo.receiptData,
+        receiptUrl: paymentInfo.receiptUrl || null,
+        timestamp: paymentInfo.timestamp
+      },
+      status: 'pending', // pending, approved, declined
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      seen: false,
+      requiresAction: true // Flag to show this needs admin action
+    };
+
+    console.log('📝 Notification data to be sent:', notificationData);
+
+    // Add to notifications collection
+    console.log('💾 Adding notification to Firestore...');
+    const docRef = await db.collection('notifications').add(notificationData);
+    console.log('✅ Payment verification notification sent successfully! Document ID:', docRef.id);
+
+    // Show success message to user
+    alert('Payment verification request sent to admin successfully!');
+
+  } catch (error) {
+    console.error('❌ Error sending payment verification notification:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    alert('Failed to send notification to admin. Error: ' + error.message);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+
   // Utility function to display messages/status
   function showStatus(message, isError = false) {
     // Create or update status display
@@ -62,11 +133,11 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
       document.body.appendChild(statusEl);
     }
-    
+
     statusEl.textContent = message;
     statusEl.style.backgroundColor = isError ? '#e74c3c' : '#2ecc71';
     statusEl.style.display = 'block';
-    
+
     // Auto-hide after 5 seconds
     setTimeout(() => {
       if (statusEl) statusEl.style.display = 'none';
@@ -100,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Payment Modal Functionality
   function initPaymentModal() {
     const gcashPayment = document.getElementById('gcash-payment');
-    const cardPayment = document.getElementById('card-payment');
+    const bankTransferPayment = document.getElementById('bank-transfer-payment');
     const paymentModal = document.getElementById('payment-modal');
     const modalTitle = document.getElementById('payment-modal-title');
     const qrCodeImage = document.getElementById('payment-qr-code');
@@ -114,10 +185,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewImage = document.getElementById('preview-image');
     const removeFile = document.getElementById('remove-file');
 
+    // Debug: Check if all elements are found
+    console.log('Payment modal elements check:', {
+      gcashPayment: !!gcashPayment,
+      bankTransferPayment: !!bankTransferPayment,
+      paymentModal: !!paymentModal,
+      modalTitle: !!modalTitle,
+      qrCodeImage: !!qrCodeImage,
+      modalClose: !!modalClose,
+      paymentCancel: !!paymentCancel,
+      paymentConfirm: !!paymentConfirm,
+      referenceCode: !!referenceCode,
+      receiptUpload: !!receiptUpload,
+      fileUploadArea: !!fileUploadArea,
+      filePreview: !!filePreview,
+      previewImage: !!previewImage,
+      removeFile: !!removeFile
+    });
+
+    if (!gcashPayment || !bankTransferPayment || !paymentModal) {
+      console.error('Critical payment modal elements not found!');
+      return;
+    }
+
     // QR Code images - replace these paths with your actual QR code images
     const qrCodes = {
       gcash: '../src/IMG/gcash-qr.png', // Replace with your GCash QR code
-      card: '../src/IMG/card-qr.png'    // Replace with your Card QR code
+      bank_transfer: '../src/IMG/bank-transfer-qr.png'    // Replace with your Bank Transfer QR code
+    };
+
+    // Fallback QR code text for when images are not available
+    const qrCodeFallback = {
+      gcash: 'GCash QR Code - Please scan or use: 09XX-XXX-XXXX',
+      bank_transfer: 'Bank Transfer Details - Account: XXXX-XXXX-XXXX'
     };
 
     let uploadedFile = null;
@@ -126,24 +226,61 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show payment modal
     function showPaymentModal(paymentType) {
       currentPaymentType = paymentType;
-      modalTitle.textContent = paymentType === 'gcash' ? 'Complete GCash Payment' : 'Complete Card Payment';
+      modalTitle.textContent = paymentType === 'gcash' ? 'Complete GCash Payment' : 'Complete Bank Transfer Payment';
+
+      // Try to load QR code, with fallback handling
       qrCodeImage.src = qrCodes[paymentType];
-      qrCodeImage.alt = `${paymentType === 'gcash' ? 'GCash' : 'Card'} QR Code`;
-      
+      qrCodeImage.alt = `${paymentType === 'gcash' ? 'GCash' : 'Bank Transfer'} QR Code`;
+
+      // Handle image load error
+      qrCodeImage.onerror = function () {
+        console.log('QR code image not found, showing fallback text');
+        qrCodeImage.style.display = 'none';
+
+        // Create or update fallback text
+        let fallbackDiv = document.querySelector('.qr-fallback');
+        if (!fallbackDiv) {
+          fallbackDiv = document.createElement('div');
+          fallbackDiv.className = 'qr-fallback';
+          fallbackDiv.style.cssText = `
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin: 10px 0;
+          `;
+          qrCodeImage.parentNode.appendChild(fallbackDiv);
+        }
+        fallbackDiv.innerHTML = `
+          <h4>${paymentType === 'gcash' ? 'GCash Payment' : 'Bank Transfer Payment'}</h4>
+          <p>${qrCodeFallback[paymentType]}</p>
+          <small>Please add your QR code image to display here</small>
+        `;
+        fallbackDiv.style.display = 'block';
+      };
+
+      qrCodeImage.onload = function () {
+        // Hide fallback if image loads successfully
+        const fallbackDiv = document.querySelector('.qr-fallback');
+        if (fallbackDiv) fallbackDiv.style.display = 'none';
+        qrCodeImage.style.display = 'block';
+      };
+
       // Reset form
       referenceCode.value = '';
       uploadedFile = null;
       resetFileUpload();
       updateConfirmButton();
-      
+
       // Add instruction message if not already present
       const instructionEl = document.querySelector('.payment-instruction');
       if (instructionEl) {
         instructionEl.textContent = `You must complete this payment and provide both reference code and receipt screenshot before you can place your order.`;
       }
-      
+
       paymentModal.style.display = 'flex';
-      
+
       // Disable place order button until payment is confirmed
       disablePlaceOrderButton();
     }
@@ -155,13 +292,33 @@ document.addEventListener('DOMContentLoaded', function() {
       uploadedFile = null;
       resetFileUpload();
       currentPaymentType = '';
-      
+
       // Check if payment was completed, if not, show reminder
       const paymentInfo = sessionStorage.getItem('paymentInfo');
       if (!paymentInfo) {
         showStatus('Payment not completed. You must complete payment to place your order.', true);
         disablePlaceOrderButton();
       }
+    }
+
+    // Reset payment selection - allows user to choose different payment method
+    function resetPaymentSelection() {
+      const gcashPayment = document.getElementById('gcash-payment');
+      const bankTransferPayment = document.getElementById('bank-transfer-payment');
+
+      if (gcashPayment) gcashPayment.checked = false;
+      if (bankTransferPayment) bankTransferPayment.checked = false;
+
+      // Clear any stored payment info
+      sessionStorage.removeItem('paymentInfo');
+      sessionStorage.removeItem('paymentReference');
+      sessionStorage.removeItem('paymentMethod');
+
+      // Reset current payment type
+      currentPaymentType = '';
+
+      // Keep place order button disabled until new payment is confirmed
+      disablePlaceOrderButton();
     }
 
     // Reset file upload area
@@ -177,9 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const hasReference = referenceCode.value.trim().length >= 5; // Increased minimum length
       const hasReceipt = uploadedFile !== null;
       const isComplete = hasReference && hasReceipt;
-      
+
       paymentConfirm.disabled = !isComplete;
-      
+
       // Update button text to be more descriptive
       if (!hasReference && !hasReceipt) {
         paymentConfirm.textContent = 'Enter Reference Code & Upload Receipt';
@@ -194,6 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // File upload handling
     function handleFileSelect(file) {
+      console.log('File selected:', file);
       if (!file) return;
 
       // Validate file type
@@ -209,23 +367,25 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       uploadedFile = file;
+      console.log('File accepted, showing preview...');
 
       // Show preview
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
+        console.log('File preview loaded');
         previewImage.src = e.target.result;
         const uploadPlaceholder = fileUploadArea.querySelector('.upload-placeholder');
-        uploadPlaceholder.style.display = 'none';
-        filePreview.style.display = 'block';
+        if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+        if (filePreview) filePreview.style.display = 'block';
         updateConfirmButton();
       };
       reader.readAsDataURL(file);
     }
 
     // Event Listeners
-    
+
     // Payment option click handlers
-    gcashPayment.addEventListener('change', function() {
+    gcashPayment.addEventListener('change', function () {
       if (this.checked) {
         // Clear any existing payment info when switching methods
         sessionStorage.removeItem('paymentInfo');
@@ -234,21 +394,28 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    cardPayment.addEventListener('change', function() {
+    bankTransferPayment.addEventListener('change', function () {
       if (this.checked) {
         // Clear any existing payment info when switching methods  
         sessionStorage.removeItem('paymentInfo');
         disablePlaceOrderButton();
-        showPaymentModal('card');
+        showPaymentModal('bank_transfer');
       }
     });
 
-    // Modal close handlers
-    modalClose.addEventListener('click', hidePaymentModal);
-    paymentCancel.addEventListener('click', hidePaymentModal);
+    // Modal close handlers - allow users to go back and change payment method
+    modalClose.addEventListener('click', function () {
+      hidePaymentModal();
+      resetPaymentSelection();
+    });
+
+    paymentCancel.addEventListener('click', function () {
+      hidePaymentModal();
+      resetPaymentSelection();
+    });
 
     // Click outside modal to close
-    paymentModal.addEventListener('click', function(e) {
+    paymentModal.addEventListener('click', function (e) {
       if (e.target === paymentModal) {
         hidePaymentModal();
       }
@@ -258,24 +425,35 @@ document.addEventListener('DOMContentLoaded', function() {
     referenceCode.addEventListener('input', updateConfirmButton);
 
     // File upload events
-    receiptUpload.addEventListener('change', function(e) {
+    receiptUpload.addEventListener('change', function (e) {
+      console.log('Receipt upload change event triggered', e.target.files);
       if (e.target.files[0]) {
         handleFileSelect(e.target.files[0]);
       }
     });
 
+    // Click on upload area to trigger file input
+    fileUploadArea.addEventListener('click', function (e) {
+      console.log('Upload area clicked', e.target);
+      // Don't trigger if clicking on the remove button or if file is already uploaded
+      if (!e.target.classList.contains('remove-file') && !uploadedFile) {
+        console.log('Triggering file input click');
+        receiptUpload.click();
+      }
+    });
+
     // Drag and drop functionality
-    fileUploadArea.addEventListener('dragover', function(e) {
+    fileUploadArea.addEventListener('dragover', function (e) {
       e.preventDefault();
       this.classList.add('dragover');
     });
 
-    fileUploadArea.addEventListener('dragleave', function(e) {
+    fileUploadArea.addEventListener('dragleave', function (e) {
       e.preventDefault();
       this.classList.remove('dragover');
     });
 
-    fileUploadArea.addEventListener('drop', function(e) {
+    fileUploadArea.addEventListener('drop', function (e) {
       e.preventDefault();
       this.classList.remove('dragover');
       const files = e.dataTransfer.files;
@@ -285,16 +463,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Remove file
-    removeFile.addEventListener('click', function() {
+    removeFile.addEventListener('click', function () {
       uploadedFile = null;
       resetFileUpload();
       updateConfirmButton();
     });
 
     // Payment confirmation
-    paymentConfirm.addEventListener('click', function() {
+    paymentConfirm.addEventListener('click', async function () {
       const refCode = referenceCode.value.trim();
-      
+
       if (!refCode || refCode.length < 5) {
         alert('Please enter a valid reference code (minimum 5 characters).');
         referenceCode.focus();
@@ -313,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      // Store payment data
+      // Store payment data and upload receipt to Cloudinary
       const paymentData = {
         type: currentPaymentType,
         reference: refCode,
@@ -321,35 +499,96 @@ document.addEventListener('DOMContentLoaded', function() {
         timestamp: new Date().toISOString()
       };
 
-      // Store in sessionStorage (convert file to base64 for storage)
-      const reader = new FileReader();
-      reader.onload = function(e) {
+      // Show loading state
+      paymentConfirm.disabled = true;
+      paymentConfirm.textContent = 'Uploading Receipt...';
+
+      try {
+        // Check if Cloudinary function is available
+        if (typeof window.uploadImageToCloudinary !== 'function') {
+          throw new Error('Cloudinary upload function not available. Please check if cloud.js is loaded.');
+        }
+
+        // Upload receipt to Cloudinary
+        console.log('Uploading receipt to Cloudinary...');
+        const cloudinaryResult = await window.uploadImageToCloudinary(uploadedFile);
+        console.log('Cloudinary upload result:', cloudinaryResult);
+
         const paymentInfo = {
           type: currentPaymentType,
           reference: refCode,
-          receiptData: e.target.result,
+          receiptUrl: cloudinaryResult.secure_url,
+          receiptPublicId: cloudinaryResult.public_id,
           receiptName: uploadedFile.name,
           timestamp: new Date().toISOString()
         };
-        
+
         sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
         sessionStorage.setItem('paymentReference', refCode);
         sessionStorage.setItem('paymentMethod', currentPaymentType);
-        
+
         // Hide modal and show success
         hidePaymentModal();
-        showStatus(`${currentPaymentType === 'gcash' ? 'GCash' : 'Card'} payment confirmed! You can now place your order.`, false);
-        
+        showStatus(`${currentPaymentType === 'gcash' ? 'GCash' : 'Bank Transfer'} payment confirmed! Receipt uploaded successfully.`, false);
+
         // Enable the Place Order button
         enablePlaceOrderButton();
-        
-        console.log('Payment confirmation saved:', { type: currentPaymentType, reference: refCode });
-      };
-      reader.readAsDataURL(uploadedFile);
+
+        // Send notification to admin for payment verification
+        sendPaymentVerificationNotification(paymentInfo);
+
+        console.log('Payment confirmation saved:', { type: currentPaymentType, reference: refCode, receiptUrl: paymentInfo.receiptUrl });
+
+      } catch (error) {
+        console.error('Error uploading receipt:', error);
+
+        // Fallback to base64 storage if Cloudinary fails
+        console.log('Fallback: Using base64 storage for receipt');
+        try {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const paymentInfo = {
+              type: currentPaymentType,
+              reference: refCode,
+              receiptData: e.target.result, // base64 fallback
+              receiptName: uploadedFile.name,
+              timestamp: new Date().toISOString()
+            };
+
+            sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
+            sessionStorage.setItem('paymentReference', refCode);
+            sessionStorage.setItem('paymentMethod', currentPaymentType);
+
+            // Hide modal and show success
+            hidePaymentModal();
+            showStatus(`${currentPaymentType === 'gcash' ? 'GCash' : 'Bank Transfer'} payment confirmed! Receipt saved locally.`, false);
+
+            // Enable the Place Order button
+            enablePlaceOrderButton();
+
+            // Send notification to admin for payment verification
+            sendPaymentVerificationNotification(paymentInfo);
+
+            console.log('Payment confirmation saved with base64 fallback:', { type: currentPaymentType, reference: refCode });
+
+            // Reset button state
+            paymentConfirm.disabled = false;
+            paymentConfirm.textContent = 'Confirm Payment';
+          };
+          reader.readAsDataURL(uploadedFile);
+        } catch (fallbackError) {
+          console.error('Base64 fallback also failed:', fallbackError);
+          alert('Failed to process receipt. Please try again.');
+          showStatus('Failed to process receipt. Please try again.', true);
+          // Reset button state
+          paymentConfirm.disabled = false;
+          paymentConfirm.textContent = 'Confirm Payment';
+        }
+      }
     });
 
     // Escape key to close modal
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && paymentModal.style.display === 'flex') {
         hidePaymentModal();
       }
@@ -371,10 +610,10 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       const formData = JSON.parse(savedFormData);
       const quotationData = JSON.parse(savedQuotationData);
-      
+
       // Also save formData in the standard key for modal access
       sessionStorage.setItem('formData', JSON.stringify(formData));
-      
+
       return {
         formData: formData,
         quotationData: quotationData,
@@ -400,22 +639,22 @@ document.addEventListener('DOMContentLoaded', function() {
   async function saveOrderToFirebase(savedData, shippingType) {
     try {
       const { formData, quotationData } = savedData;
-      
+
       // Get cart data from sessionStorage
       const cartData = loadCartData();
       const cartItems = Object.values(cartData);
-      
+
       // Get cart summary if available
       const cartSummary = JSON.parse(sessionStorage.getItem('cartSummary')) || null;
-      
+
       // Determine shipping method and cost
       const isPickup = shippingType === 'pickup';
       const shippingMethod = isPickup ? 'Pick Up in Store' : 'Lalamove Delivery';
       const shippingCost = isPickup ? 0 : (quotationData?.data?.priceBreakdown?.total || 0);
-      
+
       // Get payment method
       const paymentMethod = getSelectedPaymentMethod();
-      
+
       // Calculate totals
       let subtotal = 0;
       if (cartSummary && cartSummary.subtotal) {
@@ -426,9 +665,9 @@ document.addEventListener('DOMContentLoaded', function() {
           subtotal += price * item.quantity;
         });
       }
-      
+
       const total = subtotal + shippingCost;
-      
+
       // Create order data for Firebase
       const orderData = {
         customerInfo: {
@@ -459,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentMethod: paymentMethod,
         shippingMethod: shippingMethod,
         notes: `Order placed via ${shippingMethod}`,
-        estimatedDeliveryTime: isPickup ? 
+        estimatedDeliveryTime: isPickup ?
           new Date(Date.now() + 30 * 60 * 1000).toISOString() : // 30 minutes for pickup
           new Date(Date.now() + 60 * 60 * 1000).toISOString()   // 1 hour for delivery
       };
@@ -470,10 +709,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (typeof window.createOrder === 'function') {
         const orderId = await window.createOrder(orderData);
         console.log('[shipping.js] Order saved to Firebase successfully:', orderId);
-        
+
         // Store order ID in sessionStorage for confirmation page
         sessionStorage.setItem('firebaseOrderId', orderId);
-        
+
         return orderId;
       } else {
         console.warn('[shipping.js] Firebase createOrder function not available');
@@ -489,15 +728,15 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateOrderForm(cartData) {
     const orderItemsContainer = document.querySelector('.order-item');
     const totalElement = document.querySelector('.total .price');
-    
+
     if (!orderItemsContainer || !totalElement) return;
-    
+
     const cartItems = Object.values(cartData);
     let totalPrice = 0;
-    
+
     // Clear existing items
     orderItemsContainer.innerHTML = '';
-    
+
     if (cartItems.length === 0) {
       orderItemsContainer.innerHTML = `
         <div style="text-align: center; padding: 20px; color: #666;">
@@ -507,17 +746,17 @@ document.addEventListener('DOMContentLoaded', function() {
       totalElement.textContent = 'Php 0';
       return;
     }
-    
+
     // Create container for all items
     const itemsContainer = document.createElement('div');
     itemsContainer.style.cssText = 'margin-bottom: 15px;';
-    
+
     // Add each cart item
     cartItems.forEach(item => {
       const price = window.parsePrice(item.price);
       const itemTotal = price * item.quantity;
       totalPrice += itemTotal;
-      
+
       const itemDiv = document.createElement('div');
       itemDiv.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px; background: #f8f9fa; border-radius: 5px;';
       itemDiv.innerHTML = `
@@ -532,12 +771,12 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
       itemsContainer.appendChild(itemDiv);
     });
-    
+
     orderItemsContainer.appendChild(itemsContainer);
-    
+
     // Update total
     totalElement.textContent = `Php ${totalPrice.toFixed(0)}`;
-    
+
     // Store total for Firebase integration
     sessionStorage.setItem('orderSubtotal', totalPrice.toString());
   }
@@ -547,18 +786,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!savedData || !savedData.formData) return;
 
     const { formData, quotationData } = savedData;
-    
+
     // Update contact information sections
     const contactInfo = document.getElementById('contact-info');
     const deliveryInfo = document.getElementById('delivery-info');
-    
+
     const customerInfo = `<b>${formData.firstName} ${formData.lastName}</b><br>${formData.email}<br>${formData.phone}`;
     const deliveryAddress = `<b>Name:</b> ${formData.firstName} ${formData.lastName}<br><b>Address:</b> ${formData.fullAddress}<br><b>Email:</b> ${formData.email}<br><b>Phone:</b> ${formData.phone}`;
-    
+
     if (contactInfo) {
       contactInfo.innerHTML = customerInfo;
     }
-    
+
     if (deliveryInfo) {
       deliveryInfo.innerHTML = deliveryAddress;
     }
@@ -576,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update order total (add shipping cost if Lalamove is selected)
     updateOrderTotal(savedData);
-    
+
     console.log('[shipping.js] UI updated with saved data:', savedData);
   }
 
@@ -586,11 +825,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const subtotalElement = document.getElementById('subtotal-amount');
     const shippingFeeElement = document.getElementById('shipping-fee-amount');
     const totalElement = document.getElementById('total-amount');
-    
+
     // Get actual price from cart data
     const cartData = loadCartData();
     let basePrice = 0;
-    
+
     if (cartData && Object.keys(cartData).length > 0) {
       // Calculate total from cart items using the same logic as updateOrderForm
       const cartItems = Object.values(cartData);
@@ -602,7 +841,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     }
-    
+
     // If still no price, try to get it from the order form display
     if (basePrice <= 0) {
       const orderItems = document.querySelectorAll('.order-item .price');
@@ -614,38 +853,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     }
-    
+
     // Final fallback
     if (basePrice <= 0) {
       console.warn('[shipping.js] Could not calculate base price from cart, using 0');
       basePrice = 0;
     }
-    
+
     // Update subtotal
     if (subtotalElement) {
       subtotalElement.textContent = `Php ${basePrice}`;
     }
-    
+
     // Calculate shipping cost
     let shippingCost = 0;
     let shippingText = 'FREE';
-    
+
     if (isLalamoveSelected && savedData?.quotationData?.data?.priceBreakdown) {
       shippingCost = parseInt(savedData.quotationData.data.priceBreakdown.total);
       shippingText = `Php ${shippingCost}`;
     }
-    
+
     // Update shipping fee
     if (shippingFeeElement) {
       shippingFeeElement.textContent = shippingText;
     }
-    
+
     // Calculate and update total
     const newTotal = basePrice + shippingCost;
     if (totalElement) {
       totalElement.textContent = `Php ${newTotal}`;
     }
-    
+
     console.log('[shipping.js] Order total updated:', {
       cartData,
       basePrice,
@@ -659,20 +898,20 @@ document.addEventListener('DOMContentLoaded', function() {
   async function placeOrderWithSavedData(savedData, selectedShippingOption) {
     console.log('[shipping.js] Placing order with saved data:', savedData);
     console.log('[shipping.js] Quotation data structure:', savedData.quotationData);
-    
+
     try {
       const { formData, quotationData } = savedData;
-      
+
       // If pickup is selected, use mock order
       if (selectedShippingOption === 'pickup') {
         // Save order to Firebase first
         await saveOrderToFirebase(savedData, 'pickup');
-        
+
         const mockOrder = createMockPickupOrder(formData);
         showStatus('Order placed successfully (Pickup)!', false);
         return mockOrder;
       }
-      
+
       // For Lalamove delivery, use real API
       if (!quotationData || !quotationData.data || !quotationData.data.quotationId) {
         console.error('[shipping.js] Missing quotation data:', quotationData);
@@ -721,10 +960,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const orderResult = await response.json();
       console.log('[shipping.js] Order placement successful:', orderResult);
-      
+
       // Save order to Firebase
       await saveOrderToFirebase(savedData, 'lalamove');
-      
+
       return orderResult;
 
     } catch (error) {
@@ -760,13 +999,13 @@ document.addEventListener('DOMContentLoaded', function() {
   function getSelectedShippingOption() {
     const pickupRadio = document.getElementById('pickup-radio');
     const lalamoveRadio = document.getElementById('lalamove-radio');
-    
+
     if (pickupRadio && pickupRadio.checked) {
       return 'pickup';
     } else if (lalamoveRadio && lalamoveRadio.checked) {
       return 'lalamove';
     }
-    
+
     return 'pickup'; // default
   }
 
@@ -774,37 +1013,37 @@ document.addEventListener('DOMContentLoaded', function() {
   function getSelectedPaymentMethod() {
     const gcashPayment = document.getElementById('gcash-payment');
     const cardPayment = document.getElementById('card-payment');
-    
+
     if (gcashPayment && gcashPayment.checked) {
       return 'gcash';
     } else if (cardPayment && cardPayment.checked) {
       return 'card';
     }
-    
+
     return 'gcash'; // default
   }
 
   // Main payment button handler
   async function handlePayment(event) {
     event.preventDefault();
-    
+
     try {
       // Strict validation: MUST have payment info with both reference and receipt
       const selectedPaymentMethod = getSelectedPaymentMethod();
       const paymentInfo = sessionStorage.getItem('paymentInfo');
-      
+
       // Check if payment method is selected
       if (!selectedPaymentMethod || (selectedPaymentMethod !== 'gcash' && selectedPaymentMethod !== 'card')) {
         alert('Please select a payment method (GCash or Card) first.');
         return;
       }
-      
+
       // Payment info is absolutely required - no exceptions
       if (!paymentInfo) {
         alert('You must complete the payment process first. Please click on your selected payment method to open the payment modal and provide your reference code and receipt screenshot.');
         return;
       }
-      
+
       // Validate payment data completeness
       let payment;
       try {
@@ -814,29 +1053,29 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionStorage.removeItem('paymentInfo');
         return;
       }
-      
+
       // Both reference code and receipt are absolutely required
       if (!payment.reference || payment.reference.trim().length < 5) {
         alert('Payment reference code is required (minimum 5 characters). Please complete the payment modal first.');
         sessionStorage.removeItem('paymentInfo');
         return;
       }
-      
+
       if (!payment.receiptData) {
         alert('Payment receipt screenshot is required. Please complete the payment modal first.');
         sessionStorage.removeItem('paymentInfo');
         return;
       }
-      
+
       // Verify payment method matches
       if (payment.type !== selectedPaymentMethod) {
         alert('Payment method mismatch. Please complete the payment process for the selected method.');
         sessionStorage.removeItem('paymentInfo');
         return;
       }
-      
+
       showStatus('Processing your order...', false);
-      
+
       // Load saved data from previous page
       const savedData = loadSavedData();
       if (!savedData) {
@@ -862,12 +1101,12 @@ document.addEventListener('DOMContentLoaded', function() {
       // Store order result for confirmation page
       sessionStorage.setItem('orderResult', JSON.stringify(orderResult));
       sessionStorage.setItem('selectedShippingOption', selectedShippingOption);
-      
+
       console.log('[shipping.js] Order completed:', orderResult);
 
       // Show order confirmation modal instead of confirm dialog
       showOrderConfirmationModal(orderResult, selectedShippingOption);
-      
+
       // Also show Firebase order summary if available
       const firebaseOrderId = sessionStorage.getItem('firebaseOrderId');
       if (firebaseOrderId && typeof window.showFirebaseOrderSummary === 'function') {
@@ -881,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }, 1000);
       }
-      
+
     } catch (error) {
       console.error('[shipping.js] Payment process failed:', error);
       showStatus('Error: ' + error.message, true);
@@ -891,11 +1130,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to show the order confirmation modal
   function showOrderConfirmationModal(orderResult, selectedShippingOption) {
     const modal = document.getElementById('order-confirmation-modal');
-    
+
     // Try to get form data from both possible keys
     let formDataString = sessionStorage.getItem('formData') || sessionStorage.getItem('orderFormData');
     let formData = null;
-    
+
     // Safely parse formData with fallback
     try {
       formData = formDataString ? JSON.parse(formDataString) : null;
@@ -903,12 +1142,12 @@ document.addEventListener('DOMContentLoaded', function() {
       console.warn('Could not parse formData from sessionStorage:', e);
       formData = null;
     }
-    
+
     console.log('Form data for modal:', formData); // Debug log
-    
+
     // Get Firebase order ID if available
     const firebaseOrderId = sessionStorage.getItem('firebaseOrderId');
-    
+
     // Get total price from cart data or order result
     let totalPrice = '500'; // default
     const cartSummary = JSON.parse(sessionStorage.getItem('cartSummary')) || null;
@@ -917,38 +1156,38 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (orderResult.data.price) {
       totalPrice = orderResult.data.price.total;
     }
-    
+
     // Update modal content with actual form data
-    document.getElementById('modal-customer-name').textContent = formData ? 
+    document.getElementById('modal-customer-name').textContent = formData ?
       `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || 'Customer' : 'Customer';
-    document.getElementById('modal-contact-number').textContent = formData && formData.phone ? 
+    document.getElementById('modal-contact-number').textContent = formData && formData.phone ?
       formData.phone : 'N/A';
     document.getElementById('modal-order-type').textContent = selectedShippingOption === 'pickup' ? 'Store Pickup' : 'Lalamove Delivery';
-    
+
     // Show Firebase order ID if available, otherwise show Lalamove order ID
     const displayOrderId = firebaseOrderId || orderResult.data.orderId || 'N/A';
     document.getElementById('modal-order-id').textContent = displayOrderId;
-    
+
     document.getElementById('modal-status').textContent = orderResult.data.state || 'Pending';
     document.getElementById('modal-service').textContent = selectedShippingOption === 'pickup' ? 'N/A' : 'MOTORCYCLE';
     document.getElementById('modal-total').textContent = `₱${totalPrice}`;
-    
+
     // Show the modal
     modal.style.display = 'flex';
-    
+
     // Handle modal buttons
-    document.getElementById('modal-continue').onclick = function() {
+    document.getElementById('modal-continue').onclick = function () {
       modal.style.display = 'none';
       window.location.href = 'payment.html';
     };
-    
-    document.getElementById('modal-cancel').onclick = function() {
+
+    document.getElementById('modal-cancel').onclick = function () {
       modal.style.display = 'none';
       showStatus('Order saved. You can complete payment later.', false);
     };
-    
+
     // Handle summary button
-    document.getElementById('modal-summary').onclick = async function() {
+    document.getElementById('modal-summary').onclick = async function () {
       const firebaseOrderId = sessionStorage.getItem('firebaseOrderId');
       if (firebaseOrderId && typeof window.showFirebaseOrderSummary === 'function') {
         try {
@@ -962,9 +1201,9 @@ document.addEventListener('DOMContentLoaded', function() {
         showStatus('Order summary not available.', true);
       }
     };
-    
+
     // Close modal when clicking outside
-    modal.onclick = function(e) {
+    modal.onclick = function (e) {
       if (e.target === modal) {
         modal.style.display = 'none';
         showStatus('Order saved. You can complete payment later.', false);
@@ -976,17 +1215,17 @@ document.addEventListener('DOMContentLoaded', function() {
   function initShippingOptions() {
     const savedData = loadSavedData();
     const radioButtons = document.querySelectorAll('input[name="shipping"]');
-    
+
     radioButtons.forEach((radio) => {
-      radio.addEventListener('change', function() {
+      radio.addEventListener('change', function () {
         // Update visual selection
         document.querySelectorAll('.shipping-option').forEach(option => {
           option.classList.remove('selected');
         });
-        
+
         if (this.checked) {
           this.closest('.shipping-option').classList.add('selected');
-          
+
           // Update total cost
           if (savedData) {
             updateOrderTotal(savedData);
@@ -1000,16 +1239,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const lalamoveOption = document.getElementById('lalamove-option');
     const pickupRadio = document.getElementById('pickup-radio');
     const lalamoveRadio = document.getElementById('lalamove-radio');
-    
+
     if (pickupOption && pickupRadio) {
-      pickupOption.addEventListener('click', function() {
+      pickupOption.addEventListener('click', function () {
         pickupRadio.checked = true;
         pickupRadio.dispatchEvent(new Event('change'));
       });
     }
-    
+
     if (lalamoveOption && lalamoveRadio) {
-      lalamoveOption.addEventListener('click', function() {
+      lalamoveOption.addEventListener('click', function () {
         lalamoveRadio.checked = true;
         lalamoveRadio.dispatchEvent(new Event('change'));
       });
@@ -1019,7 +1258,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (pickupOption && pickupRadio) {
       pickupOption.classList.add('selected');
       pickupRadio.checked = true;
-      
+
       // Initial update of totals
       if (savedData) {
         updateOrderTotal(savedData);
@@ -1030,7 +1269,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize the page
   function init() {
     console.log('[shipping.js] Initializing shipping page');
-    
+
     // Load and display saved data
     const savedData = loadSavedData();
     if (savedData) {
@@ -1038,11 +1277,11 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       showStatus('Warning: No order data found. Please start from details page.', true);
     }
-    
+
     // Load and display cart data
     const cartData = loadCartData();
     updateOrderForm(cartData);
-    
+
     // Update order total after cart is displayed
     if (savedData) {
       updateOrderTotal(savedData);
@@ -1050,22 +1289,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize shipping options
     initShippingOptions();
-    
+
     // Initialize payment modal
     initPaymentModal();
-    
+
     // Find and modify the payment button
     const paymentBtn = document.querySelector('.continue-btn');
     if (paymentBtn) {
       // Remove the onclick attribute
       paymentBtn.removeAttribute('onclick');
-      
+
       // Initialize button as disabled until payment is confirmed
       paymentBtn.disabled = true;
       paymentBtn.textContent = 'Complete Payment First';
       paymentBtn.style.opacity = '0.6';
       paymentBtn.style.cursor = 'not-allowed';
-      
+
       // Check if payment was already completed
       const existingPaymentInfo = sessionStorage.getItem('paymentInfo');
       if (existingPaymentInfo) {
@@ -1079,10 +1318,10 @@ document.addEventListener('DOMContentLoaded', function() {
           sessionStorage.removeItem('paymentInfo');
         }
       }
-      
+
       // Add our custom handler
       paymentBtn.addEventListener('click', handlePayment);
-      
+
       console.log('[shipping.js] Payment button handler attached');
     } else {
       console.error('[shipping.js] Payment button not found');
@@ -1094,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const debugBtn = document.createElement('button');
       debugBtn.textContent = 'Debug: Show Saved Data';
       debugBtn.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 9999; padding: 10px; background: #9b59b6; color: white; border: none; border-radius: 5px;';
-      debugBtn.addEventListener('click', function() {
+      debugBtn.addEventListener('click', function () {
         const data = loadSavedData();
         console.log('Debug - Saved Data:', data);
         alert('Check console for saved data details');
