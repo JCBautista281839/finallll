@@ -666,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <span>No items in cart</span>
         </div>
       `;
-      totalElement.textContent = 'Php 0';
+      totalElement.textContent = '₱0';
       return;
     }
 
@@ -689,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <small style="color: #666;">Qty: ${item.quantity} × ${item.price}</small>
         </div>
         <div style="text-align: right;">
-          <span class="price" style="font-weight: 600; color: #8b1d1d;">Php ${itemTotal.toFixed(0)}</span>
+          <span class="price" style="font-weight: 600; color: #8b1d1d;">₱${itemTotal.toFixed(0)}</span>
         </div>
       `;
       itemsContainer.appendChild(itemDiv);
@@ -698,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function () {
     orderItemsContainer.appendChild(itemsContainer);
 
     // Update total
-    totalElement.textContent = `Php ${totalPrice.toFixed(0)}`;
+    totalElement.textContent = `₱${totalPrice.toFixed(0)}`;
 
     // Store total for Firebase integration
     sessionStorage.setItem('orderSubtotal', totalPrice.toString());
@@ -749,6 +749,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const shippingFeeElement = document.getElementById('shipping-fee-amount');
     const totalElement = document.getElementById('total-amount');
 
+    console.log('[shipping.js] updateOrderTotal called with:', {
+      isLalamoveSelected,
+      hasQuotationData: !!savedData?.quotationData?.data?.priceBreakdown,
+      quotationData: savedData?.quotationData
+    });
+
     // Get actual price from cart data
     const cartData = loadCartData();
     let basePrice = 0;
@@ -785,27 +791,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Update subtotal
     if (subtotalElement) {
-      subtotalElement.textContent = `Php ${basePrice}`;
+      subtotalElement.textContent = `₱${basePrice}`;
     }
 
     // Calculate shipping cost
     let shippingCost = 0;
     let shippingText = 'FREE';
 
+    console.log('[shipping.js] Calculating shipping cost:', {
+      isLalamoveSelected,
+      hasQuotationData: !!savedData?.quotationData?.data?.priceBreakdown,
+      priceBreakdown: savedData?.quotationData?.data?.priceBreakdown
+    });
+
     if (isLalamoveSelected && savedData?.quotationData?.data?.priceBreakdown) {
       shippingCost = parseFloat(savedData.quotationData.data.priceBreakdown.total) || 0;
-      shippingText = `Php ${shippingCost.toFixed(2)}`;
+      shippingText = `₱${shippingCost.toFixed(2)}`;
+      console.log('[shipping.js] Lalamove shipping cost calculated:', shippingCost, shippingText);
     }
 
     // Update shipping fee
     if (shippingFeeElement) {
       shippingFeeElement.textContent = shippingText;
+      console.log('[shipping.js] Updated shipping fee element to:', shippingText);
     }
 
     // Calculate and update total
     const newTotal = basePrice + shippingCost;
     if (totalElement) {
-      totalElement.textContent = `Php ${newTotal.toFixed(2)}`;
+      totalElement.textContent = `₱${newTotal.toFixed(2)}`;
     }
 
     console.log('[shipping.js] Order total updated:', {
@@ -1128,6 +1142,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     radioButtons.forEach((radio) => {
       radio.addEventListener('change', function () {
+        console.log('[shipping.js] Radio button changed:', this.value, 'checked:', this.checked);
+
         // Update visual selection
         document.querySelectorAll('.shipping-option').forEach(option => {
           option.classList.remove('selected');
@@ -1137,7 +1153,17 @@ document.addEventListener('DOMContentLoaded', function () {
           this.closest('.shipping-option').classList.add('selected');
 
           // Update total cost
-          if (savedData) {
+          const savedData = loadSavedData();
+          console.log('[shipping.js] Updating order total after radio change, savedData:', savedData);
+
+          // If Lalamove is selected but no quotation data exists, we need to get one
+          if (this.value === 'lalamove' && (!savedData || !savedData.quotationData)) {
+            console.log('[shipping.js] No quotation data found, but Lalamove selected. User needs to get quotation from details page.');
+            // For now, just update with existing data
+            if (savedData) {
+              updateOrderTotal(savedData);
+            }
+          } else if (savedData) {
             updateOrderTotal(savedData);
           }
         }

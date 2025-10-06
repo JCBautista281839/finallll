@@ -105,9 +105,19 @@
           <!-- Cart items will be loaded dynamically -->
         </div>
         <hr>
+
+        <!-- Subtotal -->
+        <div class="subtotal">
+          <span>Subtotal</span>
+          <span class="price" id="subtotal-amount">₱0</span>
+        </div>
+
+        <hr>
+
+        <!-- Total -->
         <div class="total">
           <span>Total</span>
-          <span class="price" id="total-price">Php 0</span>
+          <span class="price" id="total-price">₱0</span>
         </div>
         <!-- Checkout page continue button -->
         <button class="continue-btn" onclick="window.location.href='shipping.html'">
@@ -226,7 +236,7 @@
 
       if (cartItems.length === 0) {
         orderMenu.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>';
-        totalPriceElement.textContent = 'Php 0';
+        totalPriceElement.textContent = '₱0';
         return;
       }
 
@@ -253,11 +263,10 @@
         orderItem.innerHTML = `
           <div class="item-details">
             <h4>${item.name}</h4>
-            <p>Quantity: ${quantity}</p>
-            <p>Price: Php ${price.toFixed(0)}</p>
+            <p>x${quantity}</p>
           </div>
           <div class="item-price">
-            Php ${itemTotal.toFixed(0)}
+            ₱${itemTotal.toFixed(0)}
           </div>
         `;
 
@@ -265,7 +274,7 @@
       });
 
       // Update total price
-      totalPriceElement.textContent = `Php ${totalPrice.toFixed(0)}`;
+      totalPriceElement.textContent = `₱${totalPrice.toFixed(0)}`;
     }
 
     // Utility function to parse price
