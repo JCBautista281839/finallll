@@ -125,8 +125,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         await updatePasswordWithFirebaseClient(email, newPassword);
                     } else if (result.firebaseUpdated) {
                         // Server-side update was successful
-                        console.log('✅ Password reset completed automatically via server');
-                        showSuccess('Password reset successfully! Your password has been updated automatically. You can now log in with your new password.');
+                        console.log('Password reset completed automatically via server');
+                        showSuccess('Password updated successfully in Firebase Authentication! You can now log in with your new password.');
                         
                         // Clear session storage
                         sessionStorage.removeItem('passwordResetEmail');
