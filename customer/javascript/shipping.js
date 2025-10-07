@@ -68,7 +68,7 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     }
 
     // Get customer data from session storage
-    const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
+    const formData = JSON.parse(sessionStorage.getItem('orderFormData') || sessionStorage.getItem('formData') || '{}');
     console.log('Customer form data:', formData);
 
     const customerName = formData.name || 'Unknown Customer';
@@ -249,7 +249,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load and display customer information
     function loadCustomerInfo() {
       console.log('[shipping.js] Loading customer information...');
-      const formData = sessionStorage.getItem('formData');
+
+      // Try both possible keys for backward compatibility
+      let formData = sessionStorage.getItem('orderFormData') || sessionStorage.getItem('formData');
       console.log('[shipping.js] Raw formData from sessionStorage:', formData);
 
       if (formData) {
@@ -261,8 +263,8 @@ document.addEventListener('DOMContentLoaded', function () {
           const deliveryInfoElement = document.getElementById('delivery-info');
           if (deliveryInfoElement) {
             deliveryInfoElement.innerHTML = `
-              <b>Name:</b> ${customerData.name || 'N/A'}<br>
-              <b>Address:</b> ${customerData.fullAddress || 'N/A'}<br>
+              <b>Name:</b> ${customerData.name || customerData.firstName + ' ' + customerData.lastName || 'N/A'}<br>
+              <b>Address:</b> ${customerData.fullAddress || customerData.address || 'N/A'}<br>
               <b>Email:</b> ${customerData.email || 'N/A'}<br>
               <b>Phone:</b> ${customerData.phone || 'N/A'}
             `;
@@ -310,8 +312,16 @@ document.addEventListener('DOMContentLoaded', function () {
         let shippingCost = 0;
 
         if (lalamoveRadio && lalamoveRadio.checked) {
-          shippingCost = 89.00; // Lalamove delivery cost
-          shippingFeeElement.textContent = '₱89.00';
+          // Try to get actual quotation data from Lalamove API
+          const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+          if (quotationData.data && quotationData.data.priceBreakdown) {
+            shippingCost = parseFloat(quotationData.data.priceBreakdown.total) || 89.00;
+            const currency = quotationData.data.priceBreakdown.currency || 'PHP';
+            shippingFeeElement.textContent = `₱${shippingCost.toFixed(2)}`;
+          } else {
+            shippingCost = 89.00; // Fallback cost
+            shippingFeeElement.textContent = '₱89.00';
+          }
         } else {
           shippingCost = 0; // Pickup is free
           shippingFeeElement.textContent = 'FREE';
@@ -351,6 +361,21 @@ document.addEventListener('DOMContentLoaded', function () {
         pickupRadio.checked = true;
         pickupOption.classList.add('selected');
         updateShippingCosts();
+      }
+
+      // Update Lalamove option with actual quotation data
+      const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+      if (quotationData.data && quotationData.data.priceBreakdown && lalamoveOption) {
+        const price = parseFloat(quotationData.data.priceBreakdown.total);
+        const serviceType = quotationData.data.serviceType || 'MOTORCYCLE';
+        const distance = quotationData.data.distance || '0.5km';
+
+        // Update the price display in the Lalamove option
+        const priceElement = lalamoveOption.querySelector('.price');
+        if (priceElement) {
+          priceElement.innerHTML = `₱${price.toFixed(2)}<br><small>${serviceType} • ${distance}</small>`;
+        }
+        console.log('[shipping.js] Updated Lalamove option with quotation data:', price, serviceType, distance);
       }
     }
 
@@ -418,6 +443,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Update subtotal and initial total
       subtotalElement.textContent = `₱${subtotal.toFixed(0)}`;
+
+      // Also update the subtotal amount element if it exists
+      const subtotalAmountElement = document.getElementById('subtotal-amount');
+      if (subtotalAmountElement) {
+        subtotalAmountElement.textContent = `₱${subtotal.toFixed(0)}`;
+      }
+
+      // Store updated subtotal in sessionStorage for consistency
+      sessionStorage.setItem('orderSubtotal', subtotal.toString());
 
       // Calculate total with shipping (initially pickup - free)
       const shippingFee = 0; // Start with pickup (free)
@@ -993,20 +1027,13 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        // Verify payment method matches
-        if (payment.type !== selectedPaymentMethod) {
-          alert('Payment method mismatch. Please complete the payment process for the selected method.');
-          sessionStorage.removeItem('paymentInfo');
-          return;
-        }
-
         // Show loading status
         showStatus('Creating your order...', false);
 
         // Get all required data for order creation
-        const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
+        const formData = JSON.parse(sessionStorage.getItem('orderFormData') || sessionStorage.getItem('formData') || '{}');
         const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
-        const quotationData = JSON.parse(sessionStorage.getItem('quotationResponse') || '{}');
+        const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse') || '{}');
 
         // Validate required data
         if (!formData.name || !formData.email) {
