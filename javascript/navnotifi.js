@@ -2,7 +2,7 @@ const notifIcon = document.querySelector('.nav-link[title="Notifications"] .nav-
 const dropdown = document.getElementById('notificationDropdown');
 const closeDropdown = document.getElementById('closeDropdown');
 if (notifIcon) {
-    notifIcon.addEventListener('click', function(e) {
+    notifIcon.addEventListener('click', function (e) {
         e.preventDefault();
         if (dropdown) {
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
@@ -13,11 +13,11 @@ if (notifIcon) {
     });
 }
 if (closeDropdown) {
-    closeDropdown.addEventListener('click', function() {
+    closeDropdown.addEventListener('click', function () {
         dropdown.style.display = 'none';
     });
 }
-window.addEventListener('click', function(e) {
+window.addEventListener('click', function (e) {
     if (!dropdown) return;
     if (!dropdown.contains(e.target) && !notifIcon.contains(e.target)) {
         dropdown.style.display = 'none';
@@ -40,10 +40,10 @@ function loadDropdownNotifications() {
             const messageColor = isDark ? '#f1f1f1' : '#222';
             querySnapshot.forEach(function (doc) {
                 const data = doc.data();
-                html += `<div class="dropdown-item d-flex align-items-center py-2 px-2">
-                    <div class="flex-grow-1">
-                        <div style="color:${nameColor};margin-top:-5px">${data.name || 'System'}</div>
-                        <div style="font-size:12px;color:${messageColor};">${data.message || ''}</div>
+                html += `<div class="dropdown-item d-flex align-items-center py-2 px-2" style="word-wrap: break-word !important; overflow-wrap: break-word !important; max-width: 350px !important;">
+                    <div class="flex-grow-1" style="word-wrap: break-word !important; overflow-wrap: break-word !important; max-width: 280px !important;">
+                        <div style="color:${nameColor};margin-top:-5px; word-wrap: break-word !important; overflow-wrap: break-word !important;">${data.name || 'System'}</div>
+                        <div style="font-size:12px;color:${messageColor}; word-wrap: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; word-break: break-word !important;">${data.message || ''}</div>
                     </div>
                     <div style="font-size:12px;color:#888;min-width:70px;text-align:right;">${data.timestamp && data.timestamp.toDate ? timeAgo(data.timestamp.toDate()) : ''}</div>
                 </div>`;
@@ -66,13 +66,13 @@ function timeAgo(date) {
     if (interval >= 1) return interval + ' minute' + (interval > 1 ? 's' : '') + ' ago';
     return 'Just now';
 }
-document.addEventListener('DOMContentLoaded', function() {
-      var notifLink = document.querySelector('.nav-link[title="Notifications"]');
-      if (notifLink) {
-        notifLink.addEventListener('click', function() {
-          if (typeof loadNotifications === 'function') {
-            loadNotifications();
-          }
+document.addEventListener('DOMContentLoaded', function () {
+    var notifLink = document.querySelector('.nav-link[title="Notifications"]');
+    if (notifLink) {
+        notifLink.addEventListener('click', function () {
+            if (typeof loadNotifications === 'function') {
+                loadNotifications();
+            }
         });
-      }
-    });
+    }
+});

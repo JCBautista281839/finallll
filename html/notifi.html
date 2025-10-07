@@ -58,7 +58,7 @@
                     <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
                     <div class="nav-text">Settings</div>
                 </a>
-                <a href="#" class="nav-link text-white" title="Logout">
+                <a href="#" id="logoutBtn" class="nav-link text-white" title="Logout">
                     <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
                     <div class="nav-text">Logout</div>
                 </a>
@@ -105,7 +105,24 @@
 
             loadNotifications();
             setInterval(loadNotifications, 30000);
+
+            // Logout functionality
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
         });
+
+        // Logout functionality
+        function handleLogout() {
+            firebase.auth().signOut().then(() => {
+                console.log('User signed out successfully');
+                window.location.href = '../index.html';
+            }).catch((error) => {
+                console.error('Error signing out:', error);
+                window.location.href = '../index.html';
+            });
+        }
     </script>
 </body>
 

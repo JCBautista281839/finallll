@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,24 +8,26 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Viktoria's Bistro</title>
-  
-  
+
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;500&display=swap" rel="stylesheet">
-  
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../css/styleDashboard.css">
   <link rel="stylesheet" href="../css/nav.css">
 </head>
+
 <body class="bg-light">
-    <!-- Mobile overlay for sidebar -->
-    <div class="mobile-overlay" id="mobileOverlay"></div>
-    
-    <div class="dashboard-container d-flex" id="dashboardContainer">
-        <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
+  <!-- Mobile overlay for sidebar -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <div class="dashboard-container d-flex" id="dashboardContainer">
+    <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
       <!-- Close button for mobile -->
-      <button id="closeSidebarBtn" class="btn btn-outline-light d-md-none mb-3" style="align-self: flex-start; margin-left: 1rem;">
+      <button id="closeSidebarBtn" class="btn btn-outline-light d-md-none mb-3"
+        style="align-self: flex-start; margin-left: 1rem;">
         <i class="bi bi-x-lg"></i>
       </button>
       <div class="brand mb-1">
@@ -35,10 +38,11 @@
           <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
           <div class="nav-text">Home</div>
         </a>
-                
-        <a  class="nav-link text-white" title="Notifications" style="position:relative;">
-          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon" >
-          <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+
+        <a class="nav-link text-white" title="Notifications" style="position:relative;">
+          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon">
+          <span class="notification-badge"
+            style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
           <div class="nav-text">Notifications</div>
         </a>
         <a href="../html/Order.html" class="nav-link text-white" title="Orders">
@@ -53,7 +57,7 @@
           <img src="../src/Icons/menu (1).png" alt="Menu" class="nav-icon">
           <div class="nav-text">Menu</div>
         </a>
-      
+
         <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
           <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
           <div class="nav-text">Inventory</div>
@@ -62,7 +66,7 @@
           <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
           <div class="nav-text">Reports</div>
         </a>
-        
+
         <a href="../html/user.html" class="nav-link text-white" title="Users">
           <img src="../src/Icons/user.png" alt="user" class="nav-icon">
           <div class="nav-text">Users</div>
@@ -76,42 +80,47 @@
           <div class="nav-text">Logout</div>
         </a>
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          var logoutLink = document.querySelector('.nav-link[title="Logout"]');
-          if (logoutLink) {
-            logoutLink.addEventListener('click', function(e) {
-              e.preventDefault();
-              if (window.firebase && firebase.auth) {
-                firebase.auth().signOut().then(function() {
-                  window.location.href = '../index.html';
-                });
-              } else {
-                window.location.href = '/index.html';
-              }
-            });
-          }
-        });
+          document.addEventListener('DOMContentLoaded', function () {
+            var logoutLink = document.querySelector('.nav-link[title="Logout"]');
+            if (logoutLink) {
+              logoutLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (window.firebase && firebase.auth) {
+                  firebase.auth().signOut().then(function () {
+                    window.location.href = '../index.html';
+                  });
+                } else {
+                  window.location.href = '/index.html';
+                }
+              });
+            }
+          });
         </script>
       </nav>
       <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
-      <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
-          <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
-              <img src="../src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
-              <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
-              <img src="../src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
-          </div>
-          <div class="dropdown-body p-2" id="dropdownNotificationsList">
-              <!-- Notifications will be loaded here dynamically -->
-              <div class="text-center text-muted py-3">No notifications</div>
-          </div>
-          <div class="dropdown-footer p-2 text-center border-top">
-              <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
-          </div>
+      <div id="notificationDropdown" class="notification-dropdown"
+        style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+        <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+          <img src="../src/Icons/bell.png" alt="Notifications"
+            style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+          <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+          <img src="../src/Icons/close.png" id="closeDropdown" alt="Close"
+            style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+        </div>
+        <div class="dropdown-body p-2" id="dropdownNotificationsList"
+          style="word-wrap: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; max-width: 320px !important;">
+          <!-- Notifications will be loaded here dynamically -->
+          <div class="text-center text-muted py-3">No notifications</div>
+        </div>
+        <div class="dropdown-footer p-2 text-center border-top">
+          <a href="../html/notifi.html" class="see-all-link"
+            style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+        </div>
       </div>
-        </aside>
-    
+    </aside>
+
     <main class="main p-3 p-md-4 flex-grow-1">
-      
+
       <div class="d-flex align-items-center justify-content-between bg-white rounded-4 p-3 p-md-4 shadow-sm mb-4">
         <!-- Mobile menu button -->
         <button id="mobileMenuBtn" class="btn btn-outline-secondary d-md-none me-3">
@@ -121,22 +130,22 @@
           <h2 class="fw-bold text-primary-emphasis mb-1" id="welcomeMessage">Welcome,</h2>
           <p class="text-secondary mb-0">Here's what's happening in your restaurant.</p>
         </div>
-          <div class="d-flex flex-column align-items-end gap-2">
-            <div class="d-flex align-items-center gap-3">
-              <div class="fw-medium" id="timeNow"></div>
-            </div>
+        <div class="d-flex flex-column align-items-end gap-2">
+          <div class="d-flex align-items-center gap-3">
+            <div class="fw-medium" id="timeNow"></div>
           </div>
+        </div>
       </div>
 
       <div class="row g-4">
-        
+
         <div class="col-12 col-lg-4">
           <div class="sales-overview-card p-0 bg-transparent border-0">
             <div class="p-4 pb-3 rounded-top-4">
               <h5 class="fw-bold mb-0 sales-title">Sales Overview</h5>
             </div>
             <div class="sales-mini-cards">
-              
+
               <div class="mini-card sales-card-top d-flex align-items-center gap-3 p-3">
                 <img src="../src/Icons/peso (1).png" alt="Peso" class="icon-img">
                 <div class="flex-grow-1">
@@ -144,10 +153,11 @@
                     <div class="fw-semibold text-secondary small1 mb-1">Total Revenue</div>
                     <div class="fw-bold fs-5 value-align-up">₱2500.00</div>
                   </div>
-                  <div class="trend-revenue small"><img src="../src/Icons/trend.png" alt="Trend Up"> 10.1% from last day</div>
+                  <div class="trend-revenue small"><img src="../src/Icons/trend.png" alt="Trend Up"> 10.1% from last day
+                  </div>
                 </div>
               </div>
-              
+
               <div class="mini-card sales-card-middle d-flex align-items-center gap-3 p-3">
                 <img src="../src/Icons/cutlery.png" alt="Cultery" class="cultery-img">
                 <div class="flex-grow-1">
@@ -155,10 +165,11 @@
                     <div class="fw-semibold text-secondary small2 mb-1">Total Orders</div>
                     <div class="fw-bold fs-5">30</div>
                   </div>
-                  <div class="trend-orders small"><img src="../src/Icons/trend.png" alt="Trend Up"> 10.1% from last day</div>
+                  <div class="trend-orders small"><img src="../src/Icons/trend.png" alt="Trend Up"> 10.1% from last day
+                  </div>
                 </div>
               </div>
-              
+
               <div class="mini-card sales-card-bottom d-flex align-items-center gap-3 p-3">
                 <img src="../src/Icons/team.png" alt="Team" class="team-img">
                 <div class="flex-grow-1">
@@ -166,14 +177,15 @@
                     <div class="fw-semibold text-secondary small3 mb-1">Total Guests (Pax)</div>
                     <div class="fw-bold fs-5 value-align-up">0</div>
                   </div>
-                  <div class="trend-customers small"><img src="../src/Icons/trend.png" alt="Trend Up"> Guests entered in POS today</div>
+                  <div class="trend-customers small"><img src="../src/Icons/trend.png" alt="Trend Up"> Guests entered in
+                    POS today</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        
+
         <div class="col-12 col-lg-8">
           <div class="bg-white rounded-4 shadow-sm p-3 p-md-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -201,7 +213,7 @@
                 </select>
               </div>
             </div>
-            
+
             <!-- Charts Side by Side -->
             <div class="row g-3">
               <!-- Orders Chart -->
@@ -215,7 +227,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <!-- Revenue Chart -->
               <div class="col-12 col-md-6">
                 <div class="chart-section">
@@ -231,7 +243,7 @@
           </div>
         </div>
 
-        
+
         <div class="col-12 col-md-4 d-flex">
           <div id="topProductsCard" class="bg-white rounded-4 shadow-sm p-3 p-md-4 dashboard-card bottom-panel h-100">
             <h5 class="mb-3">Sales</h5>
@@ -256,13 +268,13 @@
               </div>
             </div>
             <div class="text-success small mt-3 d-flex align-items-center justify-content-center gap-1">
-              <i class="bi bi-graph-up-arrow"></i> 
+              <i class="bi bi-graph-up-arrow"></i>
               <span id="salesGrowthPercentage">20% increased</span>
             </div>
           </div>
         </div>
 
-        
+
         <div class="col-12 col-md-4">
           <div class="bg-white rounded-4 shadow-sm p-3 p-md-4 dashboard-card bottom-panel">
             <h5 class="mb-3">Top Products</h5>
@@ -286,7 +298,7 @@
           </div>
         </div>
 
-        
+
         <div class="col-12 col-md-4 d-flex">
           <div class="bg-white rounded-4 shadow-sm p-3 p-md-4 dashboard-card inventory-status-card bottom-panel h-100">
             <h5 class="mb-3">Inventory Status</h5>
@@ -313,23 +325,26 @@
       </div>
     </main>
   </div>
-  
-  
+
+
   <!-- Notification Dropdown UI -->
-<div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
-  <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
-    <!-- Bell icon removed -->
-    <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
-    <span class="bi bi-x-lg" id="closeDropdown" style="cursor:pointer;font-size:1.1rem;color:#888;"></span>
-  </div>
-    <div class="dropdown-body p-2" id="dropdownNotificationsList">
-        <!-- Notifications will be loaded here dynamically -->
-        <div class="text-center text-muted py-3">No notifications</div>
+  <div id="notificationDropdown" class="notification-dropdown"
+    style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+    <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+      <!-- Bell icon removed -->
+      <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+      <span class="bi bi-x-lg" id="closeDropdown" style="cursor:pointer;font-size:1.1rem;color:#888;"></span>
+    </div>
+    <div class="dropdown-body p-2" id="dropdownNotificationsList"
+      style="word-wrap: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; max-width: 320px !important;">
+      <!-- Notifications will be loaded here dynamically -->
+      <div class="text-center text-muted py-3">No notifications</div>
     </div>
     <div class="dropdown-footer p-2 text-center border-top">
-        <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+      <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See
+        all incoming activity</a>
     </div>
-</div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -337,29 +352,29 @@
   <script src="../javascript/navnotifi.js"></script>
   <script src="../javascript/notifications.js"></script>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  
+
   <script src="../main.js"></script>
   <script src="../javascript/auth-manager.js"></script>
   <script src="../javascript/scriptdash.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
       var notifLink = document.querySelector('.nav-link[title="Notifications"]');
       if (notifLink) {
-        notifLink.addEventListener('click', function() {
+        notifLink.addEventListener('click', function () {
           if (typeof loadNotifications === 'function') {
             loadNotifications();
           }
         });
       }
-      
+
       // Mobile sidebar functionality
       const sidebar = document.getElementById('sidebar');
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
       const closeSidebarBtn = document.getElementById('closeSidebarBtn');
       const mobileOverlay = document.getElementById('mobileOverlay');
       const dashboardContainer = document.getElementById('dashboardContainer');
-      
+
       // Toggle sidebar functions
       function toggleSidebar() {
         if (sidebar.classList.contains('open')) {
@@ -368,42 +383,42 @@
           openSidebar();
         }
       }
-      
+
       function openSidebar() {
         sidebar.classList.add('open');
         mobileOverlay.classList.add('show');
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
-        
+
         // Hide the burger button when sidebar opens
         if (mobileMenuBtn) {
           mobileMenuBtn.style.display = 'none';
         }
       }
-      
+
       function closeSidebar() {
         sidebar.classList.remove('open');
         mobileOverlay.classList.remove('show');
         document.body.style.overflow = ''; // Restore scrolling
-        
+
         // Show the burger button when sidebar closes
         if (mobileMenuBtn) {
           mobileMenuBtn.style.display = 'block';
         }
       }
-      
+
       // Event listeners
       if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', toggleSidebar);
       }
-      
+
       if (closeSidebarBtn) {
         closeSidebarBtn.addEventListener('click', closeSidebar);
       }
-      
+
       if (mobileOverlay) {
         mobileOverlay.addEventListener('click', closeSidebar);
       }
-      
+
       // Close sidebar when clicking on nav links on mobile
       document.querySelectorAll('.sidebar .nav-link').forEach(link => {
         link.addEventListener('click', () => {
@@ -412,16 +427,16 @@
           }
         });
       });
-      
+
       // Handle window resize
-      window.addEventListener('resize', function() {
+      window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
           closeSidebar();
         }
       });
-      
+
       // Prevent sidebar from opening on desktop
-      window.addEventListener('resize', function() {
+      window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
           sidebar.classList.remove('open');
           mobileOverlay.classList.remove('show');
@@ -433,6 +448,7 @@
         }
       });
     });
-    </script>
-</body> 
+  </script>
+</body>
+
 </html>

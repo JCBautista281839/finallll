@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu - Viktoria's Bistro</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu - Viktoria's Bistro</title>
 </head>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -12,9 +13,10 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="../css/stylemenu.css">
 <link rel="stylesheet" href="../css/nav.css">
+
 <body class="bg-light">
-     <div class="dashboard-container d-flex">
-        <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
+  <div class="dashboard-container d-flex">
+    <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
       <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
         <i class="bi bi-list"></i>
       </button>
@@ -26,13 +28,14 @@
           <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
           <div class="nav-text">Home</div>
         </a>
-                
-        <a  class="nav-link text-white" title="Notifications" style="position:relative;">
-          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon" >
-          <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+
+        <a class="nav-link text-white" title="Notifications" style="position:relative;">
+          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon">
+          <span class="notification-badge"
+            style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
           <div class="nav-text">Notifications</div>
         </a>
-                
+
         <a href="../html/Order.html" class="nav-link text-white" title="Orders">
           <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
           <div class="nav-text">Orders</div>
@@ -62,137 +65,160 @@
           <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
           <div class="nav-text">Settings</div>
         </a>
-        <a href="#" class="nav-link text-white" title="Logout">
+        <a href="#" id="logoutBtn" class="nav-link text-white" title="Logout">
           <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
           <div class="nav-text">Logout</div>
         </a>
       </nav>
-       <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
-      <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
-          <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
-              <img src="../src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
-              <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
-              <img src="../src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
-          </div>
-          <div class="dropdown-body p-2" id="dropdownNotificationsList">
-              <!-- Notifications will be loaded here dynamically -->
-              <div class="text-center text-muted py-3">No notifications</div>
-          </div>
-          <div class="dropdown-footer p-2 text-center border-top">
-              <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
-          </div>
+      <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+      <div id="notificationDropdown" class="notification-dropdown"
+        style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+        <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+          <img src="../src/Icons/bell.png" alt="Notifications"
+            style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+          <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+          <img src="../src/Icons/close.png" id="closeDropdown" alt="Close"
+            style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+        </div>
+        <div class="dropdown-body p-2" id="dropdownNotificationsList">
+          <!-- Notifications will be loaded here dynamically -->
+          <div class="text-center text-muted py-3">No notifications</div>
+        </div>
+        <div class="dropdown-footer p-2 text-center border-top">
+          <a href="../html/notifi.html" class="see-all-link"
+            style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+        </div>
       </div>
-        </aside>
+    </aside>
 
-      
-      <main class="main-content flex-grow-1 p-4">
-        <div class="menu-container">
-          
-          <div class="menu-header mb-4">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h1 class="menu-title mb-1">Menu</h1>
-                <p class="menu-subtitle text-muted">0 registered items</p>
-              </div>
-              <div class="d-flex gap-3 align-items-center">
-                <button class="btn btn-outline-primary edit-btn" id="editBtn">
-                  <img src="../src/Icons/edit.png" alt="Edit" class="edit-icon">Edit
+
+    <main class="main-content flex-grow-1 p-4">
+      <div class="menu-container">
+
+        <div class="menu-header mb-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h1 class="menu-title mb-1">Menu</h1>
+              <p class="menu-subtitle text-muted">0 registered items</p>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+              <button class="btn btn-outline-primary edit-btn" id="editBtn">
+                <img src="../src/Icons/edit.png" alt="Edit" class="edit-icon">Edit
+              </button>
+              <div style="position:relative;">
+                <button class="btn btn-outline-secondary" id="filterBtn">
+                  <img src="../src/Icons/settings-sliders.png" alt="Filter" class="filter-icon">Filter
                 </button>
-                <div style="position:relative;">
-                  <button class="btn btn-outline-secondary" id="filterBtn">
-                    <img src="../src/Icons/settings-sliders.png" alt="Filter" class="filter-icon">Filter
+                <div id="categoryDropdown" class="dropdown-menu"
+                  style="display:none; position:absolute; left:0; top:100%; z-index:1050; min-width:180px;">
+                  <button class="dropdown-item" data-category="All">All</button>
+                  <button class="dropdown-item" data-category="Appetizer">Appetizer</button>
+                  <button class="dropdown-item" data-category="Specials">Specials</button>
+                  <button class="dropdown-item" data-category="Pasta">Pasta</button>
+                  <button class="dropdown-item" data-category="Bilao">Bilao</button>
+                  <button class="dropdown-item" data-category="Burgers">Burgers</button>
+                  <button class="dropdown-item" data-category="Pansit">Pansit</button>
+                  <button class="dropdown-item" data-category="Feast">Feast</button>
+                  <button class="dropdown-item" data-category="Rice Bowls">Rice Bowls</button>
+                  <button class="dropdown-item" data-category="Sizzlings">Sizzlings</button>
+                  <button class="dropdown-item" data-category="Sandwiches">Sandwiches</button>
+                  <button class="dropdown-item" data-category="Drinks">Drinks</button>
+                </div>
+              </div>
+              <div class="search-container">
+                <div class="input-group">
+                  <input type="text" class="form-control search-input" placeholder="Search">
+                  <button class="btn btn-outline-secondary" type="button">
+                    <i class="bi bi-search"></i>
                   </button>
-                  <div id="categoryDropdown" class="dropdown-menu" style="display:none; position:absolute; left:0; top:100%; z-index:1050; min-width:180px;">
-                    <button class="dropdown-item" data-category="All">All</button>
-                    <button class="dropdown-item" data-category="Appetizer">Appetizer</button>
-                    <button class="dropdown-item" data-category="Specials">Specials</button>
-                    <button class="dropdown-item" data-category="Pasta">Pasta</button>
-                    <button class="dropdown-item" data-category="Bilao">Bilao</button>
-                    <button class="dropdown-item" data-category="Burgers">Burgers</button>
-                    <button class="dropdown-item" data-category="Pansit">Pansit</button>
-                    <button class="dropdown-item" data-category="Feast">Feast</button>
-                    <button class="dropdown-item" data-category="Rice Bowls">Rice Bowls</button>
-                    <button class="dropdown-item" data-category="Sizzlings">Sizzlings</button>
-                    <button class="dropdown-item" data-category="Sandwiches">Sandwiches</button>
-                    <button class="dropdown-item" data-category="Drinks">Drinks</button>
-                  </div>
-                </div>
-                <div class="search-container">
-                  <div class="input-group">
-                    <input type="text" class="form-control search-input" placeholder="Search">
-                    <button class="btn btn-outline-secondary" type="button">
-                      <i class="bi bi-search"></i>
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
-          </div>
-           
-          
-          <div class="menu-table-container">
-            <div class="table-responsive">
-              <table class="table menu-table">
-                <thead>
-                  <tr>
-                    <th class="table-header">Products</th>
-                    <th class="table-header">Category</th>
-                    <th class="table-header">Price</th>
-                    <th class="table-header">Availability</th>
-                  </tr>
-                </thead>
-                <tbody id="menuTableBody">
-                  <tr>
-                    <td colspan="4" class="text-center text-muted">Loading menu from Firebase...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          
-          <div class="add-product-section mt-4" id="addProductSection" style="display: none;">
-            <a href="../html/addproduct.html" class="text-decoration-none">
-              <div class="add-product-container">
-                <div class="d-flex align-items-center add-product-item">
-                  <div class="add-product-icon me-3">
-                    <i class="bi bi-plus-circle"></i>
-                  </div>
-                  <span class="add-product-text">Add Product</span>
-                </div>
-              </div>
-            </a>
           </div>
         </div>
-      </main>
+
+
+        <div class="menu-table-container">
+          <div class="table-responsive">
+            <table class="table menu-table">
+              <thead>
+                <tr>
+                  <th class="table-header">Products</th>
+                  <th class="table-header">Category</th>
+                  <th class="table-header">Price</th>
+                  <th class="table-header">Availability</th>
+                </tr>
+              </thead>
+              <tbody id="menuTableBody">
+                <tr>
+                  <td colspan="4" class="text-center text-muted">Loading menu from Firebase...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+
+        <div class="add-product-section mt-4" id="addProductSection" style="display: none;">
+          <a href="../html/addproduct.html" class="text-decoration-none">
+            <div class="add-product-container">
+              <div class="d-flex align-items-center add-product-item">
+                <div class="add-product-icon me-3">
+                  <i class="bi bi-plus-circle"></i>
+                </div>
+                <span class="add-product-text">Add Product</span>
               </div>
             </div>
-          </div>
+          </a>
         </div>
       </div>
-      
-   
-      <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-      
-      
-      <script src="../main.js"></script>
-      <script src="../javascript/navnotifi.js"></script>
+    </main>
+  </div>
+  </div>
+  </div>
+  </div>
+  </div>
+
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+
+  <script src="../main.js"></script>
+  <script src="../javascript/navnotifi.js"></script>
   <script src="../javascript/notifications.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-      <script src="../javascript/menu.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../javascript/menu.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
       var notifLink = document.querySelector('.nav-link[title="Notifications"]');
       if (notifLink) {
-        notifLink.addEventListener('click', function() {
+        notifLink.addEventListener('click', function () {
           if (typeof loadNotifications === 'function') {
             loadNotifications();
           }
         });
       }
+
+      // Logout functionality
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+      }
     });
-    </script>
+
+    // Logout functionality
+    function handleLogout() {
+      firebase.auth().signOut().then(() => {
+        console.log('User signed out successfully');
+        window.location.href = '../index.html';
+      }).catch((error) => {
+        console.error('Error signing out:', error);
+        window.location.href = '../index.html';
+      });
+    }
+  </script>
 </body>
+
 </html>
