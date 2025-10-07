@@ -368,7 +368,18 @@ document.addEventListener('DOMContentLoaded', function () {
       if (quotationData.data && quotationData.data.priceBreakdown && lalamoveOption) {
         const price = parseFloat(quotationData.data.priceBreakdown.total);
         const serviceType = quotationData.data.serviceType || 'MOTORCYCLE';
-        const distance = quotationData.data.distance || '0.5km';
+
+        // Handle distance - it might be a string or an object
+        let distance = '0.5km';
+        if (quotationData.data.distance) {
+          if (typeof quotationData.data.distance === 'string') {
+            distance = quotationData.data.distance;
+          } else if (typeof quotationData.data.distance === 'object' && quotationData.data.distance.value) {
+            distance = `${quotationData.data.distance.value}${quotationData.data.distance.unit || 'km'}`;
+          } else if (typeof quotationData.data.distance === 'number') {
+            distance = `${quotationData.data.distance}km`;
+          }
+        }
 
         // Update the price display in the Lalamove option
         const priceElement = lalamoveOption.querySelector('.price');
@@ -1036,7 +1047,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse') || '{}');
 
         // Validate required data
-        if (!formData.name || !formData.email) {
+        const customerName = formData.name || (formData.firstName && formData.lastName ? `${formData.firstName} ${formData.lastName}` : '');
+        if (!customerName || !formData.email) {
           alert('Customer information is missing. Please go back to the details page and fill in your information.');
           return;
         }
