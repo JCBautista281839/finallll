@@ -1201,6 +1201,10 @@ document.addEventListener('DOMContentLoaded', function () {
           throw new Error('Quotation data is missing required information');
         }
 
+        if (!formData.firstName || !formData.lastName || !formData.phone || !formData.email) {
+          throw new Error('Customer information is incomplete. Missing required fields.');
+        }
+
         // Get pickup and delivery addresses from stored data
         const pickupAddress = sessionStorage.getItem('pickupAddress') || "Viktoria's Bistro, Philippines";
         const deliveryAddress = sessionStorage.getItem('deliveryAddress') || formData.fullAddress;
@@ -1263,7 +1267,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Lalamove order failed: ${response.status} ${errorText}`);
+          console.error('[shipping.js] Lalamove API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorText
+          });
+          throw new Error(`Lalamove order failed: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
         const result = await response.json();
@@ -1295,8 +1304,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const paymentInfo = sessionStorage.getItem('paymentInfo');
 
         // Check if payment method is selected
-        if (!selectedPaymentMethod || (selectedPaymentMethod !== 'gcash' && selectedPaymentMethod !== 'card')) {
-          alert('Please select a payment method (GCash or Card) first.');
+        if (!selectedPaymentMethod || (selectedPaymentMethod !== 'gcash' && selectedPaymentMethod !== 'bank_transfer')) {
+          alert('Please select a payment method (GCash or Bank Transfer) first.');
           return;
         }
 
@@ -1412,7 +1421,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const orderConfirmationData = {
               orderId: orderId,
               lalamoveOrderId: lalamoveOrderId,
-              paymentMethod: paymentInfo.type,
+              paymentMethod: payment.type,
               deliveryMethod: lalamoveRadio && lalamoveRadio.checked ? 'delivery' : 'pickup',
               totalAmount: document.getElementById('total-amount').textContent.replace('₱', '')
             };
@@ -1431,12 +1440,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get selected payment method
     function getSelectedPaymentMethod() {
       const gcashPayment = document.getElementById('gcash-payment');
-      const cardPayment = document.getElementById('card-payment');
+      const bankTransferPayment = document.getElementById('bank-transfer-payment');
 
       if (gcashPayment && gcashPayment.checked) {
         return 'gcash';
-      } else if (cardPayment && cardPayment.checked) {
-        return 'card';
+      } else if (bankTransferPayment && bankTransferPayment.checked) {
+        return 'bank_transfer';
       }
 
       return 'gcash'; // default
