@@ -1428,7 +1428,6 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
       });
     } else {
       console.log('[SendGrid API] SendGrid configured but error occurred:', error.message);
-<<<<<<< HEAD
       
       // Always provide a fallback OTP even on server errors
       const otp = generateOTP();
@@ -1450,12 +1449,6 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
         emailSent: false,
         emailError: error.message,
         instructions: 'Please check server logs and try again'
-=======
-      res.status(500).json({
-        success: false,
-        message: 'Failed to generate SendGrid OTP. Please try again.',
-        error: error.message
->>>>>>> 8158efbc32f94810a863d6faa5fb17bdc0a875ae
       });
     }
   }
