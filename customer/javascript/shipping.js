@@ -1276,6 +1276,14 @@ document.addEventListener('DOMContentLoaded', function () {
               weight: "LESS_THAN_3_KG",
               categories: ["FOOD_DELIVERY"],
               handlingInstructions: ["KEEP_UPRIGHT"]
+            },
+            // Add potentially missing required fields
+            paymentMethod: "CASH",
+            fleetOption: "MOTORCYCLE",
+            scheduleAt: null,
+            metadata: {
+              orderId: Date.now().toString(),
+              restaurant: "Viktoria's Bistro"
             }
           }
         };
