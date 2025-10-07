@@ -17,12 +17,20 @@ const API_CONFIG = {
                          window.location.port === '3000' || 
                          window.location.port === '5001';
         
+        // Check if we're on the production domain
+        const isProduction = window.location.hostname === 'viktoriasbistro.restaurant' ||
+                            window.location.hostname.includes('viktoriasbistro');
+        
         if (isLocal && isDevPort) {
             console.log('🔧 Development environment detected, using local server');
             return 'http://localhost:5001';
-        } else {
+        } else if (isProduction) {
             console.log('🔧 Production environment detected, using production server');
             return 'https://viktoriasbistro.restaurant';
+        } else {
+            // For deployment or other environments, use the same origin
+            console.log('🔧 Deployment environment detected, using same origin');
+            return window.location.origin;
         }
     })(),
     
