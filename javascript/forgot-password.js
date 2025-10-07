@@ -104,21 +104,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await window.sendGridOTPService.sendEmailOTP(email, userName);
                 
                 if (result.success) {
-                    // Check if email was actually sent
-                    if (!result.emailSent) {
-                        // If email failed to send, show error message
-                        throw new Error('Email service is temporarily unavailable. Please try again later.');
-                    }
-                    
                     // Store email for OTP verification
                     sessionStorage.setItem('passwordResetEmail', email);
                     
                     console.log('✅ SendGrid OTP sent successfully for password reset');
                     
-                    // Show success message
-                    showSuccess();
+                    // Check if email was actually sent
+                    if (result.emailSent) {
+                        // Email sent successfully - show success message
+                        showSuccess('Password reset link has been sent to your email!');
+                    } else {
+                        // Email failed to send but OTP generated - show warning for development
+                        console.warn('⚠️ Email service unavailable. OTP generated for testing:', result.otp);
+                        showSuccess('OTP generated! Check console for code (Email service unavailable).');
+                    }
                     
-                    // Redirect to OTP verification page
+                    // Always redirect to OTP verification page (for testing)
                     setTimeout(() => {
                         window.location.href = 'verify-password-reset-otp.html';
                     }, 2000);
@@ -193,7 +194,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show success message
-    function showSuccess() {
+    function showSuccess(message) {
+        if (message) {
+            // Update success message text if provided
+            const successText = successMessage.querySelector('p') || successMessage;
+            if (successText.tagName === 'P') {
+                successText.textContent = message;
+            }
+        }
+        
         successMessage.style.display = 'block';
         errorMessage.style.display = 'none';
         
