@@ -993,6 +993,13 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
+        // Verify payment method matches
+        if (payment.type !== selectedPaymentMethod) {
+          alert('Payment method mismatch. Please complete the payment process for the selected method.');
+          sessionStorage.removeItem('paymentInfo');
+          return;
+        }
+
         // Show loading status
         showStatus('Creating your order...', false);
 
