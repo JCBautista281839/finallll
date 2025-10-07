@@ -120,7 +120,7 @@
           <span class="price" id="total-price">₱0</span>
         </div>
         <!-- Checkout page continue button -->
-        <button class="continue-btn" onclick="window.location.href='shipping.html'">
+        <button class="continue-btn" id="continue-btn">
           Continue
         </button>
       </div>
@@ -281,6 +281,47 @@
     window.parsePrice = function (priceString) {
       return parseFloat(priceString.replace(/[^0-9.-]+/g, '')) || 0;
     };
+
+    // Handle Continue button click
+    document.addEventListener('DOMContentLoaded', function () {
+      const continueBtn = document.getElementById('continue-btn');
+      if (continueBtn) {
+        continueBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+
+          // Collect form data
+          const formData = {
+            email: document.getElementById('email')?.value || '',
+            phone: document.getElementById('phone')?.value || '',
+            firstName: document.getElementById('firstName')?.value || '',
+            lastName: document.getElementById('lastName')?.value || '',
+            address: document.getElementById('address')?.value || '',
+            barangay: document.getElementById('barangay')?.value || '',
+            postalCode: document.getElementById('postalCode')?.value || '',
+            city: document.getElementById('city')?.value || '',
+            province: document.getElementById('province')?.value || '',
+            name: (document.getElementById('firstName')?.value || '') + ' ' + (document.getElementById('lastName')?.value || ''),
+            fullAddress: `${document.getElementById('address')?.value || ''}, ${document.getElementById('barangay')?.value || ''}, ${document.getElementById('city')?.value || ''}, ${document.getElementById('province')?.value || ''}, ${document.getElementById('postalCode')?.value || ''}`
+          };
+
+          // Validate required fields
+          const requiredFields = ['email', 'phone', 'firstName', 'lastName', 'address', 'barangay', 'postalCode', 'city', 'province'];
+          const missingFields = requiredFields.filter(field => !formData[field]);
+
+          if (missingFields.length > 0) {
+            alert('Please fill in all required fields: ' + missingFields.join(', '));
+            return;
+          }
+
+          // Store form data in sessionStorage
+          sessionStorage.setItem('formData', JSON.stringify(formData));
+          console.log('[details.html] Form data saved to sessionStorage:', formData);
+
+          // Navigate to shipping page
+          window.location.href = 'shipping.html';
+        });
+      }
+    });
   </script>
 </body>
 
