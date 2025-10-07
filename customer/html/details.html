@@ -275,6 +275,10 @@
 
       // Update total price
       totalPriceElement.textContent = `₱${totalPrice.toFixed(0)}`;
+
+      // Store subtotal in sessionStorage for shipping page
+      sessionStorage.setItem('orderSubtotal', totalPrice.toString());
+      console.log('[details.html] Stored subtotal in sessionStorage:', totalPrice);
     }
 
     // Utility function to parse price
