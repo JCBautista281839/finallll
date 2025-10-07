@@ -32,28 +32,28 @@ firebase.auth().onAuthStateChanged(async (user) => {
 function initializeSettings() {
     // Settings menu navigation
     document.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', function () {
             const section = this.dataset.section;
             switchSection(section);
-            
+
             // Update active menu item
             document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
             this.classList.add('active');
         });
     });
-    
+
     // Add team member form - USE THE SIMPLE VERSION
     const addTeamForm = document.getElementById('addTeamForm');
     if (addTeamForm) {
         addTeamForm.addEventListener('submit', addTeamMemberSimple); // Changed this line
     }
-    
+
     // Clear form button
     const clearFormBtn = document.getElementById('clearForm');
     if (clearFormBtn) {
         clearFormBtn.addEventListener('click', clearAddTeamForm);
     }
-    
+
     // Logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -67,7 +67,7 @@ function switchSection(sectionName) {
     document.querySelectorAll('.settings-section').forEach(section => {
         section.classList.remove('active');
     });
-    
+
     // Show selected section
     const targetSection = document.getElementById(sectionName + 'Section');
     if (targetSection) {
@@ -78,7 +78,7 @@ function switchSection(sectionName) {
 // SIMPLIFIED - Add team member without auto logout
 async function addTeamMemberSimple(e) {
     e.preventDefault();
-    
+
     const firstName = document.getElementById('firstName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -87,49 +87,49 @@ async function addTeamMemberSimple(e) {
     const confirmPassword = document.getElementById('confirmPassword').value;
     const phone = document.getElementById('phone').value.trim();
     const startDate = document.getElementById('startDate').value;
-    
+
     // Validation
     if (!firstName || !lastName || !email || !role || !password) {
         showToast('Please fill in all required fields', 'error');
         return;
     }
-    
+
     // Password validation
     if (password !== confirmPassword) {
         showToast('Passwords do not match', 'error');
         return;
     }
-    
+
     if (password.length < 6) {
         showToast('Password must be at least 6 characters', 'error');
         return;
     }
-    
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         showToast('Please enter a valid email address', 'error');
         return;
     }
-    
+
     const addButton = document.getElementById('addTeamMember');
     const originalText = addButton.innerHTML;
     addButton.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Creating Account...';
     addButton.disabled = true;
-    
+
     try {
         // Get current user's auth before creating new user
         const currentUser = firebase.auth().currentUser;
-        
+
         // Create Firebase Auth account
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         const newUser = userCredential.user;
-        
+
         // Update user profile
         await newUser.updateProfile({
             displayName: `${firstName} ${lastName}`
         });
-        
+
         // Save user data and kitchen access flag
         const userData = {
             firstName: firstName,
@@ -170,20 +170,20 @@ async function addTeamMemberSimple(e) {
         // Clear form and reload team list
         clearAddTeamForm();
         loadTeamMembers();
-        
+
     } catch (error) {
         console.error('❌ Error creating team member:', error);
         let errorMessage = 'Error creating team member account';
-        
+
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = 'Email address is already in use';
         } else if (error.code === 'auth/weak-password') {
             errorMessage = 'Password is too weak';
         }
-        
+
         showToast(errorMessage, 'error');
     }
-    
+
     addButton.innerHTML = originalText;
     addButton.disabled = false;
 }
@@ -197,22 +197,22 @@ function clearAddTeamForm() {
 async function loadTeamMembers() {
     try {
         console.log('🔄 Loading team members...');
-        
+
         const teamList = document.getElementById('teamList');
         if (!teamList) {
             console.error('❌ Team list element not found');
             return;
         }
-        
+
         teamList.innerHTML = '<div class="loading"><i class="bi bi-hourglass-split"></i><br>Loading team members...</div>';
-        
+
         // Get team members from team_members collection
         const teamSnapshot = await firebase.firestore().collection('team_members')
             .orderBy('createdAt', 'desc')
             .get();
-        
+
         console.log('📊 Found team members:', teamSnapshot.size);
-        
+
         if (teamSnapshot.empty) {
             teamList.innerHTML = `
                 <div class="team-member">
@@ -226,7 +226,7 @@ async function loadTeamMembers() {
             `;
             return;
         }
-        
+
         // Clear and add header
         teamList.innerHTML = `
             <div class="team-header">
@@ -236,7 +236,7 @@ async function loadTeamMembers() {
                 <div class="header-cell actions-col">ACTIONS</div>
             </div>
         `;
-        
+
         // Create and append team member elements
         teamSnapshot.forEach(doc => {
             const userData = doc.data();
@@ -245,9 +245,9 @@ async function loadTeamMembers() {
                 teamList.appendChild(memberElement);
             }
         });
-        
+
         console.log('✅ Team members loaded successfully');
-        
+
     } catch (error) {
         console.error('❌ Error loading team members:', error);
         showToast('Error loading team members: ' + error.message, 'error');
@@ -258,16 +258,16 @@ async function loadTeamMembers() {
 function createTeamMemberElement(userId, userData) {
     const memberDiv = document.createElement('div');
     memberDiv.className = 'team-member';
-    
-    const displayName = userData.firstName && userData.lastName 
+
+    const displayName = userData.firstName && userData.lastName
         ? `${userData.firstName} ${userData.lastName}`
         : userData.firstName || userData.email?.split('@')[0] || 'Unknown User';
-    
+
     const role = userData.role || 'user';
     const email = userData.email || 'No email';
-    
+
     const initials = displayName.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase();
-    
+
     memberDiv.innerHTML = `
         <div class="member-cell name-col">
             <div class="member-avatar purple">
@@ -296,21 +296,21 @@ function createTeamMemberElement(userId, userData) {
             </div>
         </div>
     `;
-    
+
     return memberDiv;
 }
 
 // Edit user role - SIMPLIFIED
 function editUserRole(userId, currentRole) {
     const newRole = prompt(`Enter new role for user (current: ${currentRole}):\n- admin\n- manager\n- server\n- kitchen\n- user`);
-    
+
     if (newRole && newRole !== currentRole) {
         const validRoles = ['admin', 'manager', 'server', 'kitchen', 'user'];
         if (!validRoles.includes(newRole.toLowerCase())) {
             showToast('Invalid role. Please choose: admin, manager, server, kitchen, or user', 'error');
             return;
         }
-        
+
         firebase.firestore().collection('users').doc(userId).update({
             role: newRole.toLowerCase(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -328,27 +328,25 @@ function editUserRole(userId, currentRole) {
 function removeUser(userId) {
     if (confirm('Are you sure you want to remove this user? This action cannot be undone.')) {
         firebase.firestore().collection('users').doc(userId).delete()
-        .then(() => {
-            showToast('User removed successfully', 'success');
-            loadTeamMembers();
-        }).catch(error => {
-            console.error('Error removing user:', error);
-            showToast('Error removing user', 'error');
-        });
+            .then(() => {
+                showToast('User removed successfully', 'success');
+                loadTeamMembers();
+            }).catch(error => {
+                console.error('Error removing user:', error);
+                showToast('Error removing user', 'error');
+            });
     }
 }
 
 // Logout functionality
 function handleLogout() {
-    if (confirm('Are you sure you want to logout?')) {
-        firebase.auth().signOut().then(() => {
-            console.log('User signed out successfully');
-            window.location.href = '/index.html';
-        }).catch((error) => {
-            console.error('Error signing out:', error);
-            window.location.href = '/index.html';
-        });
-    }
+    firebase.auth().signOut().then(() => {
+        console.log('User signed out successfully');
+        window.location.href = '../index.html';
+    }).catch((error) => {
+        console.error('Error signing out:', error);
+        window.location.href = '../index.html';
+    });
 }
 
 // Show toast notification
@@ -361,9 +359,9 @@ function showToast(message, type = 'info') {
         ${message}
         <button type="button" class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         if (toast.parentElement) {
             toast.remove();
@@ -379,7 +377,7 @@ function testAddTeamMember() {
         email: 'test@example.com',
         role: 'server'
     };
-    
+
     firebase.firestore().collection('team_members').add({
         ...testData,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -394,9 +392,9 @@ function testAddTeamMember() {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('🚀 Settings page loaded');
-    
+
     // Small delay to ensure Firebase is ready
     setTimeout(() => {
         if (firebase.auth().currentUser) {
