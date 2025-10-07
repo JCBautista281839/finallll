@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Viktoria's Bistro</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/nav.css">
+    <link rel="stylesheet" href="../css/settings.css">
+</head>
+
+<body>
+    <div class="dashboard-container d-flex">
+        <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
+            <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="brand mb-1">
+                <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
+            </div>
+            <nav class="nav flex-column w-100 text-center">
+                <a href="../html/Dashboard.html" class="nav-link text-white" title="Home">
+                    <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
+                    <div class="nav-text">Home</div>
+                </a>
+
+                <a class="nav-link text-white" title="Notifications" style="position:relative;">
+                    <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon">
+                    <span class="notification-badge"
+                        style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+                    <div class="nav-text">Notifications</div>
+                </a>
+                <a href="../html/Order.html" class="nav-link text-white" title="Orders">
+                    <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
+                    <div class="nav-text">Orders</div>
+                </a>
+                <a href="../html/pos.html" class="nav-link text-white" title="POS">
+                    <img src="../src/Icons/cashier-machine.png" alt="POS" class="nav-icon">
+                    <div class="nav-text">POS</div>
+                </a>
+                <a href="../html/menu.html" class="nav-link text-white" title="Menu">
+                    <img src="../src/Icons/menu (1).png" alt="Menu" class="nav-icon">
+                    <div class="nav-text">Menu</div>
+                </a>
+                <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
+                    <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
+                    <div class="nav-text">Inventory</div>
+                </a>
+                <a href="../html/analytics.html" class="nav-link text-white" title="Reports">
+                    <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
+                    <div class="nav-text">Reports</div>
+                </a>
+                <a href="../html/user.html" class="nav-link text-white" title="Users">
+                    <img src="../src/Icons/user.png" alt="user" class="nav-icon">
+                    <div class="nav-text">Users</div>
+                </a>
+                <br>
+                <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+                    <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
+                    <div class="nav-text">Settings</div>
+                </a>
+                <a href="#" id="logoutBtn" class="nav-link text-white" title="Logout">
+                    <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
+                    <div class="nav-text">Logout</div>
+                </a>
+            </nav>
+            <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+            <div id="notificationDropdown" class="notification-dropdown"
+                style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+                <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+                    <img src="../src/Icons/bell.png" alt="Notifications"
+                        style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+                    <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+                    <img src="../src/Icons/close.png" id="closeDropdown" alt="Close"
+                        style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+                </div>
+                <div class="dropdown-body p-2" id="dropdownNotificationsList">
+                    <!-- Notifications will be loaded here dynamically -->
+                    <div class="text-center text-muted py-3">No notifications</div>
+                </div>
+                <div class="dropdown-footer p-2 text-center border-top">
+                    <a href="../html/notifi.html" class="see-all-link"
+                        style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-grow-1 p-4">
+            <div class="settings-container">
+                <!-- Header -->
+                <div class="settings-header mb-4">
+                    <h1 class="settings-title mb-0">Settings</h1>
+                </div>
+
+                <div class="row">
+                    <!-- Settings Menu -->
+                    <div class="col-md-3">
+                        <div class="settings-menu">
+                            <div class="menu-item active" data-section="team">
+                                <i class="bi bi-people me-2"></i>
+                                <span>Team Management</span>
+                            </div>
+                            <div class="menu-item" data-section="admin">
+                                <i class="bi bi-shield-check me-2"></i>
+                                <span>Admin Settings</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Content -->
+                    <div class="col-md-9">
+                        <!-- Team Management Section -->
+                        <div id="teamSection" class="settings-section active">
+                            <div class="section-header">
+                                <h2>Team Management</h2>
+                            </div>
+
+                            <!-- Add Team Member -->
+                            <div class="add-team-section mb-5">
+                                <h4>Add Team Member</h4>
+                                <p class="text-muted">Create new accounts for team members with system access.</p>
+
+                                <form id="addTeamForm" class="add-team-form">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">First Name *</label>
+                                            <input type="text" class="form-control" id="firstName" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Last Name *</label>
+                                            <input type="text" class="form-control" id="lastName" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Email Address *</label>
+                                            <input type="email" class="form-control" id="email" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Role *</label>
+                                            <select class="form-select" id="role" required>
+                                                <option value="">Select Role</option>
+                                                <option value="kitchen">Kitchen Staff</option>
+                                                <option value="server">Server</option>
+                                                <option value="manager">Manager</option>
+                                                <option value="admin">Admin</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Password *</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="password" required
+                                                    minlength="6" placeholder="Min 6 characters">
+                                                <button class="btn btn-outline-secondary" type="button"
+                                                    id="togglePassword">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Confirm Password *</label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="confirmPassword"
+                                                    required minlength="6" placeholder="Confirm password">
+                                                <button class="btn btn-outline-secondary" type="button"
+                                                    id="toggleConfirmPassword">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" id="phone"
+                                                placeholder="+1 (555) 123-4567">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Start Date</label>
+                                            <input type="date" class="form-control" id="startDate">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-actions mt-4">
+                                        <button type="button" class="btn btn-secondary me-2" id="clearForm">
+                                            <i class="bi bi-x-circle me-1"></i> Clear
+                                        </button>
+                                        <button type="submit" class="btn btn-success" id="addTeamMember">
+                                            <i class="bi bi-person-plus me-1"></i> Add Team Member
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Your Team -->
+                            <div class="team-section">
+                                <h4>Your Team</h4>
+                                <p class="text-muted">Manage your existing team and change roles/permissions.</p>
+
+                                <div class="team-table">
+
+
+                                    <div class="team-list" id="teamList">
+                                        <!-- Team members will be loaded here -->
+                                        <div class="loading">
+                                            <i class="bi bi-hourglass-split"></i><br>
+                                            Loading team members...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Admin Settings Section -->
+                        <div id="adminSection" class="settings-section">
+                            <div class="section-header">
+                                <h2>Admin Settings</h2>
+                            </div>
+
+                            <div class="admin-settings">
+                                <div class="setting-group">
+                                    <h5>Restaurant Information</h5>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Restaurant Name</label>
+                                            <input type="text" class="form-control" value="Viktoria's Bistro">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Contact Number</label>
+                                            <input type="tel" class="form-control" placeholder="+1 (555) 123-4567">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Address</label>
+                                            <textarea class="form-control" rows="2"
+                                                placeholder="Restaurant Address"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="setting-group">
+                                    <h5>System Settings</h5>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="notificationsSwitch"
+                                            checked>
+                                        <label class="form-check-label" for="notificationsSwitch">
+                                            Enable Notifications
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoBackupSwitch" checked>
+                                        <label class="form-check-label" for="autoBackupSwitch">
+                                            Auto Backup Data
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="setting-group">
+                                    <button class="btn btn-primary">Save Settings</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- Custom Scripts -->
+    <script src="../javascript/navnotifi.js"></script>
+    <script src="../main.js"></script>
+    <script src="../javascript/auth-manager.js"></script>
+    <script src="../javascript/settings.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var notifLink = document.querySelector('.nav-link[title="Notifications"]');
+            if (notifLink) {
+                notifLink.addEventListener('click', function () {
+                    if (typeof loadNotifications === 'function') {
+                        loadNotifications();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

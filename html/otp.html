@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - Viktoria's Bistro</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/otp.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Column - Verification Form -->
+            <div class="col-md-6 left-column">
+                <button class="back-button" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                
+                <div class="verification-content">
+                <h1 class="main-heading" id="otpHeading">Check your email</h1>
+                <p class="email-text" id="otpInstruction">
+                    We sent a verification code to <span class="email-address" id="contactDisplay">your@email.com</span>
+                </p>
+                
+                <div class="otp-inputs">
+                    <input type="text" class="otp-input" maxlength="1" data-index="0">
+                    <input type="text" class="otp-input" maxlength="1" data-index="1">
+                    <input type="text" class="otp-input" maxlength="1" data-index="2">
+                    <input type="text" class="otp-input" maxlength="1" data-index="3">
+                    <input type="text" class="otp-input" maxlength="1" data-index="4">
+                    <input type="text" class="otp-input" maxlength="1" data-index="5">
+                </div>
+                    
+                    <p class="resend-text">
+                        Didn't get the email? <span class="resend-link" onclick="resendCode()">Click to resend.</span>
+                    </p>
+                    
+                    
+                    <button class="signup-button" id="verifyButton" onclick="verifyOTP()">
+                        Verify Email
+                    </button>
+                    
+                    <p class="login-text">
+                        Already have an account? <span class="login-link" onclick="goToLogin()">Login</span>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Right Column - Photo Collage -->
+            <div class="col-md-6 right-column">
+                <div class="photo-collage">
+                    <div class="photo-item"></div>
+                    <div class="photo-item"></div>
+                    <div class="photo-item"></div>
+                    <div class="photo-item"></div>
+                    <div class="photo-item"></div>
+                    <div class="photo-item"></div>
+                </div>
+                <div class="pink-overlay"></div>
+                <div class="overlay-text">Celebrate! at Viktoria's Bistro</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main Firebase Config -->
+    <script src="../main.js"></script>
+    
+    <!-- SendGrid OTP Service -->
+    <script src="../javascript/sendgrid-otp.js?v=2.3"></script>
+    
+    <!-- OTP Verification Functions -->
+    <script src="../javascript/otp.js"></script>
+    
+    <!-- Signup Functions for SMS OTP -->
+    
+    
+    <!-- Custom CSS for Email Verification -->
+    <style>
+        .verification-info {
+            margin: 20px 0;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .info-box i {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        .info-box h3 {
+            margin: 10px 0;
+            color: #333;
+        }
+        
+        .info-box p {
+            color: #666;
+            margin: 0;
+        }
+        
+        .verification-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+        
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .step-text {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .otp-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .otp-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        .otp-input.filled {
+            background-color: #f0f0f0;
+            border-color: #007bff;
+        }
+    </style>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Generate referral code for customer
+        function generateReferralCode(name) {
+            const namePart = name.replace(/\s+/g, '').toUpperCase().substring(0, 3);
+            const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return `${namePart}${randomPart}`;
+        }
+
+        // Wait for Firebase to be ready
+        function waitForFirebase() {
+            return new Promise((resolve) => {
+                const checkFirebase = () => {
+                    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                        console.log('Firebase is ready in OTP page');
+                        resolve();
+                    } else {
+                        setTimeout(checkFirebase, 100);
+                    }
+                };
+                checkFirebase();
+            });
+        }
+        
+        // Initialize Firebase when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Initialize Firebase
+                if (typeof initializeFirebase === 'function') {
+                    initializeFirebase();
+                }
+                
+                // Wait for Firebase to be ready
+                await waitForFirebase();
+                
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+            }
+        });
+        
+        // OTP Input Handling
+        const otpInputs = document.querySelectorAll('.otp-input');
+        const verifyButton = document.getElementById('verifyButton');
+        
+        // Auto-focus and navigation between inputs
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', function(e) {
+                const value = e.target.value;
+                
+                // Only allow numbers
+                if (!/^\d$/.test(value)) {
+                    e.target.value = '';
+                    return;
+                }
+                
+                // Add filled class
+                if (value) {
+                    e.target.classList.add('filled');
+                } else {
+                    e.target.classList.remove('filled');
+                }
+                
+                // Move to next input
+                if (value && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+                
+                // Check if all inputs are filled
+                checkOTPComplete();
+            });
+            
+            input.addEventListener('keydown', function(e) {
+                // Handle backspace
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+            
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text');
+                const digits = pastedData.replace(/\D/g, '').slice(0, 6);
+                
+                digits.split('').forEach((digit, i) => {
+                    if (otpInputs[i]) {
+                        otpInputs[i].value = digit;
+                        otpInputs[i].classList.add('filled');
+                    }
+                });
+                
+                checkOTPComplete();
+            });
+        });
+        
+        // Check if OTP is complete
+        function checkOTPComplete() {
+            const allFilled = Array.from(otpInputs).every(input => input.value);
+            verifyButton.disabled = !allFilled;
+        }
+        
+        // Verify Email OTP Code
+        async function verifyOTP() {
+            const otp = Array.from(otpInputs).map(input => input.value).join('');
+            
+            if (otp.length !== 6) {
+                alert('Please enter the complete 6-digit code');
+                return;
+            }
+            
+            // Show loading state
+            verifyButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+            verifyButton.disabled = true;
+            
+            try {
+                // Wait for Firebase to be ready
+                await waitForFirebase();
+                
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase not loaded. Please refresh the page and try again.');
+                }
+                
+                // Get current user
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    // No Firebase user yet - this is normal for OTP verification flow
+                    console.log('No Firebase user found - proceeding with OTP verification only');
+                } else {
+                    console.log('Firebase user found:', user.email);
+                }
+                
+                // Get email from localStorage first
+                const email = localStorage.getItem('signupEmail');
+                
+                console.log('Verifying Email OTP for email:', email);
+                
+                // Verify Email OTP using Firebase
+                let verificationSuccess = false;
+                
+                // Try Firebase OTP verification first
+                if (window.firebaseOTPService) {
+                    try {
+                        console.log('🔥 Attempting Firebase OTP verification...');
+                        const firebaseResult = await window.firebaseOTPService.verifyEmailOTP(email, otp);
+                        
+                        if (firebaseResult.success) {
+                            console.log('✅ Firebase OTP verified successfully');
+                            verificationSuccess = true;
+                        } else {
+                            console.log('❌ Firebase OTP verification failed:', firebaseResult.message);
+                            alert(firebaseResult.message);
+                            return;
+                        }
+                    } catch (firebaseError) {
+                        console.log('🔄 Firebase verification failed:', firebaseError.message);
+                        // Continue to fallback methods
+                    }
+                }
+                
+                // Fallback to server API verification
+                if (!verificationSuccess) {
+                    try {
+                        console.log('🔄 Attempting server OTP verification...');
+                        
+                        const response = await fetch(`${window.location.origin}/api/sendgrid-verify-otp`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ email, otp })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            console.log('✅ Server OTP verified successfully');
+                            verificationSuccess = true;
+                        } else {
+                            console.log('❌ Server OTP verification failed:', result.message);
+                            alert(result.message);
+                            return;
+                        }
+                    } catch (serverError) {
+                        console.log('🔄 Server verification failed, trying local fallback...');
+                        
+                        // Fallback to local OTP verification
+                        try {
+                            const storedOTP = localStorage.getItem('emailOTP');
+                            const storedExpiry = localStorage.getItem('emailOTPExpiry');
+                            
+                            if (!storedOTP) {
+                                throw new Error('No OTP found. Please request a new verification code.');
+                            }
+                            
+                            if (Date.now() > parseInt(storedExpiry)) {
+                                localStorage.removeItem('emailOTP');
+                                localStorage.removeItem('emailOTPExpiry');
+                                throw new Error('OTP has expired. Please request a new verification code.');
+                            }
+                            
+                            if (storedOTP === otp) {
+                                localStorage.removeItem('emailOTP');
+                                localStorage.removeItem('emailOTPExpiry');
+                                console.log('✅ Local OTP verified successfully');
+                                verificationSuccess = true;
+                            } else {
+                                throw new Error('Invalid OTP code. Please check and try again.');
+                            }
+                        } catch (localError) {
+                            console.log('❌ Local OTP verification failed:', localError.message);
+                            alert(localError.message);
+                            return;
+                        }
+                    }
+                }
+                
+                // Create Firebase user account after successful OTP verification
+                if (verificationSuccess) {
+                    console.log('🔐 Creating Firebase user account...');
+                    
+                    const signupEmail = localStorage.getItem('signupEmail');
+                    const signupPassword = localStorage.getItem('signupPassword');
+                    const signupName = localStorage.getItem('signupName');
+                    const signupPhone = localStorage.getItem('signupPhone');
+                    
+                    if (signupEmail && signupPassword) {
+                        try {
+                            // Create Firebase user account
+                            const userCredential = await firebase.auth().createUserWithEmailAndPassword(signupEmail, signupPassword);
+                            const user = userCredential.user;
+                            
+                            // Update user profile
+                            await user.updateProfile({
+                                displayName: signupName
+                            });
+                            
+                            // Store user data in Firestore
+                            await firebase.firestore().collection('customers').doc(user.uid).set({
+                                name: signupName,
+                                email: signupEmail,
+                                phone: signupPhone,
+                                isEmailVerified: true,
+                                referralCode: generateReferralCode(signupName),
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            console.log('✅ Firebase user account created successfully');
+                            
+                        } catch (firebaseError) {
+                            console.error('❌ Error creating Firebase user:', firebaseError);
+                            // Don't fail the entire process if Firebase user creation fails
+                            console.log('⚠️ Continuing without Firebase user creation');
+                        }
+                    }
+                }
+                
+                // Clear stored data
+                localStorage.removeItem('signupEmail');
+                localStorage.removeItem('signupName');
+                localStorage.removeItem('signupPassword');
+                localStorage.removeItem('signupPhone');
+                
+                 // Show success message
+                 alert('Email verified successfully! You are now logged in.');
+                 
+                 // Redirect to main page for automatic login
+                 window.location.href = '../index.html';
+                
+            } catch (error) {
+                console.error('OTP verification error:', error);
+                alert('Verification failed: ' + error.message);
+                
+                // Reset button state
+                verifyButton.innerHTML = 'Verify Email';
+                verifyButton.disabled = false;
+            }
+        }
+
+
+        
+        // Resend Email OTP Code
+        async function resendCode() {
+            const resendLink = document.querySelector('.resend-link');
+            resendLink.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            resendLink.style.pointerEvents = 'none';
+            
+            try {
+                // Wait for Firebase to be ready
+                await waitForFirebase();
+                
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase not loaded. Please refresh the page and try again.');
+                }
+                
+                // Get current user
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    // No Firebase user yet - this is normal for OTP verification flow
+                    console.log('No Firebase user found - proceeding with OTP resend');
+                }
+                
+                // Resend Email OTP via Firebase
+                const email = localStorage.getItem('signupEmail');
+                const userName = localStorage.getItem('signupName');
+                
+                if (!email) {
+                    throw new Error('Email not found. Please sign up again.');
+                }
+                
+                console.log('Resending Email OTP to:', email);
+                
+                let resendSuccess = false;
+                
+                // Try Firebase OTP resend first
+                if (window.firebaseOTPService) {
+                    try {
+                        console.log('🔥 Attempting Firebase OTP resend...');
+                        const firebaseResult = await window.firebaseOTPService.resendOTP(email, userName);
+                        
+                        if (firebaseResult.success && firebaseResult.otp) {
+                            console.log('✅ Firebase OTP resent successfully:', firebaseResult.otp);
+                            localStorage.setItem('emailOTP', firebaseResult.otp);
+                            localStorage.setItem('emailOTPExpiry', firebaseResult.expiry);
+                            
+                            alert(`New OTP Code: ${firebaseResult.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                            resendSuccess = true;
+                        }
+                    } catch (firebaseError) {
+                        console.log('🔄 Firebase resend failed:', firebaseError.message);
+                    }
+                }
+                
+                // Fallback to server API resend
+                if (!resendSuccess) {
+                    try {
+                        console.log('🔄 Attempting server OTP resend...');
+                        
+                        const response = await fetch(`${window.location.origin}/api/sendgrid-resend-otp`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ email, userName })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success && result.otp) {
+                            console.log('✅ Server OTP resent successfully:', result.otp);
+                            localStorage.setItem('emailOTP', result.otp);
+                            localStorage.setItem('emailOTPExpiry', result.expiry);
+                            
+                            alert(`New OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                            resendSuccess = true;
+                        }
+                    } catch (serverError) {
+                        console.log('🔄 Server resend failed:', serverError.message);
+                    }
+                }
+                
+                // Final fallback to local OTP generation
+                if (!resendSuccess) {
+                    try {
+                        console.log('🔄 Generating local fallback OTP...');
+                        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                        localStorage.setItem('emailOTP', otp);
+                        localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000));
+                        
+                        alert(`New OTP Code: ${otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                        resendSuccess = true;
+                    } catch (localError) {
+                        console.log('🔄 Local OTP generation failed:', localError.message);
+                    }
+                }
+                
+                if (!resendSuccess) {
+                    throw new Error('Failed to resend verification code. Please try again.');
+                }
+                
+            } catch (error) {
+                console.error('Resend OTP error:', error);
+                alert('Failed to resend code: ' + error.message);
+            } finally {
+                // Reset button state
+                resendLink.innerHTML = 'Click to resend.';
+                resendLink.style.pointerEvents = 'auto';
+            }
+        }
+        
+        // Navigation functions
+        function goBack() {
+            window.history.back();
+        }
+        
+         function goToLogin() {
+             window.location.href = '../html/login.html';
+         }
+
+        
+        // Add some visual feedback
+        verifyButton.addEventListener('mouseenter', function() {
+            if (!this.disabled) {
+                this.style.transform = 'translateY(-2px)';
+            }
+        });
+        
+        verifyButton.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+        
+        // Set the contact display for Email
+        function setContactDisplayEmail() {
+            const email = localStorage.getItem('signupEmail') || 'your@email.com';
+            document.getElementById('contactDisplay').textContent = email;
+        }
+
+
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setContactDisplayEmail();
+            otpInputs[0].focus();
+        });
+    </script>
+
+</body>
+</html>

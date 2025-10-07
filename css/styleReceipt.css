@@ -1,0 +1,337 @@
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsExtraLight';
+  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsSemiBold';
+  src: url('../src/fonts/Poppins-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+html, body {
+    min-height: 100vh;
+    width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.transaction-content {
+    display: flex;
+    gap: 2rem;
+    height: calc(100vh - 200px);
+}
+
+.transaction-complete-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;   
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.transaction-title {
+    font-size: 2rem;
+    font-family: 'PoppinsSemiBold', sans-serif;
+    color: #000000;
+    margin-top: 100px;
+    text-align: center;
+}
+
+.receipt-image-container {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.receipt-paper {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 350px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.receipt-paper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ddd 0%, #fff 50%, #ddd 100%);
+    border-radius: 8px 8px 0 0;
+}
+
+.receipt-content {
+    box-sizing: border-box;
+    overflow: visible;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.receipt-header {
+    text-align: center;
+    border-bottom: 2px dashed #ccc;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.restaurant-name {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.restaurant-address {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.phone-number {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.receipt-date {
+    font-size: 10px;
+    color: #666;
+}
+
+.receipt-number {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: -5px;
+}
+
+.receipt-items {
+    margin-bottom: 1px;
+    margin-top: -5px;
+    text-transform: capitalize;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 11px;
+}
+
+.item-name {
+    flex: 1;
+}
+
+.item-quantity {
+    margin: 0 8px;
+    text-align: center;
+}
+
+.item-price {
+    text-align: right;
+    min-width: 50px;
+}
+
+.subtotal-row {
+    border-top: 1px solid #ccc;
+    padding-top: 8px;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+.tax-row {
+    font-size: 10px;
+    color: #666;
+}
+
+.total-row {
+    border-top: 2px solid #000;
+    padding-top: 8px;
+    margin-top: 8px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.payment-method {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 11px;
+}
+
+.thank-you {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.barcode {
+    text-align: center;
+    font-family: monospace;
+    font-size: 10px;
+    margin-top: 15px;
+    color: #333;
+}
+
+.print-button-container {
+    text-align: center;
+}
+
+.print-btn {
+    background: #28a745;
+    width: 200px;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-family: 'PoppinsSemiBold', sans-serif;
+    margin-top: -25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.print-btn:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.print-btn i {
+    margin-right: 8px;
+}
+
+.btn-close-order {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.btn-close-order:hover {
+    color: #c82333;
+}
+
+.top-bar {
+    background: transparent;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.back-button {
+    cursor: pointer;
+    font-family: 'PoppinsRegular';
+    margin-top: -10px;
+    margin-left: -10px;
+    color: #96392d;
+    font-weight: 500;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.back-text {
+    font-size: 30px !important;
+}
+
+.datetime-display {
+    font-size: 1.1rem;
+    margin-top: -5px;
+    font-family: 'PoppinsMedium', sans-serif;
+    color: #000000;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+
+}
+
+.receipt-main-container {
+    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+@media print {
+    @page { margin: 0; }
+    
+    body * { visibility: hidden; }
+    .receipt-paper, .receipt-paper * { visibility: visible; }
+    .receipt-paper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        border: 1px solid #000;
+        box-shadow: none;
+        margin: 0;
+        padding: 12px;
+        background: #fff;
+    }
+    body { background: #fff !important; }
+}
+
+
+@media (max-width: 1200px) {
+    .transaction-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .order-panel {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .transaction-complete-container {
+        padding: 1rem;
+    }
+    
+    .transaction-title {
+        font-size: 1.5rem;
+    }
+    
+    .receipt-paper {
+        max-width: 100%;
+    }
+    
+    .search-input {
+        width: 150px;
+    }
+}

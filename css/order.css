@@ -1,0 +1,619 @@
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsExtraLight';
+  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+.dark-mode .dashboard-container {
+  background: #080808 !important;
+}
+
+.dark-mode .body {
+  background: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
+.main-content {
+  min-height: calc(100vh - 40px);
+  background: #ffffff;
+  border-radius: 40px;
+  margin: 30px;
+  background-size: cover;
+  background-position: center;
+}
+
+.container-fluid {
+  background: transparent;
+  border-radius: 0;
+  padding: 30px;
+  box-shadow: none;
+  max-height: 690px;
+   overflow: auto;
+}
+
+/* Table Styles */
+.table {
+  margin-bottom: 0;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.table th {
+  font-weight: 600;
+  padding: 1rem;
+  white-space: nowrap;
+  border-top: none;
+}
+
+.table td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+/* Clickable row styles - only for pending payment orders */
+
+
+
+
+
+/* Status cell fix (stable height, no jumping) */
+.pending-payment-row .status-cell {
+    min-height: 65px;
+}
+
+/* Edit hint text */
+
+
+/* Table layout - ensures columns maintain fixed widths */
+.table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Lock Actions column header and cells - prevents shifting */
+.order-table th:last-child,
+.order-table td:last-child {
+    width: 140px;           /* Fixed width instead of percentage */
+    min-width: 140px;       /* Ensures minimum space */
+    max-width: 140px;       /* Prevents expansion */
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    padding: 8px 4px;       /* Consistent padding */
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+/* Ensure Actions header text stays in place */
+.order-table th:last-child {
+    position: relative;
+    font-weight: 600;
+}
+
+/* Allow text wrapping in other columns (adjust column number as needed) */
+.table th:nth-child(7),
+.table td:nth-child(7) {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* Keep View button properly aligned and stable */
+.order-table td:last-child .btn {
+    display: inline-block;
+    margin: 0 auto;
+    min-width: 60px;        /* Ensures button has consistent width */
+}
+
+/* Keep the edit hint stable under button */
+.order-table td:last-child .edit-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: #0d6efd;
+    margin-top: 4px;
+    white-space: nowrap;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    text-align: center;     /* Center the hint text */
+}
+
+.order-table td:last-child:hover .edit-hint {
+    opacity: 1;
+}
+
+/* Additional stability - prevent content overflow */
+.order-table td:last-child * {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Ensure the entire table respects the fixed layout */
+.order-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Completed orders - no hover effects */
+.table tbody tr:not(.clickable-order-row):not(.pending-payment-row) {
+    cursor: default;
+}
+
+.table tbody tr:not(.clickable-order-row):not(.pending-payment-row):hover {
+    background-color: transparent;
+    transform: none;
+    box-shadow: none;
+}/* Column Widths and Alignment */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 15%;
+  white-space: nowrap;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 12%;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 25%;
+  padding-left: 24px;
+}
+
+.table th:nth-child(3) {
+  padding-left: 24px;
+}
+
+.table td:nth-child(3) .order-items-list {
+  border-left: 1px solid #dee2e6;
+  padding-left: 12px;
+  margin-left: -12px;
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 20%;
+  text-align: right;
+}
+
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 15%;
+  text-align: center;
+}
+
+.table th:nth-child(6),
+.table td:nth-child(6) {
+  width: 13%;
+  text-align: center;
+}
+
+/* Order Items Style */
+.order-items-list {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  
+}
+
+.item-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: 100%;
+  text-align: center;
+}
+
+.item-row:hover {
+  background-color: #f8f9fa;
+}
+
+.text-nowrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #333;
+}
+
+.item-name {
+  font-weight: 500;
+}
+
+.item-quantity {
+  color: #666;
+}
+
+.text-muted.small {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 4px;
+  padding-left: 8px;
+}
+
+/* Align items cell content */
+.table td:nth-child(3) {
+  text-align: left;
+  padding-left: 1.5rem;
+}
+
+.search-container {
+  position: relative;
+  width: 100%;
+}
+
+.search-input {
+  height: 48px;
+  border-radius: 20px;
+  border: none;
+  background-color: #f8f9fa;
+  font-size: 14px;
+  font-family: 'PoppinsExtraLight';
+  outline: none;
+  padding-right: 46px;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #96392d !important;
+  background-color: white;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-icon {
+  width: 25px;
+  height: 25px;
+  margin-top: -75px;
+  margin-left: 958px;
+  filter: invert(44%) sepia(1%) saturate(0%) hue-rotate(178deg) brightness(92%) contrast(87%);
+}
+
+.date-container {
+  position: relative;
+  width: fit-content;
+  margin-left: auto;
+}
+
+.form-control {
+  display: inline-flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 20px;
+  border: none;
+  padding: 6px 16px;
+  font-family: 'PoppinsRegular';
+  font-size: 13px !important;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.form-control .calendar-icon{
+  margin-left: 50px !important;
+}
+
+.calendar-icon{
+  width: 20px;
+  height: 20px;
+  margin-top: -77px;
+  margin-left: 15px;
+  filter: invert(44%) sepia(1%) saturate(0%) hue-rotate(178deg) brightness(92%) contrast(87%);
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    cursor: pointer;
+}
+
+input[type="date"] {
+    position: relative;
+}
+
+.filters-row > .col-md-6:first-child { flex: 0 0 90%; max-width: 80%; }
+.filters-row > .col-md-6:last-child { flex: 0 0 10%; max-width: 30%; }
+
+@media (max-width: 768px) {
+  .filters-row > .col-md-6:first-child,
+  .filters-row > .col-md-6:last-child { flex: 0 0 100%; max-width: 100%; }
+}
+
+
+@media (min-width: 769px) {
+  .date-container { width: 220px; }
+  .date-input { width: 100%; }
+}
+
+.date-input {
+  height: 48px;
+  width: 240px;
+  border-radius: 28px;
+  padding-left: 46px;
+  padding-right: 42px;
+  border: 1px solid #e6e6e6;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.date-input:focus {
+  border-color: #ce947d;
+  background-color: white;
+}
+
+.date-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  z-index: 2;
+  filter: brightness(0.7);
+}
+
+.date-arrow {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+  z-index: 2;
+}
+
+
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: none;
+  background-color: transparent;
+  margin-top: -30px !important;
+  font-family: 'PoppinsRegular';
+}
+
+.card-body,
+.table-responsive {
+  background-color: transparent;
+}
+
+
+.table {
+  margin-bottom: 0;
+  background: transparent;
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: transparent;
+  --bs-table-hover-bg: transparent;
+}
+
+.table th {
+  border: none;
+  font-weight: 600;
+  color: #333;
+  padding: 20px 15px;
+  background-color: transparent;
+  font-size: 14px;
+}
+
+.table td {
+  border: none;
+  padding: 20px 15px;
+  vertical-align: middle;
+  font-size: 14px;
+  color: #333;
+  background-color: transparent;
+}
+
+
+.table th:last-child,
+.table td:last-child {
+  text-align: right;
+  padding-right: 40px; 
+}
+
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  text-align: right;
+  padding-right: 24px;
+}
+
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  text-align: center;
+}
+
+
+.table > :not(caption) > * > * {
+  background-color: transparent !important;
+}
+
+.table thead tr {
+  border-bottom: 1px solid;
+}
+
+.table tbody tr {
+  background-color: transparent;
+}
+
+.table tbody tr:hover {
+  background-color: transparent;
+}
+
+.table tbody tr + tr td {
+  border-top: 1px solid #f2f2f2;
+}
+
+
+.badge {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+
+.badge.bg-success {
+  background-color: #19c37d !important;
+  color: #fff;
+  border-radius: 9999px;
+  padding: 8px 18px;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000;
+}
+
+
+.table thead.table-light,
+.table thead.table-light th {
+  background-color: transparent !important;
+}
+
+
+.table-hover tbody tr:hover > * {
+  --bs-table-accent-bg: transparent;
+  background-color: transparent !important;
+}
+
+
+.pending-payment-row {
+    background-color: rgba(13, 110, 253, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+.pending-payment-row:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 15px;
+  }
+  
+  .container-fluid {
+    padding: 20px;
+  }
+  
+  .search-container,
+  .date-container {
+    margin-bottom: 15px;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+}
+
+
+/* Dark Mode Overrides */
+.dark-mode .main-content {
+  background: #232323 !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode .container-fluid {
+  background: transparent !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode .table th,
+.dark-mode .table td {
+  color: #e0e0e0 !important;
+  background: transparent !important;
+}
+
+.dark-mode .table thead tr {
+  border-bottom: 1px solid #444 !important;
+}
+
+.dark-mode .table tbody tr + tr td {
+  border-top: 1px solid #333 !important;
+}
+
+.dark-mode .table th {
+  background-color: transparent !important;
+}
+
+.dark-mode .table td {
+  background-color: transparent !important;
+}
+
+.dark-mode .card {
+  background-color: #232323 !important;
+  color: #f1f1f1 !important;
+}
+
+.dark-mode .badge.bg-success {
+  background-color: #1e8c5a !important;
+  color: #fff !important;
+}
+
+.dark-mode .badge.bg-warning {
+  background-color: #bfa600 !important;
+  color: #232323 !important;
+}
+
+.dark-mode .search-input,
+.dark-mode .date-input,
+.dark-mode .form-control {
+  background-color: #2d2d2d !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+
+.dark-mode .search-input::placeholder {
+  color: #aaa !important;
+}
+
+.dark-mode .calendar-icon,
+.dark-mode .search-icon {
+  filter: invert(80%) sepia(10%) saturate(500%) hue-rotate(180deg) brightness(90%) contrast(90%) !important;
+}
+
+.dark-mode .pending-payment-row {
+  background-color: rgba(13, 110, 253, 0.10) !important;
+}
+
+.dark-mode .pending-payment-row:hover {
+  background-color: rgba(13, 110, 253, 0.18) !important;
+}
+

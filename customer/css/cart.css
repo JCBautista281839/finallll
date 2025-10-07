@@ -1,0 +1,117 @@
+/* === CART OVERLAY === */
+.cart-overlay {
+  position: fixed;
+  top: 0;
+  right: -400px; /* Hidden by default */
+  width: 350px;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease-in-out;
+  z-index: 1000;
+}
+
+.cart-overlay.active {
+  right: 0;
+}
+
+.cart-content {
+  padding: 2rem 1.2rem 1.2rem 1.2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-content h2 {
+  margin-top: 0;
+  color: #8b2f22;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cart-items {
+  flex: 1;
+  margin-top: 1rem;
+  overflow-y: auto;
+}
+
+.close-cart {
+  font-size: 1.5rem;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.cart-item {
+  border-bottom: 1px solid #ddd;
+  padding: 1rem 0;
+}
+
+.empty-cart {
+  color: #999;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.cart-subtotal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0 1.2rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.cart-subtotal-label {
+  color: #a94a3a;
+}
+.cart-subtotal-value {
+  color: #888;
+}
+
+.proceed-checkout-btn {
+  background: #933F32;
+  color: #fff;
+  border: none;
+  border-radius: 18px;
+  width: 100%;
+  font-size: 1.15rem;
+  font-weight: 500;
+  padding: 12px 0;
+  margin: 0 auto;
+  display: block;
+  transition: background 0.2s;
+}
+.proceed-checkout-btn:hover {
+  background: #a94a3a;
+}
+
+@media (max-width: 600px) {
+  .cart-overlay {
+    display: none;
+    width: 100vw;
+    right: -100vw;
+    left: 0;
+    border-radius: 0;
+    max-width: 100vw;
+    min-width: 0;
+  }
+  .cart-overlay.active {
+    display: block;
+    right: 0;
+  }
+  .cart-content {
+    padding: 1rem 0.5rem 0.8rem 0.5rem;
+  }
+  .cart-content h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .cart-subtotal-row {
+    font-size: 1rem;
+    margin: 1.2rem 0 1rem 0;
+  }
+  .proceed-checkout-btn {
+    font-size: 1rem;
+    padding: 10px 0;
+    border-radius: 16px;
+  }
+}

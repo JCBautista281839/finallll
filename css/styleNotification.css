@@ -1,0 +1,256 @@
+@font-face {
+    font-family: 'PoppinsMedium';
+    src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PoppinsBlack';
+    src: url('../src/fonts/Poppins-Black.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PoppinsRegular';
+    src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PoppinsExtraLight';
+    src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+.main-content {
+    background: #ffffff;
+    min-height: calc(100vh - 40px);
+    border-radius: 60px;
+    font-family: 'PoppinsRegular', sans-serif;
+    margin: 30px;
+}
+
+.header-action-row {
+    background: transparent;
+    padding: 1.25rem;
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 0.75rem;
+}
+
+/* Payment verification notification styles */
+.payment-verification-row {
+    background-color: #fff3cd;
+    border-left: 4px solid #ff9800;
+}
+
+.payment-notification-content {
+    max-width: 100%;
+}
+
+.customer-details {
+    margin: 8px 0;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.receipt-preview {
+    margin: 8px 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    transition: all 0.2s ease;
+    font-size: 12px !important;
+}
+
+.action-buttons button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments for payment verification */
+@media (max-width: 768px) {
+    .customer-details {
+        font-size: 11px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-buttons button {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+}
+
+.inventory-header {
+    flex-shrink: 0;
+}
+
+.inventory-title {
+    font-size: 12px !important;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.inventory-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 0;
+    font-weight: 500;
+}
+
+.inventory-table-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: none;
+    overflow: hidden;
+    overflow-x: auto;
+}
+
+.inventory-table {
+    margin: 0;
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.inventory-table thead {
+    background: transparent;
+}
+
+.inventory-table th {
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.inventory-table td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+    color: #333;
+    font-weight: 500;
+    word-wrap: break-word;
+    word-break: break-word;
+    max-width: 300px;
+    line-height: 1.4;
+}
+
+/* Specific styling for notification description column */
+.inventory-table td:nth-child(2) {
+    max-width: 250px;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.inventory-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.inventory-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.bi {
+    font-size: 1.5rem;
+    vertical-align: middle;
+}
+
+/* Remove any user/person icons from notifications */
+.inventory-table td::before,
+.inventory-table td::after {
+    display: none !important;
+}
+
+.inventory-table td img[alt*="user"],
+.inventory-table td img[alt*="person"],
+.inventory-table td img[alt*="avatar"] {
+    display: none !important;
+}
+
+/* Hide any Font Awesome user icons */
+.inventory-table td .fa-user,
+.inventory-table td .fa-user-circle,
+.inventory-table td .fa-user-o {
+    display: none !important;
+}
+
+@media (max-width: 1200px) {
+    .header-action-row {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+
+    .inventory-title {
+        font-size: 2rem;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        border-radius: 0;
+    }
+
+    .header-action-row {
+        padding: 1.5rem;
+    }
+
+    .inventory-title {
+        font-size: 2rem;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-action-row {
+        padding: 1rem;
+    }
+
+    .inventory-title {
+        font-size: 1.75rem;
+    }
+
+    .inventory-subtitle {
+        font-size: 1rem;
+    }
+
+    .inventory-table-container {
+        border-radius: 8px;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+}

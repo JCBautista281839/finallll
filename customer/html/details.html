@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="../css/details.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="menu-header">
+      <div class="left-section">
+        <a href="../html/menucustomer.html" class="back-to-menu" id="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          <span>DETAILS</span>
+        </a>
+        <nav class="main-nav">
+          <ul class="nav-list">
+            <li><a href="/index.html" class="nav-link">Home</a></li>
+            <li><a href="menucustomer.html" class="nav-link active">Menu</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="right-section">
+        <div class="search-bar">
+          <input type="text" placeholder="Search" class="search-input">
+          <img class="search-img" src="/src/Icons/search.png" alt="Search Icon">
+        </div>
+        <div class="header-icons">
+          <a href="../html/login.html">
+            <img class="user-img" src="/src/Icons/user (1).png" alt="User Icon">
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Checkout form and order summary -->
+    <div class="checkout">
+      <!-- Contact and Shipping Details -->
+      <div class="form-section">
+        <h2 class="form-title">ENTER YOUR CONTACT AND SHIPPING DETAILS</h2>
+
+        <h3>Contact Information</h3>
+        <div class="row">
+          <div class="col">
+            <label>Email Address *</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
+          </div>
+          <div class="col">
+            <label>Phone Number *</label>
+            <input type="tel" id="phone" placeholder="Enter your phone number" required>
+          </div>
+        </div>
+
+        <h3>Shipping Address</h3>
+        <div class="row">
+          <div class="col">
+            <label>First Name *</label>
+            <input type="text" id="firstName" required>
+          </div>
+          <div class="col">
+            <label>Last Name *</label>
+            <input type="text" id="lastName" required>
+          </div>
+        </div>
+
+        <label>Address *</label>
+        <input type="text" id="address" required>
+
+        <div class="row">
+          <div class="col">
+            <label>Barangay *</label>
+            <input type="text" id="barangay" required>
+          </div>
+          <div class="col">
+            <label>Postal Code *</label>
+            <input type="text" id="postalCode" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>City / Municipality *</label>
+            <input type="text" id="city" required>
+          </div>
+          <div class="col">
+            <label>Province *</label>
+            <input type="text" id="province" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <h2>ORDER SUMMARY</h2>
+        <div class="order-menu" id="order-menu">
+          <!-- Cart items will be loaded dynamically -->
+        </div>
+        <hr>
+
+        <!-- Subtotal -->
+        <div class="subtotal">
+          <span>Subtotal</span>
+          <span class="price" id="subtotal-amount">₱0</span>
+        </div>
+
+        <hr>
+
+        <!-- Total -->
+        <div class="total">
+          <span>Total</span>
+          <span class="price" id="total-price">₱0</span>
+        </div>
+        <!-- Checkout page continue button -->
+        <button class="continue-btn" onclick="window.location.href='shipping.html'">
+          Continue
+        </button>
+      </div>
+    </div>
+
+    <!-- Location Confirmation -->
+    <div class="location-section">
+      <h3>Location Confirmation</h3>
+      <p>Pin and confirm your address below</p>
+
+      <input id="address-input" type="text" placeholder="Enter your address"
+        style="width:100%;padding:10px;margin-bottom:10px;">
+      <div id="coords-result" style="margin-top:10px; font-weight:605;"></div>
+
+      <!-- Map Container -->
+      <div class="map-box">
+        <div id="map"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+
+  <!-- Google Maps API -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
+  <script src="../javascript/maps.js"></script>
+  <script src="../javascript/details.js"></script>
+
+  <script>
+    // Back button functionality
+    document.addEventListener('DOMContentLoaded', function () {
+      const backBtn = document.getElementById('back-btn');
+      if (backBtn) {
+        backBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          window.location.href = '../html/menucustomer.html';
+        });
+      }
+    });
+
+    // Wait for Firebase to be ready before initializing cart system
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('[details.html] Page loaded, waiting for Firebase...');
+
+      // Function to wait for Firebase to be ready
+      function waitForFirebase() {
+        return new Promise((resolve) => {
+          const checkFirebase = () => {
+            if (typeof firebase !== 'undefined' &&
+              firebase.apps &&
+              firebase.apps.length > 0 &&
+              firebase.auth &&
+              firebase.firestore) {
+              console.log('[details.html] ✅ Firebase is ready');
+              resolve();
+            } else {
+              console.log('[details.html] ⏳ Waiting for Firebase...');
+              setTimeout(checkFirebase, 100);
+            }
+          };
+          checkFirebase();
+        });
+      }
+
+      // Initialize cart system after Firebase is ready
+      waitForFirebase().then(() => {
+        console.log('[details.html] Initializing cart system...');
+        initializeCartSystem();
+      }).catch(error => {
+        console.error('[details.html] Error waiting for Firebase:', error);
+        // Initialize with fallback to sessionStorage
+        initializeCartSystem();
+      });
+    });
+
+    // Initialize cart system
+    function initializeCartSystem() {
+      console.log('[details.html] Initializing cart system...');
+
+      // Debug: Check what's in sessionStorage
+      const rawCartData = sessionStorage.getItem('cartData');
+      console.log('[details.html] Raw sessionStorage cartData:', rawCartData);
+
+      // Load cart data from sessionStorage (matching cart.js format)
+      let cartData = JSON.parse(rawCartData) || {};
+      let cartItems = Object.values(cartData);
+
+      console.log('[details.html] Parsed cart data:', cartData);
+      console.log('[details.html] Cart items array:', cartItems);
+      console.log('[details.html] Cart items length:', cartItems.length);
+
+      // Display cart items in order summary
+      displayOrderSummary(cartItems);
+    }
+
+    // Function to display order summary
+    function displayOrderSummary(cartItems) {
+      const orderMenu = document.getElementById('order-menu');
+      const totalPriceElement = document.getElementById('total-price');
+
+      if (!orderMenu || !totalPriceElement) {
+        console.error('[details.html] Order menu or total price element not found');
+        return;
+      }
+
+      // Clear existing items
+      orderMenu.innerHTML = '';
+
+      if (cartItems.length === 0) {
+        orderMenu.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>';
+        totalPriceElement.textContent = '₱0';
+        return;
+      }
+
+      let totalPrice = 0;
+
+      cartItems.forEach(item => {
+        // Parse price (handle both string and number formats)
+        let price;
+        if (typeof item.price === 'string') {
+          price = parseFloat(item.price.replace(/[^0-9.-]+/g, '')) || 0;
+        } else {
+          price = parseFloat(item.price) || 0;
+        }
+
+        const quantity = parseInt(item.quantity) || 1;
+        const itemTotal = price * quantity;
+        totalPrice += itemTotal;
+
+        console.log(`[details.html] Item: ${item.name}, Price: ${price}, Quantity: ${quantity}, Total: ${itemTotal}`);
+
+        // Create order item element
+        const orderItem = document.createElement('div');
+        orderItem.className = 'order-item';
+        orderItem.innerHTML = `
+          <div class="item-details">
+            <h4>${item.name}</h4>
+            <p>x${quantity}</p>
+          </div>
+          <div class="item-price">
+            ₱${itemTotal.toFixed(0)}
+          </div>
+        `;
+
+        orderMenu.appendChild(orderItem);
+      });
+
+      // Update total price
+      totalPriceElement.textContent = `₱${totalPrice.toFixed(0)}`;
+    }
+
+    // Utility function to parse price
+    window.parsePrice = function (priceString) {
+      return parseFloat(priceString.replace(/[^0-9.-]+/g, '')) || 0;
+    };
+  </script>
+</body>
+
+</html>

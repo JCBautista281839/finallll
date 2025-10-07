@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kitchen - Viktoria's Bistro</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/nav.css">
+  <link rel="stylesheet" href="../css/styleKitchen.css">
+</head>
+<body>
+  <div class="container-fluid">
+    <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
+      <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="brand mb-1">
+        <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
+      </div>
+
+      <nav class="nav flex-column w-100 text-center">
+        <a href="../html/kitchen.html" class="nav-link text-white active" title="Home">
+          <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
+          <div class="nav-text">Home</div>
+        </a>
+        <a href="../html/try.html" class="nav-link text-white" title="Notifications">
+          <img src="../src/Icons/bell.png" alt="Orders" class="nav-icon">
+          <div class="nav-text">Notifications</div>
+        </a>
+        <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
+          <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
+          <div class="nav-text">Inventory</div>
+        </a>
+
+        <div style="flex-grow: 1;"></div>
+
+        <a href="#" id="logoutBtn" class="nav-link text-white" title="Logout">
+          <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
+          <div class="nav-text">Logout</div>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-header">
+        <div class="datetime-display" id="currentDateTime">12:00 PM Monday</div>
+      </div>
+
+      <div class="kitchen-content">
+        <div id="kitchenOrders"></div>
+
+        <!-- main container where cards are inserted -->
+        <div class="orders-container" id="ordersContainer">
+          <!-- initial placeholder while we wait for data -->
+          <div class="order-card">
+            <div class="order-header">
+              <div class="order-title">
+                <h5 class="order-number">Loading orders...</h5>
+                <div class="order-datetime">
+                  <span class="order-date">Please wait</span>
+                  <span class="order-time">Connecting to POS</span>
+                </div>
+              </div>
+            </div>
+            <div class="order-items">
+              <div class="items-header">
+                <span>Items</span><span>Qty</span>
+              </div>
+              <div class="items-list">
+                <div class="item-row">
+                  <span class="item-name">Loading...</span>
+                  <span class="item-quantity">-</span>
+                </div>
+              </div>
+            </div>
+            <div class="order-actions">
+              <button class="btn btn-secondary order-ready-btn" disabled>Loading Orders...</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="kitchenOrdersOrdersPage"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="orderOverlay" class="order-overlay">
+    <div class="order-overlay-content">
+      <div class="overlay-header">
+  <h3 id="overlayOrderNumber">Order No. 0001 / Dine in</h3>
+  <button class="close-overlay-btn">×</button>
+      </div>
+      <div class="overlay-order-details">
+        <div class="overlay-date-time">
+          <span id="overlayOrderDate">Wed, January 1, 2025</span>
+          <span id="overlayOrderTime">12:00 PM</span>
+        </div>
+        <div class="overlay-items">
+          <div class="overlay-items-header">
+            <div class="items-column">Items</div>
+            <div class="qty-column">Qty</div>
+          </div>
+          <div id="overlayOrderItems"></div>
+        </div>
+      </div>
+      <div class="overlay-actions">
+        <button class="btn btn-success order-ready-btn-overlay" onclick="markOrderReadyFromOverlay()">Order Ready</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs (one set only) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Your app scripts (main.js must define initializeFirebase or firebase config) -->
+  <script src="../main.js"></script>
+  <script src="../javascript/kitchen-access.js"></script>
+  <script src="../javascript/kitchenCopy.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (window.firebase && firebase.auth) {
+            firebase.auth().signOut().then(function() {
+              window.location.href = '/index.html';
+            }).catch(function(error) {
+              alert('Logout failed: ' + error.message);
+            });
+          } else {
+            window.location.href = '/index.html';
+          }
+        });
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
