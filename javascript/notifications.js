@@ -263,7 +263,21 @@ function loadNotifications() {
                 } else {
                     typeText = data.type || 'Other';
                 }
-                var time = data.timestamp && data.timestamp.toDate ? timeAgo(data.timestamp.toDate()) : '';
+                var time = '';
+                if (data.timestamp) {
+                    if (data.timestamp.toDate) {
+                        // Firestore timestamp
+                        time = timeAgo(data.timestamp.toDate());
+                    } else if (typeof data.timestamp === 'string') {
+                        // ISO string timestamp
+                        time = timeAgo(new Date(data.timestamp));
+                    } else {
+                        // Fallback
+                        time = 'Unknown time';
+                    }
+                } else {
+                    time = 'No timestamp';
+                }
                 if (!data.seen) {
                     unseenCount++;
                     batch.update(doc.ref, { seen: true });
@@ -320,20 +334,36 @@ function loadNotifications() {
                             <div class="order-notification-content">
                                 <p><strong>${data.message || ''}</strong></p>
                                 <div class="order-details">
-                                    <small><strong>Customer:</strong> ${data.customerName || 'Unknown'} | 
-                                    <strong>Email:</strong> ${data.customerEmail || 'Unknown'} | 
-                                    <strong>Total:</strong> ₱${data.orderTotal || 'Unknown'} | 
-                                    <strong>Payment:</strong> ${data.paymentMethod || 'Unknown'} | 
-                                    <strong>Reference:</strong> ${data.paymentReference || 'Unknown'}</small>
+                                    <small><strong>Customer:</strong> ${data.customerInfo?.name || 'Unknown'} | 
+                                    <strong>Email:</strong> ${data.customerInfo?.email || 'Unknown'} | 
+                                    <strong>Total:</strong> ₱${data.orderDetails?.total || 'Unknown'} | 
+                                    <strong>Payment:</strong> ${data.paymentDetails?.method?.toUpperCase() || 'Unknown'} | 
+                                    <strong>Reference:</strong> ${data.paymentDetails?.reference || 'Unknown'}</small>
                                 </div>
+                                ${data.paymentDetails?.receiptUrl ?
+                            `<div class="receipt-preview">
+                                        <small><strong>Receipt:</strong> 
+                                        <a href="#" onclick="viewReceipt('${data.paymentDetails.receiptUrl}', '${data.paymentDetails.receiptName || 'receipt.jpg'}')" 
+                                           style="color: #007bff; text-decoration: underline;">View Receipt</a>
+                                        </small>
+                                    </div>` :
+                            (data.paymentDetails?.receiptData ?
+                                `<div class="receipt-preview">
+                                            <small><strong>Receipt:</strong> 
+                                            <a href="#" onclick="viewReceipt('${data.paymentDetails.receiptData}', '${data.paymentDetails.receiptName || 'receipt.jpg'}')" 
+                                               style="color: #007bff; text-decoration: underline;">View Receipt</a>
+                                            </small>
+                                        </div>` : ''
+                            )
+                        }
                                 <div class="action-buttons" style="margin-top: 10px;">
                                     <button class="btn btn-success btn-sm me-2" onclick="approveOrder('${data.orderId}', '${doc.id}')" 
                                             style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
-                                        <i class="fas fa-check"></i> Accept
+                                        <i class="fas fa-check"></i> Accept Order
                                     </button>
                                     <button class="btn btn-danger btn-sm" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
-                                        <i class="fas fa-times"></i> Decline
+                                        <i class="fas fa-times"></i> Decline Order
                                     </button>
                                 </div>
                             </div>
@@ -423,33 +453,85 @@ window.handlePaymentVerification = async function (docId, action) {
             return;
         }
 
+        // Find the related order using customer info and payment reference
+        const ordersQuery = await db.collection('orders')
+            .where('status', '==', 'Pending Payment')
+            .get();
+
+        let orderDoc = null;
+        let bestMatch = null;
+        let bestMatchScore = 0;
+        
+        ordersQuery.forEach(doc => {
+            const orderData = doc.data();
+            let matchScore = 0;
+            
+            // Check payment reference match (highest priority)
+            if (orderData.paymentInfo?.reference === reference && reference !== 'Unknown' && reference !== 'no-reference') {
+                matchScore += 10;
+            }
+            
+            // Check customer name match
+            if (orderData.customerInfo?.name === customerName && customerName !== 'Unknown Customer') {
+                matchScore += 5;
+            }
+            
+            // Check customer phone match if available
+            if (data.customerInfo?.phone && orderData.customerInfo?.phone === data.customerInfo.phone) {
+                matchScore += 3;
+            }
+            
+            // Check payment type match
+            if (orderData.paymentInfo?.type?.toLowerCase() === paymentType.toLowerCase()) {
+                matchScore += 2;
+            }
+            
+            if (matchScore > bestMatchScore) {
+                bestMatchScore = matchScore;
+                bestMatch = doc;
+            }
+        });
+        
+        orderDoc = bestMatch;
+
+        console.log('🔍 Looking for order with:', { customerName, paymentType, reference });
+        console.log('🔍 Found', ordersQuery.size, 'orders with Pending Payment status');
+        
+        if (!orderDoc && action === 'approved') {
+            console.warn('❌ No matching order found for approval. Details:', {
+                customerName, 
+                paymentType, 
+                reference,
+                searchedOrders: ordersQuery.size
+            });
+            alert('Related order not found. Please ensure the order exists and has "Pending Payment" status.');
+            return;
+        }
+
+        console.log('✅ Found matching order:', orderDoc ? orderDoc.id : 'none', 'with score:', bestMatchScore);
+
+        // If approving, update order status to "In the Kitchen"
+        if (action === 'approved' && orderDoc) {
+            await db.collection('orders').doc(orderDoc.id).update({
+                status: 'In the Kitchen',
+                approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                approvedBy: 'admin'
+            });
+        }
+
         // Update the notification status
         await docRef.update({
             status: action,
             adminAction: {
                 action: action,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                admin: 'Admin' // You can get actual admin info if available
+                admin: 'Admin'
             },
-            message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}`
+            message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}${action === 'approved' ? ' and sent to kitchen' : ''}`
         });
 
-        // Create a new notification for the customer (for future customer notification system)
-        const customerNotificationData = {
-            type: 'payment_status',
-            message: `Your payment verification has been ${action}. ${action === 'approved' ? 'Your order can now proceed.' : 'Please contact support for assistance.'}`,
-            customerInfo: data.customerInfo,
-            paymentInfo: data.paymentInfo,
-            status: action,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            seen: false,
-            isCustomerNotification: true
-        };
-
-        await db.collection('customer_notifications').add(customerNotificationData);
-
         // Show success message
-        alert(`Payment verification ${action} successfully!`);
+        alert(`Payment verification ${action} successfully!${action === 'approved' ? ' Order has been sent to the kitchen.' : ''}`);
 
         // Reload notifications to update the display
         loadNotifications();
@@ -589,13 +671,13 @@ async function approveOrder(orderId, notificationId) {
             return;
         }
 
-        if (!confirm('Are you sure you want to approve this order?')) {
+        if (!confirm('Are you sure you want to APPROVE this order? The customer will be notified and the order will proceed to preparation.')) {
             return;
         }
 
-        // Update order status to 'confirmed'
+        // Update order status to 'In the Kitchen' to make it appear in orders page and kitchen workflow
         await db.collection('orders').doc(orderId).update({
-            status: 'confirmed',
+            status: 'In the Kitchen',
             approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
             approvedBy: 'admin'
         });
@@ -604,7 +686,8 @@ async function approveOrder(orderId, notificationId) {
         await db.collection('notifications').doc(notificationId).update({
             requiresAction: false,
             actionTaken: 'approved',
-            actionTakenAt: firebase.firestore.FieldValue.serverTimestamp()
+            actionTakenAt: firebase.firestore.FieldValue.serverTimestamp(),
+            message: `Order #${orderId} has been APPROVED by admin and sent to kitchen`
         });
 
         // Send notification to kitchen/orders
@@ -613,7 +696,7 @@ async function approveOrder(orderId, notificationId) {
         // Reload notifications to update UI
         loadNotifications();
 
-        alert('Order approved successfully! It has been sent to the kitchen.');
+        alert('✅ Order approved successfully! It has been sent to the kitchen for preparation.');
 
     } catch (error) {
         console.error('Error approving order:', error);
@@ -630,10 +713,15 @@ async function declineOrder(orderId, notificationId) {
             return;
         }
 
-        const reason = prompt('Please provide a reason for declining this order (optional):');
+        const reason = prompt('Please provide a reason for declining this order (required):');
         if (reason === null) return; // User cancelled
+        
+        if (!reason.trim()) {
+            alert('Please provide a reason for declining the order.');
+            return;
+        }
 
-        if (!confirm('Are you sure you want to decline this order?')) {
+        if (!confirm('Are you sure you want to DECLINE this order? The customer will be notified that their order was rejected.')) {
             return;
         }
 
@@ -642,7 +730,7 @@ async function declineOrder(orderId, notificationId) {
             status: 'declined',
             declinedAt: firebase.firestore.FieldValue.serverTimestamp(),
             declinedBy: 'admin',
-            declineReason: reason || 'No reason provided'
+            declineReason: reason
         });
 
         // Mark notification as no longer requiring action
@@ -650,13 +738,14 @@ async function declineOrder(orderId, notificationId) {
             requiresAction: false,
             actionTaken: 'declined',
             actionTakenAt: firebase.firestore.FieldValue.serverTimestamp(),
-            declineReason: reason || 'No reason provided'
+            declineReason: reason,
+            message: `Order #${orderId} has been DECLINED by admin - Reason: ${reason}`
         });
 
         // Reload notifications to update UI
         loadNotifications();
 
-        alert('Order declined successfully.');
+        alert('❌ Order declined successfully. Customer will be notified.');
 
     } catch (error) {
         console.error('Error declining order:', error);
