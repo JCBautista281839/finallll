@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     console.log('✅ SendGrid OTP sent successfully for password reset');
                     
+<<<<<<< HEAD
                     // Show OTP if email failed to send
                     if (!result.emailSent && result.otp) {
                         // OTP popup removed - OTP is now handled server-side
@@ -119,6 +120,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     showSuccess();
                     
                     // Redirect to OTP verification page
+=======
+                    // Check if email was actually sent
+                    if (result.emailSent) {
+                        // Email sent successfully - show success message
+                        showSuccess('Password reset link has been sent to your email!');
+                    } else {
+                        // Email failed to send but OTP generated - show warning for development
+                        console.warn('⚠️ Email service unavailable. OTP generated for testing:', result.otp);
+                        showSuccess('OTP generated! Check console for code (Email service unavailable).');
+                    }
+                    
+                    // Always redirect to OTP verification page (for testing)
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                     setTimeout(() => {
                         window.location.href = 'verify-password-reset-otp.html';
                     }, 2000);
@@ -193,7 +207,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show success message
+<<<<<<< HEAD
     function showSuccess() {
+=======
+    function showSuccess(message) {
+        if (message) {
+            // Update success message text if provided
+            const successText = successMessage.querySelector('p') || successMessage;
+            if (successText.tagName === 'P') {
+                successText.textContent = message;
+            }
+        }
+        
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         successMessage.style.display = 'block';
         errorMessage.style.display = 'none';
         

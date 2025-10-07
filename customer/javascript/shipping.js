@@ -106,12 +106,12 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
 
     // Add to notifications collection with timeout
     console.log('💾 Adding notification to Firestore...');
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Firestore operation timeout')), 10000)
     );
-    
+
     const addPromise = db.collection('notifications').add(notificationData);
-    
+
     const docRef = await Promise.race([addPromise, timeoutPromise]);
     console.log('✅ Payment verification notification sent successfully! Document ID:', docRef.id);
 
@@ -277,15 +277,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const itemDiv = document.createElement('div');
         itemDiv.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px; background: #f8f9fa; border-radius: 5px;';
-        
+
         const itemName = document.createElement('div');
         itemName.style.cssText = 'flex: 1;';
         itemName.innerHTML = '<span style="font-weight: 600;">' + item.name + '</span><br><small style="color: #666;">Qty: ' + item.quantity + ' × ' + item.price + '</small>';
-        
+
         const itemPrice = document.createElement('div');
         itemPrice.style.cssText = 'text-align: right;';
         itemPrice.innerHTML = '<span class="price" style="font-weight: 600; color: #8b1d1d;">Php ' + itemTotal.toFixed(0) + '</span>';
-        
+
         itemDiv.appendChild(itemName);
         itemDiv.appendChild(itemPrice);
         itemsContainer.appendChild(itemDiv);
@@ -655,13 +655,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Upload receipt to Cloudinary
           console.log('Uploading receipt to Cloudinary...');
-          
+
           // Add timeout to Cloudinary upload
           const uploadPromise = window.uploadImageToCloudinary(uploadedFile);
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Cloudinary upload timeout')), 30000)
           );
-          
+
           const cloudinaryResult = await Promise.race([uploadPromise, timeoutPromise]);
           console.log('Cloudinary upload result:', cloudinaryResult);
 
@@ -689,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
           console.log('About to send payment verification notification with:', paymentInfo);
           console.log('Current payment type:', currentPaymentType);
           console.log('Reference code:', refCode);
-          
+
           // Don't await this - let it run in background
           sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
             console.warn('Payment verification notification failed:', notificationError.message);
@@ -728,7 +728,7 @@ document.addEventListener('DOMContentLoaded', function () {
               console.log('About to send payment verification notification (fallback) with:', paymentInfo);
               console.log('Current payment type (fallback):', currentPaymentType);
               console.log('Reference code (fallback):', refCode);
-              
+
               // Don't await this - let it run in background
               sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
                 console.warn('Payment verification notification failed (fallback):', notificationError.message);
@@ -740,12 +740,12 @@ document.addEventListener('DOMContentLoaded', function () {
               paymentConfirm.disabled = false;
               paymentConfirm.textContent = 'Confirm Payment';
             };
-            
-            reader.onerror = function() {
+
+            reader.onerror = function () {
               console.error('FileReader error');
               throw new Error('Failed to read file');
             };
-            
+
             reader.readAsDataURL(uploadedFile);
           } catch (fallbackError) {
             console.error('Base64 fallback also failed:', fallbackError);
@@ -902,10 +902,10 @@ document.addEventListener('DOMContentLoaded', function () {
             console.warn('Admin notification failed, but order was created:', notificationError);
             // Still proceed - order was created successfully
           }
-          
+
           // Store order ID for confirmation page
           sessionStorage.setItem('orderId', orderId);
-          
+
           showStatus('Order placed successfully! Admin will be notified for approval.', false);
 
           // Navigate to confirmation page
@@ -1017,7 +1017,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     let firebaseReady = false;
     let attempts = 0;
     const maxAttempts = 50; // 5 seconds max wait
-    
+
     while (!firebaseReady && attempts < maxAttempts) {
       try {
         if (firebase.apps && firebase.apps.length > 0 && firebase.firestore) {
@@ -1041,11 +1041,11 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     // Initialize Firebase Order Manager
     if (typeof FirebaseOrderManager === 'undefined') {
       console.warn('FirebaseOrderManager not available. Creating simple order...');
-      
+
       // Fallback: Create order directly with Firestore
       const db = firebase.firestore();
       const orderId = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      
+
       // Convert cart data to items array
       const items = Object.values(cartData).map(item => ({
         name: item.name,
@@ -1090,12 +1090,12 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     }
 
     const orderManager = new FirebaseOrderManager();
-    
+
     // Wait for Firebase Order Manager to initialize with timeout
     let initialized = false;
     attempts = 0;
     const maxInitAttempts = 30; // 3 seconds max
-    
+
     while (!initialized && attempts < maxInitAttempts) {
       if (orderManager.isInitialized) {
         initialized = true;
@@ -1176,23 +1176,23 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     console.log('[shipping.js] Creating order with data:', orderData);
 
     // Create the order with timeout
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Order creation timeout')), 15000)
     );
-    
+
     const createPromise = orderManager.createOrder(orderData);
     const orderId = await Promise.race([createPromise, timeoutPromise]);
-    
+
     console.log('[shipping.js] Order created successfully with ID:', orderId);
     return orderId;
 
   } catch (error) {
     console.error('[shipping.js] Error creating Firebase order:', error);
-    
+
     // Create a fallback order ID so the process doesn't completely fail
     const fallbackOrderId = 'ORDER_FALLBACK_' + Date.now();
     console.log('[shipping.js] Created fallback order ID:', fallbackOrderId);
-    
+
     // Store order data in session storage as backup
     try {
       const fallbackOrderData = {
@@ -1208,7 +1208,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     } catch (storageError) {
       console.warn('Could not store fallback order data:', storageError.message);
     }
-    
+
     return fallbackOrderId;
   }
 }
@@ -1226,7 +1226,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
     let firebaseReady = false;
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     while (!firebaseReady && attempts < maxAttempts) {
       try {
         if (firebase.apps && firebase.apps.length > 0 && firebase.firestore) {
@@ -1265,14 +1265,14 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
       type: 'order_approval',
       orderId: orderId,
       message: `New order #${orderId} requires approval from ${formData.name}. Total: ₱${total.toFixed(2)} (${paymentMethod.toUpperCase()}: ${paymentInfo.reference})`,
-      
+
       // Customer details
       customerInfo: {
         name: formData.name || 'Unknown Customer',
         email: formData.email || 'No email',
         phone: formData.phone || 'No phone'
       },
-      
+
       // Order details
       orderDetails: {
         orderId: orderId,
@@ -1286,7 +1286,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
           price: item.price
         }))
       },
-      
+
       // Payment details
       paymentDetails: {
         method: paymentMethod,
@@ -1295,20 +1295,20 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
         receiptData: paymentInfo.receiptData || null,
         timestamp: paymentInfo.timestamp
       },
-      
+
       // Shipping details
       shippingDetails: {
         address: formData.address || '',
         method: quotationData.serviceType || 'pickup',
         cost: shippingCost
       },
-      
+
       // Notification metadata
       timestamp: new Date().toISOString(), // Use regular timestamp instead of server timestamp
       seen: false,
       requiresAction: true,
       status: 'pending', // pending, approved, declined
-      
+
       // Action buttons for admin
       actions: {
         approve: true,
@@ -1320,13 +1320,13 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
 
     // Try to add notification to Firestore with timeout
     try {
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Notification send timeout')), 5000)
       );
-      
+
       const addPromise = db.collection('notifications').add(notificationData);
       const docRef = await Promise.race([addPromise, timeoutPromise]);
-      
+
       console.log('[shipping.js] Admin notification sent successfully! Document ID:', docRef.id);
       return true;
     } catch (firestoreError) {

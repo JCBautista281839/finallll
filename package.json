@@ -11,6 +11,10 @@
     "otp-dev": "nodemon spaceship-function.js"
   },
   "dependencies": {
+<<<<<<< HEAD
+=======
+    "@sendgrid/mail": "^8.1.6",
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",

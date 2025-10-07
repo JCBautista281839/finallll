@@ -66,6 +66,27 @@ async function handleLogin(email, password) {
         
         console.log('✅ Firebase Auth successful for:', user.email);
         
+<<<<<<< HEAD
+=======
+        // Check if there's a pending password reset
+        const pendingReset = sessionStorage.getItem('pendingPasswordReset');
+        if (pendingReset) {
+            try {
+                const resetData = JSON.parse(pendingReset);
+                if (resetData.email === email && resetData.newPassword) {
+                    console.log('🔄 Pending password reset found, updating password...');
+                    await user.updatePassword(resetData.newPassword);
+                    console.log('✅ Password updated successfully in Firebase!');
+                    sessionStorage.removeItem('pendingPasswordReset');
+                    showToast('Password updated successfully!', 'success');
+                }
+            } catch (resetError) {
+                console.error('⚠️ Failed to update password:', resetError);
+                // Continue with login even if password update fails
+            }
+        }
+        
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         // Now search for user in Firestore collections to get role and data
         let userRole = null;
         let userFound = false;

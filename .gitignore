@@ -85,10 +85,78 @@ config.env.secure.backup
 .env.*
 !env.example
 
+<<<<<<< HEAD
+=======
+# Production environment files (contains real API keys)
+env.production
+env.production.*
+.env.production
+.env.production.*
+
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 # Firebase service account credentials
 firebase-service-account.json
 firebase-adminsdk-*.json
 victoria-s-bistro-firebase-adminsdk-*.json
 *firebase*service*account*.json
 *firebase*adminsdk*.json
+<<<<<<< HEAD
 !firebase-service-account.example.json
+=======
+!firebase-service-account.example.json
+
+# API Keys and sensitive data patterns
+*api*key*
+*secret*
+*password*
+*token*
+*credential*
+*private*
+*secure*
+
+# Test files with sensitive data
+test-*.js
+!test-sendgrid-config.js
+debug-*.js
+*-debug.js
+
+# Configuration files with secrets
+config.json
+secrets.json
+credentials.json
+private.json
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.temp
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and debugging
+*.log
+logs/
+debug.log
+error.log
+access.log
+
+# Upload directories (may contain sensitive data)
+uploads/
+temp/
+tmp/
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8

@@ -68,11 +68,94 @@ const fs = require('fs');
 
 const app = express();
 
+<<<<<<< HEAD
 // Basic middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+=======
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5001',
+      'http://127.0.0.1:5500',
+      'http://localhost:5500',
+      'https://viktoriasbistro.restaurant',
+      'https://www.viktoriasbistro.restaurant'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+// Basic middleware
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check endpoint (must be before other routes)
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    sendgridConfigured: !!(SENDGRID_API_KEY && SENDGRID_API_KEY !== 'your_sendgrid_api_key_here'),
+    firebaseInitialized: firebaseAdminInitialized
+  });
+});
+
+// API health check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    sendgridConfigured: !!(SENDGRID_API_KEY && SENDGRID_API_KEY !== 'your_sendgrid_api_key_here'),
+    firebaseInitialized: firebaseAdminInitialized,
+    endpoints: {
+      sendOtp: '/api/sendgrid-send-otp',
+      verifyOtp: '/api/sendgrid-verify-otp',
+      passwordReset: '/api/send-password-reset-otp'
+    }
+  });
+});
+
+// Add CORS and security headers
+app.use((req, res, next) => {
+  // CORS headers
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 // Add permissive CSP headers for development
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src 'self' *; img-src 'self' data: blob: *;");
@@ -103,6 +186,11 @@ if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
   console.warn('⚠️  WARNING: SENDGRID_API_KEY not found in environment variables');
   console.warn('📝 Please create a .env file with your SendGrid API key');
   console.warn('📖 See SETUP_INSTRUCTIONS.md for details');
+<<<<<<< HEAD
+=======
+} else {
+  console.log('✅ SendGrid API key configured successfully');
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 }
 
 // Multer configuration for file uploads
@@ -210,6 +298,11 @@ async function sendOTPEmail(email, userName, otp) {
         emailSent: false,
         message: 'SendGrid not configured - OTP generated locally'
       };
+<<<<<<< HEAD
+=======
+    } else {
+      console.log('✅ SendGrid API key found, attempting to send email');
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     }
 
     console.log(`📧 Sending OTP email to ${email} via SendGrid`);
@@ -1350,10 +1443,64 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('[SendGrid API] Send OTP error:', error.message);
+<<<<<<< HEAD
     res.status(500).json({
       success: false,
       message: 'Failed to generate SendGrid OTP'
     });
+=======
+    console.error('[SendGrid API] Error details:', error);
+    
+    // Check if it's a SendGrid configuration issue
+    if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
+      console.log('[SendGrid API] SendGrid not configured, generating local OTP as fallback');
+      
+      // Generate OTP locally as fallback
+      const otp = generateOTP();
+      const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+      
+      otpStorage.set(email, {
+        otp: otp,
+        expiry: expiry,
+        attempts: 0,
+        createdAt: Date.now(),
+        source: 'local-fallback'
+      });
+      
+      res.json({
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'OTP generated successfully (SendGrid not configured)',
+        emailSent: false,
+        emailError: 'SendGrid API key not configured'
+      });
+    } else {
+      console.log('[SendGrid API] SendGrid configured but error occurred:', error.message);
+      
+      // Always provide a fallback OTP even on server errors
+      const otp = generateOTP();
+      const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+      
+      otpStorage.set(email, {
+        otp: otp,
+        expiry: expiry,
+        attempts: 0,
+        createdAt: Date.now(),
+        source: 'error-fallback'
+      });
+      
+      res.json({
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'OTP generated successfully (server error occurred)',
+        emailSent: false,
+        emailError: error.message,
+        instructions: 'Please check server logs and try again'
+      });
+    }
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
   }
 });
 
@@ -1984,6 +2131,13 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
       // If no server-side OTP data, assume this is from SendGrid OTP verification
       // The verification was already done on the client side
       console.log(`[Password Reset OTP] No server-side OTP data found for ${email}, assuming SendGrid OTP verification`);
+<<<<<<< HEAD
+=======
+      
+      // Check if this is a verified password reset request
+      // The client should have set a verification flag in session storage
+      console.log(`[Password Reset OTP] Proceeding with password reset for verified user: ${email}`);
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     }
 
     // Update password in Firebase Auth
@@ -2030,6 +2184,7 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
     } catch (firebaseError) {
       console.error('[Password Reset OTP] Firebase password update error:', firebaseError.message);
       console.error('[Password Reset OTP] Firebase error code:', firebaseError.code);
+<<<<<<< HEAD
 
       if (firebaseError.code === 'auth/user-not-found') {
         return res.status(400).json({
@@ -2040,10 +2195,47 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
         return res.status(400).json({
           success: false,
           message: 'Password is too weak. Please choose a stronger password.'
+=======
+      console.error('[Password Reset OTP] Firebase error details:', firebaseError);
+
+      if (firebaseError.code === 'auth/user-not-found') {
+        console.log(`[Password Reset OTP] ❌ User not found in Firebase Auth: ${email}`);
+        return res.status(400).json({
+          success: false,
+          message: 'No account found with this email address. Please check your email or create a new account.',
+          firebaseUpdated: false,
+          clientSideUpdate: false,
+          firebaseUpdateFailed: true,
+          error: 'user-not-found'
+        });
+      } else if (firebaseError.code === 'auth/weak-password') {
+        console.log(`[Password Reset OTP] ❌ Password too weak for user: ${email}`);
+        return res.status(400).json({
+          success: false,
+          message: 'Password is too weak. Please choose a stronger password.',
+          firebaseUpdated: false,
+          clientSideUpdate: false,
+          firebaseUpdateFailed: true,
+          error: 'weak-password'
+        });
+      } else if (firebaseError.code === 'app/invalid-credential') {
+        console.log(`[Password Reset OTP] ❌ Firebase Admin SDK credential issue`);
+        return res.status(500).json({
+          success: false,
+          message: 'Server configuration error. Please contact support.',
+          firebaseUpdated: false,
+          clientSideUpdate: true,
+          firebaseUpdateFailed: true,
+          error: 'invalid-credential'
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         });
       } else {
         // For other Firebase errors, log and continue with client-side update
         console.log('⚠️ Firebase update failed, will use client-side update');
+<<<<<<< HEAD
+=======
+        console.log('⚠️ Error details:', firebaseError);
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         firebaseUpdateSuccess = false;
       }
     }
@@ -2239,5 +2431,10 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   From Name: ${SENDGRID_FROM_NAME}`);
   if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
     console.log(`   ⚠️  Create .env file with SENDGRID_API_KEY for email functionality`);
+<<<<<<< HEAD
+=======
+  } else {
+    console.log(`   ✅ SendGrid API key configured and ready for email sending`);
+>>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
   }
 });

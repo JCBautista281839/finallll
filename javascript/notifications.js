@@ -461,46 +461,46 @@ window.handlePaymentVerification = async function (docId, action) {
         let orderDoc = null;
         let bestMatch = null;
         let bestMatchScore = 0;
-        
+
         ordersQuery.forEach(doc => {
             const orderData = doc.data();
             let matchScore = 0;
-            
+
             // Check payment reference match (highest priority)
             if (orderData.paymentInfo?.reference === reference && reference !== 'Unknown' && reference !== 'no-reference') {
                 matchScore += 10;
             }
-            
+
             // Check customer name match
             if (orderData.customerInfo?.name === customerName && customerName !== 'Unknown Customer') {
                 matchScore += 5;
             }
-            
+
             // Check customer phone match if available
             if (data.customerInfo?.phone && orderData.customerInfo?.phone === data.customerInfo.phone) {
                 matchScore += 3;
             }
-            
+
             // Check payment type match
             if (orderData.paymentInfo?.type?.toLowerCase() === paymentType.toLowerCase()) {
                 matchScore += 2;
             }
-            
+
             if (matchScore > bestMatchScore) {
                 bestMatchScore = matchScore;
                 bestMatch = doc;
             }
         });
-        
+
         orderDoc = bestMatch;
 
         console.log('🔍 Looking for order with:', { customerName, paymentType, reference });
         console.log('🔍 Found', ordersQuery.size, 'orders with Pending Payment status');
-        
+
         if (!orderDoc && action === 'approved') {
             console.warn('❌ No matching order found for approval. Details:', {
-                customerName, 
-                paymentType, 
+                customerName,
+                paymentType,
                 reference,
                 searchedOrders: ordersQuery.size
             });
@@ -510,31 +510,67 @@ window.handlePaymentVerification = async function (docId, action) {
 
         console.log('✅ Found matching order:', orderDoc ? orderDoc.id : 'none', 'with score:', bestMatchScore);
 
-        // If approving, update order status to "In the Kitchen"
+        // If approving, redirect to POS with pre-loaded order data
         if (action === 'approved' && orderDoc) {
+            // Mark order as payment approved but not yet processed
             await db.collection('orders').doc(orderDoc.id).update({
-                status: 'In the Kitchen',
+                status: 'Payment Approved',
                 approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                approvedBy: 'admin'
+                approvedBy: 'admin',
+                paymentVerified: true
             });
+
+            // Update the notification status
+            await docRef.update({
+                status: action,
+                adminAction: {
+                    action: action,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    admin: 'Admin'
+                },
+                message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}. Redirecting to POS for order processing.`
+            });
+
+            // Redirect to POS with order data
+            alert('✅ Payment approved! Redirecting to POS for order processing...');
+            
+            // Store order data for POS to pick up
+            sessionStorage.setItem('approvedOrderId', orderDoc.id);
+            sessionStorage.setItem('approvedOrderData', JSON.stringify(orderDoc.data()));
+            
+            // Redirect to POS page
+            window.location.href = '/html/pos.html?mode=approved-order&orderId=' + orderDoc.id;
+            return;
         }
 
-        // Update the notification status
-        await docRef.update({
-            status: action,
-            adminAction: {
-                action: action,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                admin: 'Admin'
-            },
-            message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}${action === 'approved' ? ' and sent to kitchen' : ''}`
-        });
+        // Handle decline action
+        if (action === 'declined') {
+            // Update the notification status
+            await docRef.update({
+                status: action,
+                adminAction: {
+                    action: action,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    admin: 'Admin'
+                },
+                message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}`
+            });
 
-        // Show success message
-        alert(`Payment verification ${action} successfully!${action === 'approved' ? ' Order has been sent to the kitchen.' : ''}`);
+            // If order was found, mark it as declined
+            if (orderDoc) {
+                await db.collection('orders').doc(orderDoc.id).update({
+                    status: 'Payment Declined',
+                    declinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    declinedBy: 'admin'
+                });
+            }
 
-        // Reload notifications to update the display
-        loadNotifications();
+            // Show success message
+            alert('Payment verification declined.');
+            
+            // Reload notifications to update the display
+            loadNotifications();
+        }
 
     } catch (error) {
         console.error('Error handling payment verification:', error);
@@ -715,7 +751,7 @@ async function declineOrder(orderId, notificationId) {
 
         const reason = prompt('Please provide a reason for declining this order (required):');
         if (reason === null) return; // User cancelled
-        
+
         if (!reason.trim()) {
             alert('Please provide a reason for declining the order.');
             return;
