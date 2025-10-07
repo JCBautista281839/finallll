@@ -158,43 +158,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
             } catch (serverError) {
-                console.log('🔄 Server password reset failed, attempting direct Firebase Auth update:', serverError.message);
+                console.log('🔄 Server password reset failed, using Firebase built-in password reset:', serverError.message);
                 
-                // Fallback: Try to sign in user first, then update password
+                // Fallback: Use Firebase's sendPasswordResetEmail
                 try {
-                    console.log('🔑 Attempting to get Firebase Auth action code for password reset...');
+                    console.log('📧 Sending Firebase password reset email to:', email);
                     
-                    // For development/testing when server is down:
-                    // Store the new password in session storage temporarily
-                    // The login page will use it to update Firebase
-                    sessionStorage.setItem('pendingPasswordReset', JSON.stringify({
-                        email: email,
-                        newPassword: newPassword,
-                        timestamp: Date.now()
-                    }));
+                    await firebase.auth().sendPasswordResetEmail(email);
                     
-                    console.log('✅ Password reset request saved locally');
-                    console.log('ℹ️ Password will be updated when you log in');
+                    console.log('✅ Firebase password reset email sent successfully');
                     
-                    // Show success message
-                    showSuccess('Password reset successful! Please log in with your new password.');
+                    // Show success message with instructions
+                    showSuccess('Password reset email sent! Please check your inbox and click the link to reset your password.');
                     
-                    // Clear OTP session storage
+                    // Clear session storage
                     sessionStorage.removeItem('passwordResetEmail');
                     sessionStorage.removeItem('passwordResetVerified');
                     
-                    // Redirect to login after 3 seconds
+                    // Redirect to login after 5 seconds
                     setTimeout(() => {
                         window.location.href = 'login.html';
-                    }, 3000);
+                    }, 5000);
                     
                     return; // Exit successfully
                     
-                } catch (fallbackError) {
-                    console.error('❌ All password reset methods failed:', fallbackError);
+                } catch (firebaseError) {
+                    console.error('❌ Firebase password reset email failed:', firebaseError);
                     
                     // Show error with instructions
-                    showError('Server is temporarily unavailable. Please try resetting your password again later or contact support.');
+                    showError('Unable to reset password. Server is temporarily unavailable. Please try again later or contact support.');
                     
                     // Clear session storage
                     sessionStorage.removeItem('passwordResetEmail');
