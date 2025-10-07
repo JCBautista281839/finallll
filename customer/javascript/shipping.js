@@ -1205,6 +1205,25 @@ document.addEventListener('DOMContentLoaded', function () {
           throw new Error('Customer information is incomplete. Missing required fields.');
         }
 
+        // Validate coordinates
+        const stops = quotationData.data.stops;
+        if (!stops || stops.length < 2) {
+          throw new Error('Invalid quotation data: Missing stops information');
+        }
+
+        // Check if coordinates are valid
+        const pickup = stops[0];
+        const delivery = stops[1];
+
+        if (!pickup.coordinates || !delivery.coordinates) {
+          throw new Error('Invalid quotation data: Missing coordinates');
+        }
+
+        if (typeof pickup.coordinates.lat !== 'number' || typeof pickup.coordinates.lng !== 'number' ||
+          typeof delivery.coordinates.lat !== 'number' || typeof delivery.coordinates.lng !== 'number') {
+          throw new Error('Invalid quotation data: Coordinates must be numbers');
+        }
+
         // Get pickup and delivery addresses from stored data
         const pickupAddress = sessionStorage.getItem('pickupAddress') || "Viktoria's Bistro, Philippines";
         const deliveryAddress = sessionStorage.getItem('deliveryAddress') || formData.fullAddress;
@@ -1212,49 +1231,48 @@ document.addEventListener('DOMContentLoaded', function () {
         // Format phone number for Lalamove
         const formattedPhone = formatPhoneNumber(formData.phone);
 
-        // Prepare order data for Lalamove API
+        // Prepare order data for Lalamove API (correct format for /v3/orders endpoint)
         const orderData = {
-          data: {
-            serviceType: quotationData.data.serviceType || 'MOTORCYCLE',
-            specialRequests: [],
-            language: 'en_PH',
-            stops: [
-              // Pickup stop (restaurant)
-              {
-                coordinates: quotationData.data.stops[0].coordinates,
-                address: quotationData.data.stops[0].address,
-                contact: {
-                  name: "Viktoria's Bistro",
-                  phone: "+639189876543" // Restaurant phone number
-                }
+          serviceType: quotationData.data.serviceType || 'MOTORCYCLE',
+          specialRequests: [],
+          language: 'en_PH',
+          stops: [
+            // Pickup stop (restaurant)
+            {
+              coordinates: {
+                lat: quotationData.data.stops[0].coordinates.lat,
+                lng: quotationData.data.stops[0].coordinates.lng
               },
-              // Delivery stop (customer)
-              {
-                coordinates: quotationData.data.stops[1].coordinates,
-                address: quotationData.data.stops[1].address,
-                contact: {
-                  name: `${formData.firstName} ${formData.lastName}`,
-                  phone: formattedPhone
-                }
+              address: quotationData.data.stops[0].address,
+              contact: {
+                name: "Viktoria's Bistro",
+                phone: "+639189876543"
               }
-            ],
-            isRouteOptimized: false,
-            item: {
-              quantity: "1",
-              weight: "LESS_THAN_3_KG",
-              categories: ["FOOD_DELIVERY"],
-              handlingInstructions: ["KEEP_UPRIGHT"]
             },
-            // Optional: Add special instructions
-            metadata: {
-              customerEmail: formData.email,
-              orderType: 'food_delivery',
-              restaurant: "Viktoria's Bistro"
+            // Delivery stop (customer)
+            {
+              coordinates: {
+                lat: quotationData.data.stops[1].coordinates.lat,
+                lng: quotationData.data.stops[1].coordinates.lng
+              },
+              address: quotationData.data.stops[1].address,
+              contact: {
+                name: `${formData.firstName} ${formData.lastName}`.trim(),
+                phone: formattedPhone
+              }
             }
+          ],
+          isRouteOptimized: false,
+          item: {
+            quantity: "1",
+            weight: "LESS_THAN_3_KG",
+            categories: ["FOOD_DELIVERY"],
+            handlingInstructions: ["KEEP_UPRIGHT"]
           }
         };
 
-        console.log('[shipping.js] Calling Lalamove Place Order API with data:', orderData);
+        console.log('[shipping.js] Calling Lalamove Place Order API with data:', JSON.stringify(orderData, null, 2));
+        console.log('[shipping.js] Quotation data being used:', quotationData);
 
         // Call the server endpoint to place the order
         const response = await fetch('/api/place-order', {
