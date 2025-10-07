@@ -97,7 +97,7 @@ firebase-adminsdk-*.json
 victoria-s-bistro-firebase-adminsdk-*.json
 *firebase*service*account*.json
 *firebase*adminsdk*.json
-!firebase-service-account.example.json
+*firebase-service-account.json
 
 # API Keys and sensitive data patterns
 *api*key*
