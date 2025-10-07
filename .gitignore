@@ -85,24 +85,18 @@ config.env.secure.backup
 .env.*
 !env.example
 
-<<<<<<< HEAD
-=======
 # Production environment files (contains real API keys)
 env.production
 env.production.*
 .env.production
 .env.production.*
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 # Firebase service account credentials
 firebase-service-account.json
 firebase-adminsdk-*.json
 victoria-s-bistro-firebase-adminsdk-*.json
 *firebase*service*account*.json
 *firebase*adminsdk*.json
-<<<<<<< HEAD
-!firebase-service-account.example.json
-=======
 !firebase-service-account.example.json
 
 # API Keys and sensitive data patterns
@@ -159,4 +153,3 @@ access.log
 uploads/
 temp/
 tmp/
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
