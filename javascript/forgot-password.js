@@ -109,28 +109,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     console.log('✅ SendGrid OTP sent successfully for password reset');
                     
-                    // Show OTP if email failed to send
+                    // Show appropriate message based on email status
                     if (!result.emailSent && result.otp) {
                         console.log(`Password Reset OTP Code: ${result.otp} (Email not sent)`);
                         
-                        // Show a more informative message to the user
-                        const alertDiv = document.createElement('div');
-                        alertDiv.className = 'alert alert-warning';
-                        alertDiv.innerHTML = `
-                            <strong>⚠️ Email Service Unavailable</strong><br>
-                            Your OTP code is: <strong>${result.otp}</strong><br>
-                            <small>Please use this code to reset your password. Email service will be restored shortly.</small>
-                        `;
-                        
-                        // Insert after the success message
-                        const successAlert = document.querySelector('.alert-success');
-                        if (successAlert) {
-                            successAlert.parentNode.insertBefore(alertDiv, successAlert.nextSibling);
-                        }
+                        // Show warning message instead of success
+                        showEmailServiceWarning(result.otp);
+                    } else {
+                        // Show success message only if email was actually sent
+                        showSuccess();
                     }
-                    
-                    // Show success message
-                    showSuccess();
                     
                     // Redirect to OTP verification page
                     setTimeout(() => {
@@ -204,6 +192,37 @@ document.addEventListener('DOMContentLoaded', function() {
     function isValidEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
+    }
+    
+    // Show email service warning message
+    function showEmailServiceWarning(otp) {
+        // Hide other messages
+        successMessage.style.display = 'none';
+        errorMessage.style.display = 'none';
+        
+        // Create warning message
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'alert alert-warning';
+        warningDiv.style.display = 'block';
+        warningDiv.innerHTML = `
+            <div style="text-align: center;">
+                <strong>⚠️ Email Service Temporarily Unavailable</strong><br><br>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                    <strong>Your OTP Code:</strong><br>
+                    <span style="font-size: 24px; font-weight: bold; color: #8B2E20; letter-spacing: 3px;">${otp}</span>
+                </div>
+                <small>Please use this code to reset your password. Email service will be restored shortly.</small>
+            </div>
+        `;
+        
+        // Insert the warning message
+        const form = document.getElementById('forgotPasswordForm');
+        form.parentNode.insertBefore(warningDiv, form.nextSibling);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            warningDiv.style.display = 'none';
+        }, 10000);
     }
     
     // Show success message
