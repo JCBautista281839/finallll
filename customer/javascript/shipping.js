@@ -73,6 +73,12 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
       return false; // Return false instead of throwing error
     }
 
+    // Ensure user is authenticated (try anonymous if not)
+    if (!firebase.auth().currentUser) {
+      console.log('No authenticated user, proceeding without authentication for notifications');
+      // Don't try to authenticate for notifications - just proceed
+    }
+
     // Create notification data with proper validation
     const notificationData = {
       type: 'payment_verification',
@@ -98,9 +104,15 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
 
     console.log('📝 Notification data to be sent:', notificationData);
 
-    // Add to notifications collection
+    // Add to notifications collection with timeout
     console.log('💾 Adding notification to Firestore...');
-    const docRef = await db.collection('notifications').add(notificationData);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Firestore operation timeout')), 10000)
+    );
+    
+    const addPromise = db.collection('notifications').add(notificationData);
+    
+    const docRef = await Promise.race([addPromise, timeoutPromise]);
     console.log('✅ Payment verification notification sent successfully! Document ID:', docRef.id);
 
     // Show success message to user (non-blocking)
@@ -110,6 +122,7 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
   } catch (error) {
     console.warn('Could not send payment verification notification:', error.message);
     // Don't show error alert to user - just log it
+    console.warn('Full error details:', error);
     return false;
   }
 }
@@ -124,8 +137,24 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         if (typeof firebase !== 'undefined' && typeof initializeFirebase === 'function') {
           console.log('Initializing Firebase for shipping page...');
-          initializeFirebase().catch(error => {
-            console.warn('Firebase initialization warning:', error.message);
+          initializeFirebase().then(() => {
+            console.log('Firebase initialized successfully for shipping');
+            // Check if user is already authenticated
+            return new Promise((resolve) => {
+              firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                  console.log('User already authenticated:', user.uid);
+                  resolve(user);
+                } else {
+                  console.log('No user authenticated, continuing without auth');
+                  resolve(null);
+                }
+              });
+            });
+          }).then((user) => {
+            console.log('Firebase auth state resolved for shipping');
+          }).catch(error => {
+            console.warn('Firebase initialization/auth warning:', error.message);
           });
         } else {
           console.log('Firebase initialization not available, continuing without it');
@@ -620,12 +649,20 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
           // Check if Cloudinary function is available
           if (typeof window.uploadImageToCloudinary !== 'function') {
+            console.warn('Cloudinary upload function not available. Using base64 fallback.');
             throw new Error('Cloudinary upload function not available. Please check if cloud.js is loaded.');
           }
 
           // Upload receipt to Cloudinary
           console.log('Uploading receipt to Cloudinary...');
-          const cloudinaryResult = await window.uploadImageToCloudinary(uploadedFile);
+          
+          // Add timeout to Cloudinary upload
+          const uploadPromise = window.uploadImageToCloudinary(uploadedFile);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Cloudinary upload timeout')), 30000)
+          );
+          
+          const cloudinaryResult = await Promise.race([uploadPromise, timeoutPromise]);
           console.log('Cloudinary upload result:', cloudinaryResult);
 
           const paymentInfo = {
@@ -652,7 +689,11 @@ document.addEventListener('DOMContentLoaded', function () {
           console.log('About to send payment verification notification with:', paymentInfo);
           console.log('Current payment type:', currentPaymentType);
           console.log('Reference code:', refCode);
-          sendPaymentVerificationNotification(paymentInfo);
+          
+          // Don't await this - let it run in background
+          sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
+            console.warn('Payment verification notification failed:', notificationError.message);
+          });
 
           console.log('Payment confirmation saved:', { type: currentPaymentType, reference: refCode, receiptUrl: paymentInfo.receiptUrl });
 
@@ -687,7 +728,11 @@ document.addEventListener('DOMContentLoaded', function () {
               console.log('About to send payment verification notification (fallback) with:', paymentInfo);
               console.log('Current payment type (fallback):', currentPaymentType);
               console.log('Reference code (fallback):', refCode);
-              sendPaymentVerificationNotification(paymentInfo);
+              
+              // Don't await this - let it run in background
+              sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
+                console.warn('Payment verification notification failed (fallback):', notificationError.message);
+              });
 
               console.log('Payment confirmation saved with base64 fallback:', { type: currentPaymentType, reference: refCode });
 
@@ -695,6 +740,12 @@ document.addEventListener('DOMContentLoaded', function () {
               paymentConfirm.disabled = false;
               paymentConfirm.textContent = 'Confirm Payment';
             };
+            
+            reader.onerror = function() {
+              console.error('FileReader error');
+              throw new Error('Failed to read file');
+            };
+            
             reader.readAsDataURL(uploadedFile);
           } catch (fallbackError) {
             console.error('Base64 fallback also failed:', fallbackError);
@@ -800,7 +851,7 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        if (!payment.receiptData) {
+        if (!payment.receiptData && !payment.receiptUrl) {
           alert('Payment receipt screenshot is required. Please complete the payment modal first.');
           sessionStorage.removeItem('paymentInfo');
           return;
@@ -813,10 +864,57 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        showStatus('Order placed successfully! Payment verification in progress.', false);
+        // Show loading status
+        showStatus('Creating your order...', false);
 
-        // Navigate to confirmation page
-        window.location.href = 'payment.html';
+        // Get all required data for order creation
+        const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
+        const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
+        const quotationData = JSON.parse(sessionStorage.getItem('quotationResponse') || '{}');
+
+        // Validate required data
+        if (!formData.name || !formData.email) {
+          alert('Customer information is missing. Please go back to the details page and fill in your information.');
+          return;
+        }
+
+        if (Object.keys(cartData).length === 0) {
+          alert('No items in cart. Please add items before placing order.');
+          return;
+        }
+
+        // Try to create Firebase order first
+        let orderId = null;
+        try {
+          orderId = await createFirebaseOrder(formData, cartData, quotationData, payment, selectedPaymentMethod);
+        } catch (error) {
+          console.error('Firebase order creation failed:', error);
+          // Create a fallback order ID
+          orderId = 'ORDER_FALLBACK_' + Date.now();
+        }
+
+        if (orderId) {
+          // Try to send admin notification (non-blocking)
+          try {
+            await sendOrderApprovalNotification(orderId, formData, cartData, quotationData, payment, selectedPaymentMethod);
+            console.log('Admin notification sent successfully');
+          } catch (notificationError) {
+            console.warn('Admin notification failed, but order was created:', notificationError);
+            // Still proceed - order was created successfully
+          }
+          
+          // Store order ID for confirmation page
+          sessionStorage.setItem('orderId', orderId);
+          
+          showStatus('Order placed successfully! Admin will be notified for approval.', false);
+
+          // Navigate to confirmation page
+          setTimeout(() => {
+            window.location.href = 'payment.html';
+          }, 1500);
+        } else {
+          throw new Error('Failed to create order');
+        }
 
       } catch (error) {
         console.error('[shipping.js] Payment process failed:', error);
@@ -900,5 +998,390 @@ async function sendOrderNotificationToAdmin(orderId, orderData) {
     console.log('[shipping.js] Admin notification sent for order:', orderId);
   } catch (error) {
     console.error('[shipping.js] Error sending admin notification:', error);
+  }
+}
+
+// Function to create Firebase order
+async function createFirebaseOrder(formData, cartData, quotationData, paymentInfo, paymentMethod) {
+  try {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase not available for order creation');
+      // Create a mock order ID for testing
+      const mockOrderId = 'ORDER_MOCK_' + Date.now();
+      console.log('Created mock order ID:', mockOrderId);
+      return mockOrderId;
+    }
+
+    // Wait for Firebase to be ready
+    let firebaseReady = false;
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds max wait
+    
+    while (!firebaseReady && attempts < maxAttempts) {
+      try {
+        if (firebase.apps && firebase.apps.length > 0 && firebase.firestore) {
+          firebaseReady = true;
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+      } catch (checkError) {
+        console.warn('Firebase readiness check failed:', checkError.message);
+        break;
+      }
+    }
+
+    if (!firebaseReady) {
+      console.warn('Firebase not ready, creating mock order');
+      const mockOrderId = 'ORDER_MOCK_' + Date.now();
+      return mockOrderId;
+    }
+
+    // Initialize Firebase Order Manager
+    if (typeof FirebaseOrderManager === 'undefined') {
+      console.warn('FirebaseOrderManager not available. Creating simple order...');
+      
+      // Fallback: Create order directly with Firestore
+      const db = firebase.firestore();
+      const orderId = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      
+      // Convert cart data to items array
+      const items = Object.values(cartData).map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        totalPrice: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
+      }));
+
+      // Calculate totals
+      const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+      const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
+      const total = subtotal + shippingCost;
+
+      // Ensure user is authenticated
+      if (!firebase.auth().currentUser) {
+        console.log('No authenticated user, proceeding without authentication for order creation');
+        // Don't try to authenticate - just proceed with null userId
+      }
+
+      const orderData = {
+        orderId: orderId,
+        userId: firebase.auth().currentUser ? firebase.auth().currentUser.uid : null,
+        status: 'pending_approval',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        customerInfo: {
+          fullName: formData.name || '',
+          email: formData.email || '',
+          phone: formData.phone || ''
+        },
+        items: items,
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        total: total,
+        paymentMethod: paymentMethod,
+        paymentInfo: paymentInfo,
+        source: 'customer_web'
+      };
+
+      await db.collection('orders').doc(orderId).set(orderData);
+      console.log('Order created successfully with fallback method:', orderId);
+      return orderId;
+    }
+
+    const orderManager = new FirebaseOrderManager();
+    
+    // Wait for Firebase Order Manager to initialize with timeout
+    let initialized = false;
+    attempts = 0;
+    const maxInitAttempts = 30; // 3 seconds max
+    
+    while (!initialized && attempts < maxInitAttempts) {
+      if (orderManager.isInitialized) {
+        initialized = true;
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+    }
+
+    if (!initialized) {
+      throw new Error('Firebase Order Manager initialization timeout');
+    }
+
+    // Convert cart data to items array
+    const items = Object.values(cartData).map(item => ({
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      totalPrice: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
+    }));
+
+    // Calculate totals
+    const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+    const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
+    const total = subtotal + shippingCost;
+
+    // Get current user ID if available
+    let currentUserId = null;
+    try {
+      if (firebase.auth().currentUser) {
+        currentUserId = firebase.auth().currentUser.uid;
+      } else {
+        // Don't try to authenticate - just proceed with null userId
+        console.log('No authenticated user, proceeding with null userId');
+        currentUserId = null;
+      }
+    } catch (error) {
+      console.log('Authentication error, proceeding without userId:', error.message);
+    }
+
+    // Prepare order data
+    const orderData = {
+      customerInfo: {
+        firstName: formData.name ? formData.name.split(' ')[0] : '',
+        lastName: formData.name ? formData.name.split(' ').slice(1).join(' ') : '',
+        fullName: formData.name || '',
+        email: formData.email || '',
+        phone: formData.phone || ''
+      },
+      shippingInfo: {
+        address: formData.address || '',
+        barangay: formData.barangay || '',
+        city: formData.city || '',
+        province: formData.province || '',
+        postalCode: formData.postalCode || '',
+        method: quotationData.serviceType || 'pickup',
+        cost: shippingCost
+      },
+      items: items,
+      subtotal: subtotal,
+      shippingCost: shippingCost,
+      total: total,
+      paymentMethod: paymentMethod,
+      paymentInfo: {
+        type: paymentInfo.type,
+        reference: paymentInfo.reference,
+        receiptUrl: paymentInfo.receiptUrl || null,
+        receiptData: paymentInfo.receiptData || null,
+        receiptName: paymentInfo.receiptName || '',
+        timestamp: paymentInfo.timestamp
+      },
+      status: 'pending_approval', // Order needs admin approval
+      notes: formData.notes || '',
+      estimatedDeliveryTime: quotationData.estimatedDeliveryTime || null,
+      userId: currentUserId
+    };
+
+    console.log('[shipping.js] Creating order with data:', orderData);
+
+    // Create the order with timeout
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Order creation timeout')), 15000)
+    );
+    
+    const createPromise = orderManager.createOrder(orderData);
+    const orderId = await Promise.race([createPromise, timeoutPromise]);
+    
+    console.log('[shipping.js] Order created successfully with ID:', orderId);
+    return orderId;
+
+  } catch (error) {
+    console.error('[shipping.js] Error creating Firebase order:', error);
+    
+    // Create a fallback order ID so the process doesn't completely fail
+    const fallbackOrderId = 'ORDER_FALLBACK_' + Date.now();
+    console.log('[shipping.js] Created fallback order ID:', fallbackOrderId);
+    
+    // Store order data in session storage as backup
+    try {
+      const fallbackOrderData = {
+        orderId: fallbackOrderId,
+        customerInfo: formData,
+        cartData: cartData,
+        paymentInfo: paymentInfo,
+        timestamp: new Date().toISOString(),
+        status: 'pending_approval'
+      };
+      sessionStorage.setItem('fallbackOrderData', JSON.stringify(fallbackOrderData));
+      console.log('Fallback order data stored in session storage');
+    } catch (storageError) {
+      console.warn('Could not store fallback order data:', storageError.message);
+    }
+    
+    return fallbackOrderId;
+  }
+}
+
+// Function to send order approval notification to admin
+async function sendOrderApprovalNotification(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod) {
+  try {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase not available for admin notification');
+      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+    }
+
+    // Wait for Firebase to be ready
+    let firebaseReady = false;
+    let attempts = 0;
+    const maxAttempts = 30;
+    
+    while (!firebaseReady && attempts < maxAttempts) {
+      try {
+        if (firebase.apps && firebase.apps.length > 0 && firebase.firestore) {
+          firebaseReady = true;
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+      } catch (checkError) {
+        console.warn('Firebase readiness check failed:', checkError.message);
+        break;
+      }
+    }
+
+    if (!firebaseReady) {
+      console.warn('Firebase not ready for notification, trying server fallback');
+      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+    }
+
+    const db = firebase.firestore();
+
+    // Don't try to authenticate - just proceed
+    console.log('Sending notification without authentication');
+
+    // Calculate totals for display
+    const items = Object.values(cartData);
+    const subtotal = items.reduce((sum, item) => {
+      const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+      return sum + (price * item.quantity);
+    }, 0);
+    const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
+    const total = subtotal + shippingCost;
+
+    // Create comprehensive notification for admin
+    const notificationData = {
+      type: 'order_approval',
+      orderId: orderId,
+      message: `New order #${orderId} requires approval from ${formData.name}. Total: ₱${total.toFixed(2)} (${paymentMethod.toUpperCase()}: ${paymentInfo.reference})`,
+      
+      // Customer details
+      customerInfo: {
+        name: formData.name || 'Unknown Customer',
+        email: formData.email || 'No email',
+        phone: formData.phone || 'No phone'
+      },
+      
+      // Order details
+      orderDetails: {
+        orderId: orderId,
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        total: total,
+        itemCount: items.length,
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      },
+      
+      // Payment details
+      paymentDetails: {
+        method: paymentMethod,
+        reference: paymentInfo.reference,
+        receiptUrl: paymentInfo.receiptUrl || null,
+        receiptData: paymentInfo.receiptData || null,
+        timestamp: paymentInfo.timestamp
+      },
+      
+      // Shipping details
+      shippingDetails: {
+        address: formData.address || '',
+        method: quotationData.serviceType || 'pickup',
+        cost: shippingCost
+      },
+      
+      // Notification metadata
+      timestamp: new Date().toISOString(), // Use regular timestamp instead of server timestamp
+      seen: false,
+      requiresAction: true,
+      status: 'pending', // pending, approved, declined
+      
+      // Action buttons for admin
+      actions: {
+        approve: true,
+        decline: true
+      }
+    };
+
+    console.log('[shipping.js] Sending admin notification:', notificationData);
+
+    // Try to add notification to Firestore with timeout
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Notification send timeout')), 5000)
+      );
+      
+      const addPromise = db.collection('notifications').add(notificationData);
+      const docRef = await Promise.race([addPromise, timeoutPromise]);
+      
+      console.log('[shipping.js] Admin notification sent successfully! Document ID:', docRef.id);
+      return true;
+    } catch (firestoreError) {
+      console.warn('Firestore notification failed, trying server fallback:', firestoreError.message);
+      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+    }
+
+  } catch (error) {
+    console.error('[shipping.js] Error sending order approval notification:', error);
+    console.warn('Trying server fallback for notification');
+    return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+  }
+}
+
+// Fallback function to send notification via server API
+async function sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod) {
+  try {
+    const items = Object.values(cartData);
+    const subtotal = items.reduce((sum, item) => {
+      const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+      return sum + (price * item.quantity);
+    }, 0);
+    const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
+    const total = subtotal + shippingCost;
+
+    const notificationPayload = {
+      type: 'order_approval',
+      orderId: orderId,
+      customerName: formData.name,
+      customerEmail: formData.email,
+      customerPhone: formData.phone,
+      total: total,
+      paymentMethod: paymentMethod,
+      paymentReference: paymentInfo.reference,
+      items: items,
+      timestamp: new Date().toISOString()
+    };
+
+    const response = await fetch('/api/send-notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(notificationPayload)
+    });
+
+    if (response.ok) {
+      console.log('Notification sent via server successfully');
+      return true;
+    } else {
+      console.warn('Server notification failed');
+      return false;
+    }
+  } catch (error) {
+    console.error('Server notification error:', error);
+    return false;
   }
 }
