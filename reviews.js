@@ -501,14 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create the unauthenticated user form layout
     ratingForm.innerHTML = `
       <div class="rating-form-title-stars-row">
-        <span class="rating-form-title">Sign in to share your experience</span>
-        <span class="rating-stars-input">
-          <span class="star-input"></span>
-          <span class="star-input"></span>
-          <span class="star-input"></span>
-          <span class="star-input"></span>
-          <span class="star-input"></span>
-        </span>
+        <span class="rating-form-title">Share your experience</span>
       </div>
       <div class="rating-categories">
         <button type="button" class="rating-category-btn active" disabled>Overall Service</button>

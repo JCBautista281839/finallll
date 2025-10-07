@@ -40,10 +40,6 @@
           <a href="../html/login.html">
             <img class="user-img" src="/src/Icons/user (1).png" alt="User Icon">
           </a>
-          <a href="#" id="shopping-bag-btn" class="bag-container">
-            <img class="bag-img" src="/src/Icons/bag (1).png" alt="Bag Icon">
-            <span class="item-counter" id="item-counter">0</span>
-          </a>
         </div>
       </div>
     </header>
@@ -79,7 +75,7 @@
           <input type="radio" name="shipping" id="lalamove-radio">
           <span class="option-title">Lalamove Delivery</span>
           <span class="option-desc">Door-to-door delivery service</span>
-          <span class="price">₱89.00<br><small>SEDAN • 0.5km</small></span>
+          <span class="price">₱89.00<br><small>MOTORCYCLE • 0.5km</small></span>
         </div>
 
         <!-- Payment Information Section -->
@@ -99,18 +95,16 @@
 
       <!-- Order Summary -->
       <div class="order-summary">
-        <h2>ORDER FORM</h2>
-        <div class="order-item">
-          <span>1</span>
-          <span>Crispy Kare-Kare</span>
-          <span class="price">Php 500</span>
+        <h2>ORDER SUMMARY</h2>
+        <div class="order-menu" id="order-menu">
+          <p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>
         </div>
         <hr>
 
         <!-- Subtotal -->
         <div class="subtotal">
           <span>Subtotal</span>
-          <span class="price" id="subtotal-amount">Php 500</span>
+          <span class="price" id="subtotal-amount">₱0</span>
         </div>
 
         <!-- Shipping Fee -->
@@ -124,7 +118,7 @@
         <!-- Updated Total -->
         <div class="total">
           <span>Total</span>
-          <span class="price" id="total-amount">Php 500</span>
+          <span class="price" id="total-amount">₱0</span>
         </div>
         <!-- Shipping page continue button -->
         <button class="continue-btn" id="place-order-btn">
@@ -261,6 +255,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
 
   <!-- Firebase Configuration -->
   <script src="../firebase-config.js"></script>

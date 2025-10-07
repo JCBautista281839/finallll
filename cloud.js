@@ -22,7 +22,7 @@
         formData.append('file', file);
         formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
         formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
-        
+
         try {
             const response = await fetch(
                 `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
@@ -31,11 +31,11 @@
                     body: formData
                 }
             );
-            
+
             if (!response.ok) {
                 throw new Error('Upload failed');
             }
-            
+
             const data = await response.json();
             return data;
         } catch (error) {
@@ -53,19 +53,19 @@
     async function uploadProfileImage(file) {
         try {
             console.log('📤 Uploading profile image to Cloudinary...');
-            
+
             // Validate file
             if (!file.type.startsWith('image/')) {
                 throw new Error('Please select a valid image file');
             }
-            
+
             if (file.size > 5 * 1024 * 1024) {
                 throw new Error('Image size must be less than 5MB');
             }
-            
+
             const result = await uploadImageToCloudinary(file);
             console.log('✅ Profile image uploaded successfully:', result);
-            
+
             return {
                 publicId: result.public_id,
                 url: result.secure_url,
@@ -83,7 +83,7 @@
 
         // Try to access the cloudinary object, which might be loaded as a property on window
         const cl = window.cloudinary;
-        
+
         if (typeof cl !== 'undefined' && typeof cl.createUploadWidget === 'function') {
             console.log('✅ Cloudinary SDK loaded successfully');
             updateCloudinaryStatus('success', 'Cloudinary Ready');
@@ -188,14 +188,14 @@
 
                 // Store the widget in a global variable for access
                 window.cloudinaryWidget = uploadWidget;
-                
+
                 // Set up click handlers for the upload widget
                 updatePhotoUploadFunctionality();
                 console.log('✅ Cloudinary widget initialized and ready to use');
-                
+
                 // Dispatch an event indicating Cloudinary is ready
                 window.dispatchEvent(new CustomEvent('cloudinaryReady'));
-                
+
             } catch (widgetError) {
                 console.error('❌ Error creating Cloudinary widget:', widgetError);
                 updateCloudinaryStatus('error', 'Widget Error');
@@ -258,29 +258,29 @@
     function setupFallbackPhotoUpload() {
         console.log('🔄 Setting up fallback photo upload system...');
         updateCloudinaryStatus('warning', 'Using Fallback Upload');
-        
+
         // If there's already a fallback input, remove it to avoid duplicates
         const existingInput = document.getElementById('fallbackPhotoInput');
         if (existingInput) {
             existingInput.remove();
         }
-        
+
         const photoPreview = document.getElementById('photoPreview');
         const changePhotoBtn = document.getElementById('changePhotoBtn');
         const editProfileIcon = document.getElementById('editProfileIcon');
         const profileImageContainer = document.getElementById('profileImageContainer');
-        
+
         // Create fallback input
         const fallbackInput = document.createElement('input');
         fallbackInput.type = 'file';
         fallbackInput.accept = 'image/*';
         fallbackInput.style.display = 'none';
         fallbackInput.id = 'fallbackPhotoInput';
-        
+
         // Append to body
         document.body.appendChild(fallbackInput);
         console.log('✅ Fallback file input created and appended to body');
-        
+
         // Handle file selection with better error handling
         fallbackInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -288,49 +288,49 @@
                 console.log('No file selected');
                 return;
             }
-            
+
             // Show loading indicator
             if (typeof window.showMessage === 'function') {
                 window.showMessage('Uploading photo...', 'info');
             }
-            
+
             try {
                 // Validate file
                 if (!file.type.startsWith('image/')) {
                     throw new Error('Please select a valid image file');
                 }
-                
+
                 if (file.size > 5 * 1024 * 1024) {
                     throw new Error('Image size must be less than 5MB');
                 }
-                
+
                 // For profile images, try to upload to Cloudinary directly
                 if (editProfileIcon || profileImageContainer) {
                     console.log('📤 Uploading profile image using fallback method...');
-                    
+
                     // Try direct upload method
                     const result = await uploadProfileImage(file);
-                    
+
                     if (!result) {
                         throw new Error('Upload failed');
                     }
-                    
+
                     // Update profile image
                     const profileImg = document.getElementById('profileImg');
                     const placeholderIcon = document.getElementById('placeholderIcon');
-                    
+
                     if (profileImg && placeholderIcon) {
                         profileImg.src = result.optimizedUrl || result.url;
                         profileImg.style.display = 'block';
                         placeholderIcon.style.display = 'none';
                         profileImg.setAttribute('data-cloudinary-url', result.url);
                         profileImg.setAttribute('data-public-id', result.publicId);
-                        
+
                         // Trigger profile image update event
                         window.dispatchEvent(new CustomEvent('profileImageUpdated', {
                             detail: result
                         }));
-                        
+
                         // Call the profile settings handler if available
                         if (typeof window.handleCloudinaryUploadResult === 'function') {
                             window.handleCloudinaryUploadResult({
@@ -338,7 +338,7 @@
                                 public_id: result.publicId
                             });
                         }
-                        
+
                         console.log('✅ Profile image updated with fallback method');
                         if (typeof window.showMessage === 'function') {
                             window.showMessage('Profile picture uploaded successfully!', 'success');
@@ -351,14 +351,14 @@
                     reader.onload = (e) => {
                         const previewImage = document.getElementById('previewImage');
                         const uploadPlaceholder = document.getElementById('uploadPlaceholder');
-                        
+
                         if (previewImage && uploadPlaceholder) {
                             previewImage.src = e.target.result;
                             previewImage.style.display = 'block';
                             uploadPlaceholder.style.display = 'none';
                             previewImage.setAttribute('data-fallback-url', e.target.result);
                             console.log('📸 Photo preview updated with fallback URL');
-                            
+
                             if (typeof window.showMessage === 'function') {
                                 window.showMessage('Photo preview updated', 'success');
                             }
@@ -373,7 +373,7 @@
                 }
             }
         });
-        
+
         // Set up click handlers for fallback
         const elements = [photoPreview, changePhotoBtn, editProfileIcon, profileImageContainer].filter(Boolean);
         elements.forEach(element => {
@@ -382,7 +382,7 @@
                 fallbackInput.click();
             });
         });
-        
+
         console.log('✅ Fallback photo upload system ready');
     }
 
@@ -398,8 +398,8 @@
         const previewImage = document.getElementById('previewImage');
         return previewImage?.style.display !== 'none'
             ? previewImage.getAttribute('data-cloudinary-url') ||
-              previewImage.getAttribute('data-fallback-url') ||
-              previewImage.src
+            previewImage.getAttribute('data-fallback-url') ||
+            previewImage.src
             : null;
     }
 
@@ -429,7 +429,7 @@
             statusBadge.textContent = message;
         }
     }
-    
+
     // Unified message display function
     function showMessage(message, type = 'info') {
         // If the user already has a showToast function, use that
@@ -437,7 +437,7 @@
             window.showToast(message, type);
             return;
         }
-        
+
         // Otherwise create our own toast notification
         const toast = document.createElement('div');
         toast.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} position-fixed`;
@@ -447,16 +447,16 @@
             ${message}
             <button type="button" class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
         `;
-        
+
         document.body.appendChild(toast);
-        
+
         setTimeout(() => {
             if (toast.parentElement) {
                 toast.remove();
             }
         }, 3000);
     }
-    
+
     // Make the message function globally available
     window.showMessage = showMessage;
 
@@ -483,49 +483,49 @@
     // Dynamically load the Cloudinary script with better error handling
     function loadCloudinaryScript() {
         console.log('Loading Cloudinary Widget script...');
-        
+
         // Define a global variable to track loading status
         window.cloudinaryScriptLoading = true;
-        
+
         // Check if script is already loaded
-        if (document.querySelector('script[src*="upload_widget.js"]') || 
+        if (document.querySelector('script[src*="upload_widget.js"]') ||
             typeof window.cloudinary !== 'undefined') {
             console.log('Cloudinary script appears to be loaded, initializing widget...');
             window.cloudinaryScriptLoading = false;
             setTimeout(initCloudinaryWidget, 500);
             return;
         }
-        
+
         // Create script element with better error handling
         const script = document.createElement('script');
         script.src = 'https://upload-widget.cloudinary.com/global/all.js';
         script.async = true;
         script.crossOrigin = 'anonymous'; // Add crossOrigin for better error reporting
-        
+
         // Add timeout for script loading
         const scriptTimeout = setTimeout(() => {
             if (window.cloudinaryScriptLoading) {
-                console.error('❌ Cloudinary script load timed out after 10 seconds');
+                console.warn('Cloudinary script taking longer than expected to load, setting up fallback...');
                 window.cloudinaryScriptLoading = false;
                 setupFallbackPhotoUpload();
             }
-        }, 10000); // 10 second timeout
-        
-        script.onload = function() {
+        }, 8000); // 8 second timeout (reduced from 10)
+
+        script.onload = function () {
             clearTimeout(scriptTimeout);
             window.cloudinaryScriptLoading = false;
             console.log('✅ Cloudinary Widget script loaded successfully');
-            
+
             // Verify cloudinary object is available
             if (typeof window.cloudinary === 'undefined') {
-                console.warn('⚠️ Cloudinary script loaded but cloudinary object not found');
+                console.warn('Cloudinary script loaded but object not immediately available, retrying...');
                 // Try to initialize again after a short delay
                 setTimeout(() => {
                     if (typeof window.cloudinary !== 'undefined') {
                         console.log('✅ Cloudinary object available after delay');
                         initCloudinaryWidget();
                     } else {
-                        console.error('❌ Cloudinary object still not available after delay');
+                        console.warn('Cloudinary object still not available, using fallback upload');
                         setupFallbackPhotoUpload();
                     }
                 }, 1000);
@@ -534,18 +534,18 @@
                 setTimeout(initCloudinaryWidget, 300);
             }
         };
-        
-        script.onerror = function() {
+
+        script.onerror = function () {
             clearTimeout(scriptTimeout);
             window.cloudinaryScriptLoading = false;
-            console.error('❌ Failed to load Cloudinary Widget script');
+            console.warn('Could not load Cloudinary Widget, using fallback upload method');
             setupFallbackPhotoUpload();
         };
-        
+
         // Append to head
         document.head.appendChild(script);
     }
-    
+
     // Initialize when DOM is ready with fallback
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadCloudinaryScript);
