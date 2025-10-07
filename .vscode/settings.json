@@ -4,11 +4,18 @@
         "PowerShell": {
             "source": "PowerShell",
             "icon": "terminal-powershell",
-            "args": ["-NoExit", "-Command", "cd '${workspaceFolder}'"]
+            "args": [
+                "-NoExit",
+                "-Command",
+                "cd '${workspaceFolder}'"
+            ]
         },
         "Command Prompt": {
             "path": "cmd.exe",
-            "args": ["/k", "cd /d ${workspaceFolder}"]
+            "args": [
+                "/k",
+                "cd /d ${workspaceFolder}"
+            ]
         }
     },
     "terminal.integrated.cwd": "${workspaceFolder}",
@@ -88,5 +95,6 @@
     "terminal.integrated.tabs.hoverBorderTopDimmed": "terminal.ansiYellow",
     "terminal.integrated.tabs.activeBorderBottomDimmed": "terminal.ansiGreen",
     "terminal.integrated.tabs.inactiveBorderBottomDimmed": "terminal.ansiBlue",
-    "terminal.integrated.tabs.hoverBorderBottomDimmed": "terminal.ansiYellow"
+    "terminal.integrated.tabs.hoverBorderBottomDimmed": "terminal.ansiYellow",
+    "liveServer.settings.port": 5001
 }

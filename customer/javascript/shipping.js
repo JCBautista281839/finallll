@@ -39,6 +39,16 @@ function formatPhoneNumber(phone) {
   }
 }
 
+// Utility function to parse price from string
+function parsePrice(priceString) {
+  if (typeof priceString === 'number') return priceString;
+  if (!priceString) return 0;
+  return parseFloat(priceString.replace(/[^0-9.-]+/g, '')) || 0;
+}
+
+// Make parsePrice available globally
+window.parsePrice = parsePrice;
+
 // Function to send payment verification notification to admin
 window.sendPaymentVerificationNotification = async function (paymentInfo) {
   console.log('🔔 Starting payment verification notification process...');
@@ -106,12 +116,12 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
 
     // Add to notifications collection with timeout
     console.log('💾 Adding notification to Firestore...');
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Firestore operation timeout')), 10000)
     );
-    
+
     const addPromise = db.collection('notifications').add(notificationData);
-    
+
     const docRef = await Promise.race([addPromise, timeoutPromise]);
     console.log('✅ Payment verification notification sent successfully! Document ID:', docRef.id);
 
@@ -236,68 +246,188 @@ document.addEventListener('DOMContentLoaded', function () {
       return {};
     }
 
+    // Load and display customer information
+    function loadCustomerInfo() {
+      console.log('[shipping.js] Loading customer information...');
+      const formData = sessionStorage.getItem('formData');
+      console.log('[shipping.js] Raw formData from sessionStorage:', formData);
+
+      if (formData) {
+        try {
+          const customerData = JSON.parse(formData);
+          console.log('[shipping.js] Parsed customer data:', customerData);
+
+          // Update the customer information display
+          const deliveryInfoElement = document.getElementById('delivery-info');
+          if (deliveryInfoElement) {
+            deliveryInfoElement.innerHTML = `
+              <b>Name:</b> ${customerData.name || 'N/A'}<br>
+              <b>Address:</b> ${customerData.fullAddress || 'N/A'}<br>
+              <b>Email:</b> ${customerData.email || 'N/A'}<br>
+              <b>Phone:</b> ${customerData.phone || 'N/A'}
+            `;
+            console.log('[shipping.js] Customer information updated successfully');
+          } else {
+            console.warn('[shipping.js] delivery-info element not found');
+          }
+        } catch (error) {
+          console.error('[shipping.js] Error parsing customer data:', error);
+        }
+      } else {
+        console.warn('[shipping.js] No customer data found in sessionStorage');
+        // Display placeholder information
+        const deliveryInfoElement = document.getElementById('delivery-info');
+        if (deliveryInfoElement) {
+          deliveryInfoElement.innerHTML = `
+            <b>Name:</b> Not provided<br>
+            <b>Address:</b> Not provided<br>
+            <b>Email:</b> Not provided<br>
+            <b>Phone:</b> Not provided
+          `;
+        }
+      }
+    }
+
+    // Initialize shipping options with proper cost display
+    function initShippingOptions() {
+      console.log('[shipping.js] Initializing shipping options...');
+
+      const pickupOption = document.getElementById('pickup-option');
+      const lalamoveOption = document.getElementById('lalamove-option');
+      const pickupRadio = document.getElementById('pickup-radio');
+      const lalamoveRadio = document.getElementById('lalamove-radio');
+      const shippingFeeElement = document.getElementById('shipping-fee-amount');
+      const totalElement = document.getElementById('total-amount');
+
+      if (!pickupOption || !lalamoveOption || !shippingFeeElement || !totalElement) {
+        console.warn('[shipping.js] Some shipping option elements not found');
+        return;
+      }
+
+      // Function to update shipping costs
+      function updateShippingCosts() {
+        const subtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
+        let shippingCost = 0;
+
+        if (lalamoveRadio && lalamoveRadio.checked) {
+          shippingCost = 89.00; // Lalamove delivery cost
+          shippingFeeElement.textContent = '₱89.00';
+        } else {
+          shippingCost = 0; // Pickup is free
+          shippingFeeElement.textContent = 'FREE';
+        }
+
+        const total = subtotal + shippingCost;
+        totalElement.textContent = `₱${total.toFixed(0)}`;
+
+        console.log('[shipping.js] Shipping costs updated - Subtotal:', subtotal, 'Shipping:', shippingCost, 'Total:', total);
+      }
+
+      // Add event listeners to shipping options
+      if (pickupRadio) {
+        pickupRadio.addEventListener('change', function () {
+          if (this.checked) {
+            // Remove selected class from other options
+            lalamoveOption.classList.remove('selected');
+            pickupOption.classList.add('selected');
+            updateShippingCosts();
+          }
+        });
+      }
+
+      if (lalamoveRadio) {
+        lalamoveRadio.addEventListener('change', function () {
+          if (this.checked) {
+            // Remove selected class from other options
+            pickupOption.classList.remove('selected');
+            lalamoveOption.classList.add('selected');
+            updateShippingCosts();
+          }
+        });
+      }
+
+      // Initialize with pickup selected (free)
+      if (pickupRadio) {
+        pickupRadio.checked = true;
+        pickupOption.classList.add('selected');
+        updateShippingCosts();
+      }
+    }
+
     // Update order form with cart data
     function updateOrderForm(cartData) {
       console.log('[shipping.js] updateOrderForm called with cartData:', cartData);
 
-      const orderItemsContainer = document.querySelector('.order-item');
-      const totalElement = document.querySelector('.total .price');
+      const orderMenuContainer = document.getElementById('order-menu');
+      const subtotalElement = document.getElementById('subtotal-amount');
+      const totalElement = document.getElementById('total-amount');
 
       console.log('[shipping.js] Found elements:', {
-        orderItemsContainer: !!orderItemsContainer,
+        orderMenuContainer: !!orderMenuContainer,
+        subtotalElement: !!subtotalElement,
         totalElement: !!totalElement
       });
 
-      if (!orderItemsContainer || !totalElement) return;
+      if (!orderMenuContainer || !subtotalElement || !totalElement) {
+        console.error('[shipping.js] Required elements not found');
+        return;
+      }
 
       const cartItems = Object.values(cartData);
-      let totalPrice = 0;
+      let subtotal = 0;
 
       console.log('[shipping.js] Cart items:', cartItems);
 
       // Clear existing items
-      orderItemsContainer.innerHTML = '';
+      orderMenuContainer.innerHTML = '';
 
       if (cartItems.length === 0) {
         console.log('[shipping.js] No cart items, showing empty message');
-        orderItemsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;"><span>No items in cart</span></div>';
-        totalElement.textContent = 'Php 0';
+        orderMenuContainer.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>';
+        subtotalElement.textContent = '₱0';
+        totalElement.textContent = '₱0';
         return;
       }
 
-      // Create container for all items
-      const itemsContainer = document.createElement('div');
-      itemsContainer.style.cssText = 'margin-bottom: 15px;';
-
       // Add each cart item
       cartItems.forEach(item => {
-        const price = window.parsePrice(item.price);
-        const itemTotal = price * item.quantity;
-        totalPrice += itemTotal;
+        const price = window.parsePrice ? window.parsePrice(item.price) : parseFloat(item.price.replace(/[^\d.]/g, '')) || 0;
+        const quantity = parseInt(item.quantity) || 1;
+        const itemTotal = price * quantity;
+        subtotal += itemTotal;
 
-        const itemDiv = document.createElement('div');
-        itemDiv.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px; background: #f8f9fa; border-radius: 5px;';
-        
-        const itemName = document.createElement('div');
-        itemName.style.cssText = 'flex: 1;';
-        itemName.innerHTML = '<span style="font-weight: 600;">' + item.name + '</span><br><small style="color: #666;">Qty: ' + item.quantity + ' × ' + item.price + '</small>';
-        
-        const itemPrice = document.createElement('div');
-        itemPrice.style.cssText = 'text-align: right;';
-        itemPrice.innerHTML = '<span class="price" style="font-weight: 600; color: #8b1d1d;">Php ' + itemTotal.toFixed(0) + '</span>';
-        
-        itemDiv.appendChild(itemName);
-        itemDiv.appendChild(itemPrice);
-        itemsContainer.appendChild(itemDiv);
+        console.log(`[shipping.js] Item: ${item.name}, Price: ${price}, Quantity: ${quantity}, Total: ${itemTotal}`);
+
+        // Create order item element
+        const orderItem = document.createElement('div');
+        orderItem.className = 'order-item';
+        orderItem.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; border: 1px solid #e9ecef;';
+
+        orderItem.innerHTML = `
+          <div class="item-details" style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; font-size: 14px; font-weight: 600;">${item.name}</h4>
+            <p style="margin: 0; font-size: 12px; color: #666;">x${quantity}</p>
+          </div>
+          <div class="item-price" style="text-align: right;">
+            <span style="font-weight: 600; color: #8b1d1d;">₱${itemTotal.toFixed(0)}</span>
+          </div>
+        `;
+
+        orderMenuContainer.appendChild(orderItem);
       });
 
-      orderItemsContainer.appendChild(itemsContainer);
+      // Update subtotal and initial total
+      subtotalElement.textContent = `₱${subtotal.toFixed(0)}`;
 
-      // Update total
-      totalElement.textContent = 'Php ' + totalPrice.toFixed(0);
+      // Calculate total with shipping (initially pickup - free)
+      const shippingFee = 0; // Start with pickup (free)
+      const total = subtotal + shippingFee;
+      totalElement.textContent = `₱${total.toFixed(0)}`;
 
-      // Store total for Firebase integration
-      sessionStorage.setItem('orderSubtotal', totalPrice.toString());
+      // Store subtotal for shipping calculations
+      sessionStorage.setItem('orderSubtotal', subtotal.toString());
+
+      console.log('[shipping.js] Order summary updated - Subtotal:', subtotal, 'Total:', total);
     }
 
     // Payment Modal Functionality
@@ -655,13 +785,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Upload receipt to Cloudinary
           console.log('Uploading receipt to Cloudinary...');
-          
+
           // Add timeout to Cloudinary upload
           const uploadPromise = window.uploadImageToCloudinary(uploadedFile);
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Cloudinary upload timeout')), 30000)
           );
-          
+
           const cloudinaryResult = await Promise.race([uploadPromise, timeoutPromise]);
           console.log('Cloudinary upload result:', cloudinaryResult);
 
@@ -689,7 +819,7 @@ document.addEventListener('DOMContentLoaded', function () {
           console.log('About to send payment verification notification with:', paymentInfo);
           console.log('Current payment type:', currentPaymentType);
           console.log('Reference code:', refCode);
-          
+
           // Don't await this - let it run in background
           sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
             console.warn('Payment verification notification failed:', notificationError.message);
@@ -728,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function () {
               console.log('About to send payment verification notification (fallback) with:', paymentInfo);
               console.log('Current payment type (fallback):', currentPaymentType);
               console.log('Reference code (fallback):', refCode);
-              
+
               // Don't await this - let it run in background
               sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
                 console.warn('Payment verification notification failed (fallback):', notificationError.message);
@@ -740,12 +870,12 @@ document.addEventListener('DOMContentLoaded', function () {
               paymentConfirm.disabled = false;
               paymentConfirm.textContent = 'Confirm Payment';
             };
-            
-            reader.onerror = function() {
+
+            reader.onerror = function () {
               console.error('FileReader error');
               throw new Error('Failed to read file');
             };
-            
+
             reader.readAsDataURL(uploadedFile);
           } catch (fallbackError) {
             console.error('Base64 fallback also failed:', fallbackError);
@@ -770,9 +900,15 @@ document.addEventListener('DOMContentLoaded', function () {
     function init() {
       console.log('[shipping.js] Initializing shipping page');
 
+      // Load and display customer information
+      loadCustomerInfo();
+
       // Load and display cart data
       const cartData = loadCartData();
       updateOrderForm(cartData);
+
+      // Initialize shipping options
+      initShippingOptions();
 
       // Initialize payment modal
       initPaymentModal();
@@ -857,13 +993,6 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        // Verify payment method matches
-        if (payment.type !== selectedPaymentMethod) {
-          alert('Payment method mismatch. Please complete the payment process for the selected method.');
-          sessionStorage.removeItem('paymentInfo');
-          return;
-        }
-
         // Show loading status
         showStatus('Creating your order...', false);
 
@@ -902,10 +1031,10 @@ document.addEventListener('DOMContentLoaded', function () {
             console.warn('Admin notification failed, but order was created:', notificationError);
             // Still proceed - order was created successfully
           }
-          
+
           // Store order ID for confirmation page
           sessionStorage.setItem('orderId', orderId);
-          
+
           showStatus('Order placed successfully! Admin will be notified for approval.', false);
 
           // Navigate to confirmation page
@@ -1017,7 +1146,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     let firebaseReady = false;
     let attempts = 0;
     const maxAttempts = 50; // 5 seconds max wait
-    
+
     while (!firebaseReady && attempts < maxAttempts) {
       try {
         if (firebase.apps && firebase.apps.length > 0 && firebase.firestore) {
@@ -1041,11 +1170,11 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     // Initialize Firebase Order Manager
     if (typeof FirebaseOrderManager === 'undefined') {
       console.warn('FirebaseOrderManager not available. Creating simple order...');
-      
+
       // Fallback: Create order directly with Firestore
       const db = firebase.firestore();
       const orderId = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      
+
       // Convert cart data to items array
       const items = Object.values(cartData).map(item => ({
         name: item.name,
@@ -1090,12 +1219,12 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     }
 
     const orderManager = new FirebaseOrderManager();
-    
+
     // Wait for Firebase Order Manager to initialize with timeout
     let initialized = false;
     attempts = 0;
     const maxInitAttempts = 30; // 3 seconds max
-    
+
     while (!initialized && attempts < maxInitAttempts) {
       if (orderManager.isInitialized) {
         initialized = true;
@@ -1176,23 +1305,23 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     console.log('[shipping.js] Creating order with data:', orderData);
 
     // Create the order with timeout
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Order creation timeout')), 15000)
     );
-    
+
     const createPromise = orderManager.createOrder(orderData);
     const orderId = await Promise.race([createPromise, timeoutPromise]);
-    
+
     console.log('[shipping.js] Order created successfully with ID:', orderId);
     return orderId;
 
   } catch (error) {
     console.error('[shipping.js] Error creating Firebase order:', error);
-    
+
     // Create a fallback order ID so the process doesn't completely fail
     const fallbackOrderId = 'ORDER_FALLBACK_' + Date.now();
     console.log('[shipping.js] Created fallback order ID:', fallbackOrderId);
-    
+
     // Store order data in session storage as backup
     try {
       const fallbackOrderData = {
@@ -1208,7 +1337,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     } catch (storageError) {
       console.warn('Could not store fallback order data:', storageError.message);
     }
-    
+
     return fallbackOrderId;
   }
 }
@@ -1226,7 +1355,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
     let firebaseReady = false;
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     while (!firebaseReady && attempts < maxAttempts) {
       try {
         if (firebase.apps && firebase.apps.length > 0 && firebase.firestore) {
@@ -1265,14 +1394,14 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
       type: 'order_approval',
       orderId: orderId,
       message: `New order #${orderId} requires approval from ${formData.name}. Total: ₱${total.toFixed(2)} (${paymentMethod.toUpperCase()}: ${paymentInfo.reference})`,
-      
+
       // Customer details
       customerInfo: {
         name: formData.name || 'Unknown Customer',
         email: formData.email || 'No email',
         phone: formData.phone || 'No phone'
       },
-      
+
       // Order details
       orderDetails: {
         orderId: orderId,
@@ -1286,7 +1415,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
           price: item.price
         }))
       },
-      
+
       // Payment details
       paymentDetails: {
         method: paymentMethod,
@@ -1295,20 +1424,20 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
         receiptData: paymentInfo.receiptData || null,
         timestamp: paymentInfo.timestamp
       },
-      
+
       // Shipping details
       shippingDetails: {
         address: formData.address || '',
         method: quotationData.serviceType || 'pickup',
         cost: shippingCost
       },
-      
+
       // Notification metadata
       timestamp: new Date().toISOString(), // Use regular timestamp instead of server timestamp
       seen: false,
       requiresAction: true,
       status: 'pending', // pending, approved, declined
-      
+
       // Action buttons for admin
       actions: {
         approve: true,
@@ -1320,13 +1449,13 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
 
     // Try to add notification to Firestore with timeout
     try {
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Notification send timeout')), 5000)
       );
-      
+
       const addPromise = db.collection('notifications').add(notificationData);
       const docRef = await Promise.race([addPromise, timeoutPromise]);
-      
+
       console.log('[shipping.js] Admin notification sent successfully! Document ID:', docRef.id);
       return true;
     } catch (firestoreError) {
