@@ -103,6 +103,35 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Health check endpoint (must be before other routes)
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    sendgridConfigured: !!(SENDGRID_API_KEY && SENDGRID_API_KEY !== 'your_sendgrid_api_key_here'),
+    firebaseInitialized: firebaseAdminInitialized
+  });
+});
+
+// API health check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    sendgridConfigured: !!(SENDGRID_API_KEY && SENDGRID_API_KEY !== 'your_sendgrid_api_key_here'),
+    firebaseInitialized: firebaseAdminInitialized,
+    endpoints: {
+      sendOtp: '/api/sendgrid-send-otp',
+      verifyOtp: '/api/sendgrid-verify-otp',
+      passwordReset: '/api/send-password-reset-otp'
+    }
+  });
+});
+
 // Add CORS and security headers
 app.use((req, res, next) => {
   // CORS headers
