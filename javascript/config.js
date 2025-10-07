@@ -5,13 +5,6 @@
 
 // API Base URL Configuration
 const API_CONFIG = {
-<<<<<<< HEAD
-    // Development
-    // BASE_URL: 'http://localhost:5001',
-    
-    // Production
-    BASE_URL: 'https://viktoriasbistro.restaurant',
-=======
     // Auto-detect environment and set appropriate base URL
     BASE_URL: (() => {
         // Check if we're running locally
@@ -40,7 +33,6 @@ const API_CONFIG = {
             return window.location.origin;
         }
     })(),
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     
     // API Endpoints
     ENDPOINTS: {

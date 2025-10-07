@@ -125,11 +125,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         await updatePasswordWithFirebaseClient(email, newPassword);
                     } else if (result.firebaseUpdated) {
                         // Server-side update was successful
-<<<<<<< HEAD
+
                         console.log('Password reset completed automatically via server');
-=======
+
                         console.log('✅ Password reset completed automatically via server');
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
                         showSuccess('Password updated successfully in Firebase Authentication! You can now log in with your new password.');
                         
                         // Clear session storage
@@ -148,7 +148,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     return; // Exit successfully
                 } else {
-<<<<<<< HEAD
                     throw new Error(result.message || 'Failed to reset password');
                 }
                 
@@ -169,61 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 1000);
-=======
-                    // Handle specific error cases from server
-                    if (result.error === 'user-not-found') {
-                        showError('No account found with this email address. Please check your email or create a new account.');
-                    } else if (result.error === 'weak-password') {
-                        showError('Password is too weak. Please choose a stronger password.');
-                    } else if (result.error === 'invalid-credential') {
-                        showError('Server configuration error. Please contact support or try again later.');
-                    } else {
-                        throw new Error(result.message || 'Failed to reset password');
-                    }
-                    return;
-                }
-                
-            } catch (serverError) {
-                console.log('🔄 Server password reset failed, using Firebase built-in password reset:', serverError.message);
-                
-                // Fallback: Use Firebase's sendPasswordResetEmail
-                try {
-                    console.log('📧 Sending Firebase password reset email to:', email);
-                    
-                    await firebase.auth().sendPasswordResetEmail(email);
-                    
-                    console.log('✅ Firebase password reset email sent successfully');
-                    
-                    // Show success message with instructions
-                    showSuccess('Password reset email sent! Please check your inbox and click the link to reset your password.');
-                    
-                    // Clear session storage
-                    sessionStorage.removeItem('passwordResetEmail');
-                    sessionStorage.removeItem('passwordResetVerified');
-                    
-                    // Redirect to login after 5 seconds
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 5000);
-                    
-                    return; // Exit successfully
-                    
-                } catch (firebaseError) {
-                    console.error('❌ Firebase password reset email failed:', firebaseError);
-                    
-                    // Show error with instructions
-                    showError('Unable to reset password. Server is temporarily unavailable. Please try again later or contact support.');
-                    
-                    // Clear session storage
-                    sessionStorage.removeItem('passwordResetEmail');
-                    sessionStorage.removeItem('passwordResetVerified');
-                    
-                    // Redirect to login after 5 seconds
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 5000);
-                }
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
             }
             
         } catch (error) {
@@ -392,17 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 3000);
                 
             } else {
-<<<<<<< HEAD
-                // User is not signed in, we need to sign them in first
-                console.log('⚠️ User not signed in, attempting to sign in with email link');
-                
-                // Try to sign in the user using email link (this requires the user to have clicked a link)
-                // Since we can't do this automatically, we'll show a success message
-                console.log('✅ Password reset completed - user will need to sign in with new password');
-                
-                // Show success message
-                showSuccess('Password reset completed successfully! You can now log in with your new password.');
-=======
                 // User is not signed in - this is the most common case for password reset
                 console.log('⚠️ User not signed in, cannot update password directly via client-side');
                 console.log('ℹ️ This is normal for password reset flow - server-side update should handle this');
@@ -410,7 +343,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Since we can't update password without being signed in, 
                 // we'll show a message indicating the reset was processed
                 showSuccess('Password reset request processed. If the server-side update failed, please try logging in with your current password or contact support.');
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                 
                 // Clear session storage
                 sessionStorage.removeItem('passwordResetEmail');
@@ -436,11 +368,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMsg = 'Password is too weak. Please choose a stronger password.';
             } else if (error.code === 'auth/requires-recent-login') {
                 errorMsg = 'Please sign in again to update your password.';
-<<<<<<< HEAD
-=======
             } else if (error.code === 'auth/network-request-failed') {
                 errorMsg = 'Network error. Please check your connection and try again.';
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
             }
             
             // Use the showError function from the DOM scope

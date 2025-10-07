@@ -66,8 +66,6 @@ async function handleLogin(email, password) {
         
         console.log('✅ Firebase Auth successful for:', user.email);
         
-<<<<<<< HEAD
-=======
         // Check if there's a pending password reset
         const pendingReset = sessionStorage.getItem('pendingPasswordReset');
         if (pendingReset) {
@@ -86,7 +84,6 @@ async function handleLogin(email, password) {
             }
         }
         
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         // Now search for user in Firestore collections to get role and data
         let userRole = null;
         let userFound = false;

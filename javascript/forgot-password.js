@@ -109,18 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     console.log('✅ SendGrid OTP sent successfully for password reset');
                     
-<<<<<<< HEAD
-                    // Show OTP if email failed to send
-                    if (!result.emailSent && result.otp) {
-                        // OTP popup removed - OTP is now handled server-side
-                        console.log(`Password Reset OTP Code: ${result.otp} (Email not sent)`);
-                    }
-                    
-                    // Show success message
-                    showSuccess();
-                    
-                    // Redirect to OTP verification page
-=======
                     // Check if email was actually sent
                     if (result.emailSent) {
                         // Email sent successfully - show success message
@@ -132,7 +120,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Always redirect to OTP verification page (for testing)
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                     setTimeout(() => {
                         window.location.href = 'verify-password-reset-otp.html';
                     }, 2000);
@@ -207,9 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show success message
-<<<<<<< HEAD
-    function showSuccess() {
-=======
     function showSuccess(message) {
         if (message) {
             // Update success message text if provided
@@ -219,7 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         successMessage.style.display = 'block';
         errorMessage.style.display = 'none';
         
