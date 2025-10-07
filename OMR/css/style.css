@@ -61,9 +61,17 @@ body {
 }
 
 @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 /* Card Styles */
@@ -150,6 +158,23 @@ body {
 
 .preview-actions {
     margin-top: 1rem;
+}
+
+/* Webcam Preview Styles */
+.webcam-preview {
+    text-align: center;
+}
+
+#webcamVideo {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    background: #000;
+}
+
+#webcamCanvas {
+    display: none;
 }
 
 /* Function Cards */
@@ -387,8 +412,13 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Responsive Design */
@@ -396,20 +426,20 @@ body {
     .header-title {
         font-size: 2rem;
     }
-    
+
     .upload-area {
         padding: 2rem 1rem;
     }
-    
+
     .upload-icon {
         font-size: 3rem;
     }
-    
+
     .function-card {
         padding: 1.5rem 1rem;
         margin-bottom: 1rem;
     }
-    
+
     .card-body {
         padding: 1.5rem;
     }
@@ -419,15 +449,15 @@ body {
     .header-title {
         font-size: 1.5rem;
     }
-    
+
     .upload-area {
         padding: 1.5rem 1rem;
     }
-    
+
     .upload-icon {
         font-size: 2.5rem;
     }
-    
+
     .function-icon {
         font-size: 2rem;
     }
@@ -439,8 +469,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .slide-in {
@@ -448,15 +485,31 @@ body {
 }
 
 @keyframes slideIn {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 /* Status Colors */
-.status-dot.ready { background-color: var(--success-color); }
-.status-dot.processing { background-color: var(--warning-color); }
-.status-dot.error { background-color: var(--danger-color); }
-.status-dot.offline { background-color: #6c757d; }
+.status-dot.ready {
+    background-color: var(--success-color);
+}
+
+.status-dot.processing {
+    background-color: var(--warning-color);
+}
+
+.status-dot.error {
+    background-color: var(--danger-color);
+}
+
+.status-dot.offline {
+    background-color: #6c757d;
+}
 
 /* Custom Scrollbar */
 .console-content::-webkit-scrollbar {

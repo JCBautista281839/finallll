@@ -1,20 +1,20 @@
-<!DOCTYPE html
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/nav.css"> 
-    <link rel="stylesheet" href="../css/stylepos.css">
-    <link rel="stylesheet" href="../css/pos-menu.css">
-    <link rel="stylesheet" href="../css/omr-scanner.css">
-    
+<!DOCTYPE html <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="../css/nav.css">
+<link rel="stylesheet" href="../css/stylepos.css">
+<link rel="stylesheet" href="../css/pos-menu.css">
+<link rel="stylesheet" href="../css/omr-scanner.css">
+<link rel="icon" type="image/png" href="/src/IMG/Logo.png">
+
 <body>
-     <div class="dashboard-container d-flex">
-        <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
+  <div class="dashboard-container d-flex">
+    <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
       <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
         <i class="bi bi-list"></i>
       </button>
@@ -26,13 +26,14 @@
           <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
           <div class="nav-text">Home</div>
         </a>
-                
-        <a  class="nav-link text-white" title="Notifications" style="position:relative;">
-          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon" >
-          <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+
+        <a class="nav-link text-white" title="Notifications" style="position:relative;">
+          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon">
+          <span class="notification-badge"
+            style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
           <div class="nav-text">Notifications</div>
         </a>
-                
+
         <a href="../html/Order.html" class="nav-link text-white" title="Orders">
           <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
           <div class="nav-text">Orders</div>
@@ -67,174 +68,179 @@
           <div class="nav-text">Logout</div>
         </a>
       </nav>
-    <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
-      <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
-          <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
-              <img src="../src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
-              <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
-              <img src="../src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
-          </div>
-          <div class="dropdown-body p-2" id="dropdownNotificationsList">
-              <!-- Notifications will be loaded here dynamically -->
-              <div class="text-center text-muted py-3">No notifications</div>
-          </div>
-          <div class="dropdown-footer p-2 text-center border-top">
-              <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
-          </div>
+      <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+      <div id="notificationDropdown" class="notification-dropdown"
+        style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+        <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+          <img src="../src/Icons/bell.png" alt="Notifications"
+            style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+          <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+          <img src="../src/Icons/close.png" id="closeDropdown" alt="Close"
+            style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+        </div>
+        <div class="dropdown-body p-2" id="dropdownNotificationsList">
+          <!-- Notifications will be loaded here dynamically -->
+          <div class="text-center text-muted py-3">No notifications</div>
+        </div>
+        <div class="dropdown-footer p-2 text-center border-top">
+          <a href="../html/notifi.html" class="see-all-link"
+            style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+        </div>
       </div>
-        </aside>
-      <main class="main-content flex-grow-1">
-        <div class="pos-container d-flex">
-          <div class="menu-panel flex-grow-1">
-            
-            <div class="pos-header">
-              <div class="d-flex justify-content-between align-items-center">
-                <h1 class="pos-title">Items</h1>
-                <div class="datetime-display" id="currentDateTime">12:00 PM Monday</div>
-              </div>
-            </div>
+    </aside>
+    <main class="main-content flex-grow-1">
+      <div class="pos-container d-flex">
+        <div class="menu-panel flex-grow-1">
 
-           
-           <div class="search-container">
-            <div class="input-group">
+          <div class="pos-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h1 class="pos-title">Items</h1>
+              <div class="datetime-display" id="currentDateTime">12:00 PM Monday</div>
+            </div>
+          </div>
+
+
+          <div class="search-container d-flex gap-2 align-items-start">
+            <!-- OMR Scanner Button -->
+            <button class="btn btn-primary" id="omrScannerBtn" title="Scan Order Sheet" style="white-space: nowrap;">
+              <i class="bi bi-upc-scan"></i></button>
+            <div class="input-group flex-grow-1">
               <input type="text" class="form-control search-input" placeholder="Search">
               <button class="btn btn-outline-secondary" type="button">
                 <img src="../src/Icons/search.png" alt="Search" class="search-icon">
               </button>
             </div>
-            <!-- OMR Scanner Button -->
-            <button class="btn btn-primary mt-2" id="omrScannerBtn" title="Scan OMR Sheet">
-              <i class="bi bi-upc-scan"></i> Scan Order Sheet
-            </button>
           </div>
 
-            
-            <div class="category-tabs">
-              <div class="nav nav-pills" id="categoryNav">
-                <button class="nav-link active" data-category="all">All</button>
-                <button class="nav-link" data-category="appetizers">Appetizers</button>
-                <button class="nav-link" data-category="specials">Specials</button>
-                <button class="nav-link" data-category="specials">Silog</button>
-                <button class="nav-link" data-category="specials">More Loved</button>
-                <button class="nav-link" data-category="pasta">Pasta</button>
-                <button class="nav-link" data-category="pansit">Pansit</button>
-                <button class="nav-link" data-category="bilao">Bilao</button>
-                <button class="nav-link" data-category="burgers">Burgers</button>
-                <button class="nav-link" data-category="sandwiches">Sandwiches</button>
-                <button class="nav-link" data-category="feast">Feast</button>
-                <button class="nav-link" data-category="rice-bowls">Rice Bowls</button>
-                <button class="nav-link" data-category="drinks">Drinks</button>
-                <button class="nav-link" data-category="sizzling">Sizzlings</button>
-                <button class="nav-link more-categories">
-                  <i class="bi bi-chevron-right"></i>
-                </button>
-              </div>
-            </div>
 
-            
-            <div class="menu-items-grid"></div>
+          <div class="category-tabs">
+            <div class="nav nav-pills" id="categoryNav">
+              <button class="nav-link active" data-category="all">All</button>
+              <button class="nav-link" data-category="appetizers">Appetizers</button>
+              <button class="nav-link" data-category="specials">Specials</button>
+              <button class="nav-link" data-category="specials">Silog</button>
+              <button class="nav-link" data-category="specials">More Loved</button>
+              <button class="nav-link" data-category="pasta">Pasta</button>
+              <button class="nav-link" data-category="pansit">Pansit</button>
+              <button class="nav-link" data-category="bilao">Bilao</button>
+              <button class="nav-link" data-category="burgers">Burgers</button>
+              <button class="nav-link" data-category="sandwiches">Sandwiches</button>
+              <button class="nav-link" data-category="feast">Feast</button>
+              <button class="nav-link" data-category="rice-bowls">Rice Bowls</button>
+              <button class="nav-link" data-category="drinks">Drinks</button>
+              <button class="nav-link" data-category="sizzling">Sizzlings</button>
+              <button class="nav-link more-categories">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
           </div>
 
-      
 
-           
-           <div class="order-panel">
-            
-            <div class="order-header">
-              <div class="d-flex justify-content-between align-items-center">
-                <h5 class="order-number">Order No. </h5>
-                <button class="btn-close-order">
-                  <i class="bi bi-trash"></i>
+          <div class="menu-items-grid"></div>
+        </div>
+
+
+
+
+        <div class="order-panel">
+
+          <div class="order-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="order-number">Order No. </h5>
+              <button class="btn-close-order">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle order-type" type="button"
+                  id="orderTypeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                  <span>Dine in</span>
                 </button>
+                <ul class="dropdown-menu" aria-labelledby="orderTypeDropdown">
+                  <li><a class="dropdown-item" href="#" data-type="Dine in">Dine in</a></li>
+                  <li><a class="dropdown-item" href="#" data-type="Take out">Take out</a></li>
+                </ul>
               </div>
-              <div class="d-flex align-items-center gap-2">
-                <div class="dropdown">
-                  <button class="btn btn-outline-secondary btn-sm dropdown-toggle order-type" type="button" 
-                          id="orderTypeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span>Dine in</span>
-                  </button>
-                  <ul class="dropdown-menu" aria-labelledby="orderTypeDropdown">
-                    <li><a class="dropdown-item" href="#" data-type="Dine in">Dine in</a></li>
-                    <li><a class="dropdown-item" href="#" data-type="Take out">Take out</a></li>
-                  </ul>
-                </div>
-                <div class="table-number">
-                  <input type="number" class="form-control form-control-sm" 
-                         placeholder="Table No." min="1" max="99" id="tableNumber">
-                </div>
-                <div class="pax-number">
-                  <input type="number" class="form-control form-control-sm" 
-                         placeholder="Pax" min="1" max="99" id="paxNumber">
-                </div>
+              <div class="table-number">
+                <input type="number" class="form-control form-control-sm" placeholder="Table No." min="1" max="99"
+                  id="tableNumber">
               </div>
-            </div> 
-            <div class="order-items">    
-            </div> 
-            <div class="order-summary">
-              <div class="summary-row">
-                <span>Subtotal</span>
-                <span class="summary-subtotal">₱0.00</span>
-              </div>
-              <div class="summary-row">
-                <span>Tax</span>
-                <span class="summary-tax">₱0.00</span>
-              </div>
-                <div class="summary-row">
-                  <span>Discount</span>
-                  <select class="form-select form-select-sm discount-dropdown" style="width:auto;display:inline-block;">
-                    <option value="none">No discount</option>
-                    <option value="pwd">PWD</option>
-                    <option value="senior">Senior Citizen</option>
-                    <option value="custom">Add Discount</option>
-                  </select>
-                  <span class="summary-discount" style="margin-left:8px;">0%</span>
-              </div>
-              <div class="summary-row" id="customDiscountInputRow" style="display:none;">
-                <span>Special Discount</span>
-                <input type="text" min="0" max="100" id="customDiscountInput" class="form-control" placeholder="Enter percent">
-                <span style="margin-left:2px;">%</span>
-              </div>
-              <div class="summary-row total">
-                <span>Total</span>
-                <span class="summary-total">₱0.00</span>
+              <div class="pax-number">
+                <input type="number" class="form-control form-control-sm" placeholder="Pax" min="1" max="99"
+                  id="paxNumber">
               </div>
             </div>
+          </div>
+          <div class="order-items">
+          </div>
+          <div class="order-summary">
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span class="summary-subtotal">₱0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax</span>
+              <span class="summary-tax">₱0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Discount</span>
+              <select class="form-select form-select-sm discount-dropdown" style="width:auto;display:inline-block;">
+                <option value="none">No discount</option>
+                <option value="pwd">PWD</option>
+                <option value="senior">Senior Citizen</option>
+                <option value="custom">Add Discount</option>
+              </select>
+              <span class="summary-discount" style="margin-left:8px;">0%</span>
+            </div>
+            <div class="summary-row" id="customDiscountInputRow" style="display:none;">
+              <span>Special Discount</span>
+              <input type="text" min="0" max="100" id="customDiscountInput" class="form-control"
+                placeholder="Enter percent">
+              <span style="margin-left:2px;">%</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total</span>
+              <span class="summary-total">₱0.00</span>
+            </div>
+          </div>
 
-            
-            <div class="proceed-button-container">
-              <button class="btn btn-success proceed-btn">Proceed</button>
-            </div>
+
+          <div class="proceed-button-container">
+            <button class="btn btn-success proceed-btn">Proceed</button>
           </div>
         </div>
-      </main>
-     </div>
+      </div>
+    </main>
+  </div>
 
-      <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-      <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-      
-      <script src="../main.js"></script>
-      <script src="../javascript/darkmode.js"></script>
-      <script src="../javascript/navnotifi.js"></script>
+
+  <script src="../main.js"></script>
+  <script src="../javascript/darkmode.js"></script>
+  <script src="../javascript/navnotifi.js"></script>
   <script src="../javascript/notifications.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-      <script src="../javascript/pos.js"></script>
-      <script src="../javascript/clock.js"></script>
-      <script src="../javascript/omr-scanner-integration.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../javascript/pos.js"></script>
+  <script src="../javascript/clock.js"></script>
+  <script src="../javascript/omr-scanner-integration.js"></script>
 
-     
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
       var notifLink = document.querySelector('.nav-link[title="Notifications"]');
       if (notifLink) {
-        notifLink.addEventListener('click', function() {
+        notifLink.addEventListener('click', function () {
           if (typeof loadNotifications === 'function') {
             loadNotifications();
           }
         });
       }
     });
-    </script>
+  </script>
 </body>
+
 </html>

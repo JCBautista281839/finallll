@@ -96,6 +96,7 @@ def health_check():
             "version": "1.0.0",
             "endpoints": [
                 "/api/upload",
+                "/api/upload-webcam",
                 "/api/detect-circles",
                 "/api/analyze-shaded",
                 "/api/full-scan",
@@ -151,6 +152,58 @@ def upload_file():
         return jsonify(create_response(
             success=False,
             message="Upload failed",
+            error=str(e)
+        )), 500
+
+@app.route('/api/upload-webcam', methods=['POST'])
+def upload_webcam():
+    """Handle webcam image upload"""
+    try:
+        data = request.get_json()
+        if not data or 'image' not in data:
+            return jsonify(create_response(
+                success=False,
+                message="No image data provided",
+                error="Missing image in request"
+            )), 400
+        
+        # Extract base64 image data
+        image_data = data['image']
+        if image_data.startswith('data:image'):
+            # Remove data URL prefix
+            image_data = image_data.split(',')[1]
+        
+        # Decode base64 image
+        image_bytes = base64.b64decode(image_data)
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"omr_webcam_{timestamp}.png"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Save image file
+        with open(filepath, 'wb') as f:
+            f.write(image_bytes)
+        
+        # Get file info
+        file_size = os.path.getsize(filepath)
+        
+        return jsonify(create_response(
+            success=True,
+            message="Webcam image uploaded successfully",
+            data={
+                "filename": filename,
+                "filepath": filepath,
+                "size": file_size,
+                "uploaded_at": datetime.now().isoformat()
+            }
+        ))
+        
+    except Exception as e:
+        app.logger.error(f"Webcam upload error: {str(e)}")
+        return jsonify(create_response(
+            success=False,
+            message="Webcam upload failed",
             error=str(e)
         )), 500
 
@@ -304,6 +357,7 @@ if __name__ == '__main__':
     print("Server will be available at: http://localhost:5003")
     print("API endpoints:")
     print("   - POST /api/upload")
+    print("   - POST /api/upload-webcam")
     print("   - POST /api/detect-circles")
     print("   - POST /api/analyze-shaded")
     print("   - POST /api/full-scan")
