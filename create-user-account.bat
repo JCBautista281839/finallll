@@ -23,3 +23,4 @@ echo After creating the account, you can log in with those credentials.
 echo.
 
 pause
+

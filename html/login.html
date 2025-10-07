@@ -30,11 +30,14 @@
 
             <div class="login-form">
                 <div class="role-choice">
-                    <button type="button" class="btn btn-outline-primary" id="adminBtn">Admin</button>
+                    <button type="button" class="btn btn-outline-primary" id="adminBtn">Admin/Staff</button>
                     <button type="button" class="btn btn-outline-secondary" id="customerBtn">Customer</button>
                 </div>
                 <h1 class="welcome-title">WELCOME KA VIKTORIAS!</h1>
                 <p class="welcome-subtitle">Let's get you signed in.</p>
+                <div id="roleInfo" class="role-info" style="display: none; margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; font-size: 14px; color: #6c757d;">
+                    <i class="fas fa-info-circle"></i> <span id="roleInfoText"></span>
+                </div>
 
                 <form id="loginForm">
                     <input type="email" id="username" class="form-input" placeholder="Email Address" required>
