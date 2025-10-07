@@ -1211,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', function () {
           throw new Error('Invalid quotation data: Missing stops information');
         }
 
-        // Check if coordinates are valid
+        // Check if coordinates are valid and convert to numbers if needed
         const pickup = stops[0];
         const delivery = stops[1];
 
@@ -1219,9 +1219,16 @@ document.addEventListener('DOMContentLoaded', function () {
           throw new Error('Invalid quotation data: Missing coordinates');
         }
 
-        if (typeof pickup.coordinates.lat !== 'number' || typeof pickup.coordinates.lng !== 'number' ||
-          typeof delivery.coordinates.lat !== 'number' || typeof delivery.coordinates.lng !== 'number') {
-          throw new Error('Invalid quotation data: Coordinates must be numbers');
+        // Convert coordinates to numbers if they're strings
+        pickup.coordinates.lat = Number(pickup.coordinates.lat);
+        pickup.coordinates.lng = Number(pickup.coordinates.lng);
+        delivery.coordinates.lat = Number(delivery.coordinates.lat);
+        delivery.coordinates.lng = Number(delivery.coordinates.lng);
+
+        // Validate that coordinates are valid numbers
+        if (isNaN(pickup.coordinates.lat) || isNaN(pickup.coordinates.lng) ||
+          isNaN(delivery.coordinates.lat) || isNaN(delivery.coordinates.lng)) {
+          throw new Error('Invalid quotation data: Coordinates are not valid numbers');
         }
 
         // Get pickup and delivery addresses from stored data
