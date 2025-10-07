@@ -258,6 +258,8 @@ function loadNotifications() {
                     typeText = 'Restock';
                 } else if (data.type === 'payment_verification') {
                     typeText = 'Payment Verification';
+                } else if (data.type === 'order_approval') {
+                    typeText = 'Order Approval';
                 } else {
                     typeText = data.type || 'Other';
                 }
@@ -304,6 +306,34 @@ function loadNotifications() {
                                     <button class="btn btn-danger btn-sm" onclick="handlePaymentVerification('${doc.id}', 'declined')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
                                         ✗ Decline
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${time}</td>
+                    </tr>`;
+                } else if (data.type === 'order_approval' && data.requiresAction) {
+                    // Handle order approval notifications with action buttons
+                    rows += `<tr class="order-approval-row" data-doc-id="${doc.id}">
+                        <td><span style='font-weight:600; color: #007bff;'>${typeText}</span></td>
+                        <td>
+                            <div class="order-notification-content">
+                                <p><strong>${data.message || ''}</strong></p>
+                                <div class="order-details">
+                                    <small><strong>Customer:</strong> ${data.customerName || 'Unknown'} | 
+                                    <strong>Email:</strong> ${data.customerEmail || 'Unknown'} | 
+                                    <strong>Total:</strong> ₱${data.orderTotal || 'Unknown'} | 
+                                    <strong>Payment:</strong> ${data.paymentMethod || 'Unknown'} | 
+                                    <strong>Reference:</strong> ${data.paymentReference || 'Unknown'}</small>
+                                </div>
+                                <div class="action-buttons" style="margin-top: 10px;">
+                                    <button class="btn btn-success btn-sm me-2" onclick="approveOrder('${data.orderId}', '${doc.id}')" 
+                                            style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
+                                        <i class="fas fa-check"></i> Accept
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
+                                            style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
+                                        <i class="fas fa-times"></i> Decline
                                     </button>
                                 </div>
                             </div>
@@ -548,4 +578,123 @@ if (window.location.pathname.endsWith('notifi.html')) {
             notifHeader.appendChild(box);
         }
     });
+}
+
+// Function to approve an order
+async function approveOrder(orderId, notificationId) {
+    try {
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            alert('Database not available');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to approve this order?')) {
+            return;
+        }
+
+        // Update order status to 'confirmed'
+        await db.collection('orders').doc(orderId).update({
+            status: 'confirmed',
+            approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            approvedBy: 'admin'
+        });
+
+        // Mark notification as no longer requiring action
+        await db.collection('notifications').doc(notificationId).update({
+            requiresAction: false,
+            actionTaken: 'approved',
+            actionTakenAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Send notification to kitchen/orders
+        await sendOrderToKitchen(orderId);
+
+        // Reload notifications to update UI
+        loadNotifications();
+
+        alert('Order approved successfully! It has been sent to the kitchen.');
+
+    } catch (error) {
+        console.error('Error approving order:', error);
+        alert('Error approving order. Please try again.');
+    }
+}
+
+// Function to decline an order
+async function declineOrder(orderId, notificationId) {
+    try {
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            alert('Database not available');
+            return;
+        }
+
+        const reason = prompt('Please provide a reason for declining this order (optional):');
+        if (reason === null) return; // User cancelled
+
+        if (!confirm('Are you sure you want to decline this order?')) {
+            return;
+        }
+
+        // Update order status to 'declined'
+        await db.collection('orders').doc(orderId).update({
+            status: 'declined',
+            declinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            declinedBy: 'admin',
+            declineReason: reason || 'No reason provided'
+        });
+
+        // Mark notification as no longer requiring action
+        await db.collection('notifications').doc(notificationId).update({
+            requiresAction: false,
+            actionTaken: 'declined',
+            actionTakenAt: firebase.firestore.FieldValue.serverTimestamp(),
+            declineReason: reason || 'No reason provided'
+        });
+
+        // Reload notifications to update UI
+        loadNotifications();
+
+        alert('Order declined successfully.');
+
+    } catch (error) {
+        console.error('Error declining order:', error);
+        alert('Error declining order. Please try again.');
+    }
+}
+
+// Function to send approved order to kitchen
+async function sendOrderToKitchen(orderId) {
+    try {
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) return;
+
+        // Get the order details
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+            throw new Error('Order not found');
+        }
+
+        const orderData = orderDoc.data();
+
+        // Create a kitchen notification
+        await db.collection('notifications').add({
+            type: 'kitchen_order',
+            orderId: orderId,
+            message: `New approved order #${orderId} for ${orderData.customerInfo.fullName} - ${orderData.shippingInfo.method}`,
+            customerName: orderData.customerInfo.fullName,
+            shippingMethod: orderData.shippingInfo.method,
+            items: orderData.items,
+            total: orderData.total,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            seen: false,
+            targetScreen: 'kitchen'
+        });
+
+        console.log('Order sent to kitchen:', orderId);
+
+    } catch (error) {
+        console.error('Error sending order to kitchen:', error);
+    }
 }
