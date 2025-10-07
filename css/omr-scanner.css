@@ -1,15 +1,47 @@
-/**
- * OMR Scanner Integration CSS
- * Styling for the OMR scanner modal and interface elements
- */
+@font-face {
+  font-family: 'PoppinsMedium';
+  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
 
-/* OMR Scanner Button */
+@font-face {
+  font-family: 'PoppinsBlack';
+  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsRegular';
+  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'PoppinsExtraLight';
+  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'PoppinsLight';
+  src: url('../src/fonts/Poppins-Light.woff') format('woff');
+  font-weight: 200;
+  font-style: normal;
+}
+
 #omrScannerBtn {
-    width: 100%;
+    width: 15%;
     padding: 10px 15px;
     font-weight: 600;
     border-radius: 8px;
     transition: all 0.3s ease;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #omrScannerBtn:hover {
@@ -18,11 +50,13 @@
 }
 
 #omrScannerBtn i {
-    margin-right: 8px;
+    margin: 0;
+    font-size: 1.2rem;
 }
 
 /* Upload Area */
 .omr-upload-area {
+    font-family: 'PoppinsRegular', sans-serif;
     border: 2px dashed #6c757d;
     border-radius: 12px;
     padding: 40px 20px;
@@ -33,12 +67,12 @@
 }
 
 .omr-upload-area:hover {
-    border-color: #0d6efd;
+    border-color: #96392d;
     background-color: #e7f1ff;
 }
 
 .omr-upload-area.drag-over {
-    border-color: #0d6efd;
+    border-color: #96392d;
     background-color: #cfe2ff;
     transform: scale(1.02);
 }
@@ -81,11 +115,12 @@
     padding: 15px;
     background-color: #e7f3ff;
     border-radius: 8px;
-    border-left: 4px solid #0d6efd;
+    border-left: 4px solid #96392d;
+    font-family: 'PoppinsRegular', sans-serif;
 }
 
 .omr-scan-summary strong {
-    color: #0d6efd;
+    color: #96392d;
 }
 
 /* Error Area */
@@ -101,12 +136,17 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
+#omrScannerModal .bi-upc-scan {
+   color: #ffffff;
+}
+
 #omrScannerModal .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #760000;
     color: white;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     border-bottom: none;
+    font-family: 'PoppinsRegular', sans-serif;
 }
 
 #omrScannerModal .modal-header .btn-close {
@@ -114,7 +154,7 @@
 }
 
 #omrScannerModal .modal-title {
-    font-weight: 600;
+    font-weight: 500;
 }
 
 #omrScannerModal .modal-title i {
@@ -145,11 +185,11 @@
     #omrScannerModal .modal-dialog {
         margin: 10px;
     }
-    
+
     .omr-upload-area {
         padding: 30px 15px;
     }
-    
+
     .omr-items-list {
         max-height: 200px;
     }
@@ -161,6 +201,7 @@
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
