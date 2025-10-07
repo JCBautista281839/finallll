@@ -1238,43 +1238,45 @@ document.addEventListener('DOMContentLoaded', function () {
         // Format phone number for Lalamove
         const formattedPhone = formatPhoneNumber(formData.phone);
 
-        // Prepare order data for Lalamove API (correct format for /v3/orders endpoint)
+        // Prepare order data for Lalamove API (server expects data wrapper)
         const orderData = {
-          serviceType: quotationData.data.serviceType || 'MOTORCYCLE',
-          specialRequests: [],
-          language: 'en_PH',
-          stops: [
-            // Pickup stop (restaurant)
-            {
-              coordinates: {
-                lat: quotationData.data.stops[0].coordinates.lat,
-                lng: quotationData.data.stops[0].coordinates.lng
+          data: {
+            serviceType: quotationData.data.serviceType || 'MOTORCYCLE',
+            specialRequests: [],
+            language: 'en_PH',
+            stops: [
+              // Pickup stop (restaurant)
+              {
+                coordinates: {
+                  lat: quotationData.data.stops[0].coordinates.lat,
+                  lng: quotationData.data.stops[0].coordinates.lng
+                },
+                address: quotationData.data.stops[0].address,
+                contact: {
+                  name: "Viktoria's Bistro",
+                  phone: "+639189876543"
+                }
               },
-              address: quotationData.data.stops[0].address,
-              contact: {
-                name: "Viktoria's Bistro",
-                phone: "+639189876543"
+              // Delivery stop (customer)
+              {
+                coordinates: {
+                  lat: quotationData.data.stops[1].coordinates.lat,
+                  lng: quotationData.data.stops[1].coordinates.lng
+                },
+                address: quotationData.data.stops[1].address,
+                contact: {
+                  name: `${formData.firstName} ${formData.lastName}`.trim(),
+                  phone: formattedPhone
+                }
               }
-            },
-            // Delivery stop (customer)
-            {
-              coordinates: {
-                lat: quotationData.data.stops[1].coordinates.lat,
-                lng: quotationData.data.stops[1].coordinates.lng
-              },
-              address: quotationData.data.stops[1].address,
-              contact: {
-                name: `${formData.firstName} ${formData.lastName}`.trim(),
-                phone: formattedPhone
-              }
+            ],
+            isRouteOptimized: false,
+            item: {
+              quantity: "1",
+              weight: "LESS_THAN_3_KG",
+              categories: ["FOOD_DELIVERY"],
+              handlingInstructions: ["KEEP_UPRIGHT"]
             }
-          ],
-          isRouteOptimized: false,
-          item: {
-            quantity: "1",
-            weight: "LESS_THAN_3_KG",
-            categories: ["FOOD_DELIVERY"],
-            handlingInstructions: ["KEEP_UPRIGHT"]
           }
         };
 
