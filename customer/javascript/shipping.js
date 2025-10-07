@@ -941,6 +941,203 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // Order Confirmation Modal
+    function showOrderConfirmationModal(orderData) {
+      console.log('[shipping.js] Showing order confirmation modal with data:', orderData);
+
+      // Create modal HTML
+      const modalHTML = `
+        <div id="order-confirmation-modal" style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        ">
+          <div style="
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s ease-out;
+          ">
+            <div style="
+              background: linear-gradient(135deg, #28a745, #20c997);
+              color: white;
+              padding: 20px;
+              text-align: center;
+              border-radius: 15px 15px 0 0;
+            ">
+              <div style="
+                width: 60px;
+                height: 60px;
+                background: white;
+                border-radius: 50%;
+                margin: 0 auto 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">
+                <svg width="30" height="30" fill="#28a745" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+              </div>
+              <h2 style="margin: 0; font-size: 24px;">Order Confirmed!</h2>
+              <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Thank you for your order</p>
+            </div>
+            
+            <div style="padding: 25px;">
+              <div style="
+                background: #f8f9fa;
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 20px;
+                border-left: 4px solid #28a745;
+              ">
+                <h3 style="margin: 0 0 15px; color: #333; font-size: 18px;">Order Summary</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="color: #666;">Order ID:</span>
+                  <strong style="color: #333;">#${orderData.orderId}</strong>
+                </div>
+                ${orderData.lalamoveOrderId ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="color: #666;">Delivery ID:</span>
+                  <strong style="color: #333;">#${orderData.lalamoveOrderId}</strong>
+                </div>
+                ` : ''}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="color: #666;">Payment Method:</span>
+                  <strong style="color: #333;">${orderData.paymentMethod === 'gcash' ? 'GCash' : 'Bank Transfer'}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="color: #666;">Delivery Method:</span>
+                  <strong style="color: #333;">${orderData.deliveryMethod === 'delivery' ? 'Lalamove Delivery' : 'Store Pickup'}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #666;">Total Amount:</span>
+                  <strong style="color: #28a745; font-size: 18px;">₱${orderData.totalAmount}</strong>
+                </div>
+              </div>
+
+              <div style="
+                background: #e7f3ff;
+                border-radius: 10px;
+                padding: 15px;
+                margin-bottom: 20px;
+                border-left: 4px solid #007bff;
+              ">
+                <h4 style="margin: 0 0 10px; color: #333; font-size: 16px;">📱 What's Next?</h4>
+                <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.6;">
+                  <li>Our admin will review and approve your order</li>
+                  <li>You'll receive SMS/email updates on your order status</li>
+                  ${orderData.deliveryMethod === 'delivery' ?
+          '<li>A Lalamove rider will pick up and deliver your order</li>' :
+          '<li>You can pick up your order at our store once ready</li>'
+        }
+                  <li>Keep your order ID for reference</li>
+                </ul>
+              </div>
+
+              <div style="text-align: center;">
+                <button id="close-order-modal" style="
+                  background: #28a745;
+                  color: white;
+                  border: none;
+                  padding: 12px 30px;
+                  border-radius: 25px;
+                  font-size: 16px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  transition: background 0.3s ease;
+                  margin-right: 10px;
+                " onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
+                  Continue Shopping
+                </button>
+                <button id="view-orders-btn" style="
+                  background: #007bff;
+                  color: white;
+                  border: none;
+                  padding: 12px 30px;
+                  border-radius: 25px;
+                  font-size: 16px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  transition: background 0.3s ease;
+                " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
+                  View My Orders
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <style>
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: scale(0.8) translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+        </style>
+      `;
+
+      // Add modal to page
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+      // Add event listeners
+      const modal = document.getElementById('order-confirmation-modal');
+      const closeBtn = document.getElementById('close-order-modal');
+      const viewOrdersBtn = document.getElementById('view-orders-btn');
+
+      // Close modal and go to menu
+      closeBtn.addEventListener('click', function () {
+        modal.remove();
+        // Clear cart and order data
+        sessionStorage.removeItem('cartData');
+        sessionStorage.removeItem('orderFormData');
+        sessionStorage.removeItem('formData');
+        sessionStorage.removeItem('paymentInfo');
+        sessionStorage.removeItem('quotationData');
+        // Redirect to menu or home page
+        window.location.href = '../index.html';
+      });
+
+      // View orders (you can customize this)
+      viewOrdersBtn.addEventListener('click', function () {
+        modal.remove();
+        // Clear cart and order data
+        sessionStorage.removeItem('cartData');
+        sessionStorage.removeItem('orderFormData');
+        sessionStorage.removeItem('formData');
+        sessionStorage.removeItem('paymentInfo');
+        sessionStorage.removeItem('quotationData');
+        // Redirect to orders page (customize as needed)
+        window.location.href = '../index.html';
+      });
+
+      // Close modal when clicking outside
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+          closeBtn.click();
+        }
+      });
+
+      // Auto-scroll to top if needed
+      modal.scrollTop = 0;
+    }
+
     // Initialize the page
     function init() {
       console.log('[shipping.js] Initializing shipping page');
@@ -991,6 +1188,100 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         console.error('[shipping.js] Payment button not found');
         showStatus('Error: Payment button not found', true);
+      }
+    }
+
+    // Function to place actual order with Lalamove API
+    async function placeLalamoveOrder(formData, quotationData) {
+      console.log('[shipping.js] Placing Lalamove order with data:', { formData, quotationData });
+
+      try {
+        // Validate required data
+        if (!quotationData.data || !quotationData.data.stops) {
+          throw new Error('Quotation data is missing required information');
+        }
+
+        // Get pickup and delivery addresses from stored data
+        const pickupAddress = sessionStorage.getItem('pickupAddress') || "Viktoria's Bistro, Philippines";
+        const deliveryAddress = sessionStorage.getItem('deliveryAddress') || formData.fullAddress;
+
+        // Format phone number for Lalamove
+        const formattedPhone = formatPhoneNumber(formData.phone);
+
+        // Prepare order data for Lalamove API
+        const orderData = {
+          data: {
+            serviceType: quotationData.data.serviceType || 'MOTORCYCLE',
+            specialRequests: [],
+            language: 'en_PH',
+            stops: [
+              // Pickup stop (restaurant)
+              {
+                coordinates: quotationData.data.stops[0].coordinates,
+                address: quotationData.data.stops[0].address,
+                contact: {
+                  name: "Viktoria's Bistro",
+                  phone: "+639189876543" // Restaurant phone number
+                }
+              },
+              // Delivery stop (customer)
+              {
+                coordinates: quotationData.data.stops[1].coordinates,
+                address: quotationData.data.stops[1].address,
+                contact: {
+                  name: `${formData.firstName} ${formData.lastName}`,
+                  phone: formattedPhone
+                }
+              }
+            ],
+            isRouteOptimized: false,
+            item: {
+              quantity: "1",
+              weight: "LESS_THAN_3_KG",
+              categories: ["FOOD_DELIVERY"],
+              handlingInstructions: ["KEEP_UPRIGHT"]
+            },
+            // Optional: Add special instructions
+            metadata: {
+              customerEmail: formData.email,
+              orderType: 'food_delivery',
+              restaurant: "Viktoria's Bistro"
+            }
+          }
+        };
+
+        console.log('[shipping.js] Calling Lalamove Place Order API with data:', orderData);
+
+        // Call the server endpoint to place the order
+        const response = await fetch('/api/place-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(orderData)
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Lalamove order failed: ${response.status} ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('[shipping.js] ✅ Lalamove order placed successfully:', result);
+
+        // Extract order ID from response
+        const lalamoveOrderId = result.data ? result.data.orderRef : result.orderRef;
+
+        if (!lalamoveOrderId) {
+          throw new Error('No order ID returned from Lalamove API');
+        }
+
+        console.log('[shipping.js] Lalamove Order ID:', lalamoveOrderId);
+        return lalamoveOrderId;
+
+      } catch (error) {
+        console.error('[shipping.js] ❌ Lalamove order placement failed:', error);
+        throw error;
       }
     }
 
@@ -1058,10 +1349,36 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
-        // Try to create Firebase order first
+        // Check if Lalamove delivery is selected
+        const lalamoveRadio = document.getElementById('lalamove-radio');
+        const isLalamoveDelivery = lalamoveRadio && lalamoveRadio.checked;
+
+        let lalamoveOrderId = null;
+
+        if (isLalamoveDelivery) {
+          // Place order with Lalamove API
+          try {
+            showStatus('Placing Lalamove delivery order...', false);
+            lalamoveOrderId = await placeLalamoveOrder(formData, quotationData);
+            console.log('[shipping.js] Lalamove order placed successfully:', lalamoveOrderId);
+            showStatus('Lalamove delivery order created successfully!', false);
+          } catch (lalamoveError) {
+            console.error('[shipping.js] Lalamove order failed:', lalamoveError);
+            showStatus('Warning: Lalamove order failed, but internal order will still be created.', true);
+            // Continue with internal order creation even if Lalamove fails
+          }
+        }
+
+        // Try to create Firebase order (internal order tracking)
         let orderId = null;
         try {
-          orderId = await createFirebaseOrder(formData, cartData, quotationData, payment, selectedPaymentMethod);
+          // Add Lalamove order ID to the order data if available
+          const orderData = {
+            ...quotationData,
+            lalamoveOrderId: lalamoveOrderId,
+            deliveryMethod: isLalamoveDelivery ? 'lalamove' : 'pickup'
+          };
+          orderId = await createFirebaseOrder(formData, cartData, orderData, payment, selectedPaymentMethod);
         } catch (error) {
           console.error('Firebase order creation failed:', error);
           // Create a fallback order ID
@@ -1078,14 +1395,28 @@ document.addEventListener('DOMContentLoaded', function () {
             // Still proceed - order was created successfully
           }
 
-          // Store order ID for confirmation page
+          // Store order ID and Lalamove order ID for confirmation page
           sessionStorage.setItem('orderId', orderId);
+          if (lalamoveOrderId) {
+            sessionStorage.setItem('lalamoveOrderId', lalamoveOrderId);
+          }
 
-          showStatus('Order placed successfully! Admin will be notified for approval.', false);
+          const successMessage = lalamoveOrderId ?
+            'Order placed successfully! Lalamove delivery has been arranged. Admin will be notified for approval.' :
+            'Order placed successfully! Admin will be notified for approval.';
 
-          // Navigate to confirmation page
+          showStatus(successMessage, false);
+
+          // Show order confirmation modal instead of navigating to payment.html
           setTimeout(() => {
-            window.location.href = 'payment.html';
+            const orderConfirmationData = {
+              orderId: orderId,
+              lalamoveOrderId: lalamoveOrderId,
+              paymentMethod: paymentInfo.type,
+              deliveryMethod: lalamoveRadio && lalamoveRadio.checked ? 'delivery' : 'pickup',
+              totalAmount: document.getElementById('total-amount').textContent.replace('₱', '')
+            };
+            showOrderConfirmationModal(orderConfirmationData);
           }, 1500);
         } else {
           throw new Error('Failed to create order');
