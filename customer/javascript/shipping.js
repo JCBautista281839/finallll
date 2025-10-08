@@ -39,6 +39,16 @@ function formatPhoneNumber(phone) {
   }
 }
 
+// Utility function to parse price from string
+function parsePrice(priceString) {
+  if (typeof priceString === 'number') return priceString;
+  if (!priceString) return 0;
+  return parseFloat(priceString.replace(/[^0-9.-]+/g, '')) || 0;
+}
+
+// Make parsePrice available globally
+window.parsePrice = parsePrice;
+
 // Function to send payment verification notification to admin
 window.sendPaymentVerificationNotification = async function (paymentInfo) {
   console.log('🔔 Starting payment verification notification process...');
@@ -299,22 +309,22 @@ document.addEventListener('DOMContentLoaded', function () {
       // Check if delivery is available or if we're in pickup-only mode
       const useRealDelivery = sessionStorage.getItem('useRealDelivery') !== 'false';
       const storedQuotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
-      
+
       // If delivery is not available, hide the delivery option and show a notice
       if (!useRealDelivery || (storedQuotationData.data && storedQuotationData.data.pickupOnly)) {
         console.log('[shipping.js] Delivery not available, enabling pickup-only mode');
-        
+
         // Hide the delivery option
         if (lalamoveOption) {
           lalamoveOption.style.display = 'none';
         }
-        
+
         // Force pickup selection
         if (pickupRadio) {
           pickupRadio.checked = true;
           pickupRadio.disabled = true; // User can't change this
         }
-        
+
         // Add a notice explaining why delivery is not available
         const noticeElement = document.createElement('div');
         noticeElement.style.cssText = `
@@ -331,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <small>Due to address verification issues, delivery service is not available for your location. 
           You can collect your order from our store once it's ready.</small>
         `;
-        
+
         // Insert notice after shipping options
         const shippingContainer = pickupOption.parentElement;
         if (shippingContainer) {
@@ -956,9 +966,15 @@ document.addEventListener('DOMContentLoaded', function () {
     function init() {
       console.log('[shipping.js] Initializing shipping page');
 
+      // Load and display customer information
+      loadCustomerInfo();
+
       // Load and display cart data
       const cartData = loadCartData();
       updateOrderForm(cartData);
+
+      // Initialize shipping options
+      initShippingOptions();
 
       // Initialize payment modal
       initPaymentModal();
