@@ -177,6 +177,23 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize Firebase after a short delay to allow scripts to load
     setTimeout(initializeFirebaseForShipping, 500);
 
+    // Initialize Firestore Cart Manager
+    function initializeFirestoreCart() {
+      try {
+        if (typeof FirestoreCartManager !== 'undefined') {
+          window.firestoreCart = new FirestoreCartManager();
+          console.log('[shipping.js] Firestore Cart Manager initialized');
+        } else {
+          console.log('[shipping.js] FirestoreCartManager not available');
+        }
+      } catch (error) {
+        console.warn('[shipping.js] Firestore Cart Manager initialization error:', error.message);
+      }
+    }
+
+    // Initialize Firestore Cart Manager after scripts load
+    setTimeout(initializeFirestoreCart, 1000);
+
     // Utility function to display messages/status
     function showStatus(message, isError = false) {
       // Create or update status display
@@ -233,17 +250,61 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    // Load cart data from sessionStorage
-    function loadCartData() {
-      const cartData = sessionStorage.getItem('cartData');
-      console.log('[shipping.js] Loading cart data from sessionStorage:', cartData);
-      if (cartData) {
-        const parsedData = JSON.parse(cartData);
-        console.log('[shipping.js] Parsed cart data:', parsedData);
-        return parsedData;
+    // Load cart data from Firestore or sessionStorage
+    async function loadCartData() {
+      try {
+        // First try to get from Firestore if Firebase is available
+        if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+          const user = firebase.auth().currentUser;
+          const customerId = user.uid;
+          
+          console.log('[shipping.js] Loading cart data from Firestore for user:', customerId);
+          
+          // Wait for Firestore to be ready
+          if (window.firestoreCart) {
+            await window.firestoreCart.waitForFirebase();
+            const cartItems = await window.firestoreCart.getCartItems(customerId);
+            
+            if (cartItems.length > 0) {
+              console.log('[shipping.js] Cart items from Firestore:', cartItems);
+              
+              // Convert Firestore cart items to the format expected by updateOrderForm
+              const cartData = {};
+              cartItems.forEach(item => {
+                cartData[item.productName] = {
+                  name: item.productName,
+                  price: item.price,
+                  quantity: item.quantity
+                };
+              });
+              
+              console.log('[shipping.js] Converted cart data:', cartData);
+              return cartData;
+            }
+          }
+        }
+        
+        // Fallback to sessionStorage
+        const cartData = sessionStorage.getItem('cartData');
+        console.log('[shipping.js] Loading cart data from sessionStorage:', cartData);
+        if (cartData) {
+          const parsedData = JSON.parse(cartData);
+          console.log('[shipping.js] Parsed cart data:', parsedData);
+          return parsedData;
+        }
+        
+        console.log('[shipping.js] No cart data found in Firestore or sessionStorage');
+        return {};
+      } catch (error) {
+        console.error('[shipping.js] Error loading cart data:', error);
+        
+        // Fallback to sessionStorage on error
+        const cartData = sessionStorage.getItem('cartData');
+        if (cartData) {
+          return JSON.parse(cartData);
+        }
+        return {};
       }
-      console.log('[shipping.js] No cart data found in sessionStorage');
-      return {};
     }
 
     // Load and display customer information
@@ -436,8 +497,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateOrderForm(cartData) {
       console.log('[shipping.js] updateOrderForm called with cartData:', cartData);
 
-      const orderItemsContainer = document.querySelector('.order-item');
-      const totalElement = document.querySelector('.total .price');
+      const orderItemsContainer = document.getElementById('order-menu');
+      const totalElement = document.getElementById('subtotal-amount');
 
       console.log('[shipping.js] Found elements:', {
         orderItemsContainer: !!orderItemsContainer,
@@ -456,8 +517,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (cartItems.length === 0) {
         console.log('[shipping.js] No cart items, showing empty message');
-        orderItemsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;"><span>No items in cart</span></div>';
-        totalElement.textContent = 'Php 0';
+        orderItemsContainer.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>';
+        totalElement.textContent = '₱0';
         return;
       }
 
@@ -480,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const itemPrice = document.createElement('div');
         itemPrice.style.cssText = 'text-align: right;';
-        itemPrice.innerHTML = '<span class="price" style="font-weight: 600; color: #8b1d1d;">Php ' + itemTotal.toFixed(0) + '</span>';
+        itemPrice.innerHTML = '<span class="price" style="font-weight: 600; color: #8b1d1d;">₱' + itemTotal.toFixed(0) + '</span>';
 
         itemDiv.appendChild(itemName);
         itemDiv.appendChild(itemPrice);
@@ -490,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function () {
       orderItemsContainer.appendChild(itemsContainer);
 
       // Update total
-      totalElement.textContent = 'Php ' + totalPrice.toFixed(0);
+      totalElement.textContent = '₱' + totalPrice.toFixed(0);
 
       // Store total for Firebase integration
       sessionStorage.setItem('orderSubtotal', totalPrice.toString());
@@ -970,8 +1031,15 @@ document.addEventListener('DOMContentLoaded', function () {
       loadCustomerInfo();
 
       // Load and display cart data
-      const cartData = loadCartData();
-      updateOrderForm(cartData);
+      loadCartData().then(cartData => {
+        console.log('[shipping.js] Cart data loaded:', cartData);
+        console.log('[shipping.js] Cart data keys:', Object.keys(cartData));
+        console.log('[shipping.js] Cart data values:', Object.values(cartData));
+        updateOrderForm(cartData);
+      }).catch(error => {
+        console.error('[shipping.js] Error loading cart data:', error);
+        updateOrderForm({});
+      });
 
       // Initialize shipping options
       initShippingOptions();
