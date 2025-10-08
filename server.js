@@ -158,7 +158,8 @@ app.use((req, res, next) => {
 
 // Configuration (use environment variables)
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'PRODUCTION';
-const LALA_HOST = IS_PRODUCTION ? 'rest.lalamove.com' : 'rest.sandbox.lalamove.com';
+const LALAMOVE_ENV = process.env.LALAMOVE_ENV || 'sandbox'; // Default to sandbox for safety
+const LALA_HOST = LALAMOVE_ENV === 'production' ? 'rest.lalamove.com' : 'rest.sandbox.lalamove.com';
 const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
 const API_SECRET = process.env.LALAMOVE_API_SECRET || process.env.LALAMOVE_SECRET;
 const MARKET = process.env.LALAMOVE_MARKET || 'PH';
@@ -167,6 +168,9 @@ const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
 
 // DEBUG: Log the API secret being used (first 20 chars only for security)
 console.log('🔑 DEBUG - API_SECRET source check:');
+console.log('  - NODE_ENV:', process.env.NODE_ENV);
+console.log('  - LALAMOVE_ENV:', LALAMOVE_ENV);
+console.log('  - LALA_HOST:', LALA_HOST);
 console.log('  - LALAMOVE_API_SECRET env var:', process.env.LALAMOVE_API_SECRET ? 'SET' : 'NOT SET');
 console.log('  - LALAMOVE_SECRET env var:', process.env.LALAMOVE_SECRET ? 'SET' : 'NOT SET');
 console.log('  - Final API_SECRET (first 20 chars):', API_SECRET ? API_SECRET.substring(0, 20) + '...' : 'NOT SET');
