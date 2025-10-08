@@ -1328,12 +1328,354 @@ async function reduceInventoryForOrder(orderItems) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('POS page loaded, waiting for Firebase...');
     
+    // Check if this is an approved order from notifications
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const orderId = urlParams.get('orderId');
+    
+    if (mode === 'approved-order' && orderId) {
+        console.log('🎯 Loading approved order:', orderId);
+        loadApprovedOrder(orderId);
+    }
+    
     // Initialize order type dropdown state
     initializeOrderTypeState();
     
     
     waitForFirebase();
 });
+
+// Function to load approved order from notifications
+async function loadApprovedOrder(orderId) {
+    try {
+        // Show loading state
+        showToast('Loading approved order...', 'info');
+        
+        // Get order data from session storage first
+        const orderDataString = sessionStorage.getItem('approvedOrderData');
+        let orderData = null;
+        
+        if (orderDataString) {
+            orderData = JSON.parse(orderDataString);
+            console.log('📋 Order data from session:', orderData);
+        }
+        
+        // If no session data, fetch from Firebase
+        if (!orderData && typeof firebase !== 'undefined' && firebase.firestore) {
+            console.log('📡 Fetching order from Firebase:', orderId);
+            const db = firebase.firestore();
+            const orderDoc = await db.collection('orders').doc(orderId).get();
+            
+            if (orderDoc.exists) {
+                orderData = orderDoc.data();
+            } else {
+                throw new Error('Order not found in database');
+            }
+        }
+        
+        if (!orderData) {
+            throw new Error('No order data available');
+        }
+        
+        // Clear current order
+        clearOrderAndSummary();
+        
+        // Load order items into POS
+        if (orderData.items && Array.isArray(orderData.items)) {
+            console.log('📦 Loading', orderData.items.length, 'items into POS');
+            
+            for (const item of orderData.items) {
+                await addApprovedItemToPOS(item);
+            }
+        }
+        
+        // Set order type if available
+        if (orderData.orderType || orderData.type) {
+            const orderTypeDropdown = document.getElementById('order-type');
+            if (orderTypeDropdown) {
+                orderTypeDropdown.value = orderData.orderType || orderData.type || 'Dine in';
+                orderTypeDropdown.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        // Set customer info if available
+        if (orderData.customerInfo) {
+            displayCustomerInfo(orderData.customerInfo);
+        }
+        
+        // Update order summary
+        if (typeof updateOrderSummary === 'function') {
+            updateOrderSummary();
+        }
+        
+        // Show success message
+        showToast('✅ Approved order loaded successfully! Review and click "Proceed to Kitchen" when ready.', 'success');
+        
+        // Store original order ID for processing
+        sessionStorage.setItem('processingOrderId', orderId);
+        sessionStorage.setItem('isApprovedOrder', 'true');
+        
+        // Change the proceed button text
+        updateProceedButton();
+        
+        // Clear session data
+        sessionStorage.removeItem('approvedOrderData');
+        
+    } catch (error) {
+        console.error('Error loading approved order:', error);
+        showToast('❌ Error loading approved order: ' + error.message, 'error');
+    }
+}
+
+// Helper function to add approved items to POS
+async function addApprovedItemToPOS(item) {
+    try {
+        // Prepare item details
+        const name = item.name;
+        const price = '₱' + (item.price || item.unitPrice || 0).toFixed(2);
+        const image = item.imageUrl || 'https://via.placeholder.com/100x100?text=No+Image';
+        const quantity = item.quantity || 1;
+        
+        // Add to POS order multiple times for quantity
+        for (let i = 0; i < quantity; i++) {
+            if (typeof addItemToOrder === 'function') {
+                addItemToOrder(name, price, image);
+            }
+        }
+        
+        console.log('✅ Added approved item to POS:', name, 'x', quantity);
+        
+    } catch (error) {
+        console.error('Error adding approved item to POS:', error);
+    }
+}
+
+// Helper function to display customer info
+function displayCustomerInfo(customerInfo) {
+    // You can customize this to show customer info in the POS UI
+    const customerDisplay = document.createElement('div');
+    customerDisplay.className = 'customer-info-display';
+    customerDisplay.innerHTML = `
+        <div class="alert alert-info mb-3">
+            <strong>Customer Order:</strong> ${customerInfo.name || 'Unknown'}<br>
+            <small>Phone: ${customerInfo.phone || 'N/A'} | Email: ${customerInfo.email || 'N/A'}</small>
+        </div>
+    `;
+    
+    // Insert at top of order items
+    const orderItemsContainer = document.querySelector('.order-items');
+    if (orderItemsContainer) {
+        orderItemsContainer.insertBefore(customerDisplay, orderItemsContainer.firstChild);
+    }
+}
+
+// Helper function to update proceed button for approved orders
+function updateProceedButton() {
+    const proceedButton = document.querySelector('.proceed-btn, .payment-btn, [onclick*="proceedToPayment"]');
+    if (proceedButton) {
+        proceedButton.textContent = '🍳 Proceed to Kitchen';
+        proceedButton.style.backgroundColor = '#28a745';
+        proceedButton.style.color = 'white';
+        
+        // Update onclick to use new function
+        proceedButton.setAttribute('onclick', 'proceedApprovedOrderToKitchen()');
+    }
+}
+
+// Function to proceed approved order to kitchen with inventory deduction
+window.proceedApprovedOrderToKitchen = async function() {
+    try {
+        const orderId = sessionStorage.getItem('processingOrderId');
+        const isApprovedOrder = sessionStorage.getItem('isApprovedOrder') === 'true';
+        
+        if (!orderId || !isApprovedOrder) {
+            throw new Error('No approved order to process');
+        }
+        
+        // Confirm action
+        if (!confirm('Proceed with sending this approved order to the kitchen? This will deduct inventory and start preparation.')) {
+            return;
+        }
+        
+        // Show processing state
+        showToast('Processing order to kitchen...', 'info');
+        
+        // Get current order items from POS
+        const orderItems = getCurrentOrderItems();
+        if (!orderItems || orderItems.length === 0) {
+            throw new Error('No items in order');
+        }
+        
+        // Update order in Firebase
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            const db = firebase.firestore();
+            
+            await db.collection('orders').doc(orderId).update({
+                status: 'In the Kitchen',
+                processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                processedBy: 'admin',
+                processedInPOS: true,
+                finalItems: orderItems, // Store final processed items
+                inventoryDeducted: true // Flag to prevent double deduction
+            });
+            
+            console.log('✅ Order status updated to "In the Kitchen"');
+        }
+        
+        // Deduct inventory for each item
+        await deductInventoryForOrder(orderItems);
+        
+        // Show success message
+        showToast('✅ Order sent to kitchen successfully! Inventory has been deducted.', 'success');
+        
+        // Clear session data
+        sessionStorage.removeItem('processingOrderId');
+        sessionStorage.removeItem('isApprovedOrder');
+        
+        // Clear POS order
+        clearOrderAndSummary();
+        
+        // Optionally redirect back to notifications or show kitchen view
+        setTimeout(() => {
+            if (confirm('Order processed successfully! View kitchen dashboard to monitor preparation?')) {
+                window.location.href = '/html/kitchen.html';
+            } else {
+                window.location.href = '/html/notifi.html';
+            }
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error proceeding approved order to kitchen:', error);
+        showToast('❌ Error processing order: ' + error.message, 'error');
+    }
+}
+
+// Function to get current order items from POS
+function getCurrentOrderItems() {
+    const orderItemElements = document.querySelectorAll('.order-item');
+    const items = [];
+    
+    orderItemElements.forEach(element => {
+        const name = element.querySelector('.item-name')?.textContent?.trim();
+        const quantityEl = element.querySelector('.quantity');
+        const quantity = quantityEl ? parseInt(quantityEl.textContent) || 1 : 1;
+        const unitPrice = parseFloat(element.getAttribute('data-unit-price')) || 0;
+        
+        if (name) {
+            items.push({
+                name: name,
+                quantity: quantity,
+                unitPrice: unitPrice,
+                totalPrice: unitPrice * quantity,
+                itemId: element.getAttribute('data-item-id') || '',
+                category: element.getAttribute('data-category') || 'Unknown'
+            });
+        }
+    });
+    
+    return items;
+}
+
+// Function to deduct inventory for order items
+async function deductInventoryForOrder(orderItems) {
+    try {
+        if (typeof firebase === 'undefined' || !firebase.firestore) {
+            console.warn('Firebase not available for inventory deduction');
+            return;
+        }
+        
+        const db = firebase.firestore();
+        
+        for (const item of orderItems) {
+            // Find menu item data from Firebase to get ingredients
+            const menuData = await getMenuItemData(db, item.name);
+            
+            if (menuData && menuData.ingredients && Array.isArray(menuData.ingredients)) {
+                console.log(`🔄 Deducting inventory for ${item.name} (qty: ${item.quantity})`);
+                
+                for (const ingredient of menuData.ingredients) {
+                    const ingredientName = ingredient.name;
+                    const qtyToDeduct = (ingredient.quantity || 0) * item.quantity;
+                    
+                    if (qtyToDeduct > 0) {
+                        await deductInventoryItem(db, ingredientName, qtyToDeduct);
+                    }
+                }
+            } else {
+                console.warn('No ingredients found for item:', item.name);
+            }
+        }
+        
+        console.log('✅ Inventory deduction completed for all items');
+        
+    } catch (error) {
+        console.error('Error deducting inventory:', error);
+        // Don't throw - let the order proceed even if inventory fails
+    }
+}
+
+// Function to get menu item data from Firebase
+async function getMenuItemData(db, itemName) {
+    try {
+        // Search in menu collection for the item
+        const menuQuery = await db.collection('menu')
+            .where('name', '==', itemName)
+            .limit(1)
+            .get();
+        
+        if (!menuQuery.empty) {
+            return menuQuery.docs[0].data();
+        }
+        
+        // If not found, try case-insensitive search
+        const allMenuQuery = await db.collection('menu').get();
+        
+        for (const doc of allMenuQuery.docs) {
+            const data = doc.data();
+            if (data.name && data.name.toLowerCase() === itemName.toLowerCase()) {
+                return data;
+            }
+        }
+        
+        console.warn('Menu item not found in database:', itemName);
+        return null;
+        
+    } catch (error) {
+        console.error('Error getting menu item data:', error);
+        return null;
+    }
+}
+
+// Function to deduct a single inventory item
+async function deductInventoryItem(db, ingredientName, quantity) {
+    try {
+        // Find inventory item by name
+        const inventoryQuery = await db.collection('inventory')
+            .where('name', '==', ingredientName)
+            .limit(1)
+            .get();
+        
+        if (inventoryQuery.empty) {
+            console.warn('Inventory item not found:', ingredientName);
+            return;
+        }
+        
+        const inventoryDoc = inventoryQuery.docs[0];
+        const inventoryData = inventoryDoc.data();
+        const currentQty = inventoryData.quantity || 0;
+        const newQty = Math.max(currentQty - quantity, 0);
+        
+        await db.collection('inventory').doc(inventoryDoc.id).update({
+            quantity: newQty,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log(`✅ Deducted ${quantity} of ${ingredientName}: ${currentQty} → ${newQty}`);
+        
+    } catch (error) {
+        console.error('Error deducting inventory item:', error);
+    }
+}
 
 // Helper function to calculate time ago
 function getTimeAgo(date) {
