@@ -160,10 +160,22 @@ app.use((req, res, next) => {
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'PRODUCTION';
 const LALA_HOST = IS_PRODUCTION ? 'rest.lalamove.com' : 'rest.sandbox.lalamove.com';
 const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
-const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
+const API_SECRET = process.env.LALAMOVE_API_SECRET || process.env.LALAMOVE_SECRET;
 const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
+
+// DEBUG: Log the API secret being used (first 20 chars only for security)
+console.log('🔑 DEBUG - API_SECRET source check:');
+console.log('  - LALAMOVE_API_SECRET env var:', process.env.LALAMOVE_API_SECRET ? 'SET' : 'NOT SET');
+console.log('  - LALAMOVE_SECRET env var:', process.env.LALAMOVE_SECRET ? 'SET' : 'NOT SET');
+console.log('  - Final API_SECRET (first 20 chars):', API_SECRET ? API_SECRET.substring(0, 20) + '...' : 'NOT SET');
+
+if (!API_SECRET) {
+  console.error('❌ FATAL ERROR: No Lalamove API secret found!');
+  console.error('   Please set LALAMOVE_API_SECRET or LALAMOVE_SECRET in environment variables');
+  process.exit(1);
+}
 
 
 // OTP Configuration
