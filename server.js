@@ -1809,7 +1809,7 @@ async function sendPasswordChangeNotification(email, eventType = 'password_reset
             `
     };
 
-    const result = await sendEmail(emailData);
+    const result = await sendOTPEmail(email, 'User', 'PASSWORD_CHANGED');
     if (result.success) {
       console.log(`[Security Notification] ✅ Password change notification sent to: ${email}`);
     } else {
@@ -1888,7 +1888,7 @@ async function sendAdminSecurityAlert(email, eventType) {
                 `
       };
 
-      const result = await sendEmail(emailData);
+      const result = await sendOTPEmail(adminEmail, 'Admin', 'SECURITY_ALERT');
       if (result.success) {
         console.log(`[Admin Alert] ✅ Security alert sent to admin: ${adminEmail}`);
       } else {
