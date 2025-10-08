@@ -32,22 +32,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Resetting password for verified email:', email);
     
-    // Password visibility toggle - with null checks
-    if (togglePassword) {
-        togglePassword.addEventListener('click', function() {
-            const type = newPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            newPasswordInput.setAttribute('type', type);
-            this.classList.toggle('fa-eye-slash');
-        });
-    }
+    // Password visibility toggle
+    togglePassword.addEventListener('click', function() {
+        const type = newPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        newPasswordInput.setAttribute('type', type);
+        this.classList.toggle('fa-eye-slash');
+    });
     
-    if (toggleConfirmPassword) {
-        toggleConfirmPassword.addEventListener('click', function() {
-            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            confirmPasswordInput.setAttribute('type', type);
-            this.classList.toggle('fa-eye-slash');
-        });
-    }
+    toggleConfirmPassword.addEventListener('click', function() {
+        const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        confirmPasswordInput.setAttribute('type', type);
+        this.classList.toggle('fa-eye-slash');
+    });
     
     // Password strength checker
     function checkPasswordStrength(password) {
@@ -111,23 +107,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Real-time password confirmation checking - with null checks
-    if (confirmPasswordInput && newPasswordInput) {
-        confirmPasswordInput.addEventListener('input', function() {
-            const newPassword = newPasswordInput.value;
-            const confirmPassword = this.value;
-            
-            if (confirmPassword.length > 0) {
-                if (newPassword === confirmPassword) {
-                    this.style.borderColor = '#28a745';
-                } else {
-                    this.style.borderColor = '#dc3545';
-                }
+    // Real-time password confirmation checking
+    confirmPasswordInput.addEventListener('input', function() {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = this.value;
+        
+        if (confirmPassword.length > 0) {
+            if (newPassword === confirmPassword) {
+                this.style.borderColor = '#28a745';
             } else {
-                this.style.borderColor = '#e0e0e0';
+                this.style.borderColor = '#dc3545';
             }
-        });
-    }
+        } else {
+            this.style.borderColor = '#e0e0e0';
+        }
+    });
     
     // Handle form submission - with null check
     if (!form) {
@@ -138,8 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const newPassword = newPasswordInput ? newPasswordInput.value.trim() : '';
-        const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value.trim() : '';
+        const newPassword = newPasswordInput.value.trim();
+        const confirmPassword = confirmPasswordInput.value.trim();
         
         // Validation
         if (!newPassword) {
@@ -310,27 +304,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show success message
     function showSuccess(message = 'Password reset successfully! Redirecting to login...') {
-        if (successMessage && errorMessage) {
-            successMessage.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
-            successMessage.style.display = 'block';
-            errorMessage.style.display = 'none';
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                if (successMessage) {
-                    successMessage.style.display = 'none';
-                }
-            }, 5000);
-        }
+        successMessage.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+        successMessage.style.display = 'block';
+        errorMessage.style.display = 'none';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 5000);
     }
     
     // Show error message
     function showError(message) {
-        if (!errorText || !errorMessage || !successMessage) {
-            console.error('Error message elements not found');
-            return;
-        }
-        
         // Check if it's an OTP verification error and add helpful link
         if (message.includes('OTP verification is required')) {
             errorText.innerHTML = `${message}<br><br><a href="verify-password-reset-otp.html" style="color: #8B2E20; text-decoration: underline;">← Go back to verify OTP</a>`;
@@ -345,32 +330,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Auto-hide after 8 seconds (longer for errors with links)
         setTimeout(() => {
-            if (errorMessage) {
-                errorMessage.style.display = 'none';
-            }
+            errorMessage.style.display = 'none';
         }, 8000);
     }
     
     // Hide all messages
     function hideMessages() {
-        if (successMessage) {
-            successMessage.style.display = 'none';
-        }
-        if (errorMessage) {
-            errorMessage.style.display = 'none';
-        }
+        successMessage.style.display = 'none';
+        errorMessage.style.display = 'none';
     }
     
-    // Clear messages when user starts typing - with null checks
-    if (newPasswordInput) {
-        newPasswordInput.addEventListener('focus', function() {
-            hideMessages();
-        });
-    }
+    // Clear messages when user starts typing
+    newPasswordInput.addEventListener('focus', function() {
+        hideMessages();
+    });
     
-    if (confirmPasswordInput) {
-        confirmPasswordInput.addEventListener('focus', function() {
-            hideMessages();
-        });
-    }
+    confirmPasswordInput.addEventListener('focus', function() {
+        hideMessages();
+    });
 });
