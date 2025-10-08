@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!response.ok) {
         const error = await response.json();
         console.warn('[details.js] Server geocoding failed:', error);
-        
+
         // Try to provide more helpful error messages
         if (error.status === 'ZERO_RESULTS') {
           throw new Error('Address not found. Please check if your address is complete and correct.');
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('[details.js] Real API quotation successful:', quotationResult);
       } catch (geocodingError) {
         console.warn('[details.js] Geocoding/quotation failed:', geocodingError.message);
-        
+
         // Show error but offer fallback option
         const fallbackChoice = confirm(
           `⚠️ Address Verification Issue\n\n` +
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
       sessionStorage.setItem('pickupAddress', pickupAddress);
       sessionStorage.setItem('deliveryAddress', deliveryAddress);
       sessionStorage.setItem('useRealDelivery', useRealDelivery.toString());
-      
+
       // Store cart data for shipping page
       const existingCartData = sessionStorage.getItem('cartData');
       if (existingCartData) {
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     } catch (error) {
       console.error('[details.js] Continue process failed:', error);
-      
+
       // Provide more helpful error messages
       let errorMessage = 'Error: ';
       if (error.message.includes('fetch')) {
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
       } else {
         errorMessage += error.message;
       }
-      
+
       showStatus(errorMessage, true);
     }
   }
