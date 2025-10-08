@@ -39,6 +39,16 @@ function formatPhoneNumber(phone) {
   }
 }
 
+// Utility function to parse price from string
+function parsePrice(priceString) {
+  if (typeof priceString === 'number') return priceString;
+  if (!priceString) return 0;
+  return parseFloat(priceString.replace(/[^0-9.-]+/g, '')) || 0;
+}
+
+// Make parsePrice available globally
+window.parsePrice = parsePrice;
+
 // Function to send payment verification notification to admin
 window.sendPaymentVerificationNotification = async function (paymentInfo) {
   console.log('🔔 Starting payment verification notification process...');
@@ -236,6 +246,192 @@ document.addEventListener('DOMContentLoaded', function () {
       return {};
     }
 
+    // Load and display customer information
+    function loadCustomerInfo() {
+      console.log('[shipping.js] Loading customer information...');
+
+      // Try both possible keys for backward compatibility
+      let formData = sessionStorage.getItem('orderFormData') || sessionStorage.getItem('formData');
+      console.log('[shipping.js] Raw formData from sessionStorage:', formData);
+
+      if (formData) {
+        try {
+          const customerData = JSON.parse(formData);
+          console.log('[shipping.js] Parsed customer data:', customerData);
+
+          // Update the customer information display
+          const deliveryInfoElement = document.getElementById('delivery-info');
+          if (deliveryInfoElement) {
+            deliveryInfoElement.innerHTML = `
+              <b>Name:</b> ${customerData.name || customerData.firstName + ' ' + customerData.lastName || 'N/A'}<br>
+              <b>Address:</b> ${customerData.fullAddress || customerData.address || 'N/A'}<br>
+              <b>Email:</b> ${customerData.email || 'N/A'}<br>
+              <b>Phone:</b> ${customerData.phone || 'N/A'}
+            `;
+            console.log('[shipping.js] Customer information updated successfully');
+          } else {
+            console.warn('[shipping.js] delivery-info element not found');
+          }
+        } catch (error) {
+          console.error('[shipping.js] Error parsing customer data:', error);
+        }
+      } else {
+        console.warn('[shipping.js] No customer data found in sessionStorage');
+        // Display placeholder information
+        const deliveryInfoElement = document.getElementById('delivery-info');
+        if (deliveryInfoElement) {
+          deliveryInfoElement.innerHTML = `
+            <b>Name:</b> Not provided<br>
+            <b>Address:</b> Not provided<br>
+            <b>Email:</b> Not provided<br>
+            <b>Phone:</b> Not provided
+          `;
+        }
+      }
+    }
+
+    // Initialize shipping options with proper cost display
+    function initShippingOptions() {
+      console.log('[shipping.js] Initializing shipping options...');
+
+      const pickupOption = document.getElementById('pickup-option');
+      const lalamoveOption = document.getElementById('lalamove-option');
+      const pickupRadio = document.getElementById('pickup-radio');
+      const lalamoveRadio = document.getElementById('lalamove-radio');
+      const shippingFeeElement = document.getElementById('shipping-fee-amount');
+      const totalElement = document.getElementById('total-amount');
+
+      if (!pickupOption || !lalamoveOption || !shippingFeeElement || !totalElement) {
+        console.warn('[shipping.js] Some shipping option elements not found');
+        return;
+      }
+
+      // Check if delivery is available or if we're in pickup-only mode
+      const useRealDelivery = sessionStorage.getItem('useRealDelivery') !== 'false';
+      const storedQuotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+
+      // If delivery is not available, hide the delivery option and show a notice
+      if (!useRealDelivery || (storedQuotationData.data && storedQuotationData.data.pickupOnly)) {
+        console.log('[shipping.js] Delivery not available, enabling pickup-only mode');
+
+        // Hide the delivery option
+        if (lalamoveOption) {
+          lalamoveOption.style.display = 'none';
+        }
+
+        // Force pickup selection
+        if (pickupRadio) {
+          pickupRadio.checked = true;
+          pickupRadio.disabled = true; // User can't change this
+        }
+
+        // Add a notice explaining why delivery is not available
+        const noticeElement = document.createElement('div');
+        noticeElement.style.cssText = `
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          border-radius: 5px;
+          padding: 15px;
+          margin: 10px 0;
+          color: #856404;
+          font-size: 14px;
+        `;
+        noticeElement.innerHTML = `
+          <strong>📍 Pickup Only Available</strong><br>
+          <small>Due to address verification issues, delivery service is not available for your location. 
+          You can collect your order from our store once it's ready.</small>
+        `;
+
+        // Insert notice after shipping options
+        const shippingContainer = pickupOption.parentElement;
+        if (shippingContainer) {
+          shippingContainer.appendChild(noticeElement);
+        }
+      }
+
+      // Function to update shipping costs
+      function updateShippingCosts() {
+        const subtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
+        let shippingCost = 0;
+
+        if (lalamoveRadio && lalamoveRadio.checked) {
+          // Try to get actual quotation data from Lalamove API
+          const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+          if (quotationData.data && quotationData.data.priceBreakdown) {
+            shippingCost = parseFloat(quotationData.data.priceBreakdown.total) || 89.00;
+            const currency = quotationData.data.priceBreakdown.currency || 'PHP';
+            shippingFeeElement.textContent = `₱${shippingCost.toFixed(2)}`;
+          } else {
+            shippingCost = 89.00; // Fallback cost
+            shippingFeeElement.textContent = '₱89.00';
+          }
+        } else {
+          shippingCost = 0; // Pickup is free
+          shippingFeeElement.textContent = 'FREE';
+        }
+
+        const total = subtotal + shippingCost;
+        totalElement.textContent = `₱${total.toFixed(0)}`;
+
+        console.log('[shipping.js] Shipping costs updated - Subtotal:', subtotal, 'Shipping:', shippingCost, 'Total:', total);
+      }
+
+      // Add event listeners to shipping options
+      if (pickupRadio) {
+        pickupRadio.addEventListener('change', function () {
+          if (this.checked) {
+            // Remove selected class from other options
+            lalamoveOption.classList.remove('selected');
+            pickupOption.classList.add('selected');
+            updateShippingCosts();
+          }
+        });
+      }
+
+      if (lalamoveRadio) {
+        lalamoveRadio.addEventListener('change', function () {
+          if (this.checked) {
+            // Remove selected class from other options
+            pickupOption.classList.remove('selected');
+            lalamoveOption.classList.add('selected');
+            updateShippingCosts();
+          }
+        });
+      }
+
+      // Initialize with pickup selected (free)
+      if (pickupRadio) {
+        pickupRadio.checked = true;
+        pickupOption.classList.add('selected');
+        updateShippingCosts();
+      }
+
+      // Update Lalamove option with actual quotation data
+      const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+      if (quotationData.data && quotationData.data.priceBreakdown && lalamoveOption) {
+        const price = parseFloat(quotationData.data.priceBreakdown.total);
+        const serviceType = quotationData.data.serviceType || 'MOTORCYCLE';
+
+        // Handle distance - it might be a string or an object
+        let distance = '0.5km';
+        if (quotationData.data.distance) {
+          if (typeof quotationData.data.distance === 'string') {
+            distance = quotationData.data.distance;
+          } else if (typeof quotationData.data.distance === 'object' && quotationData.data.distance.value) {
+            distance = `${quotationData.data.distance.value}${quotationData.data.distance.unit || 'km'}`;
+          } else if (typeof quotationData.data.distance === 'number') {
+            distance = `${quotationData.data.distance}km`;
+          }
+        }
+
+        // Update the price display in the Lalamove option
+        const priceElement = lalamoveOption.querySelector('.price');
+        if (priceElement) {
+          priceElement.innerHTML = `₱${price.toFixed(2)}<br><small>${serviceType} • ${distance}</small>`;
+        }
+        console.log('[shipping.js] Updated Lalamove option with quotation data:', price, serviceType, distance);
+      }
+    }
     // Update order form with cart data
     function updateOrderForm(cartData) {
       console.log('[shipping.js] updateOrderForm called with cartData:', cartData);
@@ -770,9 +966,15 @@ document.addEventListener('DOMContentLoaded', function () {
     function init() {
       console.log('[shipping.js] Initializing shipping page');
 
+      // Load and display customer information
+      loadCustomerInfo();
+
       // Load and display cart data
       const cartData = loadCartData();
       updateOrderForm(cartData);
+
+      // Initialize shipping options
+      initShippingOptions();
 
       // Initialize payment modal
       initPaymentModal();

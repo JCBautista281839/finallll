@@ -168,7 +168,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Geocoding failed');
+        console.warn('[details.js] Server geocoding failed:', error);
+        
+        // Try to provide more helpful error messages
+        if (error.status === 'ZERO_RESULTS') {
+          throw new Error('Address not found. Please check if your address is complete and correct.');
+        } else if (error.status === 'OVER_DAILY_LIMIT' || error.status === 'OVER_QUERY_LIMIT') {
+          throw new Error('Geocoding service is temporarily unavailable. Please try again later.');
+        } else if (error.status === 'REQUEST_DENIED') {
+          throw new Error('Geocoding service is not available. Please contact support.');
+        } else {
+          throw new Error(error.error || 'Unable to verify address location. Please check your address details.');
+        }
       }
 
       const result = await response.json();
@@ -318,35 +329,79 @@ document.addEventListener('DOMContentLoaded', function () {
 
       console.log('[details.js] Attempting to get quotation for delivery from:', pickupAddress, 'to:', deliveryAddress);
 
-      // Get quotation from real API
-      console.log('[details.js] Getting quotation from Lalamove API...');
-      const quotationResult = await getQuotationWithAddresses(pickupAddress, deliveryAddress);
-      showStatus('Quotation received successfully!', false);
-      console.log('[details.js] Real API quotation successful:', quotationResult);
+      // Try to get quotation from real API
+      let quotationResult = null;
+      let useRealDelivery = true;
+
+      try {
+        console.log('[details.js] Getting quotation from Lalamove API...');
+        quotationResult = await getQuotationWithAddresses(pickupAddress, deliveryAddress);
+        showStatus('Quotation received successfully!', false);
+        console.log('[details.js] Real API quotation successful:', quotationResult);
+      } catch (geocodingError) {
+        console.warn('[details.js] Geocoding/quotation failed:', geocodingError.message);
+        
+        // Show error but offer fallback option
+        const fallbackChoice = confirm(
+          `⚠️ Address Verification Issue\n\n` +
+          `${geocodingError.message}\n\n` +
+          `Would you like to:\n` +
+          `• Click "OK" to proceed with PICKUP ONLY (you'll collect your order from our store)\n` +
+          `• Click "Cancel" to go back and edit your address\n\n` +
+          `Note: You can still complete your order, but delivery service won't be available.`
+        );
+
+        if (!fallbackChoice) {
+          // User chose to go back and fix address
+          showStatus('Please check and correct your address details.', true);
+          return;
+        }
+
+        // User chose to proceed with pickup only
+        useRealDelivery = false;
+        showStatus('Proceeding with pickup option only.', false);
+        console.log('[details.js] Using pickup-only fallback due to geocoding failure');
+
+        // Create a mock quotation for pickup only
+        quotationResult = {
+          success: true,
+          data: {
+            serviceType: 'PICKUP',
+            priceBreakdown: {
+              total: 0,
+              currency: 'PHP'
+            },
+            distance: '0km',
+            pickupOnly: true
+          }
+        };
+      }
 
       // Store quotation data for next page
       sessionStorage.setItem('orderFormData', JSON.stringify(formData));
       sessionStorage.setItem('quotationData', JSON.stringify(quotationResult));
       sessionStorage.setItem('pickupAddress', pickupAddress);
       sessionStorage.setItem('deliveryAddress', deliveryAddress);
+      sessionStorage.setItem('useRealDelivery', useRealDelivery.toString());
 
       console.log('[details.js] Data stored in session:', {
         formData,
         quotationResult,
         pickupAddress,
-        deliveryAddress
+        deliveryAddress,
+        useRealDelivery
       });
 
       // Show quotation summary before proceeding
       const price = quotationResult.data.priceBreakdown.total;
-      const currency = quotationResult.data.priceBreakdown.currency;
+      const currency = quotationResult.data.priceBreakdown.currency || 'PHP';
 
       // Show modern order summary modal
       const orderData = {
         customerName: `${formData.firstName} ${formData.lastName}`,
         contactNumber: formData.phone,
-        address: deliveryAddress,
-        fee: `${currency} ${price}`,
+        address: useRealDelivery ? deliveryAddress : 'Pickup at Store',
+        fee: useRealDelivery ? `${currency} ${price}` : 'FREE (Pickup)',
         service: quotationResult.data.serviceType
       };
 
@@ -359,7 +414,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     } catch (error) {
       console.error('[details.js] Continue process failed:', error);
-      showStatus('Error: ' + error.message, true);
+      
+      // Provide more helpful error messages
+      let errorMessage = 'Error: ';
+      if (error.message.includes('fetch')) {
+        errorMessage += 'Connection problem. Please check your internet connection and try again.';
+      } else if (error.message.includes('network')) {
+        errorMessage += 'Network error. Please try again in a moment.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage += 'Request timed out. Please try again.';
+      } else {
+        errorMessage += error.message;
+      }
+      
+      showStatus(errorMessage, true);
     }
   }
 
