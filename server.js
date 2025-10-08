@@ -111,7 +111,7 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: 'development',
     sendgridConfigured: !!(SENDGRID_API_KEY && SENDGRID_API_KEY !== 'your_sendgrid_api_key_here'),
     firebaseInitialized: firebaseAdminInitialized
   });
@@ -123,7 +123,7 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: 'development',
     sendgridConfigured: !!(SENDGRID_API_KEY && SENDGRID_API_KEY !== 'your_sendgrid_api_key_here'),
     firebaseInitialized: firebaseAdminInitialized,
     endpoints: {
@@ -157,7 +157,7 @@ app.use((req, res, next) => {
 });
 
 // Configuration (use environment variables)
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const IS_PRODUCTION = false; // Force development mode
 const LALA_HOST = IS_PRODUCTION ? 'rest.lalamove.com' : 'rest.sandbox.lalamove.com';
 const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
 const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
@@ -2481,17 +2481,15 @@ app.use((req, res) => res.status(404).sendFile(path.join(__dirname, 'index.html'
 const PORT = process.env.PORT || 5001; // Changed from 5003 to 5001
 
 app.listen(PORT, '0.0.0.0', () => {
-  const environment = IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT';
+  const environment = 'DEVELOPMENT';
   console.log(`\n🚀 Viktoria's Bistro Server [${environment}]`);
   console.log(`   Server: http://localhost:${PORT}`);
-  if (IS_PRODUCTION) {
-    console.log(`   Public: ${BASE_URL}`);
-    console.log(`   Webhook: ${BASE_URL}/api/webhook/lalamove`);
-  }
-  console.log(`   POS: ${IS_PRODUCTION ? BASE_URL : `http://localhost:${PORT}`}/pos`);
-  console.log(`   Menu: ${IS_PRODUCTION ? BASE_URL : `http://localhost:${PORT}`}/menu`);
+  console.log(`   Public: ${BASE_URL}`);
+  console.log(`   Webhook: ${BASE_URL}/api/webhook/lalamove`);
+  console.log(`   POS: http://localhost:${PORT}/pos`);
+  console.log(`   Menu: http://localhost:${PORT}/menu`);
   console.log(`\n📡 Lalamove Integration:`);
-  console.log(`   Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'SANDBOX'}`);
+  console.log(`   Environment: SANDBOX`);
   console.log(`   API Host: ${LALA_HOST}`);
   console.log(`   Market: ${MARKET}`);
   console.log(`\n🔐 OTP System:`);

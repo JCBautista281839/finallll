@@ -22,16 +22,14 @@ const API_CONFIG = {
                             window.location.hostname.includes('viktoriasbistro') ||
                             window.location.hostname === 'www.viktoriasbistro.restaurant';
         
+        // Always use development settings
         if (isLocal && isDevPort) {
             console.log('🔧 Development environment detected, using local server');
             return 'http://localhost:5001';
-        } else if (isProduction) {
-            console.log('🔧 Production environment detected, using production server');
-            return 'https://viktoriasbistro.restaurant';
         } else {
-            // For deployment or other environments, use the same origin
-            console.log('🔧 Deployment environment detected, using same origin');
-            return window.location.origin;
+            // For all other environments, use local server for development
+            console.log('🔧 Development mode: using local server');
+            return 'http://localhost:5001';
         }
     })(),
     
