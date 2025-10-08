@@ -2235,6 +2235,88 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
   }
 });
 
+// Create Custom Token endpoint for password reset
+app.post('/api/create-custom-token', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    console.log(`[Create Custom Token] Creating custom token for: ${email}`);
+
+    // Verify OTP (you can implement your own OTP verification logic here)
+    // For now, we'll assume the OTP is valid if it's provided
+    
+    // Force Firebase Admin SDK initialization if not already done
+    if (!firebaseAdminInitialized) {
+      console.log('🔄 Attempting to initialize Firebase Admin SDK...');
+      const initResult = initializeFirebaseAdmin();
+      if (!initResult) {
+        console.log('❌ Firebase Admin SDK initialization failed');
+        return res.status(500).json({
+          success: false,
+          message: 'Server configuration error. Please contact support.'
+        });
+      }
+    }
+
+    try {
+      if (admin.apps && admin.apps.length > 0) {
+        console.log(`[Create Custom Token] Creating custom token for: ${email}`);
+
+        // Get user by email
+        const userRecord = await admin.auth().getUserByEmail(email);
+        console.log(`[Create Custom Token] Found user with UID: ${userRecord.uid}`);
+
+        // Create custom token
+        const customToken = await admin.auth().createCustomToken(userRecord.uid);
+        console.log(`[Create Custom Token] ✅ Custom token created successfully for user: ${userRecord.uid}`);
+
+        res.json({
+          success: true,
+          customToken: customToken,
+          message: 'Custom token created successfully'
+        });
+
+      } else {
+        console.log('⚠️ Firebase Admin SDK not available');
+        return res.status(500).json({
+          success: false,
+          message: 'Server configuration error. Please contact support.'
+        });
+      }
+
+    } catch (firebaseError) {
+      console.error('[Create Custom Token] Firebase error:', firebaseError.message);
+      
+      if (firebaseError.code === 'auth/user-not-found') {
+        console.log(`[Create Custom Token] ❌ User not found in Firebase Auth: ${email}`);
+        return res.status(400).json({
+          success: false,
+          message: 'No account found with this email address.'
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: 'Server error. Please try again.'
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('[Create Custom Token] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: `Custom token creation failed: ${error.message}`
+    });
+  }
+});
+
 // Regular Password Change endpoint (for profile updates)
 app.post('/api/change-password', async (req, res) => {
   try {

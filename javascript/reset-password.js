@@ -1,5 +1,4 @@
-
-// Reset Password JavaScript
+// Reset Password JavaScript - Using Firebase updatePassword() directly
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reset Password page loaded');
     
@@ -89,86 +88,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Wait for Firebase to be ready
             await waitForFirebase();
             
-            // Reset password using Firebase Auth
+            // Reset password using Firebase Auth directly
             console.log('🔄 Resetting password for:', email);
             
-            // Try server endpoint first (with Firebase Admin SDK)
-            try {
-                const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.RESET_PASSWORD_WITH_OTP), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        email: email, 
-                        newPassword: newPassword 
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    console.log('✅ Server approved password reset');
-                    console.log('Server response:', result);
-                    console.log('Client-side update required:', result.clientSideUpdate);
-                    console.log('Firebase update failed:', result.firebaseUpdateFailed);
-                    console.log('Firebase updated:', result.firebaseUpdated);
-                    console.log('Note:', result.note);
-                    
-                    // If server-side Firebase update failed, do client-side update
-                    if (result.clientSideUpdate && result.firebaseUpdateFailed) {
-                        console.log('🔄 Server-side Firebase update failed, attempting client-side update');
-                        await updatePasswordWithFirebaseClient(email, newPassword);
-                    } else if (result.firebaseUpdated) {
-                        // Server-side update was successful
-
-                        console.log('Password reset completed automatically via server');
-
-                        console.log('✅ Password reset completed automatically via server');
-
-                        showSuccess('Password updated successfully in Firebase Authentication! You can now log in with your new password.');
-                        
-                        // Clear session storage
-                        sessionStorage.removeItem('passwordResetEmail');
-                        sessionStorage.removeItem('passwordResetVerified');
-                        
-                        // Redirect to login after 3 seconds
-                        setTimeout(() => {
-                            window.location.href = 'login.html';
-                        }, 3000);
-                    } else {
-                        // Fallback case - neither server nor client update worked as expected
-                        console.log('⚠️ Unexpected server response, attempting client-side update as fallback');
-                        await updatePasswordWithFirebaseClient(email, newPassword);
-                    }
-                    
-                    return; // Exit successfully
-                } else {
-                    throw new Error(result.message || 'Failed to reset password');
-                }
-                
-            } catch (serverError) {
-                console.log('🔄 Server password reset failed, trying client-side approach:', serverError.message);
-                
-                // Fallback: Use Firebase client-side password reset
-                // Note: This requires the user to be signed in, so we'll provide instructions instead
-                
-                // Clear session storage
-                sessionStorage.removeItem('passwordResetEmail');
-                sessionStorage.removeItem('passwordResetVerified');
-                
-                // Show success message with instructions
-                alert(`Password Reset Instructions:\n\n1. Your OTP verification was successful\n2. To complete the password reset:\n   - Go to the login page\n   - Click "Forgot Password" again\n   - Use Firebase's built-in password reset\n   - Check your email for the reset link\n\nOr contact support for assistance.`);
-                
-                // Redirect to login
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1000);
-            }
+            // Use Firebase updatePassword() method directly
+            await updatePasswordWithFirebase(email, newPassword);
             
         } catch (error) {
             console.error('Password reset error:', error);
@@ -179,11 +103,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'auth/weak-password':
                     errorMsg = 'Password is too weak. Please choose a stronger password.';
                     break;
-                case 'auth/expired-action-code':
-                    errorMsg = 'Password reset link has expired. Please request a new one.';
-                    break;
-                case 'auth/invalid-action-code':
-                    errorMsg = 'Invalid password reset link. Please request a new one.';
+                case 'auth/requires-recent-login':
+                    errorMsg = 'Please sign in again to update your password.';
                     break;
                 case 'auth/user-disabled':
                     errorMsg = 'This account has been disabled. Please contact support.';
@@ -193,6 +114,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'auth/network-request-failed':
                     errorMsg = 'Network error. Please check your connection and try again.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMsg = 'Too many requests. Please try again later.';
+                    break;
+                case 'auth/invalid-action-code':
+                    errorMsg = 'Invalid or expired reset code. Please request a new password reset.';
+                    break;
+                case 'auth/expired-action-code':
+                    errorMsg = 'Password reset code has expired. Please request a new one.';
+                    break;
+                case 'auth/wrong-password':
+                    errorMsg = 'Incorrect password. Please try again.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMsg = 'Invalid email address.';
+                    break;
+                case 'auth/invalid-credential':
+                    errorMsg = 'Invalid credentials. Please check your email and try again.';
+                    break;
+                case 'auth/email-already-in-use':
+                    errorMsg = 'Email address is already in use.';
+                    break;
+                case 'auth/operation-not-allowed':
+                    errorMsg = 'Password reset is not allowed for this account.';
                     break;
                 default:
                     errorMsg = error.message || 'An error occurred. Please try again.';
@@ -206,6 +151,101 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.innerHTML = 'Reset Password';
         }
     });
+    
+    // Function to update password using Firebase Auth directly
+    async function updatePasswordWithFirebase(email, newPassword) {
+        try {
+            console.log('🔄 Attempting Firebase password update for:', email);
+            
+            const auth = firebase.auth();
+            const currentUser = auth.currentUser;
+            
+            if (currentUser && currentUser.email === email) {
+                // User is already signed in, update password directly
+                console.log('✅ User is signed in, updating password directly');
+                await currentUser.updatePassword(newPassword);
+                console.log('✅ Password updated successfully via Firebase Auth');
+                
+                // Show success message
+                showSuccess('Password updated successfully! Please log in again.');
+                
+                // Clear session storage
+                sessionStorage.removeItem('passwordResetEmail');
+                sessionStorage.removeItem('passwordResetVerified');
+                
+                // Sign out the user to force re-login with new password
+                await auth.signOut();
+                console.log('✅ User signed out, must log in with new password');
+                
+                // Redirect to login after 3 seconds
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
+                
+            } else {
+                // User is not signed in - sign them in temporarily using OTP
+                console.log('⚠️ User not logged in, signing in temporarily...');
+                await signInAndUpdatePassword(email, newPassword);
+            }
+            
+        } catch (error) {
+            console.error('❌ Firebase password update error:', error);
+            throw error;
+        }
+    }
+    
+    // Function to update password via server API (custom OTP system)
+    async function signInAndUpdatePassword(email, newPassword) {
+        try {
+            console.log('🔄 Updating password via server API for verified user');
+            
+            // Use server API to update password with Firebase Admin SDK
+            const apiUrl = window.API_CONFIG ? window.API_CONFIG.BASE_URL + '/api/reset-password-with-otp' : '/api/reset-password-with-otp';
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    email: email, 
+                    newPassword: newPassword 
+                })
+            });
+            
+            // Check if response is ok
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Password updated successfully via server API');
+                
+                // Show success message
+                showSuccess('Password updated successfully! You can now log in with your new password.');
+                
+                // Clear session storage
+                sessionStorage.removeItem('passwordResetEmail');
+                sessionStorage.removeItem('passwordResetVerified');
+                sessionStorage.removeItem('emailOTP');
+                sessionStorage.removeItem('emailOTPEmail');
+                sessionStorage.removeItem('emailOTPExpiry');
+                
+                // Redirect to login after 3 seconds
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
+                
+            } else {
+                throw new Error(result.message || 'Failed to update password');
+            }
+            
+        } catch (error) {
+            console.error('❌ Server API password update error:', error);
+            throw error;
+        }
+    }
     
     // Password strength checker
     newPasswordInput.addEventListener('input', function() {
@@ -308,79 +348,4 @@ document.addEventListener('DOMContentLoaded', function() {
     confirmPasswordInput.addEventListener('focus', function() {
         hideMessages();
     });
-    
-    // Function to update password using Firebase Auth client-side
-    async function updatePasswordWithFirebaseClient(email, newPassword) {
-        try {
-            console.log('🔄 Attempting client-side Firebase password update for:', email);
-            
-            // Get the current user (if any)
-            const currentUser = firebase.auth().currentUser;
-            
-            if (currentUser && currentUser.email === email) {
-                // User is already signed in, update password directly
-                console.log('✅ User is signed in, updating password directly');
-                await currentUser.updatePassword(newPassword);
-                console.log('✅ Password updated successfully via Firebase Auth');
-                
-                // Show success message
-                showSuccess('Password updated successfully! You can now log in with your new password.');
-                
-                // Clear session storage
-                sessionStorage.removeItem('passwordResetEmail');
-                sessionStorage.removeItem('passwordResetVerified');
-                
-                // Redirect to login after 3 seconds
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 3000);
-                
-            } else {
-                // User is not signed in - this is the most common case for password reset
-                console.log('⚠️ User not signed in, cannot update password directly via client-side');
-                console.log('ℹ️ This is normal for password reset flow - server-side update should handle this');
-                
-                // Since we can't update password without being signed in, 
-                // we'll show a message indicating the reset was processed
-                showSuccess('Password reset request processed. If the server-side update failed, please try logging in with your current password or contact support.');
-                
-                // Clear session storage
-                sessionStorage.removeItem('passwordResetEmail');
-                sessionStorage.removeItem('passwordResetVerified');
-                
-                // Redirect to login after 3 seconds
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 3000);
-            }
-            
-        } catch (error) {
-            console.error('❌ Client-side Firebase password update error:', error);
-            
-            // Show error message
-            let errorMsg = 'Password update failed. Please try again.';
-            
-            if (error.code === 'auth/user-not-found') {
-                errorMsg = 'No account found with this email address.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMsg = 'Invalid email address.';
-            } else if (error.code === 'auth/weak-password') {
-                errorMsg = 'Password is too weak. Please choose a stronger password.';
-            } else if (error.code === 'auth/requires-recent-login') {
-                errorMsg = 'Please sign in again to update your password.';
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMsg = 'Network error. Please check your connection and try again.';
-            }
-            
-            // Use the showError function from the DOM scope
-            showError(errorMsg);
-            
-            // Reset button state
-            const resetButton = document.querySelector('button[type="submit"]');
-            if (resetButton) {
-                resetButton.disabled = false;
-                resetButton.innerHTML = 'Reset Password';
-            }
-        }
-    }
 });
