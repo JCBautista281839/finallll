@@ -73,7 +73,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     // List of allowed origins
     const allowedOrigins = [
       'http://localhost:3000',
@@ -87,7 +87,7 @@ const corsOptions = {
       'http://viktoriasbistro.restaurant',
       'http://www.viktoriasbistro.restaurant'
     ];
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -141,7 +141,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
+
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -264,8 +264,13 @@ function clearAllRateLimits() {
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
-  const raw = `${timestamp}\r\n${method}\r\n${path}\r\n\r\n${body}`;
-  return crypto.createHmac('sha256', secret).update(raw).digest('hex');
+  // Lalamove HMAC signature format: time + method + path + "" + body
+  // Note: No \r\n characters - that was the issue!
+  const raw = `${timestamp}${method}${path}${body}`;
+  console.log('[HMAC] Raw string for signature:', JSON.stringify(raw));
+  const signature = crypto.createHmac('sha256', secret).update(raw, 'utf8').digest('hex');
+  console.log('[HMAC] Generated signature:', signature);
+  return signature;
 }
 
 // OTP Functions
@@ -729,26 +734,49 @@ app.post('/api/quotation', async (req, res) => {
     const body = JSON.stringify(bodyObj);
     console.log('[proxy] Body sent to Lalamove:', body);
     const ts = Date.now().toString();
+
+    // Debug the signature generation
+    console.log('[proxy] Signature generation details:');
+    console.log('- API_SECRET length:', API_SECRET.length);
+    console.log('- Timestamp:', ts);
+    console.log('- Method: POST');
+    console.log('- Path: /v3/quotations');
+    console.log('- Body length:', body.length);
+
     const signature = makeSignature(API_SECRET, ts, 'POST', '/v3/quotations', body);
 
     const url = `https://${LALA_HOST}/v3/quotations`;
+    const authHeader = `hmac ${API_KEY}:${ts}:${signature}`;
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `hmac ${API_KEY}:${ts}:${signature}`,
+      'Authorization': authHeader,
       'Market': MARKET
     };
+
+    console.log('[proxy] Authorization header:', authHeader);
+    console.log('[proxy] All headers:', headers);
 
     console.log('[proxy] forwarding to Lalamove /v3/quotations', { url, headers, bodyObj });
     const response = await axios.post(url, body, { headers });
     console.log('[proxy] lalamove response status', response.status);
     res.status(response.status).json(response.data);
   } catch (err) {
-    console.error('[proxy] quotation error', err?.response?.data || err.message);
+    console.error('[proxy] quotation error details:');
+    console.error('- Status:', err.response?.status);
+    console.error('- Data:', JSON.stringify(err.response?.data, null, 2));
+    console.error('- Message:', err.message);
+    console.error('- Full error:', err);
+
     // If validation error thrown above, respond 400
     if (err.message && err.message.startsWith('Invalid coordinates')) {
       return res.status(400).json({ error: err.message });
     }
-    res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
+
+    // Provide more detailed error information
+    const status = err.response?.status || 500;
+    const errorData = err.response?.data || { error: err.message };
+
+    res.status(status).json(errorData);
   }
 });
 
@@ -1438,15 +1466,15 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
   } catch (error) {
     console.error('[SendGrid API] Send OTP error:', error.message);
     console.error('[SendGrid API] Error details:', error);
-    
+
     // Check if it's a SendGrid configuration issue
     if (!SENDGRID_API_KEY || SENDGRID_API_KEY === 'your_sendgrid_api_key_here') {
       console.log('[SendGrid API] SendGrid not configured, generating local OTP as fallback');
-      
+
       // Generate OTP locally as fallback
       const otp = generateOTP();
       const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
-      
+
       otpStorage.set(email, {
         otp: otp,
         expiry: expiry,
@@ -1454,7 +1482,7 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
         createdAt: Date.now(),
         source: 'local-fallback'
       });
-      
+
       res.json({
         success: true,
         otp: otp,
@@ -1465,11 +1493,11 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
       });
     } else {
       console.log('[SendGrid API] SendGrid configured but error occurred:', error.message);
-      
+
       // Always provide a fallback OTP even on server errors
       const otp = generateOTP();
       const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
-      
+
       otpStorage.set(email, {
         otp: otp,
         expiry: expiry,
@@ -1477,7 +1505,7 @@ app.post('/api/sendgrid-send-otp', rateLimitMiddleware, async (req, res) => {
         createdAt: Date.now(),
         source: 'error-fallback'
       });
-      
+
       res.json({
         success: true,
         otp: otp,
@@ -2160,7 +2188,7 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
       // If no server-side OTP data, assume this is from SendGrid OTP verification
       // The verification was already done on the client side
       console.log(`[Password Reset OTP] No server-side OTP data found for ${email}, assuming SendGrid OTP verification`);
-      
+
       // For SendGrid OTP flow, we need to check if the user has a valid session
       // This is a simplified check - in production you might want to implement proper session validation
       console.log(`[Password Reset OTP] Proceeding with password reset for verified user: ${email}`);
@@ -2301,7 +2329,7 @@ app.post('/api/create-custom-token', async (req, res) => {
 
     // Verify OTP (you can implement your own OTP verification logic here)
     // For now, we'll assume the OTP is valid if it's provided
-    
+
     // Force Firebase Admin SDK initialization if not already done
     if (!firebaseAdminInitialized) {
       console.log('🔄 Attempting to initialize Firebase Admin SDK...');
@@ -2343,7 +2371,7 @@ app.post('/api/create-custom-token', async (req, res) => {
 
     } catch (firebaseError) {
       console.error('[Create Custom Token] Firebase error:', firebaseError.message);
-      
+
       if (firebaseError.code === 'auth/user-not-found') {
         console.log(`[Create Custom Token] ❌ User not found in Firebase Auth: ${email}`);
         return res.status(400).json({
