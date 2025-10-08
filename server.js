@@ -2623,3 +2623,42 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`   ✅ SendGrid API key configured and ready for email sending`);
   }
 });
+
+// 🚨 DEBUG ENDPOINT - Test HMAC signature function on production
+app.get('/debug-hmac-test', (req, res) => {
+  try {
+    const testSecret = API_SECRET;
+    const testTimestamp = Date.now().toString();
+    const testMethod = 'POST';
+    const testPath = '/v3/quotations';
+    const testBody = '{"service_type":"MOTORCYCLE","test":"debug"}';
+
+    // Test our makeSignature function
+    const signature = makeSignature(testSecret, testTimestamp, testMethod, testPath, testBody);
+    
+    const rawString = `${testTimestamp}\r\n${testMethod}\r\n${testPath}\r\n\r\n${testBody}`;
+    
+    res.json({
+      success: true,
+      debug: {
+        message: "HMAC signature test on production server",
+        timestamp: testTimestamp,
+        signature: signature,
+        rawStringPreview: rawString.substring(0, 200),
+        hasCorrectFormat: rawString.includes('\r\n'),
+        serverUpdated: rawString.includes('\r\n') ? 'YES - HMAC fix applied' : 'NO - Still using old format',
+        apiSecret: API_SECRET ? 'API_SECRET is set' : 'API_SECRET is missing',
+        environment: process.env.NODE_ENV || 'development'
+      }
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      error: error.message,
+      debug: {
+        message: "Error testing HMAC on production",
+        makeSignatureExists: typeof makeSignature === 'function'
+      }
+    });
+  }
+});
