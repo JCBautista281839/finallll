@@ -37,7 +37,7 @@ function updateRowStatus(row) {
     cells[3].innerHTML = '<div class="status-item">' +
         '<span class="status-indicator ' + statusClass + '"></span>' +
         '<span class="status-text">' + statusLabel + '</span>' +
-    '</div>';
+        '</div>';
 }
 // Convert for display: always show in user-friendly unit
 function getDisplayStock(quantity, baseUnit) {
@@ -129,11 +129,11 @@ if (typeof sendInventoryNotification === 'undefined') {
     document.head.appendChild(script);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('Inventory page loaded, initializing Firebase...');
 
     // Always call setupEventListeners at the end to ensure all static buttons are wired up
-    document.addEventListener('readystatechange', function() {
+    document.addEventListener('readystatechange', function () {
         if (document.readyState === 'complete') {
             setupEventListeners();
         }
@@ -154,27 +154,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initializeInventory() {
         console.log('Initializing inventory system...');
-        
-       
+
+
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-       
+
+
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log('User authenticated:', user.email);
-                
+
                 // Get user role from Firestore
                 try {
                     const userDoc = await db.collection('users').doc(user.uid).get();
                     const userData = userDoc.data();
                     const userRole = userData.role || 'user';
-                    
+
                     console.log('User role:', userRole);
-                    
+
                     // Set up role-based access
                     setupRoleBasedAccess(userRole);
-                    
+
                     loadInventoryFromFirebase();
                     setupEventListeners();
                 } catch (error) {
@@ -184,19 +184,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadInventoryFromFirebase();
                     setupEventListeners();
                 }
-               
+
                 const userEmailEl = document.getElementById('userEmail');
                 const signOutBtn = document.getElementById('signOutBtn');
                 if (userEmailEl) userEmailEl.textContent = user.email;
                 if (signOutBtn) {
                     signOutBtn.style.display = '';
-                   
+
                     signOutBtn.replaceWith(signOutBtn.cloneNode(true));
                     const newSignOut = document.getElementById('signOutBtn');
                     newSignOut.addEventListener('click', function () {
                         firebase.auth().signOut().then(() => {
                             console.log('User signed out');
-                           
+
                             window.location.href = '/index.html';
                         }).catch(err => console.error('Sign out error:', err));
                     });
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup role-based access control
     function setupRoleBasedAccess(userRole) {
         console.log('Setting up role-based access for:', userRole);
-        
+
         // Get key UI elements
         const addButton = document.getElementById('inventoryAddAction');
         const editButtons = document.querySelectorAll('.edit-btn, .btn-edit');
@@ -223,29 +223,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const posNavLink = document.querySelector('a[href*="pos.html"]');
         const menuNavLink = document.querySelector('a[href*="menu.html"]');
         const homeNavLink = document.querySelector('a[href*="Dashboard.html"]');
-        
+
         if (userRole === 'kitchen') {
             console.log('🍳 Kitchen role detected - Setting up limited access');
-            
+
             // Kitchen staff can view inventory but have limited editing capabilities
             // They can only update quantities for existing items, not add/delete
-            
+
             // Hide add new item button
             if (addButton) {
                 addButton.style.display = 'none';
             }
-            
+
             // Hide delete buttons
             deleteButtons.forEach(btn => {
                 btn.style.display = 'none';
             });
-            
+
             // Redirect home link to kitchen dashboard for kitchen staff
             if (homeNavLink) {
                 homeNavLink.href = '/html/kitchen.html';
                 homeNavLink.title = 'Kitchen Dashboard';
             }
-            
+
             // Hide navigation items that kitchen staff shouldn't access
             if (settingsNavLink) {
                 settingsNavLink.style.display = 'none';
@@ -265,17 +265,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (menuNavLink) {
                 menuNavLink.style.display = 'none';
             }
-            
+
         } else if (userRole === 'admin' || userRole === 'manager') {
             console.log('👑 Admin/Manager role - Full access granted');
             // Admin and managers have full access - no restrictions
-            
+
         } else {
             console.log('👤 Regular user role - Standard access');
             // Regular users have standard access
             // May want to restrict some advanced features if needed
         }
-        
+
         // Store user role globally for other functions to use
         window.currentUserRole = userRole;
     }
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = document.createElement('tr');
         row.setAttribute('data-doc-id', docId);
         row.setAttribute('data-restock-threshold', data.minQuantity || 10);
-        
+
         // Always display in kg/L/pcs (never g/ml/piece)
         let displayUom = data.unitOfMeasure;
         let displayQty = data.quantity || 0;
@@ -362,83 +362,83 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>${displayUom || 'N/A'}</td>
             <td></td>
         `;
-        
-       
+
+
         updateRowStatus(row);
         return row;
     }
 
     // Track notified items to prevent duplicate notifications
-// Track notified items to prevent duplicate notifications
-const notifiedInventoryStatus = {};
+    // Track notified items to prevent duplicate notifications
+    const notifiedInventoryStatus = {};
 
-function updateRowStatus(row) {
-    const cells = row.querySelectorAll('td');
-    if (cells.length < 4) return;
+    function updateRowStatus(row) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 4) return;
 
-    const itemName = (cells[0].textContent || '').trim();
-    const stockText = (cells[1].textContent || '').trim();
-    const stockValue = parseFloat(stockText);
-    const stock = isNaN(stockValue) ? 0 : stockValue;
+        const itemName = (cells[0].textContent || '').trim();
+        const stockText = (cells[1].textContent || '').trim();
+        const stockValue = parseFloat(stockText);
+        const stock = isNaN(stockValue) ? 0 : stockValue;
 
-    let statusClass = '';
-    let statusLabel = '';
-    let notifyType = '';
-    let notifyMsg = '';
+        let statusClass = '';
+        let statusLabel = '';
+        let notifyType = '';
+        let notifyMsg = '';
 
-    if (stock === 0) {
-        statusClass = 'empty';
-        statusLabel = 'Empty';
-        notifyType = 'empty';
-        notifyMsg = `${itemName} is out of stock!`;
-    } else if (stock >= 1 && stock <= 5) {
-        statusClass = 'restock';
-        statusLabel = 'Need Restocking';
-        notifyType = 'restock';
-        notifyMsg = `Low stock: ${itemName}`;
-    } else if (stock >= 6) {
-        statusClass = 'steady';
-        statusLabel = 'Steady';
-    }
-
-    // Persist previous status for each item in localStorage
-    let prevStatus = localStorage.getItem('inventory_prevStatus_' + itemName);
-
-    // Only notify if status changes from steady to low/no stock, or from low to empty, or from steady to empty
-    let shouldNotify = false;
-    if ((notifyType === 'empty' || notifyType === 'restock') && prevStatus !== statusLabel) {
-        shouldNotify = true;
-    }
-
-    // Reset notification history for this item if restocked
-    if (statusLabel === 'Steady' && prevStatus && prevStatus !== 'Steady') {
-        ['empty', 'restock'].forEach(function(type) {
-            localStorage.removeItem('inventory_notified_' + itemName + '_' + type);
-        });
-    }
-
-    // Only notify once per item per status change
-    if (shouldNotify && typeof sendInventoryNotification === 'function') {
-        const key = 'inventory_notified_' + itemName + '_' + notifyType;
-        if (!localStorage.getItem(key)) {
-            console.log('[Inventory] Sending notification:', { type: notifyType, msg: notifyMsg, item: itemName });
-            sendInventoryNotification(notifyType, notifyMsg, itemName);
-            localStorage.setItem(key, 'true');
+        if (stock === 0) {
+            statusClass = 'empty';
+            statusLabel = 'Empty';
+            notifyType = 'empty';
+            notifyMsg = `${itemName} is out of stock!`;
+        } else if (stock >= 1 && stock <= 5) {
+            statusClass = 'restock';
+            statusLabel = 'Need Restocking';
+            notifyType = 'restock';
+            notifyMsg = `Low stock: ${itemName}`;
+        } else if (stock >= 6) {
+            statusClass = 'steady';
+            statusLabel = 'Steady';
         }
-    }
-    // Update previous status in localStorage
-    localStorage.setItem('inventory_prevStatus_' + itemName, statusLabel);
 
-    if (!statusClass) {
-        cells[3].innerHTML = '';
-        return;
-    }
+        // Persist previous status for each item in localStorage
+        let prevStatus = localStorage.getItem('inventory_prevStatus_' + itemName);
 
-    cells[3].innerHTML = '<div class="status-item">' +
-        '<span class="status-indicator ' + statusClass + '"></span>' +
-        '<span class="status-text">' + statusLabel + '</span>' +
-    '</div>';
-}
+        // Only notify if status changes from steady to low/no stock, or from low to empty, or from steady to empty
+        let shouldNotify = false;
+        if ((notifyType === 'empty' || notifyType === 'restock') && prevStatus !== statusLabel) {
+            shouldNotify = true;
+        }
+
+        // Reset notification history for this item if restocked
+        if (statusLabel === 'Steady' && prevStatus && prevStatus !== 'Steady') {
+            ['empty', 'restock'].forEach(function (type) {
+                localStorage.removeItem('inventory_notified_' + itemName + '_' + type);
+            });
+        }
+
+        // Only notify once per item per status change
+        if (shouldNotify && typeof sendInventoryNotification === 'function') {
+            const key = 'inventory_notified_' + itemName + '_' + notifyType;
+            if (!localStorage.getItem(key)) {
+                console.log('[Inventory] Sending notification:', { type: notifyType, msg: notifyMsg, item: itemName });
+                sendInventoryNotification(notifyType, notifyMsg, itemName);
+                localStorage.setItem(key, 'true');
+            }
+        }
+        // Update previous status in localStorage
+        localStorage.setItem('inventory_prevStatus_' + itemName, statusLabel);
+
+        if (!statusClass) {
+            cells[3].innerHTML = '';
+            return;
+        }
+
+        cells[3].innerHTML = '<div class="status-item">' +
+            '<span class="status-indicator ' + statusClass + '"></span>' +
+            '<span class="status-text">' + statusLabel + '</span>' +
+            '</div>';
+    }
 
     function updateRegisteredItemsCount(count) {
         const subtitle = document.querySelector('.inventory-subtitle');
@@ -448,37 +448,37 @@ function updateRowStatus(row) {
     }
 
     function addRowClickHandlers() {
-       
+
         console.log('Row click handlers disabled - use Edit Selected mode instead');
     }
 
     function openEditModal(row) {
         const cells = row.querySelectorAll('td');
         const docId = row.getAttribute('data-doc-id');
-        
-       
+
+
         let nameText = cells[0].textContent;
         if (nameText.includes('Edit')) {
-           
+
             nameText = nameText.replace(/Edit/g, '').trim();
         }
-        
-       
+
+
         document.getElementById('ingredientName').value = nameText;
         document.getElementById('ingredientUom').value = (cells[2].textContent || '').trim();
         document.getElementById('ingredientQty').value = (cells[1].textContent || '').trim();
-        
+
         // Apply role-based field restrictions
         if (window.currentUserRole === 'kitchen') {
             // Kitchen staff can only edit quantity
             document.getElementById('ingredientName').disabled = true;
             document.getElementById('ingredientUom').disabled = true;
             document.getElementById('ingredientQty').disabled = false;
-            
+
             // Add visual indicator
             document.getElementById('ingredientName').classList.add('bg-light');
             document.getElementById('ingredientUom').classList.add('bg-light');
-            
+
             // Hide delete button for kitchen staff
             const deleteBtn = document.getElementById('ingredientDeleteBtn');
             if (deleteBtn) deleteBtn.style.display = 'none';
@@ -487,28 +487,28 @@ function updateRowStatus(row) {
             document.getElementById('ingredientName').disabled = false;
             document.getElementById('ingredientUom').disabled = false;
             document.getElementById('ingredientQty').disabled = false;
-            
+
             // Remove disabled styling
             document.getElementById('ingredientName').classList.remove('bg-light');
             document.getElementById('ingredientUom').classList.remove('bg-light');
-            
+
             // Show delete button
             const deleteBtn = document.getElementById('ingredientDeleteBtn');
             if (deleteBtn) deleteBtn.style.display = '';
         }
-        
-       
+
+
         document.getElementById('ingredientModal').setAttribute('data-current-doc-id', docId);
-        
-       
+
+
         removeEditButtons();
-        
-       
+
+
         document.getElementById('ingredientModal').style.display = 'flex';
     }
 
     function setupEventListeners() {
-       
+
         const addAction = document.getElementById('inventoryAddAction');
         if (addAction) {
             addAction.addEventListener('click', function (e) {
@@ -517,7 +517,7 @@ function updateRowStatus(row) {
             });
         }
 
-       
+
         const editAction = document.getElementById('inventoryEditAction');
         if (editAction) {
             editAction.addEventListener('click', function (e) {
@@ -526,7 +526,7 @@ function updateRowStatus(row) {
             });
         }
 
-       
+
         // Report generation buttons
         const generalReportBtn = document.getElementById('generateGeneralReport');
         if (generalReportBtn) {
@@ -580,29 +580,26 @@ function updateRowStatus(row) {
             uploadDropzone.addEventListener('dragleave', handleDragLeave);
         }
 
-       
+
         const filterBtn = document.querySelector('.btn-outline-info.action-btn');
         if (filterBtn) {
-            filterBtn.addEventListener('click', function() {
-                // Use a simple prompt for status selection
-                const status = prompt('Filter by status:\nsteady\nrestock\nempty\nType "all" to show all items.', 'all');
-                if (!status) return;
-                const valid = ['all','steady','restock','empty'];
-                if (!valid.includes(status.toLowerCase())) {
-                    alert('Invalid status. Please type: steady, restock, empty, or all.');
-                    return;
-                }
-                filterInventory(status.toLowerCase());
-            });
+            // Remove prompt filter, use dropdown instead
+            const statusDropdown = document.getElementById('inventoryStatusDropdown');
+            if (statusDropdown) {
+                statusDropdown.addEventListener('change', function () {
+                    const status = statusDropdown.value;
+                    filterInventory(status);
+                });
+            }
         }
 
-       
+
         const modalClose = document.querySelector('.ingredient-modal-close');
         if (modalClose) {
             modalClose.addEventListener('click', closeModal);
         }
 
-       
+
         const modalOverlay = document.getElementById('ingredientModal');
         if (modalOverlay) {
             modalOverlay.addEventListener('click', function (e) {
@@ -612,22 +609,22 @@ function updateRowStatus(row) {
             });
         }
 
-       
+
         const saveBtn = document.getElementById('ingredientSaveBtn');
         if (saveBtn) {
             saveBtn.addEventListener('click', saveInventoryItem);
         }
 
-       
+
         const deleteBtn = document.getElementById('ingredientDeleteBtn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', deleteInventoryItem);
         }
 
-       
+
         const searchInput = document.querySelector('.search-input');
         if (searchInput) {
-            searchInput.addEventListener('input', function(e) {
+            searchInput.addEventListener('input', function (e) {
                 const searchTerm = e.target.value.toLowerCase();
                 filterInventoryTable(searchTerm);
             });
@@ -636,7 +633,7 @@ function updateRowStatus(row) {
         // Inventory status filter dropdown
         const statusDropdown = document.getElementById('inventoryStatusDropdown');
         if (statusDropdown) {
-            statusDropdown.addEventListener('change', function() {
+            statusDropdown.addEventListener('change', function () {
                 filterInventory(this.value);
             });
         }
@@ -697,17 +694,17 @@ function updateRowStatus(row) {
 
     function enableEditMode() {
         console.log('Enabling edit mode...');
-        
-       
+
+
         removeEditButtons();
-        
-       
+
+
         const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
         rows.forEach(row => {
             addEditButtonToRow(row);
         });
-        
-       
+
+
         const tbody = document.getElementById('inventoryStatus');
         if (tbody && rows.length > 0) {
             const messageRow = document.createElement('tr');
@@ -717,22 +714,22 @@ function updateRowStatus(row) {
     }
 
     function addEditButtonToRow(row) {
-       
+
         if (row.querySelector('.edit-row-btn')) return;
-        
+
         const nameCell = row.querySelector('td:first-child');
         if (!nameCell) return;
-        
+
         const editBtn = document.createElement('button');
         editBtn.className = 'btn btn-sm btn-outline-primary edit-row-btn';
         editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
         editBtn.style.marginRight = '5px';
-        
-       
+
+
         nameCell.insertBefore(editBtn, nameCell.firstChild);
-        
-       
-        editBtn.addEventListener('click', function(e) {
+
+
+        editBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             openEditModal(row);
         });
@@ -741,8 +738,8 @@ function updateRowStatus(row) {
     function removeEditButtons() {
         const editButtons = document.querySelectorAll('.edit-row-btn');
         editButtons.forEach(btn => btn.remove());
-        
-       
+
+
         const messageRows = document.querySelectorAll('#inventoryStatus tr');
         messageRows.forEach(row => {
             if (row.cells.length === 1 && row.cells[0].textContent.includes('Click the Edit button')) {
@@ -757,27 +754,27 @@ function updateRowStatus(row) {
             showMessage('Kitchen staff cannot add new inventory items.', 'error');
             return;
         }
-        
-       
+
+
         document.getElementById('ingredientName').value = '';
         document.getElementById('ingredientUom').value = '';
         document.getElementById('ingredientQty').value = '';
-        
-       
+
+
         document.getElementById('ingredientModal').removeAttribute('data-current-doc-id');
-        
-       
+
+
         const deleteBtn = document.getElementById('ingredientDeleteBtn');
         if (deleteBtn) deleteBtn.style.display = 'none';
-        
-       
+
+
         document.getElementById('ingredientModal').style.display = 'flex';
     }
 
     function closeModal() {
         document.getElementById('ingredientModal').style.display = 'none';
-        
-       
+
+
         removeEditButtons();
     }
 
@@ -902,9 +899,9 @@ function updateRowStatus(row) {
             showMessage('Kitchen staff cannot delete inventory items.', 'error');
             return;
         }
-        
+
         const currentDocId = document.getElementById('ingredientModal').getAttribute('data-current-doc-id');
-        
+
         if (!currentDocId) {
             showMessage('No item selected for deletion.', 'error');
             return;
@@ -914,28 +911,28 @@ function updateRowStatus(row) {
             return;
         }
 
-       
+
         showMessage('Deleting item...', 'info');
 
         const db = firebase.firestore();
         console.log('Attempting to delete document:', currentDocId);
-        
+
         db.collection('inventory').doc(currentDocId).delete()
             .then(() => {
                 console.log('✅ Item deleted successfully from Firebase');
                 closeModal();
-                
-               
+
+
                 showMessage('Item deleted successfully from Firebase!', 'success');
-                
-               
+
+
                 setTimeout(() => {
                     loadInventoryFromFirebase();
                 }, 1000);
             })
             .catch((error) => {
                 console.error('❌ Error deleting item from Firebase:', error);
-                
+
                 let errorMessage = 'Error deleting item: ';
                 switch (error.code) {
                     case 'permission-denied':
@@ -950,7 +947,7 @@ function updateRowStatus(row) {
                     default:
                         errorMessage += error.message;
                 }
-                
+
                 showMessage(errorMessage, 'error');
             });
     }
@@ -964,7 +961,7 @@ function updateRowStatus(row) {
 
         // Prepare data for Excel
         const data = [];
-        
+
         // Add header row
         data.push(['VIKTORIAS BISTRO - GENERAL INVENTORY REPORT']);
         data.push([`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`]);
@@ -975,7 +972,7 @@ function updateRowStatus(row) {
         rows.forEach(row => {
             const name = row.cells[0].textContent.trim();
             const stock = parseFloat(row.cells[1].textContent.trim()) || 0;
-            
+
             data.push([name, stock]);
         });
 
@@ -1002,9 +999,9 @@ function updateRowStatus(row) {
 
         // Prepare data for Excel
         const data = [];
-        
-      
-        
+
+
+
         data.push(['Item Name', 'Restock Quantity', 'Unit of Measure']);
 
         restockItems.forEach(row => {
@@ -1020,30 +1017,30 @@ function updateRowStatus(row) {
     function downloadExcelReport(data, filename, sheetName) {
         try {
             const wb = XLSX.utils.book_new();
-           
+
             const ws = XLSX.utils.aoa_to_sheet(data);
-            
-            
+
+
             const colWidths = [
-                {wch: 25}, // Item Name
-                {wch: 15}, // Stock/Data
-                {wch: 15}, // Unit/Info
-                {wch: 20}, // Status/Action
-                {wch: 15}  // Priority (if exists)
+                { wch: 25 }, // Item Name
+                { wch: 15 }, // Stock/Data
+                { wch: 15 }, // Unit/Info
+                { wch: 20 }, // Status/Action
+                { wch: 15 }  // Priority (if exists)
             ];
             ws['!cols'] = colWidths;
-            
+
             // Style the header rows (make them bold)
             const headerStyle = {
                 font: { bold: true, sz: 12 },
                 fill: { fgColor: { rgb: "E8F4FD" } },
                 alignment: { horizontal: "center" }
             };
-            
+
             // Apply styles to specific cells (header and title rows)
             if (ws['A1']) ws['A1'].s = { font: { bold: true, sz: 14 } };
             if (ws['A2']) ws['A2'].s = { font: { sz: 10, italic: true } };
-            
+
             // Find and style the data header row (Item Name, Stock, etc.)
             for (let i = 0; i < data.length; i++) {
                 if (data[i][0] === 'Item Name' || data[i][0] === 'Summary') {
@@ -1056,16 +1053,16 @@ function updateRowStatus(row) {
                     });
                 }
             }
-            
+
             // Add the worksheet to workbook
             XLSX.utils.book_append_sheet(wb, ws, sheetName);
-            
+
             // Generate Excel file and trigger download
             XLSX.writeFile(wb, filename);
-            
+
             // Show success message
             alert(`${filename} has been downloaded successfully!`);
-            
+
         } catch (error) {
             console.error('Error generating Excel report:', error);
             alert('Error generating Excel report. Please try again.');
@@ -1090,11 +1087,11 @@ function updateRowStatus(row) {
 
     function filterInventoryTable(searchTerm) {
         const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
-        
+
         rows.forEach(row => {
             const nameCell = row.querySelector('td:first-child');
             const name = nameCell ? nameCell.textContent.toLowerCase() : '';
-            
+
             if (name.includes(searchTerm)) {
                 row.style.display = '';
             } else {
@@ -1104,13 +1101,13 @@ function updateRowStatus(row) {
     }
 
     function showMessage(message, type = 'info') {
-       
+
         const existingMessage = document.querySelector('.inventory-message');
         if (existingMessage) {
             existingMessage.remove();
         }
-        
-       
+
+
         const messageDiv = document.createElement('div');
         messageDiv.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} inventory-message`;
         messageDiv.style.position = 'fixed';
@@ -1122,11 +1119,11 @@ function updateRowStatus(row) {
             <strong>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</strong> ${message}
             <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
         `;
-        
-       
+
+
         document.body.appendChild(messageDiv);
-        
-       
+
+
         setTimeout(() => {
             if (messageDiv.parentElement) {
                 messageDiv.remove();
@@ -1171,7 +1168,7 @@ function updateRowStatus(row) {
     function handleFileDrop(event) {
         event.preventDefault();
         event.currentTarget.classList.remove('dragover');
-        
+
         const files = event.dataTransfer.files;
         if (files.length > 0) {
             const file = files[0];
@@ -1193,7 +1190,7 @@ function updateRowStatus(row) {
     async function processUploadedFile() {
         const fileInput = document.getElementById('excelFileInput');
         const file = fileInput.files[0];
-        
+
         if (!file) {
             alert('Please select a file first.');
             return;
@@ -1203,7 +1200,7 @@ function updateRowStatus(row) {
         const progressDiv = document.getElementById('uploadProgress');
         const progressBar = document.querySelector('.progress-bar');
         const progressText = document.getElementById('progressText');
-        
+
         progressDiv.style.display = 'block';
         progressBar.style.width = '10%';
         progressText.textContent = 'Reading Excel file...';
@@ -1237,7 +1234,7 @@ function updateRowStatus(row) {
     function readExcelFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            
+
             reader.onload = (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
@@ -1250,7 +1247,7 @@ function updateRowStatus(row) {
                     reject(new Error('Failed to read Excel file: ' + error.message));
                 }
             };
-            
+
             reader.onerror = () => reject(new Error('Failed to read file'));
             reader.readAsArrayBuffer(file);
         });
@@ -1259,40 +1256,40 @@ function updateRowStatus(row) {
     async function processRestockData(excelData) {
         const processedItems = [];
         const errors = [];
-        
+
         // First, scan the data to determine the format and find the data rows
         let dataStartRow = 0;
         let headerRow = null;
-        
+
         // Look for header row or data start
         for (let i = 0; i < excelData.length; i++) {
             const row = excelData[i];
             const keys = Object.keys(row);
-            
+
             // Skip empty rows or header/title rows
             if (keys.length === 0) continue;
-            
+
             // Check if this looks like a header row
-            const hasItemName = keys.some(key => 
-                key.toLowerCase().includes('item') || 
+            const hasItemName = keys.some(key =>
+                key.toLowerCase().includes('item') ||
                 key.toLowerCase().includes('name') ||
                 key.toLowerCase() === 'product'
             );
-            
-            const hasQuantity = keys.some(key => 
-                key.toLowerCase().includes('quantity') || 
+
+            const hasQuantity = keys.some(key =>
+                key.toLowerCase().includes('quantity') ||
                 key.toLowerCase().includes('stock') ||
                 key.toLowerCase().includes('qty') ||
                 key.toLowerCase().includes('amount')
             );
-            
+
             if (hasItemName && hasQuantity) {
                 headerRow = row;
                 dataStartRow = i;
                 break;
             }
         }
-        
+
         // If no clear header found, start from beginning
         if (headerRow === null && excelData.length > 0) {
             dataStartRow = 0;
@@ -1301,18 +1298,18 @@ function updateRowStatus(row) {
         for (let i = dataStartRow; i < excelData.length; i++) {
             const row = excelData[i];
             if (Object.keys(row).length === 0) continue;
-            const itemName = row['Item Name'] || row['item name'] || row['Name'] || row['name'] || 
-                           row['Item'] || row['item'] || row['Product'] || row['product'] ||
-                           row['ITEM NAME'] || row['ITEM'] || row['PRODUCT'];
-            let restockQty = row['Restock Quantity'] || row['restock quantity'] || row['Quantity'] || 
-                            row['quantity'] || row['Qty'] || row['qty'] || row['Amount'] || row['amount'] ||
-                            row['Current Stock'] || row['current stock'] || row['Stock'] || row['stock'] ||
-                            row['RESTOCK QUANTITY'] || row['QUANTITY'] || row['CURRENT STOCK'] || row['STOCK'];
+            const itemName = row['Item Name'] || row['item name'] || row['Name'] || row['name'] ||
+                row['Item'] || row['item'] || row['Product'] || row['product'] ||
+                row['ITEM NAME'] || row['ITEM'] || row['PRODUCT'];
+            let restockQty = row['Restock Quantity'] || row['restock quantity'] || row['Quantity'] ||
+                row['quantity'] || row['Qty'] || row['qty'] || row['Amount'] || row['amount'] ||
+                row['Current Stock'] || row['current stock'] || row['Stock'] || row['stock'] ||
+                row['RESTOCK QUANTITY'] || row['QUANTITY'] || row['CURRENT STOCK'] || row['STOCK'];
             let unitOfMeasure = row['Unit of Measure'] || row['unit of measure'] || row['Unit'] || row['unit'] || row['UOM'] || row['uom'] || row['UNIT OF MEASURE'] || row['UNIT'];
             if (!itemName || itemName.toString().trim() === '') continue;
             const itemNameStr = itemName.toString().toLowerCase();
-            if (itemNameStr.includes('summary') || 
-                itemNameStr.includes('total') || 
+            if (itemNameStr.includes('summary') ||
+                itemNameStr.includes('total') ||
                 itemNameStr.includes('priority') ||
                 itemNameStr.includes('action') ||
                 itemNameStr.includes('report') ||
@@ -1491,12 +1488,12 @@ function updateRowStatus(row) {
         try {
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(templateData);
-            
+
             // Set column widths
             ws['!cols'] = [
-                {wch: 25}, // Item Name
-                {wch: 18}, // Restock Quantity/Current Stock
-                {wch: 40}  // Notes/Unit
+                { wch: 25 }, // Item Name
+                { wch: 18 }, // Restock Quantity/Current Stock
+                { wch: 40 }  // Notes/Unit
             ];
 
             // Style headers
@@ -1504,7 +1501,7 @@ function updateRowStatus(row) {
                 font: { bold: true },
                 fill: { fgColor: { rgb: "E8F4FD" } }
             };
-            
+
             const sectionStyle = {
                 font: { bold: true, sz: 12 },
                 fill: { fgColor: { rgb: "F0F8FF" } }
@@ -1513,370 +1510,370 @@ function updateRowStatus(row) {
             if (ws['A1']) ws['A1'].s = { font: { bold: true, sz: 14 } };
             if (ws['A2']) ws['A2'].s = { font: { sz: 10, italic: true } };
             if (ws['A3']) ws['A3'].s = { font: { sz: 10, italic: true } };
-            
+
             // Style section headers
             if (ws['A5']) ws['A5'].s = sectionStyle;
             if (ws['A11']) ws['A11'].s = sectionStyle;
             if (ws['A16']) ws['A16'].s = sectionStyle;
-            
+
             // Style the data headers
             ['A6', 'B6', 'C6'].forEach(cell => {
                 if (ws[cell]) ws[cell].s = headerStyle;
             });
-            
+
             ['A12', 'B12', 'C12'].forEach(cell => {
                 if (ws[cell]) ws[cell].s = headerStyle;
             });
 
             XLSX.utils.book_append_sheet(wb, ws, 'Restock Template');
             XLSX.writeFile(wb, 'Restock_Template.xlsx');
-            
+
         } catch (error) {
             console.error('Error generating template:', error);
             alert('Error generating template. Please try again.');
         }
     }
 
-// --- AUTO UPDATE MENU AVAILABILITY BASED ON INVENTORY ---
-async function updateMenuAvailabilityBasedOnInventory() {
-    const db = firebase.firestore();
-    // Get all ingredients that are empty
-    const emptyIngredients = [];
-    const inventorySnapshot = await db.collection('inventory').where('quantity', '==', 0).get();
-    inventorySnapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.name) emptyIngredients.push(data.name);
-    });
-    if (emptyIngredients.length === 0) return;
-    // For each menu item, check if it uses any empty ingredient
-    const menuSnapshot = await db.collection('menu').get();
-    menuSnapshot.forEach(async menuDoc => {
-        const menuData = menuDoc.data();
-        // Assume menuData.ingredients is an array of ingredient names used by the product
-        if (Array.isArray(menuData.ingredients)) {
-            const usesEmpty = menuData.ingredients.some(ing => emptyIngredients.includes(ing));
-            if (usesEmpty && menuData.available !== false) {
-                await db.collection('menu').doc(menuDoc.id).update({ available: false });
-                console.log(`Set menu item '${menuData.name}' as unavailable due to empty ingredient.`);
+    // --- AUTO UPDATE MENU AVAILABILITY BASED ON INVENTORY ---
+    async function updateMenuAvailabilityBasedOnInventory() {
+        const db = firebase.firestore();
+        // Get all ingredients that are empty
+        const emptyIngredients = [];
+        const inventorySnapshot = await db.collection('inventory').where('quantity', '==', 0).get();
+        inventorySnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.name) emptyIngredients.push(data.name);
+        });
+        if (emptyIngredients.length === 0) return;
+        // For each menu item, check if it uses any empty ingredient
+        const menuSnapshot = await db.collection('menu').get();
+        menuSnapshot.forEach(async menuDoc => {
+            const menuData = menuDoc.data();
+            // Assume menuData.ingredients is an array of ingredient names used by the product
+            if (Array.isArray(menuData.ingredients)) {
+                const usesEmpty = menuData.ingredients.some(ing => emptyIngredients.includes(ing));
+                if (usesEmpty && menuData.available !== false) {
+                    await db.collection('menu').doc(menuDoc.id).update({ available: false });
+                    console.log(`Set menu item '${menuData.name}' as unavailable due to empty ingredient.`);
+                }
             }
-        }
-    });
-}
-// Call this after inventory updates
-window.updateMenuAvailabilityBasedOnInventory = updateMenuAvailabilityBasedOnInventory;
+        });
+    }
+    // Call this after inventory updates
+    window.updateMenuAvailabilityBasedOnInventory = updateMenuAvailabilityBasedOnInventory;
 
-   
+
     waitForFirebase();
 
-// Deduct ingredients for a product (call from POS)
-window.deductIngredientsForProduct = async function(product) {
-    if (!product || !product.ingredients || !Array.isArray(product.ingredients)) {
-        alert('No ingredients to deduct for product: ' + (product?.name || 'Unknown'));
-        return;
-    }
-    const db = (window.firebase && firebase.firestore) ? firebase.firestore() : null;
-    if (!db) {
-        alert('Inventory system not available.');
-        return;
-    }
-    let deductionSummary = [];
-    let errors = [];
-    for (const ingredient of product.ingredients) {
-        const { name, quantity, unit, docId } = ingredient;
-        if (!name || !quantity) continue;
-        try {
-            let docRef = null;
-            let docData = null;
-            if (docId) {
-                docRef = db.collection('inventory').doc(docId);
-                const docSnap = await docRef.get();
-                if (docSnap.exists) docData = docSnap.data();
-            } else {
-                const query = await db.collection('inventory').where('name', '==', name).limit(1).get();
-                if (!query.empty) {
-                    docRef = db.collection('inventory').doc(query.docs[0].id);
-                    docData = query.docs[0].data();
-                }
-            }
-            if (docRef && docData) {
-                // Always convert deduction to base unit
-                let baseDeduct = 0;
-                let orderUnit = unit ? unit.trim().toLowerCase() : '';
-                if (orderUnit === 'kg' && docData.unitOfMeasure === 'g') {
-                    baseDeduct = quantity * 1000;
-                } else if (orderUnit === 'g' && docData.unitOfMeasure === 'g') {
-                    baseDeduct = quantity;
-                } else if ((orderUnit === 'l' || orderUnit === 'liter' || orderUnit === 'liters') && docData.unitOfMeasure === 'ml') {
-                    baseDeduct = quantity * 1000;
-                } else if (orderUnit === 'ml' && docData.unitOfMeasure === 'ml') {
-                    baseDeduct = quantity;
-                } else if (['pcs', 'piece', 'pieces'].includes(orderUnit) && docData.unitOfMeasure === 'pcs') {
-                    baseDeduct = quantity;
+    // Deduct ingredients for a product (call from POS)
+    window.deductIngredientsForProduct = async function (product) {
+        if (!product || !product.ingredients || !Array.isArray(product.ingredients)) {
+            alert('No ingredients to deduct for product: ' + (product?.name || 'Unknown'));
+            return;
+        }
+        const db = (window.firebase && firebase.firestore) ? firebase.firestore() : null;
+        if (!db) {
+            alert('Inventory system not available.');
+            return;
+        }
+        let deductionSummary = [];
+        let errors = [];
+        for (const ingredient of product.ingredients) {
+            const { name, quantity, unit, docId } = ingredient;
+            if (!name || !quantity) continue;
+            try {
+                let docRef = null;
+                let docData = null;
+                if (docId) {
+                    docRef = db.collection('inventory').doc(docId);
+                    const docSnap = await docRef.get();
+                    if (docSnap.exists) docData = docSnap.data();
                 } else {
-                    errors.push(`Unit mismatch for ${name}. Inventory unit: ${docData.unitOfMeasure}, deduction unit: ${unit}`);
-                    continue;
+                    const query = await db.collection('inventory').where('name', '==', name).limit(1).get();
+                    if (!query.empty) {
+                        docRef = db.collection('inventory').doc(query.docs[0].id);
+                        docData = query.docs[0].data();
+                    }
                 }
-                const newQty = (docData.quantity || 0) - baseDeduct;
-                if (newQty < 0) {
-                    errors.push(`Not enough stock for ${name}. Required: ${baseDeduct}, Available: ${docData.quantity}`);
-                    continue;
+                if (docRef && docData) {
+                    // Always convert deduction to base unit
+                    let baseDeduct = 0;
+                    let orderUnit = unit ? unit.trim().toLowerCase() : '';
+                    if (orderUnit === 'kg' && docData.unitOfMeasure === 'g') {
+                        baseDeduct = quantity * 1000;
+                    } else if (orderUnit === 'g' && docData.unitOfMeasure === 'g') {
+                        baseDeduct = quantity;
+                    } else if ((orderUnit === 'l' || orderUnit === 'liter' || orderUnit === 'liters') && docData.unitOfMeasure === 'ml') {
+                        baseDeduct = quantity * 1000;
+                    } else if (orderUnit === 'ml' && docData.unitOfMeasure === 'ml') {
+                        baseDeduct = quantity;
+                    } else if (['pcs', 'piece', 'pieces'].includes(orderUnit) && docData.unitOfMeasure === 'pcs') {
+                        baseDeduct = quantity;
+                    } else {
+                        errors.push(`Unit mismatch for ${name}. Inventory unit: ${docData.unitOfMeasure}, deduction unit: ${unit}`);
+                        continue;
+                    }
+                    const newQty = (docData.quantity || 0) - baseDeduct;
+                    if (newQty < 0) {
+                        errors.push(`Not enough stock for ${name}. Required: ${baseDeduct}, Available: ${docData.quantity}`);
+                        continue;
+                    }
+                    await docRef.update({ quantity: newQty });
+                    deductionSummary.push(`${name}: -${baseDeduct} (new: ${newQty})`);
+                } else {
+                    errors.push(`Ingredient not found in inventory: ${name}`);
                 }
-                await docRef.update({ quantity: newQty });
-                deductionSummary.push(`${name}: -${baseDeduct} (new: ${newQty})`);
-            } else {
-                errors.push(`Ingredient not found in inventory: ${name}`);
+            } catch (err) {
+                errors.push(`Error deducting ${name}: ${err.message}`);
             }
-        } catch (err) {
-            errors.push(`Error deducting ${name}: ${err.message}`);
         }
-    }
-    if (deductionSummary.length > 0) {
-        alert('Ingredients deducted:\n' + deductionSummary.join('\n'));
-    }
-    if (errors.length > 0) {
-        alert('Inventory deduction errors:\n' + errors.join('\n'));
-    }
-};
+        if (deductionSummary.length > 0) {
+            alert('Ingredients deducted:\n' + deductionSummary.join('\n'));
+        }
+        if (errors.length > 0) {
+            alert('Inventory deduction errors:\n' + errors.join('\n'));
+        }
+    };
 
-// Deduct stock for weight/volume/pieces units and return updated stock, display, and status
-function deductAndStatus({
-    currentStock, orderQty, orderUnit, threshold, unitType = 'weight', baseUnit = null
-}) {
-    // unitType: 'weight', 'volume', or 'pieces'
-    // Supported units: Kg, g, L, mL, pcs
-    // baseUnit: 'g', 'mL', or 'pcs' (optional, auto-detects if not provided)
-    let baseStock, baseOrder, displayValue, displayUnit, status;
-    let _baseUnit = baseUnit;
+    // Deduct stock for weight/volume/pieces units and return updated stock, display, and status
+    function deductAndStatus({
+        currentStock, orderQty, orderUnit, threshold, unitType = 'weight', baseUnit = null
+    }) {
+        // unitType: 'weight', 'volume', or 'pieces'
+        // Supported units: Kg, g, L, mL, pcs
+        // baseUnit: 'g', 'mL', or 'pcs' (optional, auto-detects if not provided)
+        let baseStock, baseOrder, displayValue, displayUnit, status;
+        let _baseUnit = baseUnit;
 
-    // Determine base unit and convert order to base
-    if (unitType === 'weight') {
-        _baseUnit = 'g';
-        if (orderUnit.toLowerCase() === 'kg') baseOrder = orderQty * 1000;
-        else if (orderUnit.toLowerCase() === 'g') baseOrder = orderQty;
-        else throw new Error('Unsupported weight unit');
-        baseStock = currentStock; // currentStock should already be in grams
-    } else if (unitType === 'volume') {
-        _baseUnit = 'mL';
-        if (orderUnit.toLowerCase() === 'l') baseOrder = orderQty * 1000;
-        else if (orderUnit.toLowerCase() === 'ml') baseOrder = orderQty;
-        else throw new Error('Unsupported volume unit');
-        baseStock = currentStock; // currentStock should already be in mL
-    } else if (unitType === 'pieces') {
-        _baseUnit = 'pcs';
-        if (orderUnit.toLowerCase() === 'pcs' || orderUnit.toLowerCase() === 'piece' || orderUnit.toLowerCase() === 'pieces') baseOrder = orderQty;
-        else throw new Error('Unsupported pieces unit');
-        baseStock = currentStock; // currentStock should already be in pcs
-    } else {
-        throw new Error('unitType must be weight, volume, or pieces');
-    }
+        // Determine base unit and convert order to base
+        if (unitType === 'weight') {
+            _baseUnit = 'g';
+            if (orderUnit.toLowerCase() === 'kg') baseOrder = orderQty * 1000;
+            else if (orderUnit.toLowerCase() === 'g') baseOrder = orderQty;
+            else throw new Error('Unsupported weight unit');
+            baseStock = currentStock; // currentStock should already be in grams
+        } else if (unitType === 'volume') {
+            _baseUnit = 'mL';
+            if (orderUnit.toLowerCase() === 'l') baseOrder = orderQty * 1000;
+            else if (orderUnit.toLowerCase() === 'ml') baseOrder = orderQty;
+            else throw new Error('Unsupported volume unit');
+            baseStock = currentStock; // currentStock should already be in mL
+        } else if (unitType === 'pieces') {
+            _baseUnit = 'pcs';
+            if (orderUnit.toLowerCase() === 'pcs' || orderUnit.toLowerCase() === 'piece' || orderUnit.toLowerCase() === 'pieces') baseOrder = orderQty;
+            else throw new Error('Unsupported pieces unit');
+            baseStock = currentStock; // currentStock should already be in pcs
+        } else {
+            throw new Error('unitType must be weight, volume, or pieces');
+        }
 
-    // Deduct
-    let updatedStock = baseStock - baseOrder;
-    if (updatedStock < 0) updatedStock = 0;
+        // Deduct
+        let updatedStock = baseStock - baseOrder;
+        if (updatedStock < 0) updatedStock = 0;
 
-    // Display logic
-    if (unitType === 'weight') {
-        if (updatedStock >= 1000) {
-            displayValue = (updatedStock / 1000).toFixed(2).replace(/\.00$/, '');
-            displayUnit = 'Kg';
+        // Display logic
+        if (unitType === 'weight') {
+            if (updatedStock >= 1000) {
+                displayValue = (updatedStock / 1000).toFixed(2).replace(/\.00$/, '');
+                displayUnit = 'Kg';
+            } else {
+                displayValue = updatedStock;
+                displayUnit = 'g';
+            }
+        } else if (unitType === 'volume') {
+            if (updatedStock >= 1000) {
+                displayValue = (updatedStock / 1000).toFixed(2).replace(/\.00$/, '');
+                displayUnit = 'L';
+            } else {
+                displayValue = updatedStock;
+                displayUnit = 'mL';
+            }
         } else {
             displayValue = updatedStock;
-            displayUnit = 'g';
+            displayUnit = 'pcs';
         }
-    } else if (unitType === 'volume') {
-        if (updatedStock >= 1000) {
-            displayValue = (updatedStock / 1000).toFixed(2).replace(/\.00$/, '');
-            displayUnit = 'L';
+
+        // Status logic
+        if (updatedStock <= 0) {
+            status = 'Empty';
+        } else if (updatedStock > 0 && updatedStock <= threshold) {
+            status = 'Need Restocking';
         } else {
-            displayValue = updatedStock;
-            displayUnit = 'mL';
+            status = 'Steady';
         }
-    } else {
-        displayValue = updatedStock;
-        displayUnit = 'pcs';
+
+        return {
+            stockBase: updatedStock,
+            stockDisplay: `${displayValue} ${displayUnit}`,
+            status: status
+        };
     }
 
-    // Status logic
-    if (updatedStock <= 0) {
-        status = 'Empty';
-    } else if (updatedStock > 0 && updatedStock <= threshold) {
-        status = 'Need Restocking';
-    } else {
-        status = 'Steady';
-    }
+    // Example usage:
+    // let result = deductAndStatus({
+    //   currentStock: 2000, orderQty: 250, orderUnit: 'g', threshold: 1000, unitType: 'weight'
+    // });
+    // result => { stockBase: 1750, stockDisplay: '1.75 Kg', status: 'Steady' }
 
-    return {
-        stockBase: updatedStock,
-        stockDisplay: `${displayValue} ${displayUnit}`,
-        status: status
+
+    // --- UNIT CONVERSION MAP AND DEDUCTION LOGIC ---
+    const UNIT_CONVERSIONS = {
+        // weight
+        'kg': { base: 'g', factor: 1000 },
+        'g': { base: 'g', factor: 1 },
+        // volume
+        'l': { base: 'ml', factor: 1000 },
+        'ml': { base: 'ml', factor: 1 },
+        // pieces
+        'pcs': { base: 'pcs', factor: 1 },
+        'piece': { base: 'pcs', factor: 1 },
+        'pieces': { base: 'pcs', factor: 1 },
+        // box (must provide piecesPerBox in context)
+        'box': { base: 'pcs', factor: null } // handled dynamically
     };
-}
 
-// Example usage:
-// let result = deductAndStatus({
-//   currentStock: 2000, orderQty: 250, orderUnit: 'g', threshold: 1000, unitType: 'weight'
-// });
-// result => { stockBase: 1750, stockDisplay: '1.75 Kg', status: 'Steady' }
-
-
-// --- UNIT CONVERSION MAP AND DEDUCTION LOGIC ---
-const UNIT_CONVERSIONS = {
-    // weight
-    'kg': { base: 'g', factor: 1000 },
-    'g': { base: 'g', factor: 1 },
-    // volume
-    'l': { base: 'ml', factor: 1000 },
-    'ml': { base: 'ml', factor: 1 },
-    // pieces
-    'pcs': { base: 'pcs', factor: 1 },
-    'piece': { base: 'pcs', factor: 1 },
-    'pieces': { base: 'pcs', factor: 1 },
-    // box (must provide piecesPerBox in context)
-    'box': { base: 'pcs', factor: null } // handled dynamically
-};
-
-function toBaseUnit(value, unit, piecesPerBox) {
-    unit = unit.toLowerCase();
-    if (unit === 'box') {
-        if (!piecesPerBox) throw new Error('piecesPerBox required for box conversion');
-        return value * piecesPerBox;
-    }
-    const conv = UNIT_CONVERSIONS[unit];
-    if (!conv) throw new Error('Unsupported unit: ' + unit);
-    return value * conv.factor;
-}
-
-function fromBaseUnit(value, baseUnit, piecesPerBox) {
-    // Returns { value, unit } in user-friendly unit
-    if (baseUnit === 'g') {
-        if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'kg' };
-        return { value, unit: 'g' };
-    }
-    if (baseUnit === 'ml') {
-        if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'L' };
-        return { value, unit: 'ml' };
-    }
-    if (baseUnit === 'pcs') {
-        if (piecesPerBox && value >= piecesPerBox) {
-            // Show as boxes if possible
-            return { value: +(value / piecesPerBox).toFixed(2), unit: 'box' };
+    function toBaseUnit(value, unit, piecesPerBox) {
+        unit = unit.toLowerCase();
+        if (unit === 'box') {
+            if (!piecesPerBox) throw new Error('piecesPerBox required for box conversion');
+            return value * piecesPerBox;
         }
-        return { value, unit: 'pcs' };
+        const conv = UNIT_CONVERSIONS[unit];
+        if (!conv) throw new Error('Unsupported unit: ' + unit);
+        return value * conv.factor;
     }
-    return { value, unit: baseUnit };
-}
 
-function deductInventory({
-    inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, piecesPerBox
-}) {
-    // Convert both inventory and order to base unit
-    const invBase = toBaseUnit(inventoryQty, inventoryUnit, piecesPerBox);
-    const orderBase = toBaseUnit(orderQty, orderUnit, piecesPerBox);
-    let newBase = invBase - orderBase;
-    if (newBase < 0) newBase = 0;
-    // For display
-    const display = fromBaseUnit(newBase, baseUnit, piecesPerBox);
-    return {
-        stockBase: newBase,
-        stockDisplay: `${display.value} ${display.unit}`,
-        value: display.value,
-        unit: display.unit
-    };
-}
-
-// --- DEDUCT INVENTORY WITH THRESHOLD AND STATUS ---
-function deductInventoryWithStatus({
-    inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, thresholdBase, piecesPerBox
-}) {
-    // Convert both inventory and order to base unit
-    const invBase = toBaseUnit(inventoryQty, inventoryUnit, piecesPerBox);
-    const orderBase = toBaseUnit(orderQty, orderUnit, piecesPerBox);
-    let newBase = invBase - orderBase;
-    if (newBase < 0) newBase = 0;
-    // Status logic (priority: Empty > Need Restocking > Steady)
-    let status;
-    if (newBase <= 0) {
-        status = 'Empty';
-    } else if (newBase > 0 && newBase <= thresholdBase) {
-        status = 'Need Restocking';
-    } else {
-        status = 'Steady';
+    function fromBaseUnit(value, baseUnit, piecesPerBox) {
+        // Returns { value, unit } in user-friendly unit
+        if (baseUnit === 'g') {
+            if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'kg' };
+            return { value, unit: 'g' };
+        }
+        if (baseUnit === 'ml') {
+            if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'L' };
+            return { value, unit: 'ml' };
+        }
+        if (baseUnit === 'pcs') {
+            if (piecesPerBox && value >= piecesPerBox) {
+                // Show as boxes if possible
+                return { value: +(value / piecesPerBox).toFixed(2), unit: 'box' };
+            }
+            return { value, unit: 'pcs' };
+        }
+        return { value, unit: baseUnit };
     }
-    // For display
-    const display = fromBaseUnit(newBase, baseUnit, piecesPerBox);
-    return {
-        stockBase: newBase,
-        stockDisplay: `${display.value} ${display.unit}`,
-        value: display.value,
-        unit: display.unit,
-        status: status
-    };
-}
 
-
-// --- FIXED: DEDUCT INVENTORY WITH PROPER UNIT CONVERSION ---
-function deductInventoryWithConversion({
-    inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, piecesPerBox
-}) {
-    // Convert both inventory and order to base unit using the conversion map
-    const invBase = toBaseUnit(inventoryQty, inventoryUnit, piecesPerBox);
-    const orderBase = toBaseUnit(orderQty, orderUnit, piecesPerBox);
-    let newBase = invBase - orderBase;
-    if (newBase < 0) newBase = 0;
-    // For display
-    const display = fromBaseUnit(newBase, baseUnit, piecesPerBox);
-    // Always show 2 decimal places for kg/L/box, integer for g/ml/pcs
-    let displayValue = display.value;
-    if (['kg', 'L', 'box'].includes(display.unit)) {
-        displayValue = (+display.value).toFixed(2).replace(/\.00$/, '');
+    function deductInventory({
+        inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, piecesPerBox
+    }) {
+        // Convert both inventory and order to base unit
+        const invBase = toBaseUnit(inventoryQty, inventoryUnit, piecesPerBox);
+        const orderBase = toBaseUnit(orderQty, orderUnit, piecesPerBox);
+        let newBase = invBase - orderBase;
+        if (newBase < 0) newBase = 0;
+        // For display
+        const display = fromBaseUnit(newBase, baseUnit, piecesPerBox);
+        return {
+            stockBase: newBase,
+            stockDisplay: `${display.value} ${display.unit}`,
+            value: display.value,
+            unit: display.unit
+        };
     }
-    return {
-        stockBase: newBase,
-        stockDisplay: `${displayValue} ${display.unit}`,
-        value: +displayValue,
-        unit: display.unit
-    };
-}
 
-// --- FIXED: UNIVERSAL INVENTORY DEDUCTION LOGIC ---
-function convertToBase(value, unit) {
-    unit = unit.toLowerCase();
-    if (unit === 'kg') return value * 1000; // to grams
-    if (unit === 'g') return value;
-    if (unit === 'l') return value * 1000; // to milliliters
-    if (unit === 'ml') return value;
-    if (unit === 'pcs' || unit === 'piece' || unit === 'pieces') return value;
-    throw new Error('Unsupported unit: ' + unit);
-}
-
-function convertFromBase(value, baseUnit) {
-    if (baseUnit === 'g') {
-        if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'kg' };
-        return { value, unit: 'g' };
+    // --- DEDUCT INVENTORY WITH THRESHOLD AND STATUS ---
+    function deductInventoryWithStatus({
+        inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, thresholdBase, piecesPerBox
+    }) {
+        // Convert both inventory and order to base unit
+        const invBase = toBaseUnit(inventoryQty, inventoryUnit, piecesPerBox);
+        const orderBase = toBaseUnit(orderQty, orderUnit, piecesPerBox);
+        let newBase = invBase - orderBase;
+        if (newBase < 0) newBase = 0;
+        // Status logic (priority: Empty > Need Restocking > Steady)
+        let status;
+        if (newBase <= 0) {
+            status = 'Empty';
+        } else if (newBase > 0 && newBase <= thresholdBase) {
+            status = 'Need Restocking';
+        } else {
+            status = 'Steady';
+        }
+        // For display
+        const display = fromBaseUnit(newBase, baseUnit, piecesPerBox);
+        return {
+            stockBase: newBase,
+            stockDisplay: `${display.value} ${display.unit}`,
+            value: display.value,
+            unit: display.unit,
+            status: status
+        };
     }
-    if (baseUnit === 'ml') {
-        if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'L' };
-        return { value, unit: 'ml' };
+
+
+    // --- FIXED: DEDUCT INVENTORY WITH PROPER UNIT CONVERSION ---
+    function deductInventoryWithConversion({
+        inventoryQty, inventoryUnit, orderQty, orderUnit, baseUnit, piecesPerBox
+    }) {
+        // Convert both inventory and order to base unit using the conversion map
+        const invBase = toBaseUnit(inventoryQty, inventoryUnit, piecesPerBox);
+        const orderBase = toBaseUnit(orderQty, orderUnit, piecesPerBox);
+        let newBase = invBase - orderBase;
+        if (newBase < 0) newBase = 0;
+        // For display
+        const display = fromBaseUnit(newBase, baseUnit, piecesPerBox);
+        // Always show 2 decimal places for kg/L/box, integer for g/ml/pcs
+        let displayValue = display.value;
+        if (['kg', 'L', 'box'].includes(display.unit)) {
+            displayValue = (+display.value).toFixed(2).replace(/\.00$/, '');
+        }
+        return {
+            stockBase: newBase,
+            stockDisplay: `${displayValue} ${display.unit}`,
+            value: +displayValue,
+            unit: display.unit
+        };
     }
-    if (baseUnit === 'pcs') {
-        return { value, unit: 'pcs' };
+
+    // --- FIXED: UNIVERSAL INVENTORY DEDUCTION LOGIC ---
+    function convertToBase(value, unit) {
+        unit = unit.toLowerCase();
+        if (unit === 'kg') return value * 1000; // to grams
+        if (unit === 'g') return value;
+        if (unit === 'l') return value * 1000; // to milliliters
+        if (unit === 'ml') return value;
+        if (unit === 'pcs' || unit === 'piece' || unit === 'pieces') return value;
+        throw new Error('Unsupported unit: ' + unit);
     }
-    throw new Error('Unsupported base unit: ' + baseUnit);
-}
 
-function deductInventoryBase(item, deduction, deductionUnit) {
-    // item: { quantity, unit } (unit must be base: g, ml, pcs)
-    // deduction: number, deductionUnit: string (can be kg, g, L, ml, pcs)
-    const deductionInBase = convertToBase(deduction, deductionUnit);
-    let newStock = item.quantity - deductionInBase;
-    if (newStock < 0) newStock = 0;
-    item.quantity = newStock; // always store in base
-    // item.unit should always be base (g, ml, pcs)
-}
+    function convertFromBase(value, baseUnit) {
+        if (baseUnit === 'g') {
+            if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'kg' };
+            return { value, unit: 'g' };
+        }
+        if (baseUnit === 'ml') {
+            if (value >= 1000) return { value: +(value / 1000).toFixed(2), unit: 'L' };
+            return { value, unit: 'ml' };
+        }
+        if (baseUnit === 'pcs') {
+            return { value, unit: 'pcs' };
+        }
+        throw new Error('Unsupported base unit: ' + baseUnit);
+    }
 
-// Format stock for display
-function getDisplayStock(quantity, baseUnit) {
+    function deductInventoryBase(item, deduction, deductionUnit) {
+        // item: { quantity, unit } (unit must be base: g, ml, pcs)
+        // deduction: number, deductionUnit: string (can be kg, g, L, ml, pcs)
+        const deductionInBase = convertToBase(deduction, deductionUnit);
+        let newStock = item.quantity - deductionInBase;
+        if (newStock < 0) newStock = 0;
+        item.quantity = newStock; // always store in base
+        // item.unit should always be base (g, ml, pcs)
+    }
 
-    return convertFromBase(quantity, baseUnit);
-}
+    // Format stock for display
+    function getDisplayStock(quantity, baseUnit) {
+
+        return convertFromBase(quantity, baseUnit);
+    }
 }); // <-- Close DOMContentLoaded event listener

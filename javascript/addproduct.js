@@ -1,13 +1,13 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Add Product page loaded, initializing Firebase...');
-    
-   
+
+
     let selectedIngredients = [];
     let currentIngredient = null;
-    
-   
+
+
     function waitForFirebase() {
-       
+
         if (window.isFirebaseReady && window.isFirebaseReady()) {
             console.log('Firebase is ready from main.js!');
             initializeAddProduct();
@@ -22,12 +22,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initializeAddProduct() {
         console.log('Initializing add product system...');
-        
-       
+
+
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-       
+
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 console.log('User authenticated:', user.email);
@@ -46,13 +46,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                
+
                 firebase.auth().signOut().then(() => {
                     console.log('User signed out successfully');
                     window.location.href = '../index.html';
                 }).catch((error) => {
                     console.error('Sign out error:', error);
-                   
+
                     window.location.href = '../index.html';
                 });
             });
@@ -62,22 +62,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadInventoryIngredients() {
         console.log('Loading inventory ingredients from Firebase...');
         const ingredientsTags = document.getElementById('ingredientsTags');
-        
+
         if (!ingredientsTags) {
             console.error('Ingredients tags container not found');
             return;
         }
 
-       
+
         ingredientsTags.innerHTML = '<div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin"></i> Loading ingredients...</div>';
 
-       
+
         const db = firebase.firestore();
-        
+
         db.collection('inventory').get()
             .then((querySnapshot) => {
                 console.log('Firebase inventory query completed, documents found:', querySnapshot.size);
-                
+
                 if (querySnapshot.empty) {
                     console.log('Inventory collection is empty');
                     ingredientsTags.innerHTML = `
@@ -121,12 +121,12 @@ document.addEventListener('DOMContentLoaded', function () {
         button.className = 'ingredient-tag';
         button.setAttribute('data-ingredient', data.name);
         button.setAttribute('data-doc-id', docId);
-        
-       
+
+
         const stock = data.quantity || 0;
         let statusClass = '';
         let statusText = '';
-        
+
         if (stock === 0) {
             statusClass = 'empty';
             statusText = 'Empty';
@@ -137,8 +137,8 @@ document.addEventListener('DOMContentLoaded', function () {
             statusClass = 'steady';
             statusText = 'In Stock';
         }
-        
-       
+
+
         button.innerHTML = `
             <div class="ingredient-tag-content">
                 <div class="ingredient-name">${data.name}</div>
@@ -148,12 +148,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
         `;
-        
-       
-        button.addEventListener('click', function() {
+
+
+        button.addEventListener('click', function () {
             showIngredientDetail(docId, data);
         });
-        
+
         return button;
     }
 
@@ -162,28 +162,28 @@ document.addEventListener('DOMContentLoaded', function () {
         const detailTitle = document.getElementById('ingredientDetailTitle');
         const quantityInput = document.getElementById('ingredientQuantity');
         const unitText = document.querySelector('.unit-text');
-        
+
         if (!detailCard || !detailTitle || !quantityInput || !unitText) {
             console.error('Ingredient detail elements not found');
             return;
         }
 
-       
+
         currentIngredient = {
             docId: docId,
             name: data.name,
             unitOfMeasure: data.unitOfMeasure || 'pieces'
         };
 
-       
+
         detailTitle.textContent = data.name;
         quantityInput.value = '1';
         unitText.textContent = data.unitOfMeasure || 'pieces';
-        
-       
+
+
         detailCard.style.display = 'block';
-        
-       
+
+
         document.querySelectorAll('.ingredient-tag').forEach(tag => {
             tag.classList.remove('active');
             if (tag.getAttribute('data-ingredient') === data.name) {
@@ -193,25 +193,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setupEventListeners() {
-       
+
         const addIngredientBtn = document.getElementById('addIngredientBtn');
         if (addIngredientBtn) {
             addIngredientBtn.addEventListener('click', addIngredientToProduct);
         }
 
-       
+
         const saveProductBtn = document.getElementById('saveProductBtn');
         if (saveProductBtn) {
             saveProductBtn.addEventListener('click', saveProductToFirebase);
         }
 
-       
+
         const closeIngredientBtn = document.getElementById('btnCloseIngredient');
         if (closeIngredientBtn) {
             closeIngredientBtn.addEventListener('click', closeIngredientDetail);
         }
 
-       
+
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function (e) {
@@ -220,13 +220,13 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-       
+
         setupPhotoUpload();
-        
-       
+
+
         const testCloudinaryBtn = document.getElementById('testCloudinaryBtn');
         if (testCloudinaryBtn) {
-            testCloudinaryBtn.addEventListener('click', function() {
+            testCloudinaryBtn.addEventListener('click', function () {
                 console.log('🧪 Testing Cloudinary connection...');
                 if (window.cloudinaryWidget) {
                     console.log('✅ Cloudinary widget available');
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const changePhotoBtn = document.getElementById('changePhotoBtn');
 
         if (photoPreview && previewImage && uploadPlaceholder && changePhotoBtn) {
-           
+
             console.log('Photo upload setup complete - handled by cloud.js');
         }
     }
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-   
+
     window.removeIngredient = removeIngredient;
 
     function closeIngredientDetail() {
@@ -374,12 +374,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (detailCard) {
             detailCard.style.display = 'none';
         }
-        
-       
+
+
         document.querySelectorAll('.ingredient-tag').forEach(tag => {
             tag.classList.remove('active');
         });
-        
+
         currentIngredient = null;
     }
 
@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const description = document.getElementById('addProductDescription').value.trim();
         const photoPreview = document.getElementById('previewImage');
 
-       
+
         if (!name) {
             showMessage('Please enter a product name.', 'error');
             return;
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-       
+
         const saveBtn = document.getElementById('saveProductBtn');
         const originalText = saveBtn.textContent;
         saveBtn.textContent = 'Saving...';
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const db = firebase.firestore();
         const batch = db.batch();
 
-       
+
         const productData = {
             name: name,
             category: category,
@@ -430,11 +430,11 @@ document.addEventListener('DOMContentLoaded', function () {
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-       
+
         const productRef = db.collection('menu').doc();
         batch.set(productRef, productData);
 
-       
+
 
         // --- Use inventory.js conversion helpers to always deduct in base units ---
         // Assumes inventory.js is loaded globally (functions: convertToBase, deductInventoryBase)
@@ -464,16 +464,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-       
+
         batch.commit()
             .then(() => {
                 console.log('Product saved successfully to Firebase');
                 showMessage('Product saved successfully! Redirecting to menu...', 'success');
-                
-               
+
+
                 resetForm();
-                
-               
+
+
                 setTimeout(() => {
                     window.location.href = '/html/menu.html';
                 }, 2000);
@@ -481,32 +481,32 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch((error) => {
                 console.error('Error saving product:', error);
                 showMessage('Error saving product. Please try again.', 'error');
-                
-               
+
+
                 saveBtn.textContent = originalText;
                 saveBtn.disabled = false;
             });
     }
 
     function resetForm() {
-       
+
         document.getElementById('addProductName').value = '';
         document.getElementById('addProductCategory').value = '';
         document.getElementById('addProductPrice').value = '';
         document.getElementById('addProductDescription').value = '';
-        
-       
+
+
         const previewImage = document.getElementById('previewImage');
         const uploadPlaceholder = document.getElementById('uploadPlaceholder');
         const changePhotoBtn = document.getElementById('changePhotoBtn');
-        
+
         if (previewImage && uploadPlaceholder && changePhotoBtn) {
             previewImage.style.display = 'none';
             uploadPlaceholder.style.display = 'block';
             changePhotoBtn.style.display = 'none';
         }
-        
-       
+
+
         selectedIngredients = [];
         updateIngredientsTable();
         closeIngredientDetail();
@@ -526,13 +526,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showMessage(message, type = 'info') {
-       
+
         const existingMessage = document.querySelector('.addproduct-message');
         if (existingMessage) {
             existingMessage.remove();
         }
-        
-       
+
+
         const messageDiv = document.createElement('div');
         messageDiv.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} addproduct-message`;
         messageDiv.style.cssText = `
@@ -546,11 +546,11 @@ document.addEventListener('DOMContentLoaded', function () {
             <strong>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</strong> ${message}
             <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
         `;
-        
-       
+
+
         document.body.appendChild(messageDiv);
-        
-       
+
+
         setTimeout(() => {
             if (messageDiv.parentElement) {
                 messageDiv.remove();
@@ -558,10 +558,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 5000);
     }
 
-   
+
     window.removeIngredient = removeIngredient;
 
-   
+
     function setupUnitSelection() {
         document.querySelectorAll('.unit-measure-dropdown .dropdown-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -572,10 +572,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-   
+
     setupUnitSelection();
 
-   
+
     waitForFirebase();
 });
 
@@ -599,7 +599,7 @@ function setupIngredientSearch() {
     const tagsContainer = document.getElementById('ingredientsTags');
     if (!searchInput || !tagsContainer) return;
 
-    searchInput.addEventListener('input', function() {
+    searchInput.addEventListener('input', function () {
         const searchTerm = searchInput.value.trim().toLowerCase();
         // Show/hide ingredient tags based on search
         tagsContainer.querySelectorAll('.ingredient-tag').forEach(tag => {
