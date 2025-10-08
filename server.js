@@ -929,6 +929,47 @@ app.get('/api/test-signature', (req, res) => {
   });
 });
 
+// Comprehensive environment debug endpoint
+app.get('/api/debug-env', (req, res) => {
+  try {
+    console.log('🔍 Environment debug endpoint called');
+    
+    res.json({
+      success: true,
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        envSources: {
+          LALAMOVE_API_SECRET: {
+            fromLALAMOVE_API_SECRET: process.env.LALAMOVE_API_SECRET ? 'SET' : 'NOT SET',
+            fromLALAMOVE_SECRET: process.env.LALAMOVE_SECRET ? 'SET' : 'NOT SET',
+            actualValuePreview: API_SECRET ? API_SECRET.substring(0, 15) + '...' : 'NOT SET',
+            fullLength: API_SECRET ? API_SECRET.length : 0,
+            expectedLength: 77 // sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr
+          },
+          LALAMOVE_API_KEY: {
+            value: API_KEY,
+            source: process.env.LALAMOVE_API_KEY ? 'ENV' : 'HARDCODED'
+          }
+        },
+        allLalamoveEnvVars: Object.keys(process.env).filter(key => key.includes('LALAMOVE')),
+        configUsed: {
+          IS_PRODUCTION: IS_PRODUCTION,
+          LALA_HOST: LALA_HOST,
+          API_KEY: API_KEY,
+          API_SECRET_LENGTH: API_SECRET ? API_SECRET.length : 0,
+          MARKET: MARKET
+        }
+      }
+    });
+  } catch (error) {
+    console.error('❌ Environment debug error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 /* ====== Lalamove Webhook Route ====== */
 app.post('/api/webhook/lalamove', (req, res) => {
   console.log('[webhook] Lalamove webhook received');
