@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Could not get user display name, using email prefix');
                 }
                 
+                // Update baseUrl to ensure we're using the correct API endpoint
+                window.sendGridOTPService.updateBaseUrl();
+                
                 const result = await window.sendGridOTPService.sendEmailOTP(email, userName);
                 
                 if (result.success) {
@@ -109,16 +112,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     console.log('✅ SendGrid OTP sent successfully for password reset');
                     
-                    // Show OTP if email failed to send
-                    if (!result.emailSent && result.otp) {
-                        // OTP popup removed - OTP is now handled server-side
-                        console.log(`Password Reset OTP Code: ${result.otp} (Email not sent)`);
+                    // Check if email was actually sent
+                    if (result.emailSent) {
+                        // Email sent successfully - show success message
+                        showSuccess('Password reset link has been sent to your email!');
+                    } else {
+                        // Email failed to send but OTP generated - show warning for development
+                        console.warn('⚠️ Email service unavailable. OTP generated for testing:', result.otp);
+                        showSuccess('OTP generated! Check console for code (Email service unavailable).');
                     }
                     
-                    // Show success message
-                    showSuccess();
-                    
-                    // Redirect to OTP verification page
+                    // Always redirect to OTP verification page (for testing)
                     setTimeout(() => {
                         window.location.href = 'verify-password-reset-otp.html';
                     }, 2000);
@@ -193,7 +197,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show success message
-    function showSuccess() {
+    function showSuccess(message) {
+        if (message) {
+            // Update success message text if provided
+            const successText = successMessage.querySelector('p') || successMessage;
+            if (successText.tagName === 'P') {
+                successText.textContent = message;
+            }
+        }
+        
         successMessage.style.display = 'block';
         errorMessage.style.display = 'none';
         

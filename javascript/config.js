@@ -5,11 +5,36 @@
 
 // API Base URL Configuration
 const API_CONFIG = {
-    // Development
-    // BASE_URL: 'http://localhost:5001',
-    
-    // Production
-    BASE_URL: 'https://viktoriasbistro.restaurant',
+    // Auto-detect environment and set appropriate base URL
+    BASE_URL: (() => {
+        // Check if we're running locally
+        const isLocal = window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1' ||
+                      window.location.hostname === '0.0.0.0';
+        
+        // Check if we're on a development port
+        const isDevPort = window.location.port === '5500' || 
+                         window.location.port === '3000' || 
+                         window.location.port === '5001';
+        
+        // Check if we're on the production domain
+        const isProduction = window.location.hostname === 'viktoriasbistro.restaurant' ||
+                            window.location.hostname.includes('viktoriasbistro') ||
+                            window.location.hostname === 'www.viktoriasbistro.restaurant';
+        
+        // Use production settings for production domain
+        if (isProduction) {
+            console.log('🚀 Production environment detected, using production server');
+            return 'https://viktoriasbistro.restaurant';
+        } else if (isLocal && isDevPort) {
+            console.log('🔧 Development environment detected, using local server');
+            return 'http://localhost:5001';
+        } else {
+            // For all other environments, use production server
+            console.log('🚀 Production mode: using production server');
+            return 'https://viktoriasbistro.restaurant';
+        }
+    })(),
     
     // API Endpoints
     ENDPOINTS: {

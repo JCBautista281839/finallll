@@ -104,8 +104,13 @@ class SendGridOTPService {
         } catch (error) {
             console.error('❌ SendGrid OTP sending error:', error);
             
-            // Fallback to local generation
-            console.log('🔄 Generating local fallback OTP due to server error');
+            // Check if it's a 503 error (server unavailable)
+            if (error.message && error.message.includes('503')) {
+                console.log('🔄 Server unavailable (503), generating local fallback OTP');
+            } else {
+                console.log('🔄 Generating local fallback OTP due to server error');
+            }
+            
             const otp = this.generateOTP();
             const expiry = Date.now() + (this.otpExpiryMinutes * 60 * 1000);
             
@@ -118,7 +123,8 @@ class SendGridOTPService {
                 otp: otp,
                 expiry: expiry,
                 message: 'OTP generated locally (server unavailable)',
-                emailSent: false
+                emailSent: false,
+                serverError: error.message
             };
         }
     }
@@ -278,12 +284,14 @@ class SendGridOTPService {
         const storedEmail = localStorage.getItem('emailOTPEmail');
         const storedOTP = localStorage.getItem('emailOTP');
         const storedExpiry = localStorage.getItem('emailOTPExpiry');
+        const isVerified = sessionStorage.getItem('passwordResetVerified');
         
         if (!storedOTP || !storedExpiry) {
             return {
                 hasOTP: false,
                 isExpired: false,
-                email: storedEmail
+                email: storedEmail,
+                isVerified: isVerified === 'true'
             };
         }
         
@@ -294,7 +302,8 @@ class SendGridOTPService {
             isExpired: isExpired,
             email: storedEmail,
             otp: storedOTP,
-            expiry: storedExpiry
+            expiry: storedExpiry,
+            isVerified: isVerified === 'true'
         };
     }
 
