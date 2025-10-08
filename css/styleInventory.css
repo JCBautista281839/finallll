@@ -1,29 +1,29 @@
 @font-face {
-  font-family: 'PoppinsMedium';
-  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsMedium';
+    src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsBlack';
-  src: url('../src/fonts/Poppins-Black.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsBlack';
+    src: url('../src/fonts/Poppins-Black.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsRegular';
-  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsRegular';
+    src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsLight';
-  src: url('../src/fonts/Poppins-Light.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsLight';
+    src: url('../src/fonts/Poppins-Light.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 .main-content {
@@ -48,27 +48,27 @@
 }
 
 .inventory-title {
-   font-size: 2.5rem;
-   font-family: 'PoppinsRegular';
-   color: #760000;
-   margin: 0;
-   margin-top: -15px;
-   margin-bottom: -5px;
-   margin-left: -16px;
+    font-size: 2.5rem;
+    font-family: 'PoppinsRegular';
+    color: #760000;
+    margin: 0;
+    margin-top: -15px;
+    margin-bottom: -5px;
+    margin-left: -16px;
 }
 
 .inventory-subtitle {
-  font-size: 1rem;
-  font-family: 'PoppinsRegular';
-  color: #898989;
-  margin-left: -15px;
+    font-size: 1rem;
+    font-family: 'PoppinsRegular';
+    color: #898989;
+    margin-left: -15px;
 }
 
 .action-bar {
-   font-family: 'PoppinsLight';
-   margin-top: -10px;
-   height: 40px;
-   color: black !important;
+    font-family: 'PoppinsLight';
+    margin-top: -10px;
+    height: 40px;
+    color: black !important;
 }
 
 .action-buttons.d-flex.gap-3.me-4 {
@@ -91,12 +91,12 @@
     background-color: transparent;
 }
 
-.btn-outline-primary{
+.btn-outline-primary {
     color: #545454;
     border: none;
 }
 
-.btn-outline-primary:hover{
+.btn-outline-primary:hover {
     color: #000000;
     border: none;
     margin-left: -5px;
@@ -115,7 +115,7 @@
     background-color: transparent;
 }
 
-.btn-outline-info{
+.btn-outline-info {
     color: #545454;
     border: none;
 }
@@ -127,21 +127,21 @@
     background-color: transparent;
 }
 
-.report-icon{
+.report-icon {
     width: 22px;
     height: 22px;
     margin-right: 1px;
     margin-bottom: 3px;
 }
 
-.upload-icon{
+.upload-icon {
     width: 26px;
     height: 26px;
     margin-right: 1px;
     margin-bottom: 2px;
 }
 
-.edit-icon{
+.edit-icon {
     width: 22px;
     height: 22px;
     margin-right: 1px;
@@ -149,7 +149,7 @@
     margin-bottom: 3px;
 }
 
-.filter-icon{
+.filter-icon {
     width: 22px;
     height: 22px;
     margin-right: 1px;
@@ -157,7 +157,13 @@
     margin-bottom: 3px;
 }
 
-.dropdown-menu{
+#inventoryStatusDropdown {
+    border: none;
+    font-family: 'PoppinsLight';
+    width: 70px !important;
+}
+
+.dropdown-menu {
     font-family: 'PoppinsLight';
     font-size: 15px;
     border-radius: 14px;
@@ -238,7 +244,7 @@
     margin-left: -10px;
 }
 
-.inventory-table td:first-child{
+.inventory-table td:first-child {
     text-transform: capitalize;
 }
 
@@ -388,7 +394,8 @@
     color: #6c757d;
 }
 
-.ingredient-input, .ingredient-select {
+.ingredient-input,
+.ingredient-select {
     width: 100%;
     border: 2px solid #e5e7eb;
     background: #ffffff;
@@ -410,15 +417,16 @@
 #ingredientName::placeholder {
     font-size: 15px;
     color: #9ca3af;
- 
+
 }
 
 .ingredient-select {
     min-height: 48px;
 }
 
-.ingredient-input:focus, .ingredient-select:focus { 
-    border-color: #ced4da; 
+.ingredient-input:focus,
+.ingredient-select:focus {
+    border-color: #ced4da;
 }
 
 .ingredient-actions {
@@ -439,8 +447,8 @@
     cursor: pointer;
 }
 
-.ingredient-save-btn:hover { 
-    filter: brightness(0.95); 
+.ingredient-save-btn:hover {
+    filter: brightness(0.95);
 }
 
 .ingredient-delete-btn {
@@ -484,15 +492,15 @@
         gap: 1.5rem;
         align-items: stretch;
     }
-    
+
     .action-bar {
         justify-content: center;
     }
-    
+
     .search-box {
         width: 100%;
     }
-    
+
     .action-buttons {
         justify-content: center;
     }
@@ -503,34 +511,34 @@
         margin-left: 0;
         border-radius: 0;
     }
-    
+
     .header-action-row {
         padding: 1.5rem;
     }
-    
+
     .inventory-title {
         font-size: 2rem;
     }
-    
+
     .action-buttons {
         flex-direction: column;
         gap: 0.75rem;
     }
-    
+
     .action-btn {
         width: 100%;
     }
-    
+
     .inventory-table th,
     .inventory-table td {
         padding: 1rem;
         font-size: 0.9rem;
     }
-    
+
     .status-legend {
         gap: 0.25rem;
     }
-    
+
     .status-item {
         font-size: 0.8rem;
     }
@@ -540,19 +548,19 @@
     .header-action-row {
         padding: 1rem;
     }
-    
+
     .inventory-title {
         font-size: 1.75rem;
     }
-    
+
     .inventory-subtitle {
         font-size: 1rem;
     }
-    
+
     .inventory-table-container {
         border-radius: 8px;
     }
-    
+
     .inventory-table th,
     .inventory-table td {
         padding: 0.75rem;

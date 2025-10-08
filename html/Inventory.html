@@ -98,13 +98,12 @@
                     <img src="../src/Icons/user.png" alt="user" class="nav-icon">
                     <div class="nav-text">Users</div>
                 </a>
+
+                <div style="flex-grow: 1;"></div>
                 <a href="../html/Settings.html" class="nav-link text-white" title="Settings">
                     <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
                     <div class="nav-text">Settings</div>
                 </a>
-
-                <div style="flex-grow: 1;"></div>
-
                 <a href="#" id="logoutBtn" class="nav-link text-white" title="Logout">
                     <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
                     <div class="nav-text">Logout</div>
@@ -175,10 +174,12 @@
                                 <li><a class="dropdown-item" href="#" id="inventoryEditAction">Edit Selected</a></li>
                             </ul>
                         </div>
-                        <button class="btn btn-outline-info action-btn">
-                            <img src="../src/Icons/settings-sliders.png" alt="Filter" class="filter-icon">
-                            Filter
-                        </button>
+                        <select id="inventoryStatusDropdown" class="form-select w-auto ms-2">
+                            <option value="all">All</option>
+                            <option value="steady">Steady</option>
+                            <option value="restock">Restock</option>
+                            <option value="empty">Empty</option>
+                        </select>
                     </div>
 
                     <div class="search-container">
