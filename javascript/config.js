@@ -19,7 +19,8 @@ const API_CONFIG = {
         
         // Check if we're on the production domain
         const isProduction = window.location.hostname === 'viktoriasbistro.restaurant' ||
-                            window.location.hostname.includes('viktoriasbistro');
+                            window.location.hostname.includes('viktoriasbistro') ||
+                            window.location.hostname === 'www.viktoriasbistro.restaurant';
         
         if (isLocal && isDevPort) {
             console.log('🔧 Development environment detected, using local server');

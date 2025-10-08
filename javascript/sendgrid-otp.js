@@ -284,12 +284,14 @@ class SendGridOTPService {
         const storedEmail = localStorage.getItem('emailOTPEmail');
         const storedOTP = localStorage.getItem('emailOTP');
         const storedExpiry = localStorage.getItem('emailOTPExpiry');
+        const isVerified = sessionStorage.getItem('passwordResetVerified');
         
         if (!storedOTP || !storedExpiry) {
             return {
                 hasOTP: false,
                 isExpired: false,
-                email: storedEmail
+                email: storedEmail,
+                isVerified: isVerified === 'true'
             };
         }
         
@@ -300,7 +302,8 @@ class SendGridOTPService {
             isExpired: isExpired,
             email: storedEmail,
             otp: storedOTP,
-            expiry: storedExpiry
+            expiry: storedExpiry,
+            isVerified: isVerified === 'true'
         };
     }
 

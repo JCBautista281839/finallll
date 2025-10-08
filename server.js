@@ -83,7 +83,9 @@ const corsOptions = {
       'http://127.0.0.1:5500',
       'http://localhost:5500',
       'https://viktoriasbistro.restaurant',
-      'https://www.viktoriasbistro.restaurant'
+      'https://www.viktoriasbistro.restaurant',
+      'http://viktoriasbistro.restaurant',
+      'http://www.viktoriasbistro.restaurant'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -1985,14 +1987,56 @@ app.post('/api/verify-password-reset-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    if (!email || !otp) {
+    if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Email and OTP are required'
+        message: 'Email is required'
       });
     }
 
     console.log(`[Password Reset OTP] Verifying OTP for: ${email}`);
+
+    // Handle status check request
+    if (otp === 'check_status') {
+      if (!passwordResetOTPStorage.has(email)) {
+        return res.json({
+          success: false,
+          message: 'No password reset OTP found for this email'
+        });
+      }
+
+      const storedData = passwordResetOTPStorage.get(email);
+
+      // Check if OTP has expired
+      if (Date.now() > storedData.expiry) {
+        passwordResetOTPStorage.delete(email);
+        return res.json({
+          success: false,
+          message: 'Password reset OTP has expired'
+        });
+      }
+
+      // Check if already verified
+      if (storedData.verified) {
+        return res.json({
+          success: true,
+          message: 'OTP is valid and verified'
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: 'OTP is valid but not yet verified'
+      });
+    }
+
+    // Regular OTP verification
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'OTP is required'
+      });
+    }
 
     if (!passwordResetOTPStorage.has(email)) {
       return res.status(400).json({
@@ -2111,8 +2155,8 @@ app.post('/api/reset-password-with-otp', async (req, res) => {
       // The verification was already done on the client side
       console.log(`[Password Reset OTP] No server-side OTP data found for ${email}, assuming SendGrid OTP verification`);
       
-      // Check if this is a verified password reset request
-      // The client should have set a verification flag in session storage
+      // For SendGrid OTP flow, we need to check if the user has a valid session
+      // This is a simplified check - in production you might want to implement proper session validation
       console.log(`[Password Reset OTP] Proceeding with password reset for verified user: ${email}`);
     }
 

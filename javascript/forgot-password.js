@@ -101,6 +101,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Could not get user display name, using email prefix');
                 }
                 
+                // Update baseUrl to ensure we're using the correct API endpoint
+                window.sendGridOTPService.updateBaseUrl();
+                
                 const result = await window.sendGridOTPService.sendEmailOTP(email, userName);
                 
                 if (result.success) {
