@@ -257,17 +257,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
           const user = firebase.auth().currentUser;
           const customerId = user.uid;
-          
+
           console.log('[shipping.js] Loading cart data from Firestore for user:', customerId);
-          
+
           // Wait for Firestore to be ready
           if (window.firestoreCart) {
             await window.firestoreCart.waitForFirebase();
             const cartItems = await window.firestoreCart.getCartItems(customerId);
-            
+
             if (cartItems.length > 0) {
               console.log('[shipping.js] Cart items from Firestore:', cartItems);
-              
+
               // Convert Firestore cart items to the format expected by updateOrderForm
               const cartData = {};
               cartItems.forEach(item => {
@@ -277,13 +277,13 @@ document.addEventListener('DOMContentLoaded', function () {
                   quantity: item.quantity
                 };
               });
-              
+
               console.log('[shipping.js] Converted cart data:', cartData);
               return cartData;
             }
           }
         }
-        
+
         // Fallback to sessionStorage
         const cartData = sessionStorage.getItem('cartData');
         console.log('[shipping.js] Loading cart data from sessionStorage:', cartData);
@@ -292,12 +292,12 @@ document.addEventListener('DOMContentLoaded', function () {
           console.log('[shipping.js] Parsed cart data:', parsedData);
           return parsedData;
         }
-        
+
         console.log('[shipping.js] No cart data found in Firestore or sessionStorage');
         return {};
       } catch (error) {
         console.error('[shipping.js] Error loading cart data:', error);
-        
+
         // Fallback to sessionStorage on error
         const cartData = sessionStorage.getItem('cartData');
         if (cartData) {
@@ -370,22 +370,22 @@ document.addEventListener('DOMContentLoaded', function () {
       // Check if delivery is available or if we're in pickup-only mode
       const useRealDelivery = sessionStorage.getItem('useRealDelivery') !== 'false';
       const storedQuotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
-      
+
       // If delivery is not available, hide the delivery option and show a notice
       if (!useRealDelivery || (storedQuotationData.data && storedQuotationData.data.pickupOnly)) {
         console.log('[shipping.js] Delivery not available, enabling pickup-only mode');
-        
+
         // Hide the delivery option
         if (lalamoveOption) {
           lalamoveOption.style.display = 'none';
         }
-        
+
         // Force pickup selection
         if (pickupRadio) {
           pickupRadio.checked = true;
           pickupRadio.disabled = true; // User can't change this
         }
-        
+
         // Add a notice explaining why delivery is not available
         const noticeElement = document.createElement('div');
         noticeElement.style.cssText = `
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <small>Due to address verification issues, delivery service is not available for your location. 
           You can collect your order from our store once it's ready.</small>
         `;
-        
+
         // Insert notice after shipping options
         const shippingContainer = pickupOption.parentElement;
         if (shippingContainer) {
