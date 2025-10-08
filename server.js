@@ -264,12 +264,25 @@ function clearAllRateLimits() {
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
-  // Lalamove HMAC signature format: time + method + path + "" + body
-  // Note: No \r\n characters - that was the issue!
-  const raw = `${timestamp}${method}${path}${body}`;
-  console.log('[HMAC] Raw string for signature:', JSON.stringify(raw));
-  const signature = crypto.createHmac('sha256', secret).update(raw, 'utf8').digest('hex');
-  console.log('[HMAC] Generated signature:', signature);
+  // Lalamove HMAC signature format (from official documentation):
+  // Raw string: timestamp + method + path + queryString + body
+  // For POST requests to /v3/quotations, queryString is typically empty
+  const queryString = ""; // No query parameters for this endpoint
+  const rawString = timestamp + method + path + queryString + body;
+
+  console.log('[HMAC] Signature components:');
+  console.log('  timestamp:', timestamp);
+  console.log('  method:', method);
+  console.log('  path:', path);
+  console.log('  queryString:', queryString, '(empty)');
+  console.log('  body preview:', body.substring(0, 200) + '...');
+  console.log('[HMAC] Raw string for signature:', rawString.substring(0, 200) + '...');
+
+  const signature = crypto.createHmac('sha256', secret)
+    .update(rawString, 'utf8')
+    .digest('hex');
+
+  console.log('[HMAC] Final signature:', signature);
   return signature;
 }
 
@@ -732,8 +745,19 @@ app.post('/api/quotation', async (req, res) => {
     // Update the body with normalized stops
     bodyObj.data.stops = normalizedStops;
     const body = JSON.stringify(bodyObj);
-    console.log('[proxy] Body sent to Lalamove:', body);
+    console.log('[proxy] Body sent to Lalamove (length=' + body.length + '):', body);
+
+    // Verify the body is valid JSON
+    try {
+      JSON.parse(body);
+      console.log('[proxy] ✅ Body is valid JSON');
+    } catch (e) {
+      console.error('[proxy] ❌ Body is NOT valid JSON:', e.message);
+      return res.status(400).json({ error: 'Invalid JSON body generated' });
+    }
+
     const ts = Date.now().toString();
+    console.log('[proxy] Timestamp generated:', ts, '(length:', ts.length, ')');
 
     // Debug the signature generation
     console.log('[proxy] Signature generation details:');
@@ -742,6 +766,7 @@ app.post('/api/quotation', async (req, res) => {
     console.log('- Method: POST');
     console.log('- Path: /v3/quotations');
     console.log('- Body length:', body.length);
+    console.log('- Body first 100 chars:', body.substring(0, 100));
 
     const signature = makeSignature(API_SECRET, ts, 'POST', '/v3/quotations', body);
 
@@ -753,11 +778,20 @@ app.post('/api/quotation', async (req, res) => {
       'Market': MARKET
     };
 
-    console.log('[proxy] Authorization header:', authHeader);
-    console.log('[proxy] All headers:', headers);
+    console.log('[proxy] Final request details:');
+    console.log('- URL:', url);
+    console.log('- Authorization header:', authHeader);
+    console.log('- All headers:', headers);
+    console.log('- Body being sent via axios:', body === JSON.stringify(bodyObj) ? '✅ Same' : '❌ Different');
 
-    console.log('[proxy] forwarding to Lalamove /v3/quotations', { url, headers, bodyObj });
-    const response = await axios.post(url, body, { headers });
+    console.log('[proxy] forwarding to Lalamove /v3/quotations');
+    const response = await axios.post(url, body, {
+      headers,
+      timeout: 30000, // 30 second timeout
+      validateStatus: function (status) {
+        return status >= 200 && status < 600; // Accept all responses for debugging
+      }
+    });
     console.log('[proxy] lalamove response status', response.status);
     res.status(response.status).json(response.data);
   } catch (err) {
@@ -845,6 +879,45 @@ app.post('/api/place-order', async (req, res) => {
     console.error('[proxy] place-order error', err?.response?.data || err.message);
     res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
   }
+});
+
+// Debug endpoint to test signature generation
+app.get('/api/test-signature', (req, res) => {
+  console.log('[debug] Testing signature generation...');
+
+  const testBody = '{"data":{"serviceType":"MOTORCYCLE","language":"en_PH","stops":[{"coordinates":{"lat":"14.445755","lng":"120.923541"},"address":"Test Address 1"},{"coordinates":{"lat":"14.554729","lng":"121.024445"},"address":"Test Address 2"}]}}';
+  const timestamp = Date.now().toString();
+  const method = 'POST';
+  const path = '/v3/quotations';
+
+  console.log('[debug] Test parameters:');
+  console.log('- API_KEY:', API_KEY);
+  console.log('- API_SECRET (first 10 chars):', API_SECRET.substring(0, 10) + '...');
+  console.log('- LALA_HOST:', LALA_HOST);
+  console.log('- MARKET:', MARKET);
+  console.log('- timestamp:', timestamp);
+  console.log('- method:', method);
+  console.log('- path:', path);
+  console.log('- body:', testBody);
+
+  const signature = makeSignature(API_SECRET, timestamp, method, path, testBody);
+  const authHeader = `hmac ${API_KEY}:${timestamp}:${signature}`;
+
+  res.json({
+    success: true,
+    debug: {
+      apiKey: API_KEY,
+      apiSecretPreview: API_SECRET.substring(0, 10) + '...',
+      host: LALA_HOST,
+      market: MARKET,
+      timestamp,
+      method,
+      path,
+      bodyLength: testBody.length,
+      signature,
+      authHeader
+    }
+  });
 });
 
 /* ====== Lalamove Webhook Route ====== */
