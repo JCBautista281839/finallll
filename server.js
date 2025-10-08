@@ -542,8 +542,14 @@ app.post('/api/geocode', async (req, res) => {
       components: 'country:PH' // Restrict to Philippines only
     };
 
+    console.log('[geocode] Request URL:', url);
+    console.log('[geocode] Request params:', params);
+
     const response = await axios.get(url, { params });
     const data = response.data;
+
+    console.log('[geocode] Google Maps API response status:', data.status);
+    console.log('[geocode] Google Maps API response results count:', data.results ? data.results.length : 0);
 
     if (data.status !== 'OK') {
       console.error('[geocode] Geocoding failed:', data.status, data.error_message);
