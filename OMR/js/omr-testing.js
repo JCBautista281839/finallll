@@ -12,12 +12,9 @@ class OMRTestingSystem {
         this.isProcessing = false;
         this.debugMessages = [];
         this.apiBaseUrl = 'http://localhost:5003/api';
-<<<<<<< HEAD
-        
-=======
+
         this.webcamStream = null;
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         this.initializeElements();
         this.setupEventListeners();
         this.checkServerStatus();
@@ -37,8 +34,6 @@ class OMRTestingSystem {
         this.scanBtn = document.getElementById('scanBtn');
         this.clearBtn = document.getElementById('clearBtn');
 
-<<<<<<< HEAD
-=======
         // Webcam elements
         this.webcamBtn = document.getElementById('webcamBtn');
         this.webcamPreview = document.getElementById('webcamPreview');
@@ -47,7 +42,6 @@ class OMRTestingSystem {
         this.captureBtn = document.getElementById('captureBtn');
         this.closeWebcamBtn = document.getElementById('closeWebcamBtn');
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         // Full Scan Upload elements
         this.fullScanUploadArea = document.getElementById('fullScanUploadArea');
         this.fullScanPreview = document.getElementById('fullScanPreview');
@@ -56,11 +50,8 @@ class OMRTestingSystem {
         this.fullScanBrowseBtn = document.getElementById('fullScanBrowseBtn');
         this.fullScanProcessBtn = document.getElementById('fullScanProcessBtn');
         this.fullScanClearBtn = document.getElementById('fullScanClearBtn');
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
         // Debug: Check if elements exist
         console.log('Full Scan Upload Area:', this.fullScanUploadArea);
         console.log('Full Scan Browse Button:', this.fullScanBrowseBtn);
@@ -112,11 +103,9 @@ class OMRTestingSystem {
      */
     setupEventListeners() {
         // File upload events
-<<<<<<< HEAD
         this.browseBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        
-=======
+
         this.browseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.fileInput.click();
@@ -131,15 +120,11 @@ class OMRTestingSystem {
         this.captureBtn.addEventListener('click', () => this.captureWebcamImage());
         this.closeWebcamBtn.addEventListener('click', () => this.stopWebcam());
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         // Drag and drop events
         this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
         this.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
-<<<<<<< HEAD
         this.uploadArea.addEventListener('click', () => this.fileInput.click());
-=======
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 
         // Full Scan upload events
         this.fullScanBrowseBtn.addEventListener('click', () => this.fullScanFileInput.click());
@@ -191,11 +176,8 @@ class OMRTestingSystem {
     handleDrop(event) {
         event.preventDefault();
         this.uploadArea.classList.remove('dragover');
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
         const files = event.dataTransfer.files;
         if (files.length > 0) {
             this.processFile(files[0]);
@@ -225,34 +207,14 @@ class OMRTestingSystem {
         try {
             this.updateStatus('processing', 'Uploading...');
             this.addDebugMessage('Uploading file to backend...', 'info');
-<<<<<<< HEAD
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-=======
 
             const formData = new FormData();
             formData.append('file', file);
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
             const response = await fetch(`${this.apiBaseUrl}/upload`, {
                 method: 'POST',
                 body: formData
             });
-<<<<<<< HEAD
-            
-            if (!response.ok) {
-                throw new Error(`Upload failed: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.currentFilePath = result.data.filepath;
-                this.addDebugMessage(`File uploaded successfully: ${result.data.filename}`, 'success');
-                
-=======
 
             if (!response.ok) {
                 throw new Error(`Upload failed: ${response.status}`);
@@ -264,7 +226,6 @@ class OMRTestingSystem {
                 this.currentFilePath = result.data.filepath;
                 this.addDebugMessage(`File uploaded successfully: ${result.data.filename}`, 'success');
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                 // Create preview
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -274,20 +235,12 @@ class OMRTestingSystem {
                     this.addDebugMessage('Image preview generated', 'success');
                 };
                 reader.readAsDataURL(file);
-<<<<<<< HEAD
-                
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                 this.updateStatus('ready', 'File Ready');
             } else {
                 throw new Error(result.message || 'Upload failed');
             }
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         } catch (error) {
             this.addDebugMessage(`Upload error: ${error.message}`, 'error');
             this.showAlert(`Upload failed: ${error.message}`, 'error');
@@ -304,19 +257,14 @@ class OMRTestingSystem {
         this.fileInput.value = '';
         this.uploadArea.style.display = 'block';
         this.uploadPreview.style.display = 'none';
-<<<<<<< HEAD
-=======
         this.webcamPreview.style.display = 'none';
         this.stopWebcam();
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         this.resultsContent.innerHTML = this.getEmptyResultsHTML();
         this.addDebugMessage('Upload cleared', 'info');
         this.updateStatus('ready', 'Ready');
     }
 
     /**
-<<<<<<< HEAD
-=======
      * Start webcam
      */
     async startWebcam() {
@@ -428,7 +376,6 @@ class OMRTestingSystem {
     }
 
     /**
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
      * Handle Full Scan file selection
      */
     handleFullScanFileSelect(event) {
@@ -466,34 +413,14 @@ class OMRTestingSystem {
         try {
             this.updateStatus('processing', 'Uploading Full Scan Image...');
             this.addDebugMessage('Uploading Full Scan file to backend...', 'info');
-<<<<<<< HEAD
-            
-            const formData = new FormData();
-            formData.append('file', file);
-            
-=======
 
             const formData = new FormData();
             formData.append('file', file);
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
             const response = await fetch(`${this.apiBaseUrl}/upload`, {
                 method: 'POST',
                 body: formData
             });
-<<<<<<< HEAD
-            
-            if (!response.ok) {
-                throw new Error(`Upload failed: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.fullScanFilePath = result.data.filepath;
-                this.addDebugMessage(`Full Scan file uploaded successfully: ${result.data.filename}`, 'success');
-                
-=======
 
             if (!response.ok) {
                 throw new Error(`Upload failed: ${response.status}`);
@@ -505,7 +432,6 @@ class OMRTestingSystem {
                 this.fullScanFilePath = result.data.filepath;
                 this.addDebugMessage(`Full Scan file uploaded successfully: ${result.data.filename}`, 'success');
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                 // Create preview
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -515,20 +441,12 @@ class OMRTestingSystem {
                     this.addDebugMessage('Full Scan image preview generated', 'success');
                 };
                 reader.readAsDataURL(file);
-<<<<<<< HEAD
-                
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                 this.updateStatus('ready', 'Full Scan File Ready');
             } else {
                 throw new Error(result.message || 'Upload failed');
             }
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         } catch (error) {
             this.addDebugMessage(`Full Scan upload error: ${error.message}`, 'error');
             this.showAlert(`Full Scan upload failed: ${error.message}`, 'error');
@@ -560,11 +478,8 @@ class OMRTestingSystem {
 
         this.addDebugMessage('Starting basic image scan...', 'info');
         this.updateStatus('processing', 'Scanning...');
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
         // Simulate scan process
         setTimeout(() => {
             this.showScanResults({
@@ -609,11 +524,8 @@ class OMRTestingSystem {
             }
 
             const result = await response.json();
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
             if (result.success) {
                 this.hideLoading();
                 this.showScanResults({
@@ -667,11 +579,8 @@ class OMRTestingSystem {
             }
 
             const result = await response.json();
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
             if (result.success) {
                 this.hideLoading();
                 this.showScanResults({
@@ -704,11 +613,8 @@ class OMRTestingSystem {
     async performFullScan() {
         // Use Full Scan specific file if available, otherwise fall back to main upload
         const filePath = this.fullScanFilePath || this.currentFilePath;
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
         if (!filePath) {
             this.showAlert('Please upload an image first (use either the main upload area or the Full Scan upload area)', 'warning');
             return;
@@ -734,11 +640,8 @@ class OMRTestingSystem {
             }
 
             const result = await response.json();
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
             if (result.success) {
                 this.hideLoading();
                 this.showScanResults({
@@ -793,11 +696,8 @@ class OMRTestingSystem {
         // Add details based on result type
         Object.entries(result.details).forEach(([key, value]) => {
             const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
             if (key === 'selectedItemsDisplay') {
                 html += `<p class="mb-1"><strong>${formattedKey}:</strong></p><ul>`;
                 value.forEach(item => {
@@ -806,11 +706,8 @@ class OMRTestingSystem {
                 html += `</ul>`;
             } else if (key === 'debugImage') {
                 html += `<p class="mb-1"><strong>${formattedKey}:</strong> <a href="/api/results/${value}" target="_blank">${value}</a></p>`;
-<<<<<<< HEAD
-            } else if (key === 'menuItemsAvailable'){
-=======
             } else if (key === 'menuItemsAvailable') {
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+            } else if (key === 'menuItemsAvailable') {
                 html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value.join(', ')}</p>`;
             } else {
                 html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value}</p>`;
@@ -873,17 +770,14 @@ class OMRTestingSystem {
             <span class="console-timestamp">[${timestamp}]</span>
             <span class="console-message ${type}">${message}</span>
         `;
-<<<<<<< HEAD
-        
-        this.consoleContent.appendChild(messageElement);
-        this.consoleContent.scrollTop = this.consoleContent.scrollHeight;
-        
-=======
 
         this.consoleContent.appendChild(messageElement);
         this.consoleContent.scrollTop = this.consoleContent.scrollHeight;
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
+        this.consoleContent.appendChild(messageElement);
+        this.consoleContent.scrollTop = this.consoleContent.scrollHeight;
+
         this.debugMessages.push({ timestamp, message, type });
     }
 
@@ -913,15 +807,12 @@ class OMRTestingSystem {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-<<<<<<< HEAD
-        
-        document.body.appendChild(alertDiv);
-        
-=======
 
         document.body.appendChild(alertDiv);
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
+
+        document.body.appendChild(alertDiv);
+
         // Auto remove after 5 seconds
         setTimeout(() => {
             if (alertDiv.parentNode) {

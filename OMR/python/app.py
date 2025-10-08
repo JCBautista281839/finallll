@@ -96,10 +96,7 @@ def health_check():
             "version": "1.0.0",
             "endpoints": [
                 "/api/upload",
-<<<<<<< HEAD
-=======
                 "/api/upload-webcam",
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
                 "/api/detect-circles",
                 "/api/analyze-shaded",
                 "/api/full-scan",
@@ -158,8 +155,6 @@ def upload_file():
             error=str(e)
         )), 500
 
-<<<<<<< HEAD
-=======
 @app.route('/api/upload-webcam', methods=['POST'])
 def upload_webcam():
     """Handle webcam image upload"""
@@ -212,7 +207,6 @@ def upload_webcam():
             error=str(e)
         )), 500
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 @app.route('/api/detect-circles', methods=['POST'])
 def detect_circles():
     """Detect circles in uploaded image"""
@@ -363,10 +357,7 @@ if __name__ == '__main__':
     print("Server will be available at: http://localhost:5003")
     print("API endpoints:")
     print("   - POST /api/upload")
-<<<<<<< HEAD
-=======
     print("   - POST /api/upload-webcam")
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     print("   - POST /api/detect-circles")
     print("   - POST /api/analyze-shaded")
     print("   - POST /api/full-scan")
