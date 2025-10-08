@@ -108,6 +108,55 @@ victoria-s-bistro-firebase-adminsdk-*.json
 *private*
 *secure*
 
+# All API-related files and directories
+api/
+apis/
+/api/
+/apis/
+*api*
+*API*
+*Api*
+
+# API configuration files
+api-config.js
+api-config.json
+api.config.js
+api.config.json
+config/api.js
+config/api.json
+config/apis.js
+config/apis.json
+
+# API keys and secrets in any format
+*.key
+*.keys
+*.secret
+*.secrets
+*.token
+*.tokens
+*.credential
+*.credentials
+*.private
+*.priv
+
+# API documentation with sensitive info
+api-docs/
+api-documentation/
+swagger.json
+openapi.json
+*swagger*
+*openapi*
+
+# API testing files
+api-test*
+test-api*
+*api-test*
+*test-api*
+api-spec*
+spec-api*
+*api-spec*
+*spec-api*
+
 # Test files with sensitive data
 test-*.js
 !test-sendgrid-config.js
@@ -153,3 +202,83 @@ access.log
 uploads/
 temp/
 tmp/
+
+# API endpoints and routes (if they contain sensitive data)
+routes/api/
+routes/apis/
+endpoints/
+endpoint/
+controllers/api/
+controllers/apis/
+
+# API middleware and services
+middleware/api/
+services/api/
+services/apis/
+lib/api/
+lib/apis/
+
+# API logs and monitoring
+api-logs/
+api-monitoring/
+api-metrics/
+api-analytics/
+
+# API cache and session data
+api-cache/
+api-sessions/
+api-sessions/
+sessions/
+
+# API backup and migration files
+api-backup/
+api-migration/
+migration/
+migrations/
+
+# API deployment and infrastructure
+api-deploy/
+deploy/
+deployment/
+infrastructure/
+infra/
+
+# API certificates and SSL
+*.pem
+*.crt
+*.cert
+*.p12
+*.pfx
+ssl/
+certs/
+certificates/
+
+# API rate limiting and security
+rate-limit/
+security/
+auth/
+authentication/
+authorization/
+
+# Postman collections and environments with API keys
+*.postman_environment.json
+*.postman_collection.json
+postman/
+postman-environments/
+postman-collections/
+*postman*environment*
+*postman*collection*
+
+# Test files that load sensitive data
+test-firebase-admin.js
+test-*admin*.js
+test-*firebase*.js
+test-*api*.js
+*test*admin*.js
+*test*firebase*.js
+*test*api*.js
+
+# Lalamove API files
+lalamove/*.json
+lalamove/*environment*
+lalamove/*collection*
