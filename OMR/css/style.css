@@ -61,11 +61,6 @@ body {
 }
 
 @keyframes pulse {
-<<<<<<< HEAD
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-=======
     0% {
         opacity: 1;
     }
@@ -77,7 +72,6 @@ body {
     100% {
         opacity: 1;
     }
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 }
 
 /* Card Styles */
@@ -166,8 +160,6 @@ body {
     margin-top: 1rem;
 }
 
-<<<<<<< HEAD
-=======
 /* Webcam Preview Styles */
 .webcam-preview {
     text-align: center;
@@ -185,7 +177,6 @@ body {
     display: none;
 }
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 /* Function Cards */
 .function-card {
     text-align: center;
@@ -421,10 +412,6 @@ body {
 }
 
 @keyframes spin {
-<<<<<<< HEAD
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-=======
     0% {
         transform: rotate(0deg);
     }
@@ -432,7 +419,6 @@ body {
     100% {
         transform: rotate(360deg);
     }
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 }
 
 /* Responsive Design */
@@ -440,17 +426,6 @@ body {
     .header-title {
         font-size: 2rem;
     }
-<<<<<<< HEAD
-    
-    .upload-area {
-        padding: 2rem 1rem;
-    }
-    
-    .upload-icon {
-        font-size: 3rem;
-    }
-    
-=======
 
     .upload-area {
         padding: 2rem 1rem;
@@ -460,16 +435,11 @@ body {
         font-size: 3rem;
     }
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     .function-card {
         padding: 1.5rem 1rem;
         margin-bottom: 1rem;
     }
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     .card-body {
         padding: 1.5rem;
     }
@@ -479,17 +449,6 @@ body {
     .header-title {
         font-size: 1.5rem;
     }
-<<<<<<< HEAD
-    
-    .upload-area {
-        padding: 1.5rem 1rem;
-    }
-    
-    .upload-icon {
-        font-size: 2.5rem;
-    }
-    
-=======
 
     .upload-area {
         padding: 1.5rem 1rem;
@@ -499,7 +458,6 @@ body {
         font-size: 2.5rem;
     }
 
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     .function-icon {
         font-size: 2rem;
     }
@@ -511,10 +469,6 @@ body {
 }
 
 @keyframes fadeIn {
-<<<<<<< HEAD
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-=======
     from {
         opacity: 0;
         transform: translateY(20px);
@@ -524,7 +478,6 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 }
 
 .slide-in {
@@ -532,17 +485,6 @@ body {
 }
 
 @keyframes slideIn {
-<<<<<<< HEAD
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
-}
-
-/* Status Colors */
-.status-dot.ready { background-color: var(--success-color); }
-.status-dot.processing { background-color: var(--warning-color); }
-.status-dot.error { background-color: var(--danger-color); }
-.status-dot.offline { background-color: #6c757d; }
-=======
     from {
         transform: translateX(-100%);
     }
@@ -568,7 +510,6 @@ body {
 .status-dot.offline {
     background-color: #6c757d;
 }
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
 
 /* Custom Scrollbar */
 .console-content::-webkit-scrollbar {
@@ -586,8 +527,4 @@ body {
 
 .console-content::-webkit-scrollbar-thumb:hover {
     background: #777;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
