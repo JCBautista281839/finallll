@@ -383,6 +383,14 @@ document.addEventListener('DOMContentLoaded', function () {
       sessionStorage.setItem('pickupAddress', pickupAddress);
       sessionStorage.setItem('deliveryAddress', deliveryAddress);
       sessionStorage.setItem('useRealDelivery', useRealDelivery.toString());
+      
+      // Store cart data for shipping page
+      const existingCartData = sessionStorage.getItem('cartData');
+      if (existingCartData) {
+        console.log('[details.js] Cart data already exists in sessionStorage:', existingCartData);
+      } else {
+        console.log('[details.js] No cart data found in sessionStorage');
+      }
 
       console.log('[details.js] Data stored in session:', {
         formData,
