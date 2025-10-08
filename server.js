@@ -264,25 +264,22 @@ function clearAllRateLimits() {
 
 // helper to sign requests
 function makeSignature(secret, timestamp, method, path, body) {
-  // Lalamove HMAC signature format (from official documentation):
-  // Raw string: timestamp + method + path + queryString + body
-  // For POST requests to /v3/quotations, queryString is typically empty
-  const queryString = ""; // No query parameters for this endpoint
-  const rawString = timestamp + method + path + queryString + body;
+  // Lalamove HMAC signature format (EXACT from documentation):
+  // SIGNATURE = HmacSHA256ToHex(<TIMESTAMP>\r\n<HTTP_VERB>\r\n<PATH>\r\n\r\n<BODY>, <SECRET>)
+  const rawString = `${timestamp}\r\n${method}\r\n${path}\r\n\r\n${body}`;
 
-  console.log('[HMAC] Signature components:');
+  console.log('[HMAC] Signature components (with \\r\\n):');
   console.log('  timestamp:', timestamp);
   console.log('  method:', method);
   console.log('  path:', path);
-  console.log('  queryString:', queryString, '(empty)');
-  console.log('  body preview:', body.substring(0, 200) + '...');
-  console.log('[HMAC] Raw string for signature:', rawString.substring(0, 200) + '...');
+  console.log('  body preview:', body.substring(0, 100) + '...');
+  console.log('[HMAC] Raw string (first 200 chars):', JSON.stringify(rawString.substring(0, 200)));
 
   const signature = crypto.createHmac('sha256', secret)
     .update(rawString, 'utf8')
     .digest('hex');
 
-  console.log('[HMAC] Final signature:', signature);
+  console.log('[HMAC] Generated signature:', signature);
   return signature;
 }
 
