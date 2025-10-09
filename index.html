@@ -1,411 +1,448 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Viktoria's Bistro</title>
 
-    <link rel="icon" type="image/png" href="/src/IMG/Logo.png">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Viktoria's Bistro</title>
 
-    <!-- Font Awesome 6 -->
+  <link rel="icon" type="image/png" href="src/IMG/Logo.png">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Font Awesome 6 -->
 
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <!-- Your Custom Styles -->
-    <link rel="stylesheet" href="indexstyle.css"> 
-  
-  </head>
-  <body>
-    <!-- Header -->
-    <header class="header navbar navbar-expand-lg">
-      <div class="container-fluid">
-        <!-- Logo -->
-        <a class="navbar-brand" href="#">
-          <img src="src/IMG/Logo.png" alt="Viktoria's Bistro Logo" class="logo-img">
-        </a>
-        
-        <!-- Hamburger Menu Button -->
-        <button class="navbar-toggler hamburger-menu" type="button" data-bs-toggle="collapse" data-bs-target="#headerCollapse" aria-controls="headerCollapse" aria-expanded="false" aria-label="Toggle navigation" id="hamburgerMenu">
-          <span class="hamburger-line"></span>
-          <span class="hamburger-line"></span>
-          <span class="hamburger-line"></span>
-        </button>
-        
-        <!-- Collapsible Content -->
-        <div class="collapse navbar-collapse" id="headerCollapse">
-          <!-- Navigation -->
-          <nav class="main-nav mx-auto">
-            <ul class="nav-list navbar-nav">
-              <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
-              <li class="nav-item"><a href="/customer/html/menucustomer.html" class="nav-link">Menu</a></li>
-            </ul>
-          </nav>
-          
-          <!-- Search and Icons -->
-          <div class="header-actions">
-            <div class="search-bar">
-              <input type="text" placeholder="Search" class="search-input">
-              <img class="search-img" src="src/Icons/search.png" alt="Search Icon">
-            </div>
-            <div class="header-icons">
-              <div class="user-profile-container" id="userProfileContainer">
-                <a href="#" class="icon-link" id="userProfileLink" onclick="handleUserProfileClick(event)">
-                  <img class="user-img" src="src/Icons/user (1).png" alt="User Icon">
-                </a>
-                <!-- User dropdown menu (hidden by default) -->
-                <div class="user-dropdown" id="userDropdown" style="display: none;">
-                  <div class="user-info" id="userInfo">
-                    <div class="user-name" id="userName">Loading...</div>
-                    <div class="user-email" id="userEmail">Loading...</div>
-                  </div>
-                  <div class="dropdown-divider"></div>
-                  <a href="customer/html/account.html" class="dropdown-item">
-                    <i class="fas fa-user"></i> My Account
-                  </a>
-                  <div class="dropdown-divider"></div>
-                  <a href="#" class="dropdown-item logout-item" onclick="handleLogout(event)">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                  </a>
-                </div>
-              </div>
-              <a href="#" class="icon-link">
-                <img class="bag-img" src="src/Icons/bag (1).png" alt="Shopping Bag Icon">
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Fullscreen Menu Overlay -->
-    <div class="fullscreen-menu-overlay" id="fullscreenMenu">
-      <div class="fullscreen-menu-content">
-        <!-- Close Button -->
-        
-        
-        <!-- Navigation Menu -->
-        <nav class="fullscreen-nav">
-          <ul class="fullscreen-nav-list">
-            <li class="fullscreen-nav-item">
-              <a href="index.html" class="fullscreen-nav-link">
-                <span class="nav-text">Home</span>
-                <span class="nav-highlight"></span>
-              </a>
-            </li>
-            <li class="fullscreen-nav-item">
-              <a href="/customer/html/menucustomer.html" class="fullscreen-nav-link">
-                <span class="nav-text">Menu</span>
-                <span class="nav-highlight"></span>
-              </a>
-            </li>
+  <!-- Your Custom Styles -->
+  <link rel="stylesheet" href="indexstyle.css">
+
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <!-- Logo -->
+      <a class="navbar-brand" href="#">
+        <img src="src/IMG/Logo.png" alt="Viktoria's Bistro Logo" class="logo-img">
+      </a>
+
+      <!-- Hamburger Menu Button -->
+      <button class="navbar-toggler hamburger-menu" type="button" data-bs-toggle="collapse"
+        data-bs-target="#headerCollapse" aria-controls="headerCollapse" aria-expanded="false"
+        aria-label="Toggle navigation" id="hamburgerMenu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+      <!-- Collapsible Content -->
+      <div class="collapse navbar-collapse" id="headerCollapse">
+        <!-- Navigation -->
+        <nav class="main-nav mx-auto">
+          <ul class="nav-list navbar-nav">
+            <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="/customer/html/menucustomer.html" class="nav-link">Menu</a></li>
           </ul>
         </nav>
-        
-        <!-- Action Icons -->
-        <div class="fullscreen-actions">
-          <div class="action-item">
-            <a href="#" class="action-link" id="fullscreenUserProfile" onclick="handleUserProfileClick(event)">
-              <div class="action-icon">
-                <img src="src/Icons/user (1).png" alt="User Icon">
-              </div>
-              <span class="action-text">Account</span>
-            </a>
-            <!-- User dropdown for fullscreen menu -->
-            <div class="fullscreen-user-dropdown" id="fullscreenUserDropdown" style="display: none;">
-              <div class="fullscreen-user-info" id="fullscreenUserInfo">
-                <div class="fullscreen-user-name" id="fullscreenUserName">Loading...</div>
-                <div class="fullscreen-user-email" id="fullscreenUserEmail">Loading...</div>
-              </div>
-              <div class="fullscreen-dropdown-divider"></div>
-              <a href="customer/html/account.html" class="fullscreen-dropdown-item">
-                <i class="fas fa-user"></i> My Account
-              </a>
-              <div class="fullscreen-dropdown-divider"></div>
-              <a href="#" class="fullscreen-dropdown-item logout-item" onclick="handleLogout(event)">
-                <i class="fas fa-sign-out-alt"></i> Logout
-              </a>
-            </div>
+
+        <!-- Search and Icons -->
+        <div class="header-actions">
+          <div class="search-bar">
+            <input type="text" placeholder="Search" class="search-input">
+            <img class="search-img" src="src/Icons/search.png" alt="Search Icon">
           </div>
-          
-          <div class="action-item">
-            <a href="#" class="action-link">
-              <div class="action-icon">
-                <img src="src/Icons/bag (1).png" alt="Shopping Bag Icon">
+          <div class="header-icons">
+            <div class="user-profile-container" id="userProfileContainer">
+              <a href="#" class="icon-link" id="userProfileLink" onclick="handleUserProfileClick(event)">
+                <img class="user-img" src="src/Icons/user (1).png" alt="User Icon">
+              </a>
+              <!-- User dropdown menu (hidden by default) -->
+              <div class="user-dropdown" id="userDropdown" style="display: none;">
+                <div class="user-info" id="userInfo">
+                  <div class="user-name" id="userName">Loading...</div>
+                  <div class="user-email" id="userEmail">Loading...</div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="customer/html/account.html" class="dropdown-item">
+                  <i class="fas fa-user"></i> My Account
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item logout-item" onclick="handleLogout(event)">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
               </div>
-              <span class="action-text">Bag</span>
+            </div>
+            <a href="#" class="icon-link">
+              <img class="bag-img" src="src/Icons/bag (1).png" alt="Shopping Bag Icon">
             </a>
           </div>
         </div>
       </div>
     </div>
+  </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <div class="container-fluid">
-        <div class="row g-0">
-          <!-- Left Content -->
-          <div class="col-md-6 scroll-left">
-            <div class="content-left">
-              <!-- Hours and Location -->
-              <div class="info-section">
-                <h3 class="info-title">WE ARE OPEN FROM</h3>
-                <p class="hours"><strong>Mon - Sun:</strong> 2:00 PM - 12:00 AM</p>
-                <div class="location">
-                  <img class="loc-img" src="src/Icons/stroke.png" alt="Location Icon">
-                  <span>Bisita St., Medicion 2C, Imus, Philippines, 4103</span>
-                </div>
-              </div>
-              
-              <!-- Main Headline -->
-              <div class="headline-section">
-                <h1 class="main-headline">
-                  <span class="filipino">Filipino</span>
-                  <span class="comfort-food">COMFORT FOOD</span>
-                </h1>
-              </div>
-              
-              <!-- Description -->
-              <div class="description-section">
-                <p class="description">
-                  Bringing the warmth of home to your table, Viktoria's Bistro serves freshly prepared Filipino classics made with love and flavor in every bite.
-                </p>
-              </div>
-              
-              <!-- Call to Action Buttons -->
-              <div class="cta-section">
-                <a class="btn btn-primary cta-btn" href="/customer/html/menucustomer.html">Order Now</a>
+  <!-- Fullscreen Menu Overlay -->
+  <div class="fullscreen-menu-overlay" id="fullscreenMenu">
+    <div class="fullscreen-menu-content">
+      <!-- Close Button -->
+
+
+      <!-- Navigation Menu -->
+      <nav class="fullscreen-nav">
+        <ul class="fullscreen-nav-list">
+          <li class="fullscreen-nav-item">
+            <a href="index.html" class="fullscreen-nav-link">
+              <span class="nav-text">Home</span>
+              <span class="nav-highlight"></span>
+            </a>
+          </li>
+          <li class="fullscreen-nav-item">
+            <a href="/customer/html/menucustomer.html" class="fullscreen-nav-link">
+              <span class="nav-text">Menu</span>
+              <span class="nav-highlight"></span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Action Icons -->
+      <div class="fullscreen-actions">
+        <div class="action-item">
+          <a href="#" class="action-link" id="fullscreenUserProfile" onclick="handleUserProfileClick(event)">
+            <div class="action-icon">
+              <img src="src/Icons/user (1).png" alt="User Icon">
+            </div>
+            <span class="action-text">Account</span>
+          </a>
+          <!-- User dropdown for fullscreen menu -->
+          <div class="fullscreen-user-dropdown" id="fullscreenUserDropdown" style="display: none;">
+            <div class="fullscreen-user-info" id="fullscreenUserInfo">
+              <div class="fullscreen-user-name" id="fullscreenUserName">Loading...</div>
+              <div class="fullscreen-user-email" id="fullscreenUserEmail">Loading...</div>
+            </div>
+            <div class="fullscreen-dropdown-divider"></div>
+            <a href="customer/html/account.html" class="fullscreen-dropdown-item">
+              <i class="fas fa-user"></i> My Account
+            </a>
+            <div class="fullscreen-dropdown-divider"></div>
+            <a href="#" class="fullscreen-dropdown-item logout-item" onclick="handleLogout(event)">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          </div>
+        </div>
+
+        <div class="action-item">
+          <a href="#" class="action-link">
+            <div class="action-icon">
+              <img src="src/Icons/bag (1).png" alt="Shopping Bag Icon">
+            </div>
+            <span class="action-text">Bag</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container-fluid">
+      <div class="row g-0">
+        <!-- Left Content -->
+        <div class="col-md-6 scroll-left">
+          <div class="content-left">
+            <!-- Hours and Location -->
+            <div class="info-section">
+              <h3 class="info-title">WE ARE OPEN FROM</h3>
+              <p class="hours"><strong>Mon - Sun:</strong> 2:00 PM - 12:00 AM</p>
+              <div class="location">
+                <img class="loc-img" src="src/Icons/stroke.png" alt="Location Icon">
+                <span>Bisita St., Medicion 2C, Imus, Philippines, 4103</span>
               </div>
             </div>
+
+            <!-- Main Headline -->
+            <div class="headline-section">
+              <h1 class="main-headline">
+                <span class="filipino">Filipino</span>
+                <span class="comfort-food">COMFORT FOOD</span>
+              </h1>
+            </div>
+
+            <!-- Description -->
+            <div class="description-section">
+              <p class="description">
+                Bringing the warmth of home to your table, Viktoria's Bistro serves freshly prepared Filipino classics
+                made with love and flavor in every bite.
+              </p>
+            </div>
+
+            <!-- Call to Action Buttons -->
+            <div class="cta-section">
+              <a class="btn btn-primary cta-btn" href="/customer/html/menucustomer.html">Order Now</a>
+            </div>
           </div>
-          
-          <!-- Right Content - Food Image -->
-          <div class="col-md-6 scroll-right">
-            <div class="content-right">
-              <div class="food-image-container">
-                <img src="src/IMG/chicken.png" alt="Roasted Chicken" class="food-image">
-                <div class="rating-badge">
-                  <i class="fas fa-star rating-star"></i>
-                  <span class="rating-text">4.6 Rating</span>
-                </div>
+        </div>
+
+        <!-- Right Content - Food Image -->
+        <div class="col-md-6 scroll-right">
+          <div class="content-right">
+            <div class="food-image-container">
+              <img src="src/IMG/chicken.png" alt="Roasted Chicken" class="food-image">
+              <div class="rating-badge">
+                <i class="fas fa-star rating-star"></i>
+                <span class="rating-text">4.6 Rating</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
+  </main>
 
-    <!-- Signature Dishes -->
-    <section class="signature-section">
-      <div class="container text-center">
-        <h2 class="signature-title">OUR SIGNATURE DISHES</h2>
-        <div class="row justify-content-center g-4 signature-row">
-          <div class="col-6 col-sm-4 col-md-3">
-            <div class="dish">
-              <div class="dish-plate"></div>
-              <img class="dish-img" src="src/IMG/kk.png" alt="Best Sellers">
-              <div class="dish-hover-text">Kare Kare</div>
-              <div class="dish-name">BEST SELLERS</div>
-            </div>
+  <!-- Signature Dishes -->
+  <section class="signature-section">
+    <div class="container text-center">
+      <h2 class="signature-title">OUR SIGNATURE DISHES</h2>
+      <div class="row justify-content-center g-4 signature-row">
+        <div class="col-6 col-sm-4 col-md-3">
+          <div class="dish">
+            <div class="dish-plate"></div>
+            <img class="dish-img" src="src/IMG/kk.png" alt="Best Sellers">
+            <div class="dish-hover-text">Kare Kare</div>
+            <div class="dish-name">BEST SELLERS</div>
           </div>
-          <div class="col-6 col-sm-4 col-md-3">
-            <div class="dish">
-              <div class="dish-plate"></div>
-              <img class="dish-img" src="src/IMG/cp.png" alt="Feast">
-              <div class="dish-hover-text">Crispy Pata</div>
-              <div class="dish-name">FEAST</div>
-            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-3">
+          <div class="dish">
+            <div class="dish-plate"></div>
+            <img class="dish-img" src="src/IMG/cp.png" alt="Feast">
+            <div class="dish-hover-text">Crispy Pata</div>
+            <div class="dish-name">FEAST</div>
           </div>
-          <div class="col-6 col-sm-4 col-md-3">
-            <div class="dish">
-              <div class="dish-plate"></div>
-              <img class="dish-img" src="src/IMG/cs.png" alt="Solo Meals">
-              <div class="dish-hover-text">Chicksilog</div>
-              <div class="dish-name">SOLO MEALS</div>
-            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-3">
+          <div class="dish">
+            <div class="dish-plate"></div>
+            <img class="dish-img" src="src/IMG/cs.png" alt="Solo Meals">
+            <div class="dish-hover-text">Chicksilog</div>
+            <div class="dish-name">SOLO MEALS</div>
           </div>
-          <div class="col-6 col-sm-4 col-md-3">
-            <div class="dish">
-              <div class="dish-plate"></div>
-              <img class="dish-img" src="src/IMG/mt.png" alt="Desserts">
-              <div class="dish-hover-text">Mango Tapioca</div>
-              <div class="dish-name">DESERTS</div>
-            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-3">
+          <div class="dish">
+            <div class="dish-plate"></div>
+            <img class="dish-img" src="src/IMG/mt.png" alt="Desserts">
+            <div class="dish-hover-text">Mango Tapioca</div>
+            <div class="dish-name">DESERTS</div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Dine In & Alfresco Section -->
-    <section class="dine-options-section">
-      <div class="container-fluid px-0">
-        <div class="dine-option dine-in">
-          <div class="background-image" style="background-image: url('src/IMG/di.png');"></div>
-          <div class="dine-option-content">
-            <h2 class="dine-option-title">Dine In</h2>
-          </div>
-        </div>
-        <div class="dine-option alfresco">
-          <div class="background-image" style="background-image: url('src/IMG/al.png');"></div>
-          <div class="dine-option-content">
-            <h2 class="dine-option-title">Alfresco</h2>
-          </div>
-        </div>
-        <div class="dine-option events">
-          <div class="background-image" style="background-image: url('src/IMG/ce.png');"></div>
+  <!-- Dine In & Alfresco Section -->
+  <section class="dine-options-section">
+    <div class="container-fluid px-0">
+      <div class="dine-option dine-in">
+        <div class="background-image" style="background-image: url('src/IMG/di.png');"></div>
+        <div class="dine-option-content">
+          <h2 class="dine-option-title">Dine In</h2>
         </div>
       </div>
-    </section>
+      <div class="dine-option alfresco">
+        <div class="background-image" style="background-image: url('src/IMG/al.png');"></div>
+        <div class="dine-option-content">
+          <h2 class="dine-option-title">Alfresco</h2>
+        </div>
+      </div>
+      <div class="dine-option events">
+        <div class="background-image" style="background-image: url('src/IMG/ce.png');"></div>
+      </div>
+    </div>
+  </section>
 
-    <!-- Customer Reviews & Feedback Section (exactly as screenshot) -->
-    <section class="customer-reviews-section">
-      <h2 class="customer-reviews-title">WHY OUR CUSTOMERS LOVE US</h2>
-          <div class="customer-reviews-subtitle">Share your own experience at Viktoria's Bistro</div>
-      <div class="customer-reviews-flex">
-        <!-- Left: Reviews List -->
-        <div class="customer-reviews-list">
-          <img class="customer-reviews-quote-bg" src="src/IMG/quote.png" alt="Quote Background">
-          <div class="customer-reviews-cards">
-            <!-- Review Card 1 -->
-            <div class="review-card">
-              <div class="review-avatar">A</div>
-              <div class="review-content">
-                <div class="review-header">
-                  <div class="review-name">ANONYMOUS</div>
-                  <div class="review-stars">
-                    <span class="star-filled"></span><span class="star-filled"></span><span class="star-filled"></span><span class="star-filled"></span><span class="star-empty"></span>
-                  </div>
+  <!-- Customer Reviews & Feedback Section (exactly as screenshot) -->
+  <section class="customer-reviews-section">
+    <h2 class="customer-reviews-title">WHY OUR CUSTOMERS LOVE US</h2>
+    <div class="customer-reviews-subtitle">Share your own experience at Viktoria's Bistro</div>
+    <div class="customer-reviews-flex">
+      <!-- Left: Reviews List -->
+      <div class="customer-reviews-list">
+        <img class="customer-reviews-quote-bg" src="src/IMG/quote.png" alt="Quote Background">
+        <div class="customer-reviews-cards">
+          <!-- Review Card 1 -->
+          <div class="review-card">
+            <div class="review-avatar">A</div>
+            <div class="review-content">
+              <div class="review-header">
+                <div class="review-name">ANONYMOUS</div>
+                <div class="review-stars">
+                  <span class="star-filled"></span><span class="star-filled"></span><span
+                    class="star-filled"></span><span class="star-filled"></span><span class="star-empty"></span>
                 </div>
-                <div class="review-text">“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam”</div>
               </div>
+              <div class="review-text">“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam”</div>
             </div>
-            <!-- Review Card 2 -->
-            <div class="review-card">
-              <div class="review-avatar">A</div>
-              <div class="review-content">
-                <div class="review-header">
-                  <div class="review-name">ANONYMOUS</div>
-                  <div class="review-stars">
-                    <span class="star-filled"></span><span class="star-filled"></span><span class="star-filled"></span><span class="star-filled"></span><span class="star-empty"></span>
-                  </div>
+          </div>
+          <!-- Review Card 2 -->
+          <div class="review-card">
+            <div class="review-avatar">A</div>
+            <div class="review-content">
+              <div class="review-header">
+                <div class="review-name">ANONYMOUS</div>
+                <div class="review-stars">
+                  <span class="star-filled"></span><span class="star-filled"></span><span
+                    class="star-filled"></span><span class="star-filled"></span><span class="star-empty"></span>
                 </div>
-                <div class="review-text">“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam”</div>
               </div>
+              <div class="review-text">“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam”</div>
             </div>
-            <!-- Review Card 3 -->
-            <div class="review-card">
-              <div class="review-avatar">A</div>
-              <div class="review-content">
-                <div class="review-header">
-                  <div class="review-name">ANONYMOUS</div>
-                  <div class="review-stars">
-                    <span class="star-filled"></span><span class="star-filled"></span><span class="star-filled"></span><span class="star-filled"></span><span class="star-empty"></span>
-                  </div>
+          </div>
+          <!-- Review Card 3 -->
+          <div class="review-card">
+            <div class="review-avatar">A</div>
+            <div class="review-content">
+              <div class="review-header">
+                <div class="review-name">ANONYMOUS</div>
+                <div class="review-stars">
+                  <span class="star-filled"></span><span class="star-filled"></span><span
+                    class="star-filled"></span><span class="star-filled"></span><span class="star-empty"></span>
                 </div>
-                <div class="review-text">“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam”</div>
               </div>
+              <div class="review-text">“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam”</div>
             </div>
           </div>
         </div>
-        <!-- Right: Rating Form -->
-        <form class="rating-form" autocomplete="off">
-          <div class="rating-form-title-stars-row">
-            <span class="rating-form-title">Rate your experience</span>
-            <span class="rating-stars-input">
-              <span class="star-input" data-value="1"></span>
-              <span class="star-input" data-value="2"></span>
-              <span class="star-input" data-value="3"></span>
-              <span class="star-input" data-value="4"></span>
-              <span class="star-input" data-value="5"></span>
-            </span>
-          </div>
-          <div class="rating-categories">
-            <button type="button" class="rating-category-btn active">Overall Service</button>
-            <button type="button" class="rating-category-btn">Food Quality</button>
-            <button type="button" class="rating-category-btn">Cleanliness</button>
-            <button type="button" class="rating-category-btn">Ambience</button>
-            <button type="button" class="rating-category-btn">Pricing</button>
-          </div>
-          <textarea class="rating-textarea" placeholder="Tell us what can be improved..." maxlength="300"></textarea>
-          <div class="anonymous-toggle">
-            <label class="anonymous-checkbox">
-              <input type="checkbox" id="anonymous-review" />
-              <span class="checkmark"></span>
-              Post as anonymous
-            </label>
-          </div>
-          <button type="submit" class="share-btn">Share</button>
-        </form>
       </div>
-    </section>
+      <!-- Right: Rating Form -->
+      <form class="rating-form" autocomplete="off">
+        <div class="rating-form-title-stars-row">
+          <span class="rating-form-title">Rate your experience</span>
+          <span class="rating-stars-input" id="customRatingStars">
+            <span class="star-input star-empty" data-value="1" tabindex="0" aria-label="1 star"></span>
+            <span class="star-input star-empty" data-value="2" tabindex="0" aria-label="2 stars"></span>
+            <span class="star-input star-empty" data-value="3" tabindex="0" aria-label="3 stars"></span>
+            <span class="star-input star-empty" data-value="4" tabindex="0" aria-label="4 stars"></span>
+            <span class="star-input star-empty" data-value="5" tabindex="0" aria-label="5 stars"></span>
+          </span>
+        </div>
+        <div class="rating-categories">
+          <button type="button" class="rating-category-btn active">Overall Service</button>
+          <button type="button" class="rating-category-btn">Food Quality</button>
+          <button type="button" class="rating-category-btn">Cleanliness</button>
+          <button type="button" class="rating-category-btn">Ambience</button>
+          <button type="button" class="rating-category-btn">Pricing</button>
+        </div>
+        <textarea class="rating-textarea" placeholder="Tell us what can be improved..." maxlength="300"></textarea>
+        <div class="anonymous-toggle">
+          <label class="anonymous-checkbox">
+            <input type="checkbox" id="anonymous-review" />
+            <span class="checkmark"></span>
+            Post as anonymous
+          </label>
+        </div>
+        <button type="submit" class="share-btn">Share</button>
+      </form>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-social">
-            <span>FOLLOW US.</span>
-            <a href="https://www.facebook.com/profile.php?id=100090330785084" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-            <a href="https://www.instagram.com/viktorias_bistro/" class="social-icon"><i class="fab fa-instagram"></i></a>
-            <a href="https://www.tiktok.com/@viktorias.bistro" class="social-icon"><i class="fab fa-tiktok"></i></a>
-          </div>
-          <div class="footer-copyright">
-            <span>VIKTORIA'S BISTRO. ALL RIGHTS RESERVED.</span>
-          </div>
-          <div class="footer-links">
-            <a href="#">TERMS OF SERVICE</a>
-          </div>
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-social">
+          <span>FOLLOW US.</span>
+          <a href="https://www.facebook.com/profile.php?id=100090330785084" class="social-icon"><i
+              class="fab fa-facebook-f"></i></a>
+          <a href="https://www.instagram.com/viktorias_bistro/" class="social-icon"><i class="fab fa-instagram"></i></a>
+          <a href="https://www.tiktok.com/@viktorias.bistro" class="social-icon"><i class="fab fa-tiktok"></i></a>
+        </div>
+        <div class="footer-copyright">
+          <span>VIKTORIA'S BISTRO. ALL RIGHTS RESERVED.</span>
+        </div>
+        <div class="footer-links">
+          <a href="#">TERMS OF SERVICE</a>
         </div>
       </div>
-    </footer>
+    </div>
+  </footer>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="main.js"></script>
-    <script src="reviews.js"></script>
-    <script src="/customer/javascript/auth-manager.js"></script>
-    <script src="feedback-stars.js"></script>
-    
-    <!-- Authentication State Management -->
-    <script>
-      // Simple Firebase ready check without recursion
-      function isFirebaseReady() {
-        return typeof firebase !== 'undefined' && 
-               firebase.apps && 
-               firebase.apps.length > 0 && 
-               firebase.auth;
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="main.js"></script>
+  <script src="reviews.js"></script>
+  <script src="customer/javascript/auth-manager.js"></script>
+  <script src="feedback-stars.js"></script>
+
+  <!-- Authentication State Management -->
+  <script>
+    // Simple Firebase ready check without recursion
+    function isFirebaseReady() {
+      return typeof firebase !== 'undefined' &&
+        firebase.apps &&
+        firebase.apps.length > 0 &&
+        firebase.auth;
+    }
+
+    // Check authentication state when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('DOM loaded, setting up auth...');
+
+      // Set up auth state listener immediately
+      setupAuthStateListener();
+
+      // Do initial check after a short delay to ensure Firebase is ready
+      setTimeout(() => {
+        checkAuthState();
+      }, 500);
+    });
+
+    function checkAuthState() {
+      try {
+        if (!isFirebaseReady()) {
+          console.log('Firebase not ready yet, will retry...');
+          setTimeout(checkAuthState, 200);
+          return;
+        }
+
+        console.log('Checking auth state...');
+        const user = firebase.auth().currentUser;
+
+        if (user) {
+          console.log('✅ User is logged in:', user.email);
+          updateUIForLoggedInUser(user);
+        } else {
+          console.log('❌ User is not logged in');
+          updateUIForGuestUser();
+        }
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+        updateUIForGuestUser();
+      }
+    }
+
+    function setupAuthStateListener() {
+      // Try to set up listener, retry if Firebase not ready
+      if (!isFirebaseReady()) {
+        console.log('Firebase not ready for auth listener, retrying...');
+        setTimeout(setupAuthStateListener, 200);
+        return;
       }
 
-      // Check authentication state when page loads
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, setting up auth...');
-        
-        // Set up auth state listener immediately
-        setupAuthStateListener();
-        
-        // Do initial check after a short delay to ensure Firebase is ready
-        setTimeout(() => {
-          checkAuthState();
-        }, 500);
-      });
-
-      function checkAuthState() {
-        try {
-          if (!isFirebaseReady()) {
-            console.log('Firebase not ready yet, will retry...');
-            setTimeout(checkAuthState, 200);
-            return;
-          }
-
-          console.log('Checking auth state...');
-          const user = firebase.auth().currentUser;
-          
+      try {
+        console.log('Setting up auth state listener...');
+        firebase.auth().onAuthStateChanged((user) => {
+          console.log('🔄 Auth state changed:', user ? 'User logged in' : 'User logged out');
           if (user) {
             console.log('✅ User is logged in:', user.email);
             updateUIForLoggedInUser(user);
@@ -413,257 +450,233 @@
             console.log('❌ User is not logged in');
             updateUIForGuestUser();
           }
-        } catch (error) {
-          console.error('Error checking auth state:', error);
-          updateUIForGuestUser();
-        }
+        });
+        console.log('✅ Auth state listener set up successfully');
+      } catch (error) {
+        console.error('Error setting up auth listener:', error);
       }
+    }
 
-      function setupAuthStateListener() {
-        // Try to set up listener, retry if Firebase not ready
-        if (!isFirebaseReady()) {
-          console.log('Firebase not ready for auth listener, retrying...');
-          setTimeout(setupAuthStateListener, 200);
-          return;
+    // Manual auth check function for debugging
+    window.manualAuthCheck = function () {
+      console.log('🔍 Manual auth check triggered');
+      checkAuthState();
+    };
+
+    // Fallback auth check after page is fully loaded
+    window.addEventListener('load', function () {
+      console.log('Page fully loaded, doing final auth check...');
+      setTimeout(() => {
+        if (isFirebaseReady()) {
+          checkAuthState();
         }
+      }, 1000);
+    });
 
-        try {
-          console.log('Setting up auth state listener...');
-          firebase.auth().onAuthStateChanged((user) => {
-            console.log('🔄 Auth state changed:', user ? 'User logged in' : 'User logged out');
-            if (user) {
-              console.log('✅ User is logged in:', user.email);
-              updateUIForLoggedInUser(user);
-            } else {
-              console.log('❌ User is not logged in');
-              updateUIForGuestUser();
-            }
-          });
-          console.log('✅ Auth state listener set up successfully');
-        } catch (error) {
-          console.error('Error setting up auth listener:', error);
-        }
-      }
-
-      // Manual auth check function for debugging
-      window.manualAuthCheck = function() {
-        console.log('🔍 Manual auth check triggered');
-        checkAuthState();
-      };
-
-      // Fallback auth check after page is fully loaded
-      window.addEventListener('load', function() {
-        console.log('Page fully loaded, doing final auth check...');
-        setTimeout(() => {
-          if (isFirebaseReady()) {
-            checkAuthState();
-          }
-        }, 1000);
-      });
-
-      function updateUIForLoggedInUser(user) {
-        // Update user profile icon to show logged-in state
-        const userProfileLink = document.getElementById('userProfileLink');
-        if (userProfileLink) {
-          // Add a small indicator that user is logged in
-          userProfileLink.innerHTML = `
+    function updateUIForLoggedInUser(user) {
+      // Update user profile icon to show logged-in state
+      const userProfileLink = document.getElementById('userProfileLink');
+      if (userProfileLink) {
+        // Add a small indicator that user is logged in
+        userProfileLink.innerHTML = `
             <div style="position: relative;">
               <img class="user-img" src="src/Icons/user (1).png" alt="User Icon">
               <div style="position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: #28a745; border-radius: 50%; border: 1px solid white;"></div>
             </div>
           `;
-        }
-
-        // Update user info in dropdown
-        const userName = document.getElementById('userName');
-        const userEmail = document.getElementById('userEmail');
-        const fullscreenUserName = document.getElementById('fullscreenUserName');
-        const fullscreenUserEmail = document.getElementById('fullscreenUserEmail');
-        
-        if (userName) userName.textContent = user.displayName || 'User';
-        if (userEmail) userEmail.textContent = user.email;
-        if (fullscreenUserName) fullscreenUserName.textContent = user.displayName || 'User';
-        if (fullscreenUserEmail) fullscreenUserEmail.textContent = user.email;
-
-        // Add welcome message or user info if needed
-        console.log('UI updated for logged-in user:', user.email);
       }
 
-      function updateUIForGuestUser() {
-        // Ensure user profile icon shows guest state
-        const userProfileLink = document.getElementById('userProfileLink');
-        if (userProfileLink) {
-          userProfileLink.innerHTML = `
+      // Update user info in dropdown
+      const userName = document.getElementById('userName');
+      const userEmail = document.getElementById('userEmail');
+      const fullscreenUserName = document.getElementById('fullscreenUserName');
+      const fullscreenUserEmail = document.getElementById('fullscreenUserEmail');
+
+      if (userName) userName.textContent = user.displayName || 'User';
+      if (userEmail) userEmail.textContent = user.email;
+      if (fullscreenUserName) fullscreenUserName.textContent = user.displayName || 'User';
+      if (fullscreenUserEmail) fullscreenUserEmail.textContent = user.email;
+
+      // Add welcome message or user info if needed
+      console.log('UI updated for logged-in user:', user.email);
+    }
+
+    function updateUIForGuestUser() {
+      // Ensure user profile icon shows guest state
+      const userProfileLink = document.getElementById('userProfileLink');
+      if (userProfileLink) {
+        userProfileLink.innerHTML = `
             <img class="user-img" src="src/Icons/user (1).png" alt="User Icon">
           `;
-        }
-        console.log('UI updated for guest user');
       }
+      console.log('UI updated for guest user');
+    }
 
-      // Handle user profile click (toggle dropdown for logged-in users)
-      function handleUserProfileClick(event) {
-        event.preventDefault();
-        
-        try {
-          if (typeof firebase === 'undefined') {
-            console.log('Firebase not loaded, redirecting to login');
-            window.location.href = 'html/login.html';
-            return;
-          }
-          
-          const user = firebase.auth().currentUser;
-          
-          if (user) {
-            // User is logged in - toggle dropdown
-            toggleUserDropdown();
-          } else {
-            // User is not logged in - redirect to login
-            console.log('User is not logged in, redirecting to login');
-            window.location.href = 'html/login.html';
-          }
-          
-        } catch (error) {
-          console.error('Error checking user authentication:', error);
-          // Fallback to login page
+    // Handle user profile click (toggle dropdown for logged-in users)
+    function handleUserProfileClick(event) {
+      event.preventDefault();
+
+      try {
+        if (typeof firebase === 'undefined') {
+          console.log('Firebase not loaded, redirecting to login');
+          window.location.href = 'html/login.html';
+          return;
+        }
+
+        const user = firebase.auth().currentUser;
+
+        if (user) {
+          // User is logged in - toggle dropdown
+          toggleUserDropdown();
+        } else {
+          // User is not logged in - redirect to login
+          console.log('User is not logged in, redirecting to login');
           window.location.href = 'html/login.html';
         }
-      }
 
-      // Toggle user dropdown
-      function toggleUserDropdown() {
-        const dropdown = document.getElementById('userDropdown');
-        if (dropdown) {
-          const isVisible = dropdown.style.display !== 'none';
-          dropdown.style.display = isVisible ? 'none' : 'block';
-          
-          // Close dropdown when clicking outside
-          if (!isVisible) {
-            setTimeout(() => {
-              document.addEventListener('click', closeDropdownOnOutsideClick);
-            }, 100);
+      } catch (error) {
+        console.error('Error checking user authentication:', error);
+        // Fallback to login page
+        window.location.href = 'html/login.html';
+      }
+    }
+
+    // Toggle user dropdown
+    function toggleUserDropdown() {
+      const dropdown = document.getElementById('userDropdown');
+      if (dropdown) {
+        const isVisible = dropdown.style.display !== 'none';
+        dropdown.style.display = isVisible ? 'none' : 'block';
+
+        // Close dropdown when clicking outside
+        if (!isVisible) {
+          setTimeout(() => {
+            document.addEventListener('click', closeDropdownOnOutsideClick);
+          }, 100);
+        }
+      }
+    }
+
+    // Close dropdown when clicking outside
+    function closeDropdownOnOutsideClick(event) {
+      const container = document.getElementById('userProfileContainer');
+      const dropdown = document.getElementById('userDropdown');
+
+      if (container && dropdown && !container.contains(event.target)) {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeDropdownOnOutsideClick);
+      }
+    }
+
+    // Handle logout
+    function handleLogout(event) {
+      event.preventDefault();
+
+      if (typeof firebase !== 'undefined') {
+        firebase.auth().signOut().then(() => {
+          console.log('User logged out successfully');
+          // Clear any stored data
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('signupEmail');
+          localStorage.removeItem('signupName');
+
+          // Update UI for guest user
+          updateUIForGuestUser();
+
+          // Close dropdown
+          const dropdown = document.getElementById('userDropdown');
+          if (dropdown) {
+            dropdown.style.display = 'none';
           }
-        }
-      }
 
-      // Close dropdown when clicking outside
-      function closeDropdownOnOutsideClick(event) {
-        const container = document.getElementById('userProfileContainer');
-        const dropdown = document.getElementById('userDropdown');
-        
-        if (container && dropdown && !container.contains(event.target)) {
-          dropdown.style.display = 'none';
-          document.removeEventListener('click', closeDropdownOnOutsideClick);
-        }
-      }
+          // Logout successful - no popup message needed
 
-      // Handle logout
-      function handleLogout(event) {
-        event.preventDefault();
-        
-        if (typeof firebase !== 'undefined') {
-          firebase.auth().signOut().then(() => {
-            console.log('User logged out successfully');
-            // Clear any stored data
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('signupEmail');
-            localStorage.removeItem('signupName');
-            
-            // Update UI for guest user
-            updateUIForGuestUser();
-            
-            // Close dropdown
-            const dropdown = document.getElementById('userDropdown');
-            if (dropdown) {
-              dropdown.style.display = 'none';
-            }
-            
-            // Logout successful - no popup message needed
-            
-          }).catch((error) => {
-            console.error('Logout error:', error);
-            alert('Error logging out. Please try again.');
-          });
-        }
-      }
-
-    </script>
-
-    <!-- Fullscreen Menu JavaScript -->
-    <script>
-      // Fullscreen menu functionality
-      document.addEventListener('DOMContentLoaded', function() {
-        const hamburgerMenu = document.getElementById('hamburgerMenu');
-        const fullscreenMenu = document.getElementById('fullscreenMenu');
-        
-        // Function to open menu
-        function openMenu() {
-          fullscreenMenu.classList.add('active');
-          hamburgerMenu.classList.add('active');
-          document.body.style.overflow = 'hidden';
-        }
-        
-        // Function to close menu
-        function closeMenu() {
-          fullscreenMenu.classList.remove('active');
-          hamburgerMenu.classList.remove('active');
-          document.body.style.overflow = 'auto';
-        }
-        
-        // Toggle fullscreen menu with hamburger button
-        hamburgerMenu.addEventListener('click', function() {
-          if (fullscreenMenu.classList.contains('active')) {
-            closeMenu();
-          } else {
-            openMenu();
-          }
+        }).catch((error) => {
+          console.error('Logout error:', error);
+          alert('Error logging out. Please try again.');
         });
-        
-        // Close menu when clicking outside the content
-        fullscreenMenu.addEventListener('click', function(e) {
-          if (e.target === fullscreenMenu) {
-            closeMenu();
-          }
-        });
-        
-        // Close menu with Escape key
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'Escape' && fullscreenMenu.classList.contains('active')) {
-            closeMenu();
-          }
-        });
-        
-        // Enhanced user profile click handler for fullscreen menu
-        const fullscreenUserProfile = document.getElementById('fullscreenUserProfile');
-        const fullscreenUserDropdown = document.getElementById('fullscreenUserDropdown');
-        
-        if (fullscreenUserProfile && fullscreenUserDropdown) {
-          fullscreenUserProfile.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            try {
-              if (typeof firebase === 'undefined') {
-                window.location.href = 'html/login.html';
-                return;
-              }
-              
-              const user = firebase.auth().currentUser;
-              
-              if (user) {
-                // Toggle dropdown in fullscreen menu
-                const isVisible = fullscreenUserDropdown.style.display !== 'none';
-                fullscreenUserDropdown.style.display = isVisible ? 'none' : 'block';
-              } else {
-                window.location.href = 'html/login.html';
-              }
-              
-            } catch (error) {
-              console.error('Error handling fullscreen user click:', error);
-              window.location.href = 'html/login.html';
-            }
-          });
+      }
+    }
+
+  </script>
+
+  <!-- Fullscreen Menu JavaScript -->
+  <script>
+    // Fullscreen menu functionality
+    document.addEventListener('DOMContentLoaded', function () {
+      const hamburgerMenu = document.getElementById('hamburgerMenu');
+      const fullscreenMenu = document.getElementById('fullscreenMenu');
+
+      // Function to open menu
+      function openMenu() {
+        fullscreenMenu.classList.add('active');
+        hamburgerMenu.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      // Function to close menu
+      function closeMenu() {
+        fullscreenMenu.classList.remove('active');
+        hamburgerMenu.classList.remove('active');
+        document.body.style.overflow = 'auto';
+      }
+
+      // Toggle fullscreen menu with hamburger button
+      hamburgerMenu.addEventListener('click', function () {
+        if (fullscreenMenu.classList.contains('active')) {
+          closeMenu();
+        } else {
+          openMenu();
         }
       });
-    </script>
-    
-  </body>
+
+      // Close menu when clicking outside the content
+      fullscreenMenu.addEventListener('click', function (e) {
+        if (e.target === fullscreenMenu) {
+          closeMenu();
+        }
+      });
+
+      // Close menu with Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && fullscreenMenu.classList.contains('active')) {
+          closeMenu();
+        }
+      });
+
+      // Enhanced user profile click handler for fullscreen menu
+      const fullscreenUserProfile = document.getElementById('fullscreenUserProfile');
+      const fullscreenUserDropdown = document.getElementById('fullscreenUserDropdown');
+
+      if (fullscreenUserProfile && fullscreenUserDropdown) {
+        fullscreenUserProfile.addEventListener('click', function (e) {
+          e.preventDefault();
+
+          try {
+            if (typeof firebase === 'undefined') {
+              window.location.href = 'html/login.html';
+              return;
+            }
+
+            const user = firebase.auth().currentUser;
+
+            if (user) {
+              // Toggle dropdown in fullscreen menu
+              const isVisible = fullscreenUserDropdown.style.display !== 'none';
+              fullscreenUserDropdown.style.display = isVisible ? 'none' : 'block';
+            } else {
+              window.location.href = 'html/login.html';
+            }
+
+          } catch (error) {
+            console.error('Error handling fullscreen user click:', error);
+            window.location.href = 'html/login.html';
+          }
+        });
+      }
+    });
+  </script>
+
+</body>
+
 </html>
