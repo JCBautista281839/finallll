@@ -1144,17 +1144,38 @@ body {
   font-size: 18px;
   color: #8B2E20;
   font-family: 'PoppinsRegular', 'Poppins', sans-serif;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   margin-left: 10px;
   text-align: left;
   font-weight: 600;
-  width: 600px;
+  width: auto;
 }
 
-/* Align stars next to the feedback form title */
 .rating-form-title-stars-row {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 18px;
+  margin-top: 15px;
+  width: 100%;
+  position: relative;
+}
+
+.rating-form .rating-form-title {
+  flex: 1 1 auto;
+}
+
+.rating-form .rating-form-title-stars-row .rating-stars-input {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.rating-form .rating-stars-input {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .rating-form-title-stars-row .rating-form-title {
@@ -1163,25 +1184,34 @@ body {
   font-family: 'PoppinsRegular', sans-serif;
   text-align: left;
   margin-bottom: 0;
+  line-height: 1;
+  /* keep title compact */
 }
 
 .rating-form-title-stars-row .rating-stars-input {
   margin-bottom: 0;
   font-size: 0;
-  margin-top: 15px;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  /* vertically center the star icons */
 }
 
 .rating-stars-input {
   font-size: 0;
   color: #bbb;
-  margin-left: 12px;
+  margin-left: 0;
   text-align: left;
   display: flex;
-  gap: 4px;
+  gap: 8px;
+  align-items: center;
 }
 
 .star-input {
   cursor: pointer;
+  width: 28px;
+  /* ensure consistent size */
+  height: 28px;
 }
 
 .rating-categories {
@@ -1220,12 +1250,13 @@ body {
 }
 
 .rating-textarea {
-  width: 100%;
-  min-height: 120px;
+  width: 555px;
+  height: 200px;
   border-radius: 8px;
   border: 1px solid #ddd;
-  padding: 12px;
+  padding: 15px;
   font-size: 14px;
+  margin-left: 10px;
   margin-bottom: 16px;
   resize: vertical;
   font-family: 'PoppinsRegular', 'Poppins', sans-serif;
@@ -1250,6 +1281,10 @@ body {
 
 .share-btn:hover {
   background: #6B1E10;
+}
+
+.fa-star {
+  color: #ffb700;
 }
 
 @media (min-width: 901px) {
@@ -2296,10 +2331,12 @@ body {
 }
 
 .rating-form-title-stars-row {
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
   margin-bottom: 12px;
+  width: 100%;
 }
 
 .rating-stars-input {
@@ -2688,6 +2725,14 @@ body {
   .rating-form-title-stars-row {
     gap: 6px;
     margin-bottom: 10px;
+  }
+
+  /* Undo absolute positioning on very small screens so stars stack */
+  .rating-form .rating-stars-input {
+    position: static;
+    right: auto;
+    top: auto;
+    transform: none;
   }
 
   .rating-stars-input .star-input {
