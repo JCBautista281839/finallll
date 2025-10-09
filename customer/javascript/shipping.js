@@ -1064,6 +1064,39 @@ document.addEventListener('DOMContentLoaded', function () {
         paymentBtn.addEventListener('click', handlePayment);
 
         console.log('[shipping.js] Payment button enabled and handler attached');
+
+        // --- Add a small Lalamove test button under the Place Order button ---
+        try {
+          const lalamoveTestBtn = document.createElement('button');
+          lalamoveTestBtn.id = 'place-lalamove-btn';
+          lalamoveTestBtn.className = 'continue-btn place-lalamove-btn';
+          lalamoveTestBtn.type = 'button';
+          lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
+          lalamoveTestBtn.style.marginTop = '8px';
+          lalamoveTestBtn.style.display = 'block';
+          lalamoveTestBtn.style.width = paymentBtn.offsetWidth ? paymentBtn.offsetWidth + 'px' : 'auto';
+
+          // Insert right after the existing payment button
+          if (paymentBtn.parentNode) paymentBtn.parentNode.insertBefore(lalamoveTestBtn, paymentBtn.nextSibling);
+
+          lalamoveTestBtn.addEventListener('click', async function (e) {
+            e.preventDefault();
+            // Prevent multiple clicks
+            lalamoveTestBtn.disabled = true;
+            lalamoveTestBtn.textContent = 'Placing Lalamove Order...';
+            try {
+              await placeLalamoveOrder();
+            } catch (err) {
+              console.error('Lalamove test order failed:', err);
+              showStatus('Lalamove test failed: ' + (err.message || err), true);
+            } finally {
+              lalamoveTestBtn.disabled = false;
+              lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
+            }
+          });
+        } catch (btnErr) {
+          console.warn('Could not create Lalamove test button:', btnErr);
+        }
       } else {
         console.error('[shipping.js] Payment button not found');
         showStatus('Error: Payment button not found', true);
@@ -1159,6 +1192,74 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       return 'gcash'; // default
+    }
+
+    // Place a Lalamove order using the stored quotation (for testing connectivity)
+    async function placeLalamoveOrder() {
+      try {
+        // Get quotation from session storage (different keys might be used)
+        const rawQuotation = sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse') || sessionStorage.getItem('quotation');
+        if (!rawQuotation) {
+          throw new Error('No quotation data found in sessionStorage');
+        }
+
+        const quotation = typeof rawQuotation === 'string' ? JSON.parse(rawQuotation) : rawQuotation;
+
+        // Basic validation
+        if (!quotation.data || !quotation.data.quotationId || !Array.isArray(quotation.data.stops) || quotation.data.stops.length < 2) {
+          throw new Error('Invalid quotation data format');
+        }
+
+        // Get customer info
+        const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
+        const customerName = formData.name || (formData.firstName ? (formData.firstName + (formData.lastName ? ' ' + formData.lastName : '')) : 'Guest');
+        const customerPhone = formData.phone || formData.contact || '';
+
+        // Build payload to match Lalamove /v3/orders expected body (wrapped with data)
+        const payload = {
+          data: {
+            quotationId: quotation.data.quotationId,
+            sender: {
+              stopId: quotation.data.stops[0].stopId || quotation.data.stops[0].id || 'SENDER_STOP',
+              name: 'Restaurant',
+              phone: '09123456789'
+            },
+            recipients: [
+              {
+                stopId: quotation.data.stops[1].stopId || quotation.data.stops[1].id || 'RECIPIENT_STOP',
+                name: customerName,
+                phone: formatPhoneNumber(customerPhone)
+              }
+            ],
+            metadata: {
+              orderRef: 'TEST_ORDER_' + Date.now()
+            }
+          }
+        };
+
+        console.log('[shipping.js] Sending Lalamove order test payload to /api/place-order:', payload);
+
+        const resp = await fetch('/api/place-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json();
+        if (!resp.ok) {
+          console.error('Lalamove API returned error:', result);
+          throw new Error(result.error || JSON.stringify(result));
+        }
+
+        console.log('Lalamove order test response:', result);
+        showStatus('Lalamove order placed (test). Check server logs for details.', false);
+        // Store result for inspection
+        sessionStorage.setItem('lalamoveTestResult', JSON.stringify(result));
+        return result;
+      } catch (error) {
+        console.error('[shipping.js] placeLalamoveOrder error:', error);
+        throw error;
+      }
     }
 
     // Initialize when DOM is ready
