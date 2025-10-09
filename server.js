@@ -158,28 +158,12 @@ app.use((req, res, next) => {
 
 // Configuration (use environment variables)
 const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'PRODUCTION';
-const LALAMOVE_ENV = process.env.LALAMOVE_ENV || 'sandbox'; // Default to sandbox for safety
-const LALA_HOST = LALAMOVE_ENV === 'production' ? 'rest.lalamove.com' : 'rest.sandbox.lalamove.com';
+const LALA_HOST = IS_PRODUCTION ? 'rest.sandbox.lalamove.com' : 'rest.sandbox.lalamove.com';
 const API_KEY = process.env.LALAMOVE_API_KEY || 'pk_test_5e6d8d33b32952622d173377b443ca5f';
-const API_SECRET = process.env.LALAMOVE_API_SECRET || process.env.LALAMOVE_SECRET;
+const API_SECRET = process.env.LALAMOVE_API_SECRET || 'sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr';
 const MARKET = process.env.LALAMOVE_MARKET || 'PH';
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
-
-// DEBUG: Log the API secret being used (first 20 chars only for security)
-console.log('🔑 DEBUG - API_SECRET source check:');
-console.log('  - NODE_ENV:', process.env.NODE_ENV);
-console.log('  - LALAMOVE_ENV:', LALAMOVE_ENV);
-console.log('  - LALA_HOST:', LALA_HOST);
-console.log('  - LALAMOVE_API_SECRET env var:', process.env.LALAMOVE_API_SECRET ? 'SET' : 'NOT SET');
-console.log('  - LALAMOVE_SECRET env var:', process.env.LALAMOVE_SECRET ? 'SET' : 'NOT SET');
-console.log('  - Final API_SECRET (first 20 chars):', API_SECRET ? API_SECRET.substring(0, 20) + '...' : 'NOT SET');
-
-if (!API_SECRET) {
-  console.error('❌ FATAL ERROR: No Lalamove API secret found!');
-  console.error('   Please set LALAMOVE_API_SECRET or LALAMOVE_SECRET in environment variables');
-  process.exit(1);
-}
 
 
 // OTP Configuration
@@ -931,47 +915,6 @@ app.get('/api/test-signature', (req, res) => {
       authHeader
     }
   });
-});
-
-// Comprehensive environment debug endpoint
-app.get('/api/debug-env', (req, res) => {
-  try {
-    console.log('🔍 Environment debug endpoint called');
-    
-    res.json({
-      success: true,
-      environment: {
-        NODE_ENV: process.env.NODE_ENV,
-        envSources: {
-          LALAMOVE_API_SECRET: {
-            fromLALAMOVE_API_SECRET: process.env.LALAMOVE_API_SECRET ? 'SET' : 'NOT SET',
-            fromLALAMOVE_SECRET: process.env.LALAMOVE_SECRET ? 'SET' : 'NOT SET',
-            actualValuePreview: API_SECRET ? API_SECRET.substring(0, 15) + '...' : 'NOT SET',
-            fullLength: API_SECRET ? API_SECRET.length : 0,
-            expectedLength: 77 // sk_test_fuI4IrymoeaYxuPUbM07eq4uQAy17LT6EfkerSucJwfbzNWWu/uiVjG+ZroIx5nr
-          },
-          LALAMOVE_API_KEY: {
-            value: API_KEY,
-            source: process.env.LALAMOVE_API_KEY ? 'ENV' : 'HARDCODED'
-          }
-        },
-        allLalamoveEnvVars: Object.keys(process.env).filter(key => key.includes('LALAMOVE')),
-        configUsed: {
-          IS_PRODUCTION: IS_PRODUCTION,
-          LALA_HOST: LALA_HOST,
-          API_KEY: API_KEY,
-          API_SECRET_LENGTH: API_SECRET ? API_SECRET.length : 0,
-          MARKET: MARKET
-        }
-      }
-    });
-  } catch (error) {
-    console.error('❌ Environment debug error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
 });
 
 /* ====== Lalamove Webhook Route ====== */
@@ -2678,44 +2621,5 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`   ⚠️  Create .env file with SENDGRID_API_KEY for email functionality`);
   } else {
     console.log(`   ✅ SendGrid API key configured and ready for email sending`);
-  }
-});
-
-// 🚨 DEBUG ENDPOINT - Test HMAC signature function on production
-app.get('/debug-hmac-test', (req, res) => {
-  try {
-    const testSecret = API_SECRET;
-    const testTimestamp = Date.now().toString();
-    const testMethod = 'POST';
-    const testPath = '/v3/quotations';
-    const testBody = '{"service_type":"MOTORCYCLE","test":"debug"}';
-
-    // Test our makeSignature function
-    const signature = makeSignature(testSecret, testTimestamp, testMethod, testPath, testBody);
-    
-    const rawString = `${testTimestamp}\r\n${testMethod}\r\n${testPath}\r\n\r\n${testBody}`;
-    
-    res.json({
-      success: true,
-      debug: {
-        message: "HMAC signature test on production server",
-        timestamp: testTimestamp,
-        signature: signature,
-        rawStringPreview: rawString.substring(0, 200),
-        hasCorrectFormat: rawString.includes('\r\n'),
-        serverUpdated: rawString.includes('\r\n') ? 'YES - HMAC fix applied' : 'NO - Still using old format',
-        apiSecret: API_SECRET ? 'API_SECRET is set' : 'API_SECRET is missing',
-        environment: process.env.NODE_ENV || 'development'
-      }
-    });
-  } catch (error) {
-    res.json({
-      success: false,
-      error: error.message,
-      debug: {
-        message: "Error testing HMAC on production",
-        makeSignatureExists: typeof makeSignature === 'function'
-      }
-    });
   }
 });
