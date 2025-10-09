@@ -18,53 +18,53 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  background-image: url('src/Icons/star (1).png');
+  background-image: url('src/Icons/star.png');
   transition: background-image 0.2s;
 }
 
 .rating-stars-input .star-input.selected,
 .rating-stars-input .star-input.active {
-  background-image: url('src/Icons/star.png');
+  background-image: url('src/Icons/star (1).png');
 }
 
 @font-face {
   font-family: 'PoppinsMedium';
-  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+  src: url('src/fonts/Poppins-Medium.woff') format('woff');
   font-weight: 200;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'PoppinsBlack';
-  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  src: url('src/fonts/Poppins-Black.woff') format('woff');
   font-weight: 200;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'PoppinsRegular';
-  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+  src: url('src/fonts/Poppins-Regular.woff') format('woff');
   font-weight: 200;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'PoppinsExtraLight';
-  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+  src: url('src/fonts/Poppins-ExtraLight.woff') format('woff');
   font-weight: 200;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'PoppinsLight';
-  src: url('../src/fonts/Poppins-Light.woff') format('woff');
+  src: url('src/fonts/Poppins-Light.woff') format('woff');
   font-weight: 200;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'pinyon-script';
-  src: url(/src/fonts/PinyonScript-Regular.ttf);
+  src: url('src/fonts/PinyonScript-Regular.ttf');
 }
 
 /* Reset and base styles */
@@ -816,29 +816,34 @@ body {
   font-size: 14px;
 }
 
-.rating-star {
-  color: #FFD700;
-  font-size: 18px;
+/* Star Rating Styles */
+.rating-stars-input {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: center;
 }
 
-.rating-text {
-  color: #3e3e3e;
-  font-size: 14px;
+.star-input {
+  width: 36px;
+  height: 36px;
+  background-image: url('src/Icons/star.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.1s;
+  /* filter removed to show PNG color as-is */
+  display: inline-block;
 }
 
-/* Scroll-in animations for hero columns */
-.scroll-left,
-.scroll-right {
-  opacity: 0;
-  transition: transform 2000ms ease, opacity 2000ms ease;
+
+.star-input:focus {
+  outline: 2px solid #ffb700;
 }
 
-.scroll-left {
-  transform: translateX(-60px);
-}
-
-.scroll-right {
-  transform: translateX(60px);
+.star-input:hover {
+  filter: none;
+  transform: scale(1.08);
 }
 
 .in-view {
@@ -1063,13 +1068,6 @@ body {
   margin-top: 20px;
 }
 
-.star-filled {
-  color: #FFD700;
-}
-
-.star-empty {
-  color: #bbb;
-}
 
 /* PNG star styling for reviews */
 .review-stars .star-filled,
@@ -1150,6 +1148,7 @@ body {
   margin-left: 10px;
   text-align: left;
   font-weight: 600;
+  width: 600px;
 }
 
 /* Align stars next to the feedback form title */
