@@ -278,13 +278,13 @@ function makeSignature(secret, timestamp, method, path, body) {
   console.log('[HMAC DEBUG] Body length:', body.length);
   console.log('[HMAC DEBUG] Body first 200 chars:', body.substring(0, 200));
   console.log('[HMAC DEBUG] Body last 50 chars:', body.substring(body.length - 50));
-  
+
   // Check for any non-printable characters in body
   const nonPrintable = body.match(/[\x00-\x1F\x7F-\x9F]/g);
   if (nonPrintable) {
     console.log('[HMAC DEBUG] WARNING: Non-printable characters found in body:', nonPrintable);
   }
-  
+
   console.log('[HMAC DEBUG] Raw string construction:');
   console.log('  - timestamp + \\r\\n:', JSON.stringify(timestamp + '\r\n'));
   console.log('  - method + \\r\\n:', JSON.stringify(method + '\r\n'));
@@ -292,7 +292,7 @@ function makeSignature(secret, timestamp, method, path, body) {
   console.log('[HMAC DEBUG] Complete raw string length:', rawString.length);
   console.log('[HMAC DEBUG] Raw string (first 300 chars):', JSON.stringify(rawString.substring(0, 300)));
   console.log('[HMAC DEBUG] Raw string (last 100 chars):', JSON.stringify(rawString.substring(rawString.length - 100)));
-  
+
   // Verify raw string format step by step
   const expectedFormat = `${timestamp}\r\n${method}\r\n${path}\r\n\r\n${body}`;
   console.log('[HMAC DEBUG] Raw string matches expected format:', rawString === expectedFormat);
@@ -728,7 +728,7 @@ app.post('/api/quotation', async (req, res) => {
   console.log('[PROXY DEBUG] Request headers:', JSON.stringify(req.headers, null, 2));
   console.log('[PROXY DEBUG] Request body type:', typeof req.body);
   console.log('[PROXY DEBUG] Request body keys:', req.body ? Object.keys(req.body) : 'null');
-  
+
   // Extra logging for stops
   if (!req.body || !req.body.data || !Array.isArray(req.body.data.stops)) {
     console.error('[PROXY DEBUG] ERROR: No stops array found in request body!');
@@ -739,10 +739,10 @@ app.post('/api/quotation', async (req, res) => {
       console.error('[PROXY DEBUG] ERROR: Less than 2 stops provided!');
     }
   }
-  
+
   console.log('[PROXY DEBUG] /api/quotation incoming');
   console.log('[PROXY DEBUG] Request body received from frontend:', JSON.stringify(req.body, null, 2));
-  
+
   try {
     // Send the body exactly as received from frontend (with data wrapper)
     // Lalamove API expects { data: { ... } } format
@@ -834,7 +834,7 @@ app.post('/api/quotation', async (req, res) => {
 
     console.log('[PROXY DEBUG] === SENDING REQUEST TO LALAMOVE ===');
     console.log('[PROXY DEBUG] forwarding to Lalamove /v3/quotations');
-    
+
     const response = await axios.post(url, body, {
       headers,
       timeout: 30000, // 30 second timeout
@@ -842,14 +842,14 @@ app.post('/api/quotation', async (req, res) => {
         return status >= 200 && status < 600; // Accept all responses for debugging
       }
     });
-    
+
     console.log('[PROXY DEBUG] === LALAMOVE RESPONSE ===');
     console.log('[PROXY DEBUG] lalamove response status:', response.status);
     console.log('[PROXY DEBUG] lalamove response headers:', JSON.stringify(response.headers, null, 2));
     console.log('[PROXY DEBUG] lalamove response data:', JSON.stringify(response.data, null, 2));
-    
+
     res.status(response.status).json(response.data);
-    
+
   } catch (err) {
     console.error('[PROXY DEBUG] === ERROR DETAILS ===');
     console.error('[PROXY DEBUG] Error type:', err.constructor.name);
@@ -878,17 +878,17 @@ app.post('/api/quotation', async (req, res) => {
     console.error('[PROXY DEBUG] === SENDING ERROR RESPONSE ===');
     console.error('[PROXY DEBUG] Status:', status);
     console.error('[PROXY DEBUG] Error data:', JSON.stringify(errorData, null, 2));
-    
+
     res.status(status).json(errorData);
   }
-  
+
   console.log('[PROXY DEBUG] === QUOTATION REQUEST END ===');
 });
 
 // Add a comprehensive debug endpoint to test Lalamove API call
 app.post('/api/debug-lalamove', async (req, res) => {
   console.log('[DEBUG-LALAMOVE] === DEBUG LALAMOVE API CALL START ===');
-  
+
   try {
     // Use provided coordinates or default test coordinates
     const testPayload = req.body && Object.keys(req.body).length > 0 ? req.body : {
@@ -929,7 +929,7 @@ app.post('/api/debug-lalamove', async (req, res) => {
 
     // Generate signature with full debug output
     const signature = makeSignature(API_SECRET, timestamp, method, path, body);
-    
+
     const url = `https://${LALA_HOST}${path}`;
     const authHeader = `hmac ${API_KEY}:${timestamp}:${signature}`;
     const headers = {
@@ -946,7 +946,7 @@ app.post('/api/debug-lalamove', async (req, res) => {
     console.log('[DEBUG-LALAMOVE] Body length:', body.length);
 
     console.log('[DEBUG-LALAMOVE] === SENDING REQUEST TO LALAMOVE ===');
-    
+
     const startTime = Date.now();
     const response = await axios.post(url, body, {
       headers,
@@ -990,7 +990,7 @@ app.post('/api/debug-lalamove', async (req, res) => {
     console.error('[DEBUG-LALAMOVE] === ERROR OCCURRED ===');
     console.error('[DEBUG-LALAMOVE] Error type:', error.constructor.name);
     console.error('[DEBUG-LALAMOVE] Error message:', error.message);
-    
+
     if (error.response) {
       console.error('[DEBUG-LALAMOVE] Response status:', error.response.status);
       console.error('[DEBUG-LALAMOVE] Response headers:', JSON.stringify(error.response.headers, null, 2));
@@ -1001,7 +1001,7 @@ app.post('/api/debug-lalamove', async (req, res) => {
     } else {
       console.error('[DEBUG-LALAMOVE] Error setting up request:', error.message);
     }
-    
+
     console.error('[DEBUG-LALAMOVE] Full error stack:', error.stack);
 
     res.status(error.response?.status || 500).json({
@@ -1026,7 +1026,7 @@ app.post('/api/debug-lalamove', async (req, res) => {
       }
     });
   }
-  
+
   console.log('[DEBUG-LALAMOVE] === DEBUG LALAMOVE API CALL END ===');
 });
 
@@ -2029,7 +2029,7 @@ app.get('/order', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Order
 app.get('/test-otp', (req, res) => res.sendFile(path.join(__dirname, 'test-otp.html')));
 app.get('/simple-test', (req, res) => res.sendFile(path.join(__dirname, 'simple-test.html')));
 app.get('/test-firebase-otp', (req, res) => res.sendFile(path.join(__dirname, 'test-firebase-otp.html')));
-
+  
 /* ====== Simple in-memory orders API (keeps existing behavior) ====== */
 let orders = [];
 let orderCounter = 1;
