@@ -268,18 +268,41 @@ function makeSignature(secret, timestamp, method, path, body) {
   // SIGNATURE = HmacSHA256ToHex(<TIMESTAMP>\r\n<HTTP_VERB>\r\n<PATH>\r\n\r\n<BODY>, <SECRET>)
   const rawString = `${timestamp}\r\n${method}\r\n${path}\r\n\r\n${body}`;
 
-  console.log('[HMAC] Signature components (with \\r\\n):');
-  console.log('  timestamp:', timestamp);
-  console.log('  method:', method);
-  console.log('  path:', path);
-  console.log('  body preview:', body.substring(0, 100) + '...');
-  console.log('[HMAC] Raw string (first 200 chars):', JSON.stringify(rawString.substring(0, 200)));
+  console.log('[HMAC DEBUG] === SIGNATURE GENERATION START ===');
+  console.log('[HMAC DEBUG] API_SECRET length:', secret.length);
+  console.log('[HMAC DEBUG] API_SECRET first 20 chars:', secret.substring(0, 20));
+  console.log('[HMAC DEBUG] API_SECRET last 10 chars:', secret.substring(secret.length - 10));
+  console.log('[HMAC DEBUG] Timestamp:', timestamp, '(type:', typeof timestamp, ')');
+  console.log('[HMAC DEBUG] Method:', method);
+  console.log('[HMAC DEBUG] Path:', path);
+  console.log('[HMAC DEBUG] Body length:', body.length);
+  console.log('[HMAC DEBUG] Body first 200 chars:', body.substring(0, 200));
+  console.log('[HMAC DEBUG] Body last 50 chars:', body.substring(body.length - 50));
+  
+  // Check for any non-printable characters in body
+  const nonPrintable = body.match(/[\x00-\x1F\x7F-\x9F]/g);
+  if (nonPrintable) {
+    console.log('[HMAC DEBUG] WARNING: Non-printable characters found in body:', nonPrintable);
+  }
+  
+  console.log('[HMAC DEBUG] Raw string construction:');
+  console.log('  - timestamp + \\r\\n:', JSON.stringify(timestamp + '\r\n'));
+  console.log('  - method + \\r\\n:', JSON.stringify(method + '\r\n'));
+  console.log('  - path + \\r\\n\\r\\n:', JSON.stringify(path + '\r\n\r\n'));
+  console.log('[HMAC DEBUG] Complete raw string length:', rawString.length);
+  console.log('[HMAC DEBUG] Raw string (first 300 chars):', JSON.stringify(rawString.substring(0, 300)));
+  console.log('[HMAC DEBUG] Raw string (last 100 chars):', JSON.stringify(rawString.substring(rawString.length - 100)));
+  
+  // Verify raw string format step by step
+  const expectedFormat = `${timestamp}\r\n${method}\r\n${path}\r\n\r\n${body}`;
+  console.log('[HMAC DEBUG] Raw string matches expected format:', rawString === expectedFormat);
 
   const signature = crypto.createHmac('sha256', secret)
     .update(rawString, 'utf8')
     .digest('hex');
 
-  console.log('[HMAC] Generated signature:', signature);
+  console.log('[HMAC DEBUG] Generated signature:', signature);
+  console.log('[HMAC DEBUG] === SIGNATURE GENERATION END ===');
   return signature;
 }
 
@@ -699,17 +722,27 @@ app.get('/api/webhook/lalamove', (req, res) => {
 /* ====== Proxy endpoints ====== */
 
 app.post('/api/quotation', async (req, res) => {
+  console.log('[PROXY DEBUG] === QUOTATION REQUEST START ===');
+  console.log('[PROXY DEBUG] Request timestamp:', new Date().toISOString());
+  console.log('[PROXY DEBUG] Request method:', req.method);
+  console.log('[PROXY DEBUG] Request headers:', JSON.stringify(req.headers, null, 2));
+  console.log('[PROXY DEBUG] Request body type:', typeof req.body);
+  console.log('[PROXY DEBUG] Request body keys:', req.body ? Object.keys(req.body) : 'null');
+  
   // Extra logging for stops
   if (!req.body || !req.body.data || !Array.isArray(req.body.data.stops)) {
-    console.error('[proxy] ERROR: No stops array found in request body!');
+    console.error('[PROXY DEBUG] ERROR: No stops array found in request body!');
+    console.error('[PROXY DEBUG] Request body structure:', JSON.stringify(req.body, null, 2));
   } else {
-    console.log('[proxy] Stops array received:', JSON.stringify(req.body.data.stops, null, 2));
+    console.log('[PROXY DEBUG] Stops array received:', JSON.stringify(req.body.data.stops, null, 2));
     if (req.body.data.stops.length < 2) {
-      console.error('[proxy] ERROR: Less than 2 stops provided!');
+      console.error('[PROXY DEBUG] ERROR: Less than 2 stops provided!');
     }
   }
-  console.log('[proxy] /api/quotation incoming');
-  console.log('[proxy] Request body received from frontend:', JSON.stringify(req.body, null, 2));
+  
+  console.log('[PROXY DEBUG] /api/quotation incoming');
+  console.log('[PROXY DEBUG] Request body received from frontend:', JSON.stringify(req.body, null, 2));
+  
   try {
     // Send the body exactly as received from frontend (with data wrapper)
     // Lalamove API expects { data: { ... } } format
@@ -717,21 +750,27 @@ app.post('/api/quotation', async (req, res) => {
 
     // Validate the nested data structure
     if (!bodyObj || !bodyObj.data || !Array.isArray(bodyObj.data.stops)) {
-      console.error('[proxy] invalid payload: missing data.stops array');
+      console.error('[PROXY DEBUG] invalid payload: missing data.stops array');
+      console.error('[PROXY DEBUG] bodyObj:', bodyObj);
+      console.error('[PROXY DEBUG] bodyObj.data:', bodyObj?.data);
       return res.status(400).json({ error: 'Invalid payload: data.stops array required' });
     }
     if (bodyObj.data.stops.length < 2) {
-      console.error('[proxy] invalid payload: need at least 2 stops');
+      console.error('[PROXY DEBUG] invalid payload: need at least 2 stops');
+      console.error('[PROXY DEBUG] stops count:', bodyObj.data.stops.length);
       return res.status(400).json({ error: 'Invalid payload: at least 2 stops required' });
     }
 
     // Ensure coordinates are strings and validate
+    console.log('[PROXY DEBUG] Processing stops for coordinate validation...');
     const normalizedStops = bodyObj.data.stops.map((s, idx) => {
+      console.log(`[PROXY DEBUG] Processing stop ${idx}:`, s);
       const coords = s.coordinates || s.location || {};
       const lat = coords.lat ? coords.lat.toString() : '';
       const lng = (coords.lng || coords.lon || coords.longitude) ? (coords.lng || coords.lon || coords.longitude).toString() : '';
+      console.log(`[PROXY DEBUG] Stop ${idx} coordinates - lat: "${lat}", lng: "${lng}"`);
       if (!lat || !lng) {
-        throw new Error(`Invalid coordinates for stop ${idx}`);
+        throw new Error(`Invalid coordinates for stop ${idx}: lat="${lat}", lng="${lng}"`);
       }
       return {
         coordinates: { lat, lng },
@@ -742,28 +781,39 @@ app.post('/api/quotation', async (req, res) => {
     // Update the body with normalized stops
     bodyObj.data.stops = normalizedStops;
     const body = JSON.stringify(bodyObj);
-    console.log('[proxy] Body sent to Lalamove (length=' + body.length + '):', body);
+    console.log('[PROXY DEBUG] Body sent to Lalamove (length=' + body.length + '):', body);
 
     // Verify the body is valid JSON
     try {
-      JSON.parse(body);
-      console.log('[proxy] ✅ Body is valid JSON');
+      const parsedBody = JSON.parse(body);
+      console.log('[PROXY DEBUG] ✅ Body is valid JSON');
+      console.log('[PROXY DEBUG] Parsed body structure:', {
+        hasData: !!parsedBody.data,
+        stopsCount: parsedBody.data?.stops?.length,
+        serviceType: parsedBody.data?.serviceType,
+        language: parsedBody.data?.language
+      });
     } catch (e) {
-      console.error('[proxy] ❌ Body is NOT valid JSON:', e.message);
+      console.error('[PROXY DEBUG] ❌ Body is NOT valid JSON:', e.message);
       return res.status(400).json({ error: 'Invalid JSON body generated' });
     }
 
     const ts = Date.now().toString();
-    console.log('[proxy] Timestamp generated:', ts, '(length:', ts.length, ')');
+    console.log('[PROXY DEBUG] Timestamp generated:', ts, '(length:', ts.length, ')');
+    console.log('[PROXY DEBUG] Current API configuration:');
+    console.log('[PROXY DEBUG] - API_KEY:', API_KEY);
+    console.log('[PROXY DEBUG] - API_SECRET (first 20 chars):', API_SECRET.substring(0, 20) + '...');
+    console.log('[PROXY DEBUG] - LALA_HOST:', LALA_HOST);
+    console.log('[PROXY DEBUG] - MARKET:', MARKET);
 
     // Debug the signature generation
-    console.log('[proxy] Signature generation details:');
-    console.log('- API_SECRET length:', API_SECRET.length);
-    console.log('- Timestamp:', ts);
-    console.log('- Method: POST');
-    console.log('- Path: /v3/quotations');
-    console.log('- Body length:', body.length);
-    console.log('- Body first 100 chars:', body.substring(0, 100));
+    console.log('[PROXY DEBUG] === SIGNATURE GENERATION DETAILS ===');
+    console.log('[PROXY DEBUG] - API_SECRET length:', API_SECRET.length);
+    console.log('[PROXY DEBUG] - Timestamp:', ts);
+    console.log('[PROXY DEBUG] - Method: POST');
+    console.log('[PROXY DEBUG] - Path: /v3/quotations');
+    console.log('[PROXY DEBUG] - Body length:', body.length);
+    console.log('[PROXY DEBUG] - Body first 100 chars:', body.substring(0, 100));
 
     const signature = makeSignature(API_SECRET, ts, 'POST', '/v3/quotations', body);
 
@@ -775,13 +825,16 @@ app.post('/api/quotation', async (req, res) => {
       'Market': MARKET
     };
 
-    console.log('[proxy] Final request details:');
-    console.log('- URL:', url);
-    console.log('- Authorization header:', authHeader);
-    console.log('- All headers:', headers);
-    console.log('- Body being sent via axios:', body === JSON.stringify(bodyObj) ? '✅ Same' : '❌ Different');
+    console.log('[PROXY DEBUG] === FINAL REQUEST DETAILS ===');
+    console.log('[PROXY DEBUG] - URL:', url);
+    console.log('[PROXY DEBUG] - Authorization header:', authHeader);
+    console.log('[PROXY DEBUG] - All headers:', JSON.stringify(headers, null, 2));
+    console.log('[PROXY DEBUG] - Body being sent via axios (first 200 chars):', body.substring(0, 200));
+    console.log('[PROXY DEBUG] - Body being sent via axios (last 100 chars):', body.substring(body.length - 100));
 
-    console.log('[proxy] forwarding to Lalamove /v3/quotations');
+    console.log('[PROXY DEBUG] === SENDING REQUEST TO LALAMOVE ===');
+    console.log('[PROXY DEBUG] forwarding to Lalamove /v3/quotations');
+    
     const response = await axios.post(url, body, {
       headers,
       timeout: 30000, // 30 second timeout
@@ -789,17 +842,32 @@ app.post('/api/quotation', async (req, res) => {
         return status >= 200 && status < 600; // Accept all responses for debugging
       }
     });
-    console.log('[proxy] lalamove response status', response.status);
+    
+    console.log('[PROXY DEBUG] === LALAMOVE RESPONSE ===');
+    console.log('[PROXY DEBUG] lalamove response status:', response.status);
+    console.log('[PROXY DEBUG] lalamove response headers:', JSON.stringify(response.headers, null, 2));
+    console.log('[PROXY DEBUG] lalamove response data:', JSON.stringify(response.data, null, 2));
+    
     res.status(response.status).json(response.data);
+    
   } catch (err) {
-    console.error('[proxy] quotation error details:');
-    console.error('- Status:', err.response?.status);
-    console.error('- Data:', JSON.stringify(err.response?.data, null, 2));
-    console.error('- Message:', err.message);
-    console.error('- Full error:', err);
+    console.error('[PROXY DEBUG] === ERROR DETAILS ===');
+    console.error('[PROXY DEBUG] Error type:', err.constructor.name);
+    console.error('[PROXY DEBUG] Error message:', err.message);
+    console.error('[PROXY DEBUG] Response status:', err.response?.status);
+    console.error('[PROXY DEBUG] Response headers:', JSON.stringify(err.response?.headers, null, 2));
+    console.error('[PROXY DEBUG] Response data:', JSON.stringify(err.response?.data, null, 2));
+    console.error('[PROXY DEBUG] Request config:', {
+      url: err.config?.url,
+      method: err.config?.method,
+      headers: err.config?.headers,
+      data: err.config?.data ? err.config.data.substring(0, 200) + '...' : 'no data'
+    });
+    console.error('[PROXY DEBUG] Full error stack:', err.stack);
 
     // If validation error thrown above, respond 400
     if (err.message && err.message.startsWith('Invalid coordinates')) {
+      console.error('[PROXY DEBUG] Coordinate validation error');
       return res.status(400).json({ error: err.message });
     }
 
@@ -807,8 +875,159 @@ app.post('/api/quotation', async (req, res) => {
     const status = err.response?.status || 500;
     const errorData = err.response?.data || { error: err.message };
 
+    console.error('[PROXY DEBUG] === SENDING ERROR RESPONSE ===');
+    console.error('[PROXY DEBUG] Status:', status);
+    console.error('[PROXY DEBUG] Error data:', JSON.stringify(errorData, null, 2));
+    
     res.status(status).json(errorData);
   }
+  
+  console.log('[PROXY DEBUG] === QUOTATION REQUEST END ===');
+});
+
+// Add a comprehensive debug endpoint to test Lalamove API call
+app.post('/api/debug-lalamove', async (req, res) => {
+  console.log('[DEBUG-LALAMOVE] === DEBUG LALAMOVE API CALL START ===');
+  
+  try {
+    // Use provided coordinates or default test coordinates
+    const testPayload = req.body && Object.keys(req.body).length > 0 ? req.body : {
+      data: {
+        serviceType: "MOTORCYCLE",
+        language: "en_PH",
+        stops: [
+          {
+            coordinates: {
+              lat: "14.4457549030656",
+              lng: "120.92354136968974"
+            },
+            address: "Viktoria's Bistro, Philippines"
+          },
+          {
+            coordinates: {
+              lat: "14.554729",
+              lng: "121.024445"
+            },
+            address: "Test Destination, Philippines"
+          }
+        ]
+      }
+    };
+
+    console.log('[DEBUG-LALAMOVE] Test payload:', JSON.stringify(testPayload, null, 2));
+
+    const body = JSON.stringify(testPayload);
+    const timestamp = Date.now().toString();
+    const method = 'POST';
+    const path = '/v3/quotations';
+
+    console.log('[DEBUG-LALAMOVE] === REQUEST PREPARATION ===');
+    console.log('[DEBUG-LALAMOVE] Body:', body);
+    console.log('[DEBUG-LALAMOVE] Timestamp:', timestamp);
+    console.log('[DEBUG-LALAMOVE] Method:', method);
+    console.log('[DEBUG-LALAMOVE] Path:', path);
+
+    // Generate signature with full debug output
+    const signature = makeSignature(API_SECRET, timestamp, method, path, body);
+    
+    const url = `https://${LALA_HOST}${path}`;
+    const authHeader = `hmac ${API_KEY}:${timestamp}:${signature}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': authHeader,
+      'Market': MARKET,
+      'Accept': 'application/json',
+      'User-Agent': 'Viktorias-Bistro/1.0'
+    };
+
+    console.log('[DEBUG-LALAMOVE] === FINAL REQUEST ===');
+    console.log('[DEBUG-LALAMOVE] URL:', url);
+    console.log('[DEBUG-LALAMOVE] Headers:', JSON.stringify(headers, null, 2));
+    console.log('[DEBUG-LALAMOVE] Body length:', body.length);
+
+    console.log('[DEBUG-LALAMOVE] === SENDING REQUEST TO LALAMOVE ===');
+    
+    const startTime = Date.now();
+    const response = await axios.post(url, body, {
+      headers,
+      timeout: 30000,
+      validateStatus: function (status) {
+        return status >= 200 && status < 600; // Accept all responses
+      }
+    });
+    const endTime = Date.now();
+
+    console.log('[DEBUG-LALAMOVE] === RESPONSE RECEIVED ===');
+    console.log('[DEBUG-LALAMOVE] Response time:', endTime - startTime, 'ms');
+    console.log('[DEBUG-LALAMOVE] Status:', response.status);
+    console.log('[DEBUG-LALAMOVE] Status text:', response.statusText);
+    console.log('[DEBUG-LALAMOVE] Response headers:', JSON.stringify(response.headers, null, 2));
+    console.log('[DEBUG-LALAMOVE] Response data:', JSON.stringify(response.data, null, 2));
+
+    res.json({
+      success: response.status >= 200 && response.status < 300,
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data,
+      debug: {
+        requestUrl: url,
+        requestHeaders: headers,
+        requestBody: testPayload,
+        requestBodyString: body,
+        timestamp,
+        signature,
+        responseTime: endTime - startTime,
+        apiConfig: {
+          apiKey: API_KEY,
+          host: LALA_HOST,
+          market: MARKET,
+          secretLength: API_SECRET.length
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('[DEBUG-LALAMOVE] === ERROR OCCURRED ===');
+    console.error('[DEBUG-LALAMOVE] Error type:', error.constructor.name);
+    console.error('[DEBUG-LALAMOVE] Error message:', error.message);
+    
+    if (error.response) {
+      console.error('[DEBUG-LALAMOVE] Response status:', error.response.status);
+      console.error('[DEBUG-LALAMOVE] Response headers:', JSON.stringify(error.response.headers, null, 2));
+      console.error('[DEBUG-LALAMOVE] Response data:', JSON.stringify(error.response.data, null, 2));
+    } else if (error.request) {
+      console.error('[DEBUG-LALAMOVE] Request was made but no response received');
+      console.error('[DEBUG-LALAMOVE] Request details:', error.request);
+    } else {
+      console.error('[DEBUG-LALAMOVE] Error setting up request:', error.message);
+    }
+    
+    console.error('[DEBUG-LALAMOVE] Full error stack:', error.stack);
+
+    res.status(error.response?.status || 500).json({
+      success: false,
+      error: {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        type: error.constructor.name
+      },
+      debug: {
+        hasResponse: !!error.response,
+        hasRequest: !!error.request,
+        errorCode: error.code,
+        apiConfig: {
+          apiKey: API_KEY,
+          host: LALA_HOST,
+          market: MARKET,
+          secretLength: API_SECRET.length
+        }
+      }
+    });
+  }
+  
+  console.log('[DEBUG-LALAMOVE] === DEBUG LALAMOVE API CALL END ===');
 });
 
 // Helper test route: call Lalamove from server-side with provided JSON (or example)
@@ -821,8 +1040,7 @@ app.post('/api/quote-test', async (req, res) => {
       language: 'en_PH',
       isRouteOptimized: false,
       stops: [
-        { coordinates: { lat: 14.4457549030656, lng: 120.92354136968974 }, address: "Viktoria's Bistro, Philippines" },
-        { coordinates: { lat: 14.554729, lng: 121.024445 }, address: 'Bonifacio High Street, Taguig' }
+        { coordinates: { lat: 14.4457549030656, lng: 120.92354136968974 }, address: "Viktoria's Bistro, Philippines" }
       ]
     };
 
@@ -880,31 +1098,86 @@ app.post('/api/place-order', async (req, res) => {
 
 // Debug endpoint to test signature generation
 app.get('/api/test-signature', (req, res) => {
-  console.log('[debug] Testing signature generation...');
+  console.log('[DEBUG] === SIGNATURE TEST START ===');
+  console.log('[DEBUG] Testing signature generation...');
 
   const testBody = '{"data":{"serviceType":"MOTORCYCLE","language":"en_PH","stops":[{"coordinates":{"lat":"14.445755","lng":"120.923541"},"address":"Test Address 1"},{"coordinates":{"lat":"14.554729","lng":"121.024445"},"address":"Test Address 2"}]}}';
   const timestamp = Date.now().toString();
   const method = 'POST';
   const path = '/v3/quotations';
 
-  console.log('[debug] Test parameters:');
-  console.log('- API_KEY:', API_KEY);
-  console.log('- API_SECRET (first 10 chars):', API_SECRET.substring(0, 10) + '...');
-  console.log('- LALA_HOST:', LALA_HOST);
-  console.log('- MARKET:', MARKET);
-  console.log('- timestamp:', timestamp);
-  console.log('- method:', method);
-  console.log('- path:', path);
-  console.log('- body:', testBody);
+  console.log('[DEBUG] === TEST PARAMETERS ===');
+  console.log('[DEBUG] - API_KEY:', API_KEY);
+  console.log('[DEBUG] - API_SECRET (full):', API_SECRET);
+  console.log('[DEBUG] - API_SECRET length:', API_SECRET.length);
+  console.log('[DEBUG] - API_SECRET first 20 chars:', API_SECRET.substring(0, 20));
+  console.log('[DEBUG] - API_SECRET last 10 chars:', API_SECRET.substring(API_SECRET.length - 10));
+  console.log('[DEBUG] - LALA_HOST:', LALA_HOST);
+  console.log('[DEBUG] - MARKET:', MARKET);
+  console.log('[DEBUG] - timestamp:', timestamp);
+  console.log('[DEBUG] - method:', method);
+  console.log('[DEBUG] - path:', path);
+  console.log('[DEBUG] - testBody:', testBody);
+  console.log('[DEBUG] - testBody length:', testBody.length);
+
+  // Test different timestamp formats
+  const timestamps = [
+    Date.now().toString(),
+    Math.floor(Date.now() / 1000).toString(),
+    new Date().getTime().toString()
+  ];
+
+  console.log('[DEBUG] === TESTING DIFFERENT TIMESTAMP FORMATS ===');
+  timestamps.forEach((ts, index) => {
+    console.log(`[DEBUG] Timestamp ${index + 1}: ${ts} (length: ${ts.length})`);
+    const sig = makeSignature(API_SECRET, ts, method, path, testBody);
+    const authHeader = `hmac ${API_KEY}:${ts}:${sig}`;
+    console.log(`[DEBUG] Signature ${index + 1}: ${sig}`);
+    console.log(`[DEBUG] Auth Header ${index + 1}: ${authHeader}`);
+  });
+
+  // Test the exact format from Lalamove documentation
+  console.log('[DEBUG] === TESTING EXACT LALAMOVE FORMAT ===');
+  const rawString = `${timestamp}\r\n${method}\r\n${path}\r\n\r\n${testBody}`;
+  console.log('[DEBUG] Raw string for HMAC:');
+  console.log('[DEBUG] - Length:', rawString.length);
+  console.log('[DEBUG] - Hex representation:', Buffer.from(rawString, 'utf8').toString('hex'));
+  console.log('[DEBUG] - JSON representation:', JSON.stringify(rawString));
+
+  // Manual HMAC calculation for verification
+  const manualHmac = crypto.createHmac('sha256', API_SECRET)
+    .update(rawString, 'utf8')
+    .digest('hex');
+  console.log('[DEBUG] Manual HMAC result:', manualHmac);
 
   const signature = makeSignature(API_SECRET, timestamp, method, path, testBody);
   const authHeader = `hmac ${API_KEY}:${timestamp}:${signature}`;
+
+  console.log('[DEBUG] === FINAL RESULTS ===');
+  console.log('[DEBUG] Final signature:', signature);
+  console.log('[DEBUG] Manual vs makeSignature match:', signature === manualHmac);
+
+  // Test with actual Lalamove endpoint URL construction
+  const testUrl = `https://${LALA_HOST}/v3/quotations`;
+  const testHeaders = {
+    'Content-Type': 'application/json',
+    'Authorization': authHeader,
+    'Market': MARKET
+  };
+
+  console.log('[DEBUG] === TEST REQUEST DETAILS ===');
+  console.log('[DEBUG] URL:', testUrl);
+  console.log('[DEBUG] Headers:', JSON.stringify(testHeaders, null, 2));
+  console.log('[DEBUG] Body (first 200 chars):', testBody.substring(0, 200));
+
+  console.log('[DEBUG] === SIGNATURE TEST END ===');
 
   res.json({
     success: true,
     debug: {
       apiKey: API_KEY,
-      apiSecretPreview: API_SECRET.substring(0, 10) + '...',
+      apiSecretLength: API_SECRET.length,
+      apiSecretPreview: API_SECRET.substring(0, 20) + '...',
       host: LALA_HOST,
       market: MARKET,
       timestamp,
@@ -912,7 +1185,13 @@ app.get('/api/test-signature', (req, res) => {
       path,
       bodyLength: testBody.length,
       signature,
-      authHeader
+      manualHmac,
+      signaturesMatch: signature === manualHmac,
+      authHeader,
+      rawStringLength: rawString.length,
+      rawStringHex: Buffer.from(rawString, 'utf8').toString('hex').substring(0, 200) + '...',
+      testUrl,
+      testHeaders
     }
   });
 });
@@ -2593,7 +2872,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`   POS: http://localhost:${PORT}/pos`);
   console.log(`   Menu: http://localhost:${PORT}/menu`);
   console.log(`\n📡 Lalamove Integration:`);
-  console.log(`   Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'SANDBOX'}`);
+  console.log(`   Environment: ${IS_PRODUCTION ? 'SANDBOX' : 'SANDBOX'}`);
   console.log(`   API Host: ${LALA_HOST}`);
   console.log(`   Market: ${MARKET}`);
   console.log(`\n🔐 OTP System:`);
