@@ -1,7 +1,7 @@
 // Reviews functionality with Firebase integration
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Reviews system loaded, initializing Firebase...');
-  
+
   // Wait for Firebase to be ready
   function waitForFirebase() {
     if (window.isFirebaseReady && window.isFirebaseReady()) {
@@ -12,35 +12,35 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(waitForFirebase, 200);
     }
   }
-  
+
   function initializeReviewsSystem() {
     console.log('Initializing reviews system...');
     loadReviewsFromFirebase();
     setupReviewForm();
     setupAuthStateListener();
   }
-  
+
   function loadReviewsFromFirebase() {
     console.log('Loading reviews from Firebase...');
-    
+
     try {
       const db = firebase.firestore();
-      
+
       // Get reviews from Firebase
       db.collection('reviews')
         .orderBy('createdAt', 'desc')
         .limit(3) // Show only the 3 most recent reviews
         .onSnapshot((querySnapshot) => {
           console.log('Reviews loaded from Firebase:', querySnapshot.size);
-          
+
           if (querySnapshot.empty) {
             console.log('No reviews found, showing default reviews');
             return;
           }
-          
+
           // Update the reviews display
           updateReviewsDisplay(querySnapshot.docs);
-          
+
         }, (error) => {
           console.error('Error loading reviews:', error);
           // Keep default reviews if Firebase fails
@@ -49,47 +49,47 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error accessing Firebase:', error);
     }
   }
-  
+
   function updateReviewsDisplay(reviewDocs) {
     const reviewsContainer = document.querySelector('.customer-reviews-cards');
     if (!reviewsContainer) return;
-    
+
     // Clear existing reviews
     reviewsContainer.innerHTML = '';
-    
+
     reviewDocs.forEach((doc, index) => {
       const reviewData = doc.data();
       console.log(`Review ${index + 1} categories:`, reviewData.categories);
-      
+
       // Clean up categories before displaying
       if (reviewData.categories && Array.isArray(reviewData.categories)) {
         reviewData.categories = [...new Set(reviewData.categories.filter(cat => cat && cat.trim()))];
         console.log(`Cleaned categories for review ${index + 1}:`, reviewData.categories);
       }
-      
+
       const reviewCard = createReviewCard(reviewData, index);
       reviewsContainer.appendChild(reviewCard);
     });
   }
-  
+
   function createReviewCard(reviewData, index) {
     const reviewCard = document.createElement('div');
     reviewCard.className = 'review-card';
-    
+
     // Get first letter of name or use 'A' for anonymous
     const avatar = reviewData.name ? reviewData.name.charAt(0).toUpperCase() : 'A';
-    
+
     // Create star rating HTML
     const stars = createStarRating(reviewData.rating || 4);
-    
+
     // Create categories HTML - use empty array if no categories to avoid duplicates
     const categories = reviewData.categories || [];
     const categoriesHTML = createCategoriesDisplay(categories);
-    
+
     // Format the name properly
-    const displayName = reviewData.name && reviewData.name !== 'Anonymous' ? 
+    const displayName = reviewData.name && reviewData.name !== 'Anonymous' ?
       reviewData.name.toUpperCase() : 'ANONYMOUS';
-    
+
     reviewCard.innerHTML = `
       <div class="review-avatar">${avatar}</div>
       <div class="review-content">
@@ -105,10 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="review-text">"${reviewData.comment || 'Great food and service!'}"</div>
       </div>
     `;
-    
+
     return reviewCard;
   }
-  
+
   function createStarRating(rating) {
     let starsHTML = '';
     for (let i = 1; i <= 5; i++) {
@@ -122,33 +122,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return starsHTML;
   }
-  
+
   function createCategoriesDisplay(categories) {
     if (!categories || categories.length === 0) {
       return '<span class="review-category-tag">General Review</span>';
     }
-    
+
     // Remove duplicates and filter out empty/null values
     const uniqueCategories = [...new Set(categories.filter(cat => cat && cat.trim()))];
-    
-    return uniqueCategories.map(category => 
+
+    return uniqueCategories.map(category =>
       `<span class="review-category-tag">${category}</span>`
     ).join(' ');
   }
-  
+
   // Global variable to track selected rating
   let globalSelectedRating = 0;
 
   function setupReviewForm() {
     const ratingForm = document.querySelector('.rating-form');
     if (!ratingForm) return;
-    
+
     let selectedRating = 0;
     globalSelectedRating = 0; // Initialize global variable
-    
+
     // Check authentication state and update UI accordingly
     checkAuthenticationAndUpdateUI();
-    
+
     // Handle star rating selection
     const starInputs = ratingForm.querySelectorAll('.star-input');
     starInputs.forEach((star, index) => {
@@ -157,40 +157,40 @@ document.addEventListener('DOMContentLoaded', () => {
         globalSelectedRating = index + 1; // Update global variable
         updateStarDisplay(starInputs, selectedRating);
       });
-      
+
       star.addEventListener('mouseenter', () => {
         updateStarDisplay(starInputs, index + 1);
       });
     });
-    
+
     // Reset stars on mouse leave
     ratingForm.addEventListener('mouseleave', () => {
       updateStarDisplay(starInputs, selectedRating);
     });
-    
+
     // Handle category selection - allow unlimited multiple selection
     const categoryBtns = ratingForm.querySelectorAll('.rating-category-btn');
     let selectedCategories = []; // Start with no categories selected
-    
+
     // Remove counter functionality - no longer needed
-    
+
     categoryBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         console.log('Button clicked:', btn.textContent);
         console.log('Button disabled:', btn.disabled);
-        
+
         // Don't allow interaction if form is disabled
         if (btn.disabled) {
           console.log('Button is disabled, ignoring click');
           return;
         }
-        
+
         const isCurrentlyActive = btn.classList.contains('active');
         console.log('Current active state:', isCurrentlyActive);
-        
+
         if (isCurrentlyActive) {
           // If already selected, deselect it
           console.log('Deselecting button:', btn.textContent);
@@ -204,17 +204,17 @@ document.addEventListener('DOMContentLoaded', () => {
           selectedCategories.push(btn.textContent);
           console.log('Selected:', btn.textContent);
         }
-        
+
         // Show message if no categories are selected (but allow it)
         if (selectedCategories.length === 0) {
           showCategoryMessage('No categories selected. You can add categories to help categorize your review.');
         }
-        
+
         console.log('Selected categories:', selectedCategories);
         console.log('Button classes after toggle:', btn.className);
       });
     });
-    
+
     // Initialize with no categories selected by default
     setTimeout(() => {
       // Ensure all buttons start in unselected state
@@ -224,57 +224,66 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.style.removeProperty('background-color');
         btn.style.removeProperty('color');
         btn.style.removeProperty('border');
-        
+
         // Set default unselected state
         toggleCategoryButton(btn, false);
         console.log(`Initialized button ${index + 1} (${btn.textContent}) as unselected`);
       });
       console.log('All category buttons initialized as unselected');
     }, 100);
-    
+
     // Handle form submission
     ratingForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      
-      // Check if user is authenticated first
+
+      // If not authenticated, show alert only
       if (!isUserAuthenticated()) {
-        showLoginPrompt();
+        alert('Please sign in to submit your review.');
         return;
       }
-      
+
       const comment = ratingForm.querySelector('.rating-textarea').value.trim();
-      
+
       if (selectedRating === 0) {
         alert('Please select a rating before submitting.');
         return;
       }
-      
+
       if (!comment) {
         alert('Please write a comment before submitting.');
         return;
       }
-      
+
       // Categories are now optional - no validation needed
-      
+
       // Check if user wants to post anonymously
       const anonymousCheckbox = document.getElementById('anonymous-review');
       const isAnonymous = anonymousCheckbox ? anonymousCheckbox.checked : false;
-      
+
       submitReview({
         rating: selectedRating,
         categories: selectedCategories, // Save all selected categories
         comment: comment,
         name: isAnonymous ? 'Anonymous' : getAuthenticatedUserName()
       });
+
+      // Refresh page after successful submit
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     });
   }
-  
+
   function updateStarDisplay(stars, rating) {
     stars.forEach((star, index) => {
       if (index < rating) {
         star.classList.add('active');
+        star.classList.remove('star-empty');
       } else {
         star.classList.remove('active');
+        if (!star.classList.contains('star-empty')) {
+          star.classList.add('star-empty');
+        }
       }
     });
   }
@@ -284,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     button.style.removeProperty('background-color');
     button.style.removeProperty('color');
     button.style.removeProperty('border');
-    
+
     if (isActive) {
       // Select the button
       button.classList.add('active');
@@ -292,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
       button.style.setProperty('color', '#fff', 'important');
       button.style.setProperty('border', '2px solid #760000', 'important');
       button.style.setProperty('transform', 'scale(1.02)', 'important');
-      
+
       // Add a subtle animation
       setTimeout(() => {
         button.style.setProperty('transform', 'scale(1)', 'important');
@@ -304,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
       button.style.setProperty('color', '#333', 'important');
       button.style.setProperty('border', '2px solid #dee2e6', 'important');
       button.style.setProperty('transform', 'scale(0.98)', 'important');
-      
+
       // Add a subtle animation
       setTimeout(() => {
         button.style.setProperty('transform', 'scale(1)', 'important');
@@ -318,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (existingMessage) {
       existingMessage.remove();
     }
-    
+
     // Create new message
     const messageDiv = document.createElement('div');
     messageDiv.className = 'category-message';
@@ -327,13 +336,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ${message}
       </div>
     `;
-    
+
     // Insert after the category buttons
     const ratingForm = document.querySelector('.rating-form');
     const categoriesDiv = ratingForm.querySelector('.rating-categories');
     if (categoriesDiv) {
       categoriesDiv.parentNode.insertBefore(messageDiv, categoriesDiv.nextSibling);
-      
+
       // Remove message after 3 seconds
       setTimeout(() => {
         if (messageDiv.parentNode) {
@@ -342,27 +351,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 3000);
     }
   }
-  
+
   function submitReview(reviewData) {
     console.log('Submitting review:', reviewData);
-    
+
     try {
       const db = firebase.firestore();
-      
+
       // Add timestamp
       reviewData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      
+
       // Submit to Firebase
       db.collection('reviews').add(reviewData)
         .then((docRef) => {
           console.log('Review submitted successfully:', docRef.id);
-          
+
           // Show success message
           showSuccessMessage();
-          
+
           // Reset form
           resetReviewForm();
-          
+
         })
         .catch((error) => {
           console.error('Error submitting review:', error);
@@ -373,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Sorry, there was an error accessing the database. Please try again.');
     }
   }
-  
+
   function showSuccessMessage() {
     // Create a temporary success message
     const successMsg = document.createElement('div');
@@ -383,48 +392,48 @@ document.addEventListener('DOMContentLoaded', () => {
         ✓ Thank you for your review! It has been submitted successfully.
       </div>
     `;
-    
+
     const ratingForm = document.querySelector('.rating-form');
     ratingForm.insertBefore(successMsg, ratingForm.firstChild);
-    
+
     // Remove message after 3 seconds
     setTimeout(() => {
       successMsg.remove();
     }, 3000);
   }
-  
+
   function resetReviewForm() {
     const ratingForm = document.querySelector('.rating-form');
-    
+
     // Reset rating to zero (no stars selected)
     const starInputs = ratingForm.querySelectorAll('.star-input');
     starInputs.forEach(star => star.classList.remove('active'));
-    
+
     // Reset global rating variable
     globalSelectedRating = 0;
-    
+
     // Force update star display to show 0 stars
     updateStarDisplay(starInputs, 0);
-    
+
     // Reset categories - no categories selected by default
     const categoryBtns = ratingForm.querySelectorAll('.rating-category-btn');
     categoryBtns.forEach(btn => toggleCategoryButton(btn, false));
-    
+
     // Reset selected categories array
     selectedCategories = [];
-    
+
     // Reset textarea
     ratingForm.querySelector('.rating-textarea').value = '';
-    
+
     // Reset anonymous checkbox
     const anonymousCheckbox = document.getElementById('anonymous-review');
     if (anonymousCheckbox) {
       anonymousCheckbox.checked = false;
     }
-    
+
     console.log('Review form reset - rating set to 0, all fields cleared');
   }
-  
+
   // Authentication helper functions
   function isUserAuthenticated() {
     try {
@@ -458,50 +467,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const ratingForm = document.querySelector('.rating-form');
     if (!ratingForm) return;
 
-    if (isUserAuthenticated()) {
-      // User is authenticated - show normal form
-      updateFormForAuthenticatedUser();
-    } else {
-      // User is not authenticated - show login prompt
-      updateFormForUnauthenticatedUser();
-    }
+    // Always show normal form, never replace with sign-in layout
+    updateFormForAuthenticatedUser();
   }
 
   function updateFormForAuthenticatedUser() {
     const ratingForm = document.querySelector('.rating-form');
     const shareBtn = ratingForm.querySelector('.share-btn');
     const ratingTitle = ratingForm.querySelector('.rating-form-title');
-    
+
     // Remove any login prompts
     const loginPrompt = ratingForm.querySelector('.login-prompt');
     if (loginPrompt) {
       loginPrompt.remove();
     }
-    
+
     // Restore normal functionality
     if (shareBtn) {
       shareBtn.textContent = 'Share';
       shareBtn.disabled = false;
       shareBtn.style.opacity = '1';
     }
-    
+
     if (ratingTitle) {
       ratingTitle.textContent = 'Rate your experience';
     }
-    
+
     // Enable form elements
     enableFormElements(true);
-    
+
   }
 
   function updateFormForUnauthenticatedUser() {
     const ratingForm = document.querySelector('.rating-form');
     if (!ratingForm) return;
-    
+
     // Create the unauthenticated user form layout
     ratingForm.innerHTML = `
       <div class="rating-form-title-stars-row">
         <span class="rating-form-title">Share your experience</span>
+        <span class="rating-stars-input" id="customRatingStars">
+            <span class="star-input star-empty" data-value="1" tabindex="0" aria-label="1 star"></span>
+            <span class="star-input star-empty" data-value="2" tabindex="0" aria-label="2 stars"></span>
+            <span class="star-input star-empty" data-value="3" tabindex="0" aria-label="3 stars"></span>
+            <span class="star-input star-empty" data-value="4" tabindex="0" aria-label="4 stars"></span>
+            <span class="star-input star-empty" data-value="5" tabindex="0" aria-label="5 stars"></span>
+          </span>
       </div>
       <div class="rating-categories">
         <button type="button" class="rating-category-btn active" disabled>Overall Service</button>
@@ -520,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <button type="button" class="share-btn" id="sign-in-btn">Sign In to Review</button>
     `;
-    
+
     // Add event listener for the sign-in button
     const signInBtn = ratingForm.querySelector('#sign-in-btn');
     if (signInBtn) {
@@ -536,17 +547,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const categories = ratingForm.querySelectorAll('.rating-category-btn');
     const textarea = ratingForm.querySelector('.rating-textarea');
     const anonymousCheckbox = document.getElementById('anonymous-review');
-    
+
     stars.forEach(star => {
       star.style.pointerEvents = enabled ? 'auto' : 'none';
       star.style.opacity = enabled ? '1' : '0.5';
     });
-    
+
     categories.forEach(btn => {
       btn.disabled = !enabled;
       btn.style.opacity = enabled ? '1' : '0.5';
     });
-    
+
     if (textarea) {
       textarea.disabled = !enabled;
       textarea.style.opacity = enabled ? '1' : '0.5';
@@ -556,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textarea.placeholder = 'Tell us what can be improved...';
       }
     }
-    
+
     // Handle anonymous checkbox
     if (anonymousCheckbox) {
       anonymousCheckbox.disabled = !enabled;
@@ -594,19 +605,19 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Add event listeners
     document.getElementById('review-login-btn').addEventListener('click', () => {
       document.body.removeChild(modal);
       window.location.href = 'html/login.html';
     });
-    
+
     document.getElementById('review-cancel-btn').addEventListener('click', () => {
       document.body.removeChild(modal);
     });
-    
+
     // Close on backdrop click
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -621,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().onAuthStateChanged((user) => {
           console.log('Reviews: Auth state changed:', user ? 'User logged in' : 'User logged out');
-          
+
           // Update the review form UI based on authentication state
           setTimeout(() => {
             checkAuthenticationAndUpdateUI();
