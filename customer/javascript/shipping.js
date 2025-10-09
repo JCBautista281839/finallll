@@ -1050,33 +1050,20 @@ document.addEventListener('DOMContentLoaded', function () {
       // Find and modify the payment button
       const paymentBtn = document.querySelector('.continue-btn');
       if (paymentBtn) {
-        // Remove the onclick attribute
+        // Remove the onclick attribute (if present)
         paymentBtn.removeAttribute('onclick');
 
-        // Initialize button as disabled until payment is confirmed
-        paymentBtn.disabled = true;
-        paymentBtn.textContent = 'Complete Payment First';
-        paymentBtn.style.opacity = '0.6';
-        paymentBtn.style.cursor = 'not-allowed';
+        // Enable the button immediately so users can place orders without
+        // being blocked by payment/customer verifications.
+        paymentBtn.disabled = false;
+        paymentBtn.textContent = 'Place Order';
+        paymentBtn.style.opacity = '1';
+        paymentBtn.style.cursor = 'pointer';
 
-        // Check if payment was already completed
-        const existingPaymentInfo = sessionStorage.getItem('paymentInfo');
-        if (existingPaymentInfo) {
-          try {
-            const payment = JSON.parse(existingPaymentInfo);
-            if (payment.reference && payment.receiptData) {
-              enablePlaceOrderButton(paymentBtn);
-            }
-          } catch (error) {
-            console.error('Invalid payment info in session storage:', error);
-            sessionStorage.removeItem('paymentInfo');
-          }
-        }
-
-        // Add our custom handler
+        // Attach handler
         paymentBtn.addEventListener('click', handlePayment);
 
-        console.log('[shipping.js] Payment button handler attached');
+        console.log('[shipping.js] Payment button enabled and handler attached');
       } else {
         console.error('[shipping.js] Payment button not found');
         showStatus('Error: Payment button not found', true);
@@ -1088,50 +1075,19 @@ document.addEventListener('DOMContentLoaded', function () {
       event.preventDefault();
 
       try {
-        // Strict validation: MUST have payment info with both reference and receipt
-        const selectedPaymentMethod = getSelectedPaymentMethod();
-        const paymentInfo = sessionStorage.getItem('paymentInfo');
+        // Relaxed behavior: don't block order creation for missing payment
+        // or customer verification. Use sensible defaults where necessary.
+        let selectedPaymentMethod = getSelectedPaymentMethod();
+        if (!selectedPaymentMethod) selectedPaymentMethod = 'none';
 
-        // Check if payment method is selected
-        if (!selectedPaymentMethod || (selectedPaymentMethod !== 'gcash' && selectedPaymentMethod !== 'card')) {
-          alert('Please select a payment method (GCash or Card) first.');
-          return;
-        }
-
-        // Payment info is absolutely required - no exceptions
-        if (!paymentInfo) {
-          alert('You must complete the payment process first. Please click on your selected payment method to open the payment modal and provide your reference code and receipt screenshot.');
-          return;
-        }
-
-        // Validate payment data completeness
-        let payment;
+        let payment = {};
         try {
-          payment = JSON.parse(paymentInfo);
-        } catch (error) {
-          alert('Invalid payment information. Please complete the payment process again.');
+          const raw = sessionStorage.getItem('paymentInfo');
+          if (raw) payment = JSON.parse(raw) || {};
+        } catch (e) {
+          console.warn('[shipping.js] Failed to parse paymentInfo; proceeding without it');
+          payment = {};
           sessionStorage.removeItem('paymentInfo');
-          return;
-        }
-
-        // Both reference code and receipt are absolutely required
-        if (!payment.reference || payment.reference.trim().length < 5) {
-          alert('Payment reference code is required (minimum 5 characters). Please complete the payment modal first.');
-          sessionStorage.removeItem('paymentInfo');
-          return;
-        }
-
-        if (!payment.receiptData && !payment.receiptUrl) {
-          alert('Payment receipt screenshot is required. Please complete the payment modal first.');
-          sessionStorage.removeItem('paymentInfo');
-          return;
-        }
-
-        // Verify payment method matches
-        if (payment.type !== selectedPaymentMethod) {
-          alert('Payment method mismatch. Please complete the payment process for the selected method.');
-          sessionStorage.removeItem('paymentInfo');
-          return;
         }
 
         // Show loading status
@@ -1139,14 +1095,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Get all required data for order creation
         const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
+        // Provide fallback values if customer info is missing so order creation
+        // doesn't fail downstream.
+        if (!formData.name) formData.name = formData.firstName ? (formData.firstName + (formData.lastName ? ' ' + formData.lastName : '')) : 'Guest';
+        if (!formData.email) formData.email = 'guest@example.com';
         const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
         const quotationData = JSON.parse(sessionStorage.getItem('quotationResponse') || '{}');
 
-        // Validate required data
-        if (!formData.name || !formData.email) {
-          alert('Customer information is missing. Please go back to the details page and fill in your information.');
-          return;
-        }
 
         if (Object.keys(cartData).length === 0) {
           alert('No items in cart. Please add items before placing order.');
