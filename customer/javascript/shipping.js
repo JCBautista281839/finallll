@@ -137,6 +137,40 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
   }
 }
 
+// Function to store Lalamove quotation in Firestore
+async function storeLalamoveQuotation(quotationData, orderData) {
+  try {
+    const db = firebase.firestore();
+    const quotationRef = db.collection('lalamove_quotations').doc();
+    
+    await quotationRef.set({
+      quotationId: quotationData.data.quotationId,
+      orderId: orderData.orderId,
+      customerInfo: {
+        name: orderData.customerInfo.fullName,
+        email: orderData.customerInfo.email,
+        phone: orderData.customerInfo.phone,
+        address: orderData.shippingInfo.address
+      },
+      quotationData: {
+        serviceType: quotationData.data.serviceType,
+        price: quotationData.data.priceBreakdown.total,
+        currency: quotationData.data.priceBreakdown.currency,
+        expiresAt: quotationData.data.expiresAt
+      },
+      status: 'active',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log('[SHIPPING] Lalamove quotation stored in Firestore:', quotationRef.id);
+    return quotationRef.id;
+  } catch (error) {
+    console.error('[SHIPPING] Error storing Lalamove quotation:', error);
+    throw error;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[SHIPPING] DOMContentLoaded event fired, starting initialization...');
 
@@ -1542,6 +1576,9 @@ async function sendOrderNotificationToAdmin(orderId, orderData) {
 // Function to create Firebase order
 async function createFirebaseOrder(formData, cartData, quotationData, paymentInfo, paymentMethod) {
   try {
+    // Initialize Lalamove Quotation Manager
+    const quotationManager = new LalamoveQuotationManager();
+    
     // Check if Firebase is available
     if (typeof firebase === 'undefined') {
       console.warn('Firebase not available for order creation');
