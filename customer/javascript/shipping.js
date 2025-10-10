@@ -60,6 +60,19 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     return false;
   }
 
+  // Get complete form data from session storage
+  let formData;
+  try {
+    formData = JSON.parse(sessionStorage.getItem('orderFormData'));
+    if (!formData) {
+      console.warn('No form data found in session storage');
+      formData = {};
+    }
+  } catch (error) {
+    console.error('Error parsing form data from session storage:', error);
+    formData = {};
+  }
+
   try {
     // Check if Firebase is available
     if (typeof firebase === 'undefined') {
@@ -68,11 +81,14 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     }
 
     // Get customer data from session storage
-    const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
+    const formData = JSON.parse(sessionStorage.getItem('orderFormData') || '{}');
     console.log('Customer form data:', formData);
 
-    const customerName = formData.name || 'Unknown Customer';
+    const customerName = formData.firstName && formData.lastName ? 
+      `${formData.firstName} ${formData.lastName}` : 'Unknown Customer';
     const customerPhone = formData.phone || 'Unknown Phone';
+    const customerEmail = formData.email || 'No email provided';
+    const customerAddress = formData.fullAddress || formData.address || 'No address provided';
 
     // Initialize Firestore
     console.log('📊 Initializing Firestore...');
@@ -92,11 +108,12 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     // Create notification data with proper validation
     const notificationData = {
       type: 'payment_verification',
-      message: `Payment verification required for ${customerName} (${(paymentInfo.type || 'Unknown').toUpperCase()}) - Reference: ${paymentInfo.reference || 'No reference'}`,
+      message: `Payment verification required for ${formData.firstName} ${formData.lastName} (${(paymentInfo.type || 'Unknown').toUpperCase()}) - Reference: ${paymentInfo.reference || 'No reference'}`,
       customerInfo: {
-        name: customerName,
-        phone: customerPhone,
-        email: formData.email || 'No email provided'
+        name: formData.firstName && formData.lastName ? `${formData.firstName} ${formData.lastName}` : customerName,
+        phone: formData.phone || customerPhone,
+        email: formData.email || 'No email provided',
+        address: formData.fullAddress || formData.address || 'No address provided'
       },
       paymentInfo: {
         type: paymentInfo.type || 'unknown',
@@ -1714,11 +1731,13 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     // Prepare order data
     const orderData = {
       customerInfo: {
-        firstName: formData.name ? formData.name.split(' ')[0] : '',
-        lastName: formData.name ? formData.name.split(' ').slice(1).join(' ') : '',
-        fullName: formData.name || '',
-        email: formData.email || '',
-        phone: formData.phone || ''
+        firstName: formData.firstName || '',
+        lastName: formData.lastName || '',
+        fullName: formData.firstName && formData.lastName ? 
+          `${formData.firstName} ${formData.lastName}` : 'Unknown Customer',
+        email: formData.email || 'No email provided',
+        phone: formData.phone || 'Unknown Phone',
+        address: formData.fullAddress || formData.address || 'No address provided'
       },
       shippingInfo: {
         address: formData.address || '',
