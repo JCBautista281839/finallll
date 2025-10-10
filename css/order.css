@@ -50,7 +50,36 @@
   padding: 30px;
   box-shadow: none;
   max-height: 690px;
-   overflow: auto;
+  overflow: auto;
+}
+
+/* Transparent scrollbars by default, subtle thumb on hover */
+.container-fluid::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.container-fluid::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.container-fluid::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.container-fluid:hover::-webkit-scrollbar-thumb,
+.table-responsive:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
 /* Table Styles */
@@ -80,7 +109,7 @@
 
 /* Status cell fix (stable height, no jumping) */
 .pending-payment-row .status-cell {
-    min-height: 65px;
+  min-height: 65px;
 }
 
 /* Edit hint text */
@@ -88,85 +117,95 @@
 
 /* Table layout - ensures columns maintain fixed widths */
 .table {
-    table-layout: fixed;
-    width: 100%;
+  table-layout: fixed;
+  width: 100%;
 }
 
 /* Lock Actions column header and cells - prevents shifting */
 .order-table th:last-child,
 .order-table td:last-child {
-    width: 140px;           /* Fixed width instead of percentage */
-    min-width: 140px;       /* Ensures minimum space */
-    max-width: 140px;       /* Prevents expansion */
-    text-align: center;
-    vertical-align: middle;
-    white-space: nowrap;
-    padding: 8px 4px;       /* Consistent padding */
-    box-sizing: border-box; /* Include padding in width calculation */
+  width: 140px;
+  /* Fixed width instead of percentage */
+  min-width: 140px;
+  /* Ensures minimum space */
+  max-width: 140px;
+  /* Prevents expansion */
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  padding: 8px 4px;
+  /* Consistent padding */
+  box-sizing: border-box;
+  /* Include padding in width calculation */
 }
 
 /* Ensure Actions header text stays in place */
 .order-table th:last-child {
-    position: relative;
-    font-weight: 600;
+  position: relative;
+  font-weight: 600;
 }
 
 /* Allow text wrapping in other columns (adjust column number as needed) */
 .table th:nth-child(7),
 .table td:nth-child(7) {
-    white-space: normal;
-    word-wrap: break-word;
+  white-space: normal;
+  word-wrap: break-word;
 }
 
 /* Keep View button properly aligned and stable */
 .order-table td:last-child .btn {
-    display: inline-block;
-    margin: 0 auto;
-    min-width: 60px;        /* Ensures button has consistent width */
+  display: inline-block;
+  margin: 0 auto;
+  min-width: 60px;
+  /* Ensures button has consistent width */
 }
 
 /* Keep the edit hint stable under button */
 .order-table td:last-child .edit-hint {
-    display: block;
-    font-size: 0.75rem;
-    color: #0d6efd;
-    margin-top: 4px;
-    white-space: nowrap;
-    opacity: 0.6;
-    transition: opacity 0.2s ease;
-    text-align: center;     /* Center the hint text */
+  display: block;
+  font-size: 0.75rem;
+  color: #890404;
+  margin-top: 4px;
+  white-space: nowrap;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  text-align: center;
+  /* Center the hint text */
 }
 
 .order-table td:last-child:hover .edit-hint {
-    opacity: 1;
+  opacity: 1;
 }
 
 /* Additional stability - prevent content overflow */
 .order-table td:last-child * {
-    max-width: 100%;
-    box-sizing: border-box;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Ensure the entire table respects the fixed layout */
 .order-table {
-    table-layout: fixed;
-    width: 100%;
+  table-layout: fixed;
+  width: 100%;
 }
 
 /* Completed orders - no hover effects */
 .table tbody tr:not(.clickable-order-row):not(.pending-payment-row) {
-    cursor: default;
+  cursor: default;
 }
 
 .table tbody tr:not(.clickable-order-row):not(.pending-payment-row):hover {
-    background-color: transparent;
-    transform: none;
-    box-shadow: none;
-}/* Column Widths and Alignment */
+  background-color: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Column Widths and Alignment */
 .table th:nth-child(1),
 .table td:nth-child(1) {
-  width: 15%;
-  white-space: nowrap;
+  width: 12%;
+  /* Allow wrapping inside the Order ID cell so date/time can break to next line */
+  white-space: normal !important;
 }
 
 .table th:nth-child(2),
@@ -185,9 +224,10 @@
 }
 
 .table td:nth-child(3) .order-items-list {
-  border-left: 1px solid #dee2e6;
-  padding-left: 12px;
-  margin-left: -12px;
+  /* remove left gutter so the item pill can be centered */
+  border-left: none;
+  padding-left: 0;
+  margin-left: 0;
 }
 
 .table th:nth-child(4),
@@ -216,17 +256,20 @@
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  
+  /* center content horizontally within the cell */
 }
 
 .item-row {
-  display: flex;
+  display: inline-flex;
+  /* size to content so we can center the pill */
   justify-content: center;
   align-items: center;
-  padding: 4px 8px;
-  border-radius: 4px;
-  width: 100%;
+  padding: 8px 14px;
+  border-radius: 10px;
+  width: auto;
   text-align: center;
+  background: #f6f8fa;
+  /* light pill background like the screenshot */
 }
 
 .item-row:hover {
@@ -236,6 +279,7 @@
 .text-nowrap {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 14px;
   color: #333;
@@ -243,6 +287,9 @@
 
 .item-name {
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .item-quantity {
@@ -256,10 +303,20 @@
   padding-left: 8px;
 }
 
+/* Center the injected prompt while keeping the item-row left aligned */
+.order-view-more-prompt {
+  text-align: center;
+  display: block;
+  width: 100%;
+  margin-left: 0;
+  /* ensure it's centered within the cell */
+  margin-top: 4px;
+}
+
 /* Align items cell content */
 .table td:nth-child(3) {
-  text-align: left;
-  padding-left: 1.5rem;
+  text-align: center;
+  padding-left: 0.5rem;
 }
 
 .search-container {
@@ -315,11 +372,11 @@
   cursor: pointer;
 }
 
-.form-control .calendar-icon{
+.form-control .calendar-icon {
   margin-left: 50px !important;
 }
 
-.calendar-icon{
+.calendar-icon {
   width: 20px;
   height: 20px;
   margin-top: -77px;
@@ -329,26 +386,42 @@
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-    opacity: 0;
-    cursor: pointer;
+  opacity: 0;
+  cursor: pointer;
 }
 
 input[type="date"] {
-    position: relative;
+  position: relative;
 }
 
-.filters-row > .col-md-6:first-child { flex: 0 0 90%; max-width: 80%; }
-.filters-row > .col-md-6:last-child { flex: 0 0 10%; max-width: 30%; }
+.filters-row>.col-md-6:first-child {
+  flex: 0 0 90%;
+  max-width: 80%;
+}
+
+.filters-row>.col-md-6:last-child {
+  flex: 0 0 10%;
+  max-width: 30%;
+}
 
 @media (max-width: 768px) {
-  .filters-row > .col-md-6:first-child,
-  .filters-row > .col-md-6:last-child { flex: 0 0 100%; max-width: 100%; }
+
+  .filters-row>.col-md-6:first-child,
+  .filters-row>.col-md-6:last-child {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
 }
 
 
 @media (min-width: 769px) {
-  .date-container { width: 220px; }
-  .date-input { width: 100%; }
+  .date-container {
+    width: 220px;
+  }
+
+  .date-input {
+    width: 100%;
+  }
 }
 
 .date-input {
@@ -420,6 +493,22 @@ input[type="date"] {
   border: none;
   font-weight: 600;
   color: #333;
+
+  /* Make the date/time under the order number appear on its own line and wrap if needed */
+  .table td:nth-child(1) small.text-muted {
+    display: block;
+    white-space: normal !important;
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 6px;
+    line-height: 1.2;
+  }
+
+  /* Slight indent for the time line to visually separate it (both lines slightly indented to keep layout simple) */
+  .table td:nth-child(1) small.text-muted {
+    padding-left: 6px;
+  }
+
   padding: 20px 15px;
   background-color: transparent;
   font-size: 14px;
@@ -438,7 +527,7 @@ input[type="date"] {
 .table th:last-child,
 .table td:last-child {
   text-align: right;
-  padding-right: 40px; 
+  padding-right: 40px;
 }
 
 
@@ -455,7 +544,7 @@ input[type="date"] {
 }
 
 
-.table > :not(caption) > * > * {
+.table> :not(caption)>*>* {
   background-color: transparent !important;
 }
 
@@ -471,7 +560,7 @@ input[type="date"] {
   background-color: transparent;
 }
 
-.table tbody tr + tr td {
+.table tbody tr+tr td {
   border-top: 1px solid #f2f2f2;
 }
 
@@ -507,19 +596,19 @@ input[type="date"] {
 }
 
 
-.table-hover tbody tr:hover > * {
+.table-hover tbody tr:hover>* {
   --bs-table-accent-bg: transparent;
   background-color: transparent !important;
 }
 
 
 .pending-payment-row {
-    background-color: rgba(13, 110, 253, 0.05);
-    transition: background-color 0.3s ease;
+  background-color: rgba(13, 110, 253, 0.05);
+  transition: background-color 0.3s ease;
 }
 
 .pending-payment-row:hover {
-    background-color: rgba(13, 110, 253, 0.1);
+  background-color: rgba(13, 110, 253, 0.1);
 }
 
 
@@ -528,11 +617,11 @@ input[type="date"] {
     margin-left: 0;
     padding: 15px;
   }
-  
+
   .container-fluid {
     padding: 20px;
   }
-  
+
   .search-container,
   .date-container {
     margin-bottom: 15px;
@@ -565,7 +654,7 @@ input[type="date"] {
   border-bottom: 1px solid #444 !important;
 }
 
-.dark-mode .table tbody tr + tr td {
+.dark-mode .table tbody tr+tr td {
   border-top: 1px solid #333 !important;
 }
 
@@ -616,4 +705,3 @@ input[type="date"] {
 .dark-mode .pending-payment-row:hover {
   background-color: rgba(13, 110, 253, 0.18) !important;
 }
-

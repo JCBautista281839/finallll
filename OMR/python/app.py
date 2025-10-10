@@ -341,6 +341,13 @@ def not_found(e):
         error="The requested endpoint does not exist"
     )), 404
 
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
 @app.errorhandler(500)
 def internal_error(e):
     """Handle 500 errors"""
@@ -362,5 +369,5 @@ if __name__ == '__main__':
     print("   - POST /api/analyze-shaded")
     print("   - POST /api/full-scan")
     print("   - GET /api/health")
-    
-    app.run(host='0.0.0.0', port=5003, debug=True)
+
+    app.run(host='0.0.0.0', port=5003, debug=False, use_reloader=False)
