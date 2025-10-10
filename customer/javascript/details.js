@@ -191,6 +191,115 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // Function to log detailed quotation summary for debugging
+  function logQuotationSummary(quotationData, label = 'Quotation Analysis') {
+    console.log('='.repeat(60));
+    console.log(`🔍 fetchQuotationData: ${label} = {object {...}}`);
+    console.log('='.repeat(60));
+    
+    try {
+      if (!quotationData) {
+        console.log('❌ fetchQuotationData: No quotation data provided');
+        return;
+      }
+
+      console.log('📊 fetchQuotationData: Full quotation object {');
+      console.log('  "data": {');
+      
+      if (quotationData.data) {
+        const data = quotationData.data;
+        
+        // Log quotationId
+        if (data.quotationId) {
+          console.log(`    "quotationId": "${data.quotationId}",`);
+        }
+        
+        // Log scheduledAt
+        if (data.scheduledAt) {
+          console.log(`    "scheduledAt": "${data.scheduledAt}",`);
+        }
+        
+        // Log expiresAt
+        if (data.expiresAt) {
+          console.log(`    "expiresAt": "${data.expiresAt}",`);
+        }
+        
+        // Log serviceType
+        if (data.serviceType) {
+          console.log(`    "serviceType": "${data.serviceType}",`);
+        }
+        
+        // Log language
+        if (data.language) {
+          console.log(`    "language": "${data.language}",`);
+        }
+        
+        // Log stops array
+        if (data.stops && Array.isArray(data.stops)) {
+          console.log('    "stops": [');
+          data.stops.forEach((stop, index) => {
+            console.log('      {');
+            if (stop.stopId) console.log(`        "stopId": "${stop.stopId}",`);
+            if (stop.coordinates) {
+              console.log('        "coordinates": {');
+              console.log(`          "lat": "${stop.coordinates.lat}",`);
+              console.log(`          "lng": "${stop.coordinates.lng}"`);
+              console.log('        },');
+            }
+            if (stop.address) console.log(`        "address": "${stop.address}"`);
+            console.log('      }' + (index < data.stops.length - 1 ? ',' : ''));
+          });
+          console.log('    ],');
+        }
+        
+        // Log isRouteOptimized
+        if (typeof data.isRouteOptimized !== 'undefined') {
+          console.log(`    "isRouteOptimized": ${data.isRouteOptimized},`);
+        }
+        
+        // Log priceBreakdown
+        if (data.priceBreakdown) {
+          console.log('    "priceBreakdown": {');
+          if (data.priceBreakdown.base) console.log(`      "base": "${data.priceBreakdown.base}",`);
+          if (data.priceBreakdown.totalExcludingPriorityFee) console.log(`      "totalExcludingPriorityFee": "${data.priceBreakdown.totalExcludingPriorityFee}",`);
+          if (data.priceBreakdown.totalIncludingPriorityFee) console.log(`      "totalIncludingPriorityFee": "${data.priceBreakdown.totalIncludingPriorityFee}",`);
+          if (data.priceBreakdown.total) console.log(`      "total": "${data.priceBreakdown.total}",`);
+          if (data.priceBreakdown.currency) console.log(`      "currency": "${data.priceBreakdown.currency}"`);
+          console.log('    },');
+        }
+        
+        // Log distance
+        if (data.distance) {
+          console.log('    "distance": {');
+          if (data.distance.value) console.log(`      "value": "${data.distance.value}",`);
+          if (data.distance.unit) console.log(`      "unit": "${data.distance.unit}"`);
+          console.log('    }');
+        }
+      }
+      
+      console.log('  }');
+      console.log('}');
+      
+      // Additional validation checks
+      console.log('\n🔍 Validation Checks:');
+      console.log('  ✓ quotationId present:', !!(quotationData.data && quotationData.data.quotationId));
+      console.log('  ✓ stops array present:', !!(quotationData.data && Array.isArray(quotationData.data.stops)));
+      console.log('  ✓ stops count:', quotationData.data && quotationData.data.stops ? quotationData.data.stops.length : 0);
+      
+      if (quotationData.data && quotationData.data.stops) {
+        quotationData.data.stops.forEach((stop, index) => {
+          console.log(`  ✓ stop[${index}] stopId:`, !!stop.stopId);
+          console.log(`  ✓ stop[${index}] coordinates:`, !!(stop.coordinates && stop.coordinates.lat && stop.coordinates.lng));
+        });
+      }
+      
+      console.log('='.repeat(60));
+      
+    } catch (error) {
+      console.error('❌ Error in logQuotationSummary:', error);
+    }
+  }
+
   // Get quotation with addresses - REAL API ONLY
   async function getQuotationWithAddresses(pickupAddress, deliveryAddress) {
     console.log('[details.js] Getting quotation for:', { pickup: pickupAddress, delivery: deliveryAddress });
@@ -233,6 +342,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Call Lalamove quotation API
       console.log('[details.js] Calling Lalamove quotation API...');
+      console.log('[details.js] ====== QUOTATION REQUEST PAYLOAD ======');
+      console.log('Request URL: /api/quotation');
+      console.log('Request Method: POST');
+      console.log('Request Body:', JSON.stringify(bodyObj, null, 2));
+      console.log('[details.js] ====== SENDING REQUEST ======');
+      
       const response = await fetch('/api/quotation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -246,10 +361,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const data = await response.json();
       console.log('[details.js] ✅ Lalamove quotation received:', data);
+      
+      // Log detailed quotation structure
+      console.log('[details.js] ====== QUOTATION RESPONSE ANALYSIS ======');
+      logQuotationSummary(data, 'Fresh Lalamove API Response');
+      
       return data;
 
     } catch (error) {
       console.error('[details.js] ❌ Quotation failed:', error);
+      
+      // Log detailed error information
+      console.error('[details.js] ====== QUOTATION ERROR ANALYSIS ======');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
       throw error;
     }
   }
@@ -338,6 +465,10 @@ document.addEventListener('DOMContentLoaded', function () {
         quotationResult = await getQuotationWithAddresses(pickupAddress, deliveryAddress);
         showStatus('Quotation received successfully!', false);
         console.log('[details.js] Real API quotation successful:', quotationResult);
+        
+        // Log successful quotation for debugging
+        console.log('[details.js] ====== SUCCESSFUL QUOTATION PROCESSING ======');
+        logQuotationSummary(quotationResult, 'Successfully Processed Quotation');
       } catch (geocodingError) {
         console.warn('[details.js] Geocoding/quotation failed:', geocodingError.message);
 
@@ -375,6 +506,10 @@ document.addEventListener('DOMContentLoaded', function () {
             pickupOnly: true
           }
         };
+        
+        // Log mock quotation for debugging
+        console.log('[details.js] ====== MOCK QUOTATION CREATED (PICKUP ONLY) ======');
+        logQuotationSummary(quotationResult, 'Mock Pickup-Only Quotation');
       }
 
       // Store quotation data for next page
@@ -383,6 +518,11 @@ document.addEventListener('DOMContentLoaded', function () {
       sessionStorage.setItem('pickupAddress', pickupAddress);
       sessionStorage.setItem('deliveryAddress', deliveryAddress);
       sessionStorage.setItem('useRealDelivery', useRealDelivery.toString());
+
+      // Log quotation being stored in sessionStorage
+      console.log('[details.js] ====== STORING QUOTATION IN SESSION STORAGE ======');
+      logQuotationSummary(quotationResult, 'Quotation Being Stored in SessionStorage');
+      console.log('[details.js] SessionStorage keys set:', ['orderFormData', 'quotationData', 'pickupAddress', 'deliveryAddress', 'useRealDelivery']);
 
       // Store cart data for shipping page
       const existingCartData = sessionStorage.getItem('cartData');
