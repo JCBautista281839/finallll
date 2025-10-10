@@ -1081,17 +1081,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
           lalamoveTestBtn.addEventListener('click', async function (e) {
             e.preventDefault();
+            
             // Prevent multiple clicks
             lalamoveTestBtn.disabled = true;
-            lalamoveTestBtn.textContent = 'Placing Lalamove Order...';
+            lalamoveTestBtn.textContent = 'Checking quotation validity...';
+            
             try {
+              // Show initial status
+              showStatus('Checking quotation and placing Lalamove order...', false);
+              
+              // Update button to show progress
+              lalamoveTestBtn.textContent = 'Validating quotation...';
+              
               await placeLalamoveOrder();
+              
+              // Success - update button and show success message
+              lalamoveTestBtn.textContent = 'Order Placed Successfully!';
+              showStatus('Lalamove order placed successfully! 🎉', false);
+              
+              // Reset button after delay
+              setTimeout(() => {
+                lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
+              }, 3000);
+              
             } catch (err) {
               console.error('Lalamove test order failed:', err);
-              showStatus('Lalamove test failed: ' + (err.message || err), true);
+              
+              // Show detailed error message
+              let errorMsg = 'Lalamove test failed: ';
+              if (err.message.includes('expired')) {
+                errorMsg += 'Quotation expired and could not be refreshed';
+              } else if (err.message.includes('422')) {
+                errorMsg += 'Invalid order data (422 error)';
+              } else {
+                errorMsg += (err.message || err);
+              }
+              
+              showStatus(errorMsg, true);
+              lalamoveTestBtn.textContent = 'Order Failed - Try Again';
+              
+              // Reset button after delay
+              setTimeout(() => {
+                lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
+              }, 3000);
+              
             } finally {
               lalamoveTestBtn.disabled = false;
-              lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
             }
           });
         } catch (btnErr) {
@@ -1194,20 +1229,183 @@ document.addEventListener('DOMContentLoaded', function () {
       return 'gcash'; // default
     }
 
+    // Function to check if quotation has expired
+    function isQuotationExpired(quotationData) {
+      console.log('[shipping.js] 🕐 Checking quotation expiry...');
+      
+      if (!quotationData?.data?.expiresAt) {
+        console.log('[shipping.js] ⚠️ No expiry date found in quotation');
+        return false;
+      }
+      
+      try {
+        const expiresAt = new Date(quotationData.data.expiresAt);
+        const now = new Date();
+        const isExpired = now >= expiresAt;
+        
+        const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+        const minutesUntilExpiry = Math.round(timeUntilExpiry / (1000 * 60));
+        
+        console.log('[shipping.js] 📅 Quotation expiry check:', {
+          expiresAt: expiresAt.toISOString(),
+          now: now.toISOString(),
+          isExpired: isExpired,
+          minutesUntilExpiry: minutesUntilExpiry
+        });
+        
+        if (isExpired) {
+          console.log('[shipping.js] ❌ Quotation has EXPIRED');
+        } else {
+          console.log(`[shipping.js] ✅ Quotation valid for ${minutesUntilExpiry} more minutes`);
+        }
+        
+        return isExpired;
+      } catch (error) {
+        console.error('[shipping.js] Error checking quotation expiry:', error);
+        return false;
+      }
+    }
+
+    // Function to refresh expired quotation with same addresses
+    async function refreshExpiredQuotation(expiredQuotation) {
+      console.log('[shipping.js] 🔄 Refreshing expired quotation...');
+      
+      try {
+        if (!expiredQuotation?.data?.stops || expiredQuotation.data.stops.length < 2) {
+          throw new Error('Invalid expired quotation structure - missing stops');
+        }
+        
+        const stops = expiredQuotation.data.stops;
+        const pickupStop = stops[0];
+        const deliveryStop = stops[1];
+        
+        console.log('[shipping.js] 📍 Extracting addresses from expired quotation:', {
+          pickup: pickupStop.address,
+          delivery: deliveryStop.address,
+          pickupCoords: pickupStop.coordinates,
+          deliveryCoords: deliveryStop.coordinates
+        });
+        
+        // Create fresh quotation request using same addresses and coordinates
+        const bodyObj = {
+          data: {
+            serviceType: expiredQuotation.data.serviceType || 'MOTORCYCLE',
+            specialRequests: expiredQuotation.data.specialRequests || [],
+            language: expiredQuotation.data.language || 'en_PH',
+            stops: [
+              {
+                coordinates: {
+                  lat: pickupStop.coordinates.lat,
+                  lng: pickupStop.coordinates.lng
+                },
+                address: pickupStop.address
+              },
+              {
+                coordinates: {
+                  lat: deliveryStop.coordinates.lat,
+                  lng: deliveryStop.coordinates.lng
+                },
+                address: deliveryStop.address
+              }
+            ],
+            isRouteOptimized: expiredQuotation.data.isRouteOptimized || false,
+            item: {
+              quantity: "1",
+              weight: "LESS_THAN_3_KG",
+              categories: ["FOOD_DELIVERY"],
+              handlingInstructions: ["KEEP_UPRIGHT"]
+            }
+          }
+        };
+        
+        console.log('[shipping.js] 📤 Sending fresh quotation request:', bodyObj);
+        
+        // Call quotation API
+        const response = await fetch('/api/quotation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyObj)
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Fresh quotation API failed: ${response.status} ${errorText}`);
+        }
+        
+        const freshQuotation = await response.json();
+        console.log('[shipping.js] ✅ Fresh quotation received:', freshQuotation);
+        
+        // Validate fresh quotation
+        if (!freshQuotation.data || !freshQuotation.data.quotationId) {
+          throw new Error('Fresh quotation response is invalid');
+        }
+        
+        console.log('[shipping.js] 🆕 Fresh quotation validated successfully:', {
+          newQuotationId: freshQuotation.data.quotationId,
+          newExpiresAt: freshQuotation.data.expiresAt,
+          stops: freshQuotation.data.stops?.length || 0
+        });
+        
+        return freshQuotation;
+        
+      } catch (error) {
+        console.error('[shipping.js] ❌ Error refreshing quotation:', error);
+        throw new Error(`Failed to refresh quotation: ${error.message}`);
+      }
+    }
+
     // Place a Lalamove order using the stored quotation (for testing connectivity)
     async function placeLalamoveOrder() {
       try {
+        console.log('[shipping.js] ====== PLACE LALAMOVE ORDER START ======');
+        
         // Get quotation from session storage (different keys might be used)
         const rawQuotation = sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse') || sessionStorage.getItem('quotation');
         if (!rawQuotation) {
           throw new Error('No quotation data found in sessionStorage');
         }
 
-        const quotation = typeof rawQuotation === 'string' ? JSON.parse(rawQuotation) : rawQuotation;
+        let quotation = typeof rawQuotation === 'string' ? JSON.parse(rawQuotation) : rawQuotation;
 
         // Basic validation
         if (!quotation.data || !quotation.data.quotationId || !Array.isArray(quotation.data.stops) || quotation.data.stops.length < 2) {
           throw new Error('Invalid quotation data format');
+        }
+
+        console.log('[shipping.js] 🔍 Initial quotation loaded:', {
+          quotationId: quotation.data.quotationId,
+          expiresAt: quotation.data.expiresAt,
+          stopsCount: quotation.data.stops.length
+        });
+
+        // Check if quotation has expired and refresh if needed
+        if (isQuotationExpired(quotation)) {
+          console.log('[shipping.js] 🔄 Quotation expired, attempting to refresh...');
+          
+          try {
+            // Get fresh quotation using same addresses
+            const freshQuotation = await refreshExpiredQuotation(quotation);
+            
+            // Update quotation variable with fresh data
+            quotation = freshQuotation;
+            
+            // Update sessionStorage with fresh quotation
+            sessionStorage.setItem('quotationData', JSON.stringify(freshQuotation));
+            console.log('[shipping.js] 💾 Fresh quotation stored in sessionStorage');
+            
+            // Log the refresh success
+            console.log('[shipping.js] ✅ Successfully refreshed expired quotation:', {
+              oldQuotationId: JSON.parse(rawQuotation).data.quotationId,
+              newQuotationId: freshQuotation.data.quotationId,
+              newExpiresAt: freshQuotation.data.expiresAt
+            });
+            
+          } catch (refreshError) {
+            console.error('[shipping.js] ❌ Failed to refresh expired quotation:', refreshError);
+            throw new Error(`Quotation expired and refresh failed: ${refreshError.message}`);
+          }
+        } else {
+          console.log('[shipping.js] ✅ Quotation is still valid, proceeding with existing quotation');
         }
 
         // Get customer info
@@ -1237,7 +1435,13 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         };
 
-        console.log('[shipping.js] Sending Lalamove order test payload to /api/place-order:', payload);
+        console.log('[shipping.js] 📤 Sending Lalamove order with valid quotation:', {
+          quotationId: payload.data.quotationId,
+          senderStopId: payload.data.sender.stopId,
+          recipientStopId: payload.data.recipients[0].stopId,
+          customerName: payload.data.recipients[0].name,
+          customerPhone: payload.data.recipients[0].phone
+        });
 
         const resp = await fetch('/api/place-order', {
           method: 'POST',
@@ -1247,17 +1451,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const result = await resp.json();
         if (!resp.ok) {
-          console.error('Lalamove API returned error:', result);
+          console.error('[shipping.js] ❌ Lalamove API returned error:', {
+            status: resp.status,
+            statusText: resp.statusText,
+            error: result
+          });
           throw new Error(result.error || JSON.stringify(result));
         }
 
-        console.log('Lalamove order test response:', result);
-        showStatus('Lalamove order placed (test). Check server logs for details.', false);
+        console.log('[shipping.js] ✅ Lalamove order placed successfully:', result);
+        showStatus('Lalamove order placed successfully! Check server logs for details.', false);
+        
         // Store result for inspection
         sessionStorage.setItem('lalamoveTestResult', JSON.stringify(result));
+        console.log('[shipping.js] ====== PLACE LALAMOVE ORDER SUCCESS ======');
+        
         return result;
       } catch (error) {
-        console.error('[shipping.js] placeLalamoveOrder error:', error);
+        console.error('[shipping.js] ❌ placeLalamoveOrder error:', error);
+        console.error('[shipping.js] ====== PLACE LALAMOVE ORDER FAILED ======');
         throw error;
       }
     }
