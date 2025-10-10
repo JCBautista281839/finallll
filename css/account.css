@@ -30,7 +30,124 @@
 .account-container {
     max-width: 1400px;
     margin: 0 auto;
-    ;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    margin-top: 10px;
+}
+
+.strength-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    border-radius: 4px;
+}
+
+.strength-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Login & Password Form Styles */
+.login-password-form {
+    padding: 2rem;
+}
+
+.login-password-form .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.login-password-form .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-password-form .form-control:focus {
+    border-color: #8B2E20;
+    box-shadow: 0 0 0 0.2rem rgba(139, 46, 32, 0.25);
+}
+
+.login-password-form .form-control.is-valid {
+    border-color: #28a745;
+}
+
+.login-password-form .form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.login-password-form .form-control:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.login-password-form .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.login-password-form .input-group .btn {
+    border: 2px solid #e9ecef;
+    border-left: none;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.login-password-form .input-group .btn:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.login-password-form .form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Menu Item Active State */
+.menu-item.active {
+    background-color: #8B2E20;
+    color: white;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
+    transition: all 0.3s ease;
+}
+
+.menu-item {
+    padding: 0.75rem 1rem;
+    margin: 0.25rem 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #666;
+}
+
+.menu-item:hover {
+    background-color: #f8f9fa;
+    color: #8B2E20;
+}
+
+.menu-item i {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
 }
 
 .account-title {

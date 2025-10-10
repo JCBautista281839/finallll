@@ -1,3 +1,129 @@
+// Kitchen role access control for kitchen.html page
+async function setupKitchenPageAccess() {
+    try {
+        // Wait for Firebase to be initialized
+        if (typeof initializeFirebase === 'function') {
+            await initializeFirebase();
+        }
+        
+        // Wait a bit for Firebase to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+        console.error('Error initializing Firebase for kitchen page access:', error);
+    }
+    
+    firebase.auth().onAuthStateChanged(async function(user) {
+        if (!user) return;
+        
+        try {
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const userRole = userData.role || 'user';
+                
+                if (userRole === 'kitchen') {
+                    console.log('🍳 Kitchen role detected - Ensuring Home link is visible');
+                    
+                    // Ensure Home link is visible and points to kitchen.html
+                    const homeNavLink = document.querySelector('a[title="Home"]');
+                    if (homeNavLink) {
+                        homeNavLink.href = '/html/kitchen.html';
+                        homeNavLink.title = 'Home';
+                        homeNavLink.style.display = '';
+                        console.log('🍳 Kitchen: Home link ensured visible');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error checking user role for kitchen page:', error);
+        }
+    });
+}
+
+// Kitchen role access control for notifications page
+async function setupKitchenNotificationsAccess() {
+    try {
+        // Wait for Firebase to be initialized
+        if (typeof initializeFirebase === 'function') {
+            await initializeFirebase();
+        }
+        
+        // Wait a bit for Firebase to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+        console.error('Error initializing Firebase for kitchen notifications access:', error);
+    }
+    
+    firebase.auth().onAuthStateChanged(async function(user) {
+        if (!user) return;
+        
+        try {
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const userRole = userData.role || 'user';
+                
+                if (userRole === 'kitchen') {
+                    console.log('🍳 Kitchen role detected - Setting up limited navigation');
+                    
+                    // Hide navigation items except Home (kitchen.html), Notifications (notifi.html), and Inventory
+                    const allNavLinks = document.querySelectorAll('.nav-link');
+                    allNavLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        const title = link.getAttribute('title');
+                        
+                        // Keep only Home (kitchen.html), Notifications (notifi.html), and Inventory
+                        if (href && !href.includes('kitchen.html') && 
+                            !href.includes('notifi.html') && 
+                            !href.includes('Inventory.html') && 
+                            title !== 'Logout' && 
+                            title !== 'Home') {
+                            link.style.display = 'none';
+                        }
+                    });
+                    
+                    // Redirect home link to kitchen dashboard
+                    const homeNavLink = document.querySelector('#homeNavLink') || document.querySelector('a[href*="Dashboard.html"]');
+                    if (homeNavLink) {
+                        homeNavLink.href = '/html/kitchen.html';
+                        homeNavLink.title = 'Kitchen Dashboard';
+                        console.log('🍳 Kitchen: Home link redirected to kitchen.html');
+                    } else {
+                        // If no home link exists, create one for kitchen users
+                        const navContainer = document.querySelector('.nav');
+                        if (navContainer) {
+                            const homeLink = document.createElement('a');
+                            homeLink.href = '/html/kitchen.html';
+                            homeLink.className = 'nav-link text-white';
+                            homeLink.title = 'Home';
+                            homeLink.innerHTML = `
+                                <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
+                                <div class="nav-text">Home</div>
+                            `;
+                            
+                            // Insert at the beginning of the nav
+                            navContainer.insertBefore(homeLink, navContainer.firstChild);
+                            console.log('🍳 Kitchen: Created new home link to kitchen.html');
+                        }
+                    }
+                    
+                    // Update page title and subtitle for kitchen users
+                    const pageTitle = document.querySelector('.inventory-title');
+                    const pageSubtitle = document.querySelector('.inventory-subtitle');
+                    if (pageTitle) {
+                        pageTitle.textContent = 'Kitchen Notifications';
+                    }
+                    if (pageSubtitle) {
+                        pageSubtitle.textContent = 'Inventory alerts and restocking reminders';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error checking user role:', error);
+        }
+    });
+}
+
 // Add Clear Notifications button logic
 function clearAllNotifications() {
     var db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
@@ -458,7 +584,20 @@ function updateNotificationBadge(count) {
 }
 
 // Query Firestore for unseen notifications and update badge
-function refreshUnseenNotificationBadge() {
+async function refreshUnseenNotificationBadge() {
+    try {
+        // Ensure Firebase is initialized
+        if (typeof initializeFirebase === 'function') {
+            await initializeFirebase();
+        }
+        
+        // Wait a bit for Firebase to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+        console.error('Error initializing Firebase for notification badge:', error);
+        return;
+    }
+    
     var sidebarNotifLink = document.querySelector('.nav-link[title="Notifications"]');
     if (!sidebarNotifLink) return;
     var badge = sidebarNotifLink.querySelector('.notification-badge');
@@ -479,7 +618,43 @@ function refreshUnseenNotificationBadge() {
         badge.style.display = 'none';
         return;
     }
-    db.collection('notifications').where('seen', '==', false).get()
+
+    // Check user role to determine which notifications to count
+    let userRole = 'admin'; // Default to admin
+    try {
+        const user = firebase.auth().currentUser;
+        if (user) {
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                userRole = userData.role || 'admin';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking user role for badge:', error);
+    }
+
+    let queryPromise;
+    
+    if (userRole === 'kitchen') {
+        // Kitchen users only count inventory-related notifications - OPTIMIZED BADGE QUERY
+        console.log('🍳 Kitchen: FAST BADGE - Counting inventory notifications...');
+        queryPromise = db.collection('notifications')
+            .where('type', 'in', ['empty', 'restock', 'inventory'])
+            .where('seen', '==', false)
+            .get()
+            .then(function(querySnapshot) {
+                console.log('🍳 Kitchen: Badge count:', querySnapshot.size, 'unseen inventory notifications');
+                return querySnapshot;
+            });
+    } else {
+        // Admin users count all notifications
+        queryPromise = db.collection('notifications')
+            .where('seen', '==', false)
+            .get();
+    }
+
+    queryPromise
         .then(function (querySnapshot) {
             var unseenCount = querySnapshot.size;
             badge.textContent = unseenCount > 99 ? '99+' : unseenCount;
@@ -522,10 +697,46 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     // Mark all notifications as seen and reset badge
-    function markAllNotificationsSeen() {
+    async function markAllNotificationsSeen() {
         var db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
         if (!db) return;
-        db.collection('notifications').where('seen', '==', false).get()
+
+        // Check user role to determine which notifications to mark as seen
+        let userRole = 'admin'; // Default to admin
+        try {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    userRole = userData.role || 'admin';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking user role for mark seen:', error);
+        }
+
+        let queryPromise;
+        
+        if (userRole === 'kitchen') {
+            // Kitchen users only mark inventory notifications as seen - OPTIMIZED MARK SEEN QUERY
+            console.log('🍳 Kitchen: FAST MARK SEEN - Marking inventory notifications as seen...');
+            queryPromise = db.collection('notifications')
+                .where('type', 'in', ['empty', 'restock', 'inventory'])
+                .where('seen', '==', false)
+                .get()
+                .then(function(querySnapshot) {
+                    console.log('🍳 Kitchen: Marking', querySnapshot.size, 'inventory notifications as seen');
+                    return querySnapshot;
+                });
+        } else {
+            // Admin users mark all notifications as seen
+            queryPromise = db.collection('notifications')
+                .where('seen', '==', false)
+                .get();
+        }
+
+        queryPromise
             .then(function (querySnapshot) {
                 var batch = db.batch();
                 querySnapshot.forEach(function (doc) {
@@ -553,13 +764,29 @@ function animateNotificationIcon() {
 }
 
 // Fetch notifications from Firestore and display in table
-function loadNotifications() {
-    // Use global db instance from main.js if available
-    var db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
-    if (!db) {
+async function loadNotifications() {
+    try {
+        // Ensure Firebase is initialized
+        if (typeof initializeFirebase === 'function') {
+            await initializeFirebase();
+        }
+        
+        // Use global db instance from main.js if available
+        var db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            console.error('Firestore not available');
+            var notificationStatus = document.getElementById('notificationStatus');
+            if (notificationStatus) {
+                notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error: Firestore not initialized.</td></tr>';
+            }
+            updateNotificationBadge(0);
+            return;
+        }
+    } catch (error) {
+        console.error('Error initializing Firebase for notifications:', error);
         var notificationStatus = document.getElementById('notificationStatus');
         if (notificationStatus) {
-            notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error: Firestore not initialized.</td></tr>';
+            notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error: Firebase initialization failed.</td></tr>';
         }
         updateNotificationBadge(0);
         return;
@@ -568,46 +795,137 @@ function loadNotifications() {
     if (!notificationStatus) return;
     notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Loading notifications...</td></tr>';
 
-    // First, get payment verification notifications specifically
-    console.log('📊 Admin: Querying for payment verification notifications...');
+    // Check user role to determine which notifications to show
+    let userRole = 'admin'; // Default to admin
+    try {
+        const user = firebase.auth().currentUser;
+        if (user) {
+            console.log('🔍 Checking user role for UID:', user.uid);
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                userRole = userData.role || 'admin';
+                console.log('👤 User role detected:', userRole);
+            } else {
+                console.log('⚠️ User document not found, defaulting to admin');
+            }
+        } else {
+            console.log('⚠️ No authenticated user, defaulting to admin');
+        }
+    } catch (error) {
+        console.error('❌ Error checking user role:', error);
+    }
 
-    db.collection('notifications')
-        .where('type', '==', 'payment_verification')
-        .orderBy('timestamp', 'desc')
-        .limit(10)
-        .get()
-        .then(function (paymentQuery) {
-            console.log('� Admin: Found', paymentQuery.size, 'payment verification notifications');
+    console.log('📊 User role:', userRole, '- Loading notifications...');
 
-            // Then get other notifications
-            return db.collection('notifications')
-                .where('type', '!=', 'payment_verification')
-                .orderBy('type')
-                .orderBy('timestamp', 'desc')
-                .limit(40)
-                .get()
-                .then(function (otherQuery) {
-                    console.log('📊 Admin: Found', otherQuery.size, 'other notifications');
+    let queryPromise;
+    
+    if (userRole === 'kitchen') {
+        // Kitchen users only see inventory-related notifications - OPTIMIZED QUERY
+        console.log('🍳 Kitchen: FAST QUERY - Loading only inventory notifications...');
+        queryPromise = db.collection('notifications')
+            .where('type', 'in', ['empty', 'restock', 'inventory'])
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .get()
+            .then(function(querySnapshot) {
+                console.log('🍳 Kitchen: Loaded', querySnapshot.size, 'inventory notifications');
+                return querySnapshot;
+            })
+            .catch(function(error) {
+                console.log('🍳 Kitchen: Index error, falling back to client-side sorting:', error);
+                // Fallback without orderBy if index doesn't exist
+                return db.collection('notifications')
+                    .where('type', 'in', ['empty', 'restock', 'inventory'])
+                    .get()
+                    .then(function(querySnapshot) {
+                        const docs = [];
+                        querySnapshot.forEach(function(doc) {
+                            docs.push(doc);
+                        });
+                        docs.sort(function(a, b) {
+                            const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
+                            const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
+                            return timestampB - timestampA;
+                        });
+                        return { docs: docs.slice(0, 50) };
+                    });
+            });
+    } else {
+        // Admin users see all notifications
+        console.log('👑 Admin: Querying for all notifications...');
+        
+        // First, get payment verification notifications specifically
+        queryPromise = db.collection('notifications')
+            .where('type', '==', 'payment_verification')
+            .orderBy('timestamp', 'desc')
+            .limit(10)
+            .get()
+            .then(function (paymentQuery) {
+                console.log('👑 Admin: Found', paymentQuery.size, 'payment verification notifications');
 
-                    // Combine both queries - payment verifications first
-                    var allDocs = [];
-                    paymentQuery.forEach(function (doc) { allDocs.push(doc); });
-                    otherQuery.forEach(function (doc) { allDocs.push(doc); });
+                // Then get other notifications
+                return db.collection('notifications')
+                    .where('type', '!=', 'payment_verification')
+                    .orderBy('type')
+                    .orderBy('timestamp', 'desc')
+                    .limit(40)
+                    .get()
+                    .then(function (otherQuery) {
+                        console.log('👑 Admin: Found', otherQuery.size, 'other notifications');
 
-                    console.log('📊 Admin: Total notifications to display:', allDocs.length);
-                    return { docs: allDocs, size: allDocs.length };
-                });
-        })
-        .catch(function (error) {
-            console.log('⚠️ Admin: Error with specific query, falling back to simple query:', error);
-            // Fallback to simple query
-            return db.collection('notifications').orderBy('timestamp', 'desc').limit(50).get();
-        })
-        .then(function (querySnapshot) {
-            var docs = querySnapshot.docs || [querySnapshot];
-            console.log('📊 Admin: Processing', docs.length, 'notifications');
+                        // Combine both queries - payment verifications first
+                        var allDocs = [];
+                        paymentQuery.forEach(function (doc) { allDocs.push(doc); });
+                        otherQuery.forEach(function (doc) { allDocs.push(doc); });
 
-            if (docs.length === 0) {
+                        console.log('👑 Admin: Total notifications to display:', allDocs.length);
+                        return { docs: allDocs, size: allDocs.length };
+                    });
+            })
+            .catch(function (error) {
+                console.log('⚠️ Admin: Error with specific query, falling back to simple query:', error);
+                // Fallback to simple query - but still respect kitchen role
+                if (userRole === 'kitchen') {
+                    console.log('🍳 Kitchen: Using optimized fallback query');
+                    return db.collection('notifications')
+                        .where('type', 'in', ['empty', 'restock', 'inventory'])
+                        .limit(50)
+                        .get()
+                        .then(function(querySnapshot) {
+                            console.log('🍳 Kitchen: Fallback loaded', querySnapshot.size, 'inventory notifications');
+                            // Sort by timestamp in JavaScript to avoid composite index requirement
+                            const docs = [];
+                            querySnapshot.forEach(function(doc) {
+                                docs.push(doc);
+                            });
+                            docs.sort(function(a, b) {
+                                const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
+                                const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
+                                return timestampB - timestampA; // Descending order
+                            });
+                            return { docs: docs }; // Return all docs since we already limited
+                        });
+                } else {
+                    console.log('👑 Admin: Using fallback query for all notifications');
+                    return db.collection('notifications').orderBy('timestamp', 'desc').limit(50).get();
+                }
+            });
+    }
+
+    queryPromise
+        .then(function (result) {
+            // Handle both QuerySnapshot and custom result format
+            var docs = result.docs || result;
+            if (Array.isArray(docs)) {
+                console.log('📊 Admin: Processing', docs.length, 'notifications');
+            } else {
+                console.log('📊 Admin: Processing', docs.size || 0, 'notifications');
+            }
+
+            // Check if docs is empty (handle both array and QuerySnapshot)
+            const isEmpty = Array.isArray(docs) ? docs.length === 0 : (docs.empty || docs.size === 0);
+            if (isEmpty) {
                 console.log('❌ Admin: No notifications found in database');
                 notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No notifications found.</td></tr>';
                 updateNotificationBadge(0);
@@ -620,9 +938,18 @@ function loadNotifications() {
             var batch = db.batch();
             var paymentVerificationCount = 0;
 
-            docs.forEach(function (doc) {
-                notifCount++;
+            // Handle both QuerySnapshot.forEach and array iteration
+            const forEachMethod = docs.forEach || Array.prototype.forEach;
+            forEachMethod.call(docs, function (doc) {
                 var data = doc.data();
+                
+                // Skip non-inventory notifications for kitchen users
+                if (userRole === 'kitchen' && !['empty', 'restock', 'inventory'].includes(data.type)) {
+                    console.log('🍳 Kitchen: Skipping non-inventory notification:', data.type);
+                    return; // Skip this notification
+                }
+                
+                notifCount++;
 
                 // Count payment verification notifications
                 if (data.type === 'payment_verification') {
@@ -669,8 +996,8 @@ function loadNotifications() {
                     batch.update(doc.ref, { seen: true });
                 }
 
-                // Handle payment verification notifications with action buttons
-                if (data.type === 'payment_verification' && data.status === 'pending') {
+                // Handle payment verification notifications with action buttons (only for admin users)
+                if (data.type === 'payment_verification' && data.status === 'pending' && userRole !== 'kitchen') {
                     rows += `<tr class="payment-verification-row" data-doc-id="${doc.id}">
                         <td><span style='font-weight:600; color: #ff9800;'>${typeText}</span></td>
                         <td>
@@ -765,7 +1092,12 @@ function loadNotifications() {
                         <td>${time}</td>
                     </tr>`;
                 } else {
-                    // Regular notification display
+                    // Regular notification display (skip payment verification for kitchen users)
+                    if (userRole === 'kitchen' && data.type === 'payment_verification') {
+                        console.log('🍳 Kitchen: Skipping payment verification notification');
+                        return; // Skip this notification for kitchen users
+                    }
+                    
                     var statusColor = '';
                     if (data.type === 'payment_verification') {
                         if (data.status === 'approved') statusColor = 'color: #28a745;';
@@ -783,8 +1115,13 @@ function loadNotifications() {
                 console.log('⚠️ Admin: No payment verification notifications found - they might be newer than the 50 limit or have timestamp issues');
             }
 
-            notificationStatus.innerHTML = rows;
-            updateNotificationBadge(unseenCount);
+    notificationStatus.innerHTML = rows;
+    updateNotificationBadge(unseenCount);
+    
+    // Hide "See all incoming activity" link for kitchen users
+    if (typeof hideSeeAllLinkForKitchen === 'function') {
+        hideSeeAllLinkForKitchen(userRole);
+    }
             // Mark all loaded notifications as seen
             if (unseenCount > 0) {
                 batch.commit();
@@ -813,11 +1150,31 @@ function timeAgo(date) {
     return 'Just now';
 }
 
+// Auto-load notifications after Firebase initialization
+async function initializeNotifications() {
+    try {
+        // Wait for Firebase to be initialized
+        if (typeof initializeFirebase === 'function') {
+            await initializeFirebase();
+        }
+        
+        // Wait a bit for Firebase to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Now load notifications
+        loadNotifications();
+    } catch (error) {
+        console.error('Error initializing notifications:', error);
+        // Fallback: try to load notifications anyway
+        setTimeout(loadNotifications, 1000);
+    }
+}
+
 // Auto-load notifications on DOMContentLoaded
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadNotifications);
+    document.addEventListener('DOMContentLoaded', initializeNotifications);
 } else {
-    loadNotifications();
+    initializeNotifications();
 }
 
 // Function to handle payment verification (approve/decline)
@@ -1049,6 +1406,9 @@ window.viewReceipt = function (receiptData, fileName) {
 
 if (window.location.pathname.endsWith('notifi.html')) {
     document.addEventListener('DOMContentLoaded', function () {
+        // Setup kitchen role access control
+        setupKitchenNotificationsAccess();
+        
         // Hide badge on notifications page
         var sidebarNotif = document.querySelector('.nav-link[title="Notifications"]');
         if (sidebarNotif) {
