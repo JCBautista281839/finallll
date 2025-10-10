@@ -18,6 +18,392 @@ function clearAllNotifications() {
         console.error(err);
     });
 }
+
+// Lalamove Helper Functions - Duplicated from shipping.js
+
+// Function to format phone number to Philippine +63 format
+function formatPhoneNumber(phone) {
+    if (!phone) return '+639568992189'; // Default fallback
+
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+
+    // Handle different Philippine number formats
+    if (digits.startsWith('63')) {
+        // Already has country code (63)
+        return '+' + digits;
+    } else if (digits.startsWith('09')) {
+        // Mobile number starting with 09 (e.g., 09171234567)
+        return '+63' + digits.substring(1); // Remove '0' and add '+63'
+    } else if (digits.startsWith('9') && digits.length === 10) {
+        // Mobile number without leading 0 (e.g., 9171234567)
+        return '+63' + digits;
+    } else {
+        // Invalid format, return default
+        console.warn('[notifications.js] Invalid phone number format:', phone, 'Using default.');
+        return '+639568992189';
+    }
+}
+
+// Function to check if quotation has expired
+function isQuotationExpired(quotationData) {
+    console.log('[notifications.js] 🕐 Checking quotation expiry...');
+    
+    if (!quotationData?.data?.expiresAt) {
+        console.log('[notifications.js] ⚠️ No expiry date found in quotation');
+        return false;
+    }
+    
+    try {
+        const expiresAt = new Date(quotationData.data.expiresAt);
+        const now = new Date();
+        const isExpired = now >= expiresAt;
+        
+        const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+        const minutesUntilExpiry = Math.round(timeUntilExpiry / (1000 * 60));
+        
+        console.log('[notifications.js] 📅 Quotation expiry check:', {
+            expiresAt: expiresAt.toISOString(),
+            now: now.toISOString(),
+            isExpired: isExpired,
+            minutesUntilExpiry: minutesUntilExpiry
+        });
+        
+        if (isExpired) {
+            console.log('[notifications.js] ❌ Quotation has EXPIRED');
+        } else {
+            console.log(`[notifications.js] ✅ Quotation valid for ${minutesUntilExpiry} more minutes`);
+        }
+        
+        return isExpired;
+    } catch (error) {
+        console.error('[notifications.js] Error checking quotation expiry:', error);
+        return false;
+    }
+}
+
+// Function to refresh expired quotation with same addresses
+async function refreshExpiredQuotation(expiredQuotation) {
+    console.log('[notifications.js] 🔄 Refreshing expired quotation...');
+    
+    try {
+        if (!expiredQuotation?.data?.stops || expiredQuotation.data.stops.length < 2) {
+            throw new Error('Invalid expired quotation structure - missing stops');
+        }
+        
+        const stops = expiredQuotation.data.stops;
+        const pickupStop = stops[0];
+        const deliveryStop = stops[1];
+        
+        console.log('[notifications.js] 📍 Extracting addresses from expired quotation:', {
+            pickup: pickupStop.address,
+            delivery: deliveryStop.address,
+            pickupCoords: pickupStop.coordinates,
+            deliveryCoords: deliveryStop.coordinates
+        });
+        
+        // Create fresh quotation request using same addresses and coordinates
+        const bodyObj = {
+            data: {
+                serviceType: expiredQuotation.data.serviceType || 'MOTORCYCLE',
+                specialRequests: expiredQuotation.data.specialRequests || [],
+                language: 'en_PH', // Always use lowercase, don't inherit from expired quotation
+                stops: [
+                    {
+                        coordinates: {
+                            lat: pickupStop.coordinates.lat,
+                            lng: pickupStop.coordinates.lng
+                        },
+                        address: pickupStop.address
+                    },
+                    {
+                        coordinates: {
+                            lat: deliveryStop.coordinates.lat,
+                            lng: deliveryStop.coordinates.lng
+                        },
+                        address: deliveryStop.address
+                    }
+                ],
+                isRouteOptimized: expiredQuotation.data.isRouteOptimized || false,
+                item: {
+                    quantity: "1",
+                    weight: "LESS_THAN_3_KG",
+                    categories: ["FOOD_DELIVERY"],
+                    handlingInstructions: ["KEEP_UPRIGHT"]
+                }
+            }
+        };
+        
+        console.log('[notifications.js] 📤 Sending fresh quotation request:', bodyObj);
+        
+        // Call quotation API
+        const response = await fetch('/api/quotation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyObj)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Fresh quotation API failed: ${response.status} ${errorText}`);
+        }
+        
+        const freshQuotation = await response.json();
+        console.log('[notifications.js] ✅ Fresh quotation received:', freshQuotation);
+        
+        // Validate fresh quotation
+        if (!freshQuotation.data || !freshQuotation.data.quotationId) {
+            throw new Error('Fresh quotation response is invalid');
+        }
+        
+        console.log('[notifications.js] 🆕 Fresh quotation validated successfully:', {
+            newQuotationId: freshQuotation.data.quotationId,
+            newExpiresAt: freshQuotation.data.expiresAt,
+            stops: freshQuotation.data.stops?.length || 0
+        });
+        
+        return freshQuotation;
+        
+    } catch (error) {
+        console.error('[notifications.js] ❌ Error refreshing quotation:', error);
+        throw new Error(`Failed to refresh quotation: ${error.message}`);
+    }
+}
+
+// Function to place Lalamove order from notifications (main function)
+async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) {
+    try {
+        console.log('[notifications.js] ====== PLACE LALAMOVE ORDER START ======');
+        
+        if (!quotationData) {
+            throw new Error('No quotation data provided');
+        }
+
+        let quotation = quotationData;
+
+        // Basic validation
+        if (!quotation.data || !quotation.data.quotationId || !Array.isArray(quotation.data.stops) || quotation.data.stops.length < 2) {
+            throw new Error('Invalid quotation data format');
+        }
+
+        console.log('[notifications.js] 🔍 Initial quotation loaded:', {
+            quotationId: quotation.data.quotationId,
+            expiresAt: quotation.data.expiresAt,
+            stopsCount: quotation.data.stops.length
+        });
+
+        // Check if quotation has expired and refresh if needed
+        if (isQuotationExpired(quotation)) {
+            console.log('[notifications.js] 🔄 Quotation expired, attempting to refresh...');
+            
+            try {
+                // Get fresh quotation using same addresses
+                const freshQuotation = await refreshExpiredQuotation(quotation);
+                
+                // Update quotation variable with fresh data
+                quotation = freshQuotation;
+                
+                console.log('[notifications.js] ✅ Successfully refreshed expired quotation:', {
+                    oldQuotationId: quotationData.data.quotationId,
+                    newQuotationId: freshQuotation.data.quotationId,
+                    newExpiresAt: freshQuotation.data.expiresAt
+                });
+                
+            } catch (refreshError) {
+                console.error('[notifications.js] ❌ Failed to refresh expired quotation:', refreshError);
+                throw new Error(`Quotation expired and refresh failed: ${refreshError.message}`);
+            }
+        } else {
+            console.log('[notifications.js] ✅ Quotation is still valid, proceeding with existing quotation');
+        }
+
+        // Use provided customer info
+        const customerName = customerInfo.name || 'Guest';
+        const customerPhone = customerInfo.phone || '';
+
+        // Build payload to match Lalamove /v3/orders expected body (wrapped with data)
+        const payload = {
+            data: {
+                quotationId: quotation.data.quotationId,
+                sender: {
+                    stopId: quotation.data.stops[0].stopId || quotation.data.stops[0].id || 'SENDER_STOP',
+                    name: 'Restaurant',
+                    phone: '+639568992189' // Restaurant phone
+                },
+                recipients: [
+                    {
+                        stopId: quotation.data.stops[1].stopId || quotation.data.stops[1].id || 'RECIPIENT_STOP',
+                        name: customerName,
+                        phone: formatPhoneNumber(customerPhone)
+                    }
+                ],
+                metadata: {
+                    orderRef: 'NOTIF_ORDER_' + Date.now()
+                }
+            }
+        };
+        
+        console.log('[notifications.js] 📤 Sending Lalamove order with valid quotation:', {
+            quotationId: payload.data.quotationId,
+            senderStopId: payload.data.sender.stopId,
+            recipientStopId: payload.data.recipients[0].stopId,
+            customerName: payload.data.recipients[0].name,
+            customerPhone: payload.data.recipients[0].phone
+        });
+
+        const resp = await fetch('/api/place-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await resp.json();
+        if (!resp.ok) {
+            console.error('[notifications.js] ❌ Lalamove API returned error:', {
+                status: resp.status,
+                statusText: resp.statusText,
+                error: result
+            });
+            throw new Error(result.error || JSON.stringify(result));
+        }
+
+        console.log('[notifications.js] ✅ Lalamove order placed successfully:', result);
+        console.log('[notifications.js] ====== PLACE LALAMOVE ORDER SUCCESS ======');
+        
+        return result;
+    } catch (error) {
+        console.error('[notifications.js] ❌ placeLalamoveOrderFromNotifications error:', error);
+        console.error('[notifications.js] ====== PLACE LALAMOVE ORDER FAILED ======');
+        throw error;
+    }
+}
+
+// Function to get quotation data from order document
+async function getOrderQuotationData(orderId) {
+    console.log('[notifications.js] 🔍 Getting quotation data for order:', orderId);
+    
+    try {
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            throw new Error('Database not available');
+        }
+
+        // Get order document
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+            throw new Error('Order not found');
+        }
+
+        const orderData = orderDoc.data();
+        console.log('[notifications.js] 📋 Order data retrieved:', {
+            orderId: orderId,
+            hasShippingInfo: !!orderData.shippingInfo,
+            hasQuotationData: !!(orderData.quotationData || orderData.lalamoveQuotation)
+        });
+
+        // Try to get quotation data from various possible locations
+        let quotationData = null;
+        
+        // Check for quotation in shippingInfo
+        if (orderData.shippingInfo?.quotationData) {
+            quotationData = orderData.shippingInfo.quotationData;
+            console.log('[notifications.js] ✅ Found quotation in shippingInfo.quotationData');
+        }
+        // Check for direct quotation field
+        else if (orderData.quotationData) {
+            quotationData = orderData.quotationData;
+            console.log('[notifications.js] ✅ Found quotation in quotationData field');
+        }
+        // Check for lalamove-specific field
+        else if (orderData.lalamoveQuotation) {
+            quotationData = orderData.lalamoveQuotation;
+            console.log('[notifications.js] ✅ Found quotation in lalamoveQuotation field');
+        }
+        // Check sessionStorage as fallback (might be available if order was just placed)
+        else {
+            console.log('[notifications.js] ⚠️ No quotation found in order, checking sessionStorage...');
+            const rawQuotation = sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse');
+            if (rawQuotation) {
+                quotationData = typeof rawQuotation === 'string' ? JSON.parse(rawQuotation) : rawQuotation;
+                console.log('[notifications.js] ✅ Found quotation in sessionStorage as fallback');
+            }
+        }
+
+        if (!quotationData) {
+            throw new Error('No quotation data found for this order');
+        }
+
+        // Validate quotation structure
+        if (!quotationData.data || !quotationData.data.quotationId) {
+            throw new Error('Invalid quotation data structure');
+        }
+
+        console.log('[notifications.js] ✅ Quotation data validated:', {
+            quotationId: quotationData.data.quotationId,
+            expiresAt: quotationData.data.expiresAt,
+            stopsCount: quotationData.data.stops?.length || 0
+        });
+
+        return quotationData;
+        
+    } catch (error) {
+        console.error('[notifications.js] ❌ Error getting quotation data:', error);
+        throw error;
+    }
+}
+
+// Function to get customer info from order document
+async function getCustomerInfoFromOrder(orderId) {
+    console.log('[notifications.js] 👤 Getting customer info for order:', orderId);
+    
+    try {
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            throw new Error('Database not available');
+        }
+
+        // Get order document
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+            throw new Error('Order not found');
+        }
+
+        const orderData = orderDoc.data();
+        
+        // Extract customer info from various possible locations
+        let customerInfo = {
+            name: 'Guest',
+            phone: ''
+        };
+
+        // Try customerInfo field first
+        if (orderData.customerInfo) {
+            customerInfo.name = orderData.customerInfo.fullName || 
+                               orderData.customerInfo.name || 
+                               (orderData.customerInfo.firstName ? 
+                                (orderData.customerInfo.firstName + (orderData.customerInfo.lastName ? ' ' + orderData.customerInfo.lastName : '')) : 
+                                'Guest');
+            customerInfo.phone = orderData.customerInfo.phone || '';
+        }
+        // Try top-level fields as fallback
+        else {
+            customerInfo.name = orderData.customerName || orderData.name || 'Guest';
+            customerInfo.phone = orderData.customerPhone || orderData.phone || '';
+        }
+
+        console.log('[notifications.js] ✅ Customer info extracted:', {
+            name: customerInfo.name,
+            phone: customerInfo.phone ? '***' + customerInfo.phone.slice(-4) : 'None'
+        });
+
+        return customerInfo;
+        
+    } catch (error) {
+        console.error('[notifications.js] ❌ Error getting customer info:', error);
+        throw error;
+    }
+}
+
 // notifications.js - Send notifications to notifi.html for inventory status
 
 // Call this function when an inventory item is empty or needs restocking
@@ -317,9 +703,13 @@ function loadNotifications() {
                                             style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
                                         ✓ Accept
                                     </button>
-                                    <button class="btn btn-danger btn-sm" onclick="handlePaymentVerification('${doc.id}', 'declined')" 
+                                    <button class="btn btn-danger btn-sm me-2" onclick="handlePaymentVerification('${doc.id}', 'declined')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
                                         ✗ Decline
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" onclick="handleLalamoveReady('${doc.id}')" 
+                                            style="background: #ffc107; border: none; padding: 5px 15px; border-radius: 4px; color: black;">
+                                        <i class="fas fa-motorcycle"></i> Lalamove Ready!
                                     </button>
                                 </div>
                             </div>
@@ -361,9 +751,13 @@ function loadNotifications() {
                                             style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
                                         <i class="fas fa-check"></i> Accept Order
                                     </button>
-                                    <button class="btn btn-danger btn-sm" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
+                                    <button class="btn btn-danger btn-sm me-2" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
                                         <i class="fas fa-times"></i> Decline Order
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" onclick="handleLalamoveReady('${data.orderId}')" 
+                                            style="background: #ffc107; border: none; padding: 5px 15px; border-radius: 4px; color: black; font-size: 0.8rem;">
+                                        <i class="fas fa-motorcycle"></i> Lalamove Ready!
                                     </button>
                                 </div>
                             </div>
@@ -533,11 +927,11 @@ window.handlePaymentVerification = async function (docId, action) {
 
             // Redirect to POS with order data
             alert('✅ Payment approved! Redirecting to POS for order processing...');
-            
+
             // Store order data for POS to pick up
             sessionStorage.setItem('approvedOrderId', orderDoc.id);
             sessionStorage.setItem('approvedOrderData', JSON.stringify(orderDoc.data()));
-            
+
             // Redirect to POS page
             window.location.href = '/html/pos.html?mode=approved-order&orderId=' + orderDoc.id;
             return;
@@ -567,7 +961,7 @@ window.handlePaymentVerification = async function (docId, action) {
 
             // Show success message
             alert('Payment verification declined.');
-            
+
             // Reload notifications to update the display
             loadNotifications();
         }
@@ -822,4 +1216,179 @@ async function sendOrderToKitchen(orderId) {
     } catch (error) {
         console.error('Error sending order to kitchen:', error);
     }
+}
+
+// Function to handle Lalamove Ready button
+window.handleLalamoveReady = async function (docId) {
+    console.log('[notifications.js] Lalamove Ready button clicked for:', docId);
+
+    // Find the button that was clicked for visual feedback
+    const clickedButton = document.querySelector(`button[onclick*="handleLalamoveReady('${docId}')"]`);
+    let originalButtonText = '';
+    
+    if (clickedButton) {
+        originalButtonText = clickedButton.innerHTML;
+        clickedButton.disabled = true;
+        clickedButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    }
+
+    try {
+        // Show initial status
+        showToast('Checking order and quotation data...', 'info');
+        
+        // First, try to get order ID from the notification or use docId as order ID
+        let orderId = docId;
+        
+        // Check if docId is a notification ID and get the actual order ID
+        try {
+            const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+            if (db) {
+                const notificationDoc = await db.collection('notifications').doc(docId).get();
+                if (notificationDoc.exists) {
+                    const notificationData = notificationDoc.data();
+                    // Check if this notification has an associated order ID
+                    if (notificationData.orderId) {
+                        orderId = notificationData.orderId;
+                        console.log('[notifications.js] Found order ID from notification:', orderId);
+                    }
+                }
+            }
+        } catch (notifError) {
+            console.log('[notifications.js] Could not get order ID from notification, using docId as order ID');
+        }
+
+        if (clickedButton) {
+            clickedButton.innerHTML = '<i class="fas fa-search"></i> Getting order data...';
+        }
+
+        // Get quotation data and customer info
+        const quotationData = await getOrderQuotationData(orderId);
+        const customerInfo = await getCustomerInfoFromOrder(orderId);
+
+        if (clickedButton) {
+            clickedButton.innerHTML = '<i class="fas fa-motorcycle"></i> Placing order...';
+        }
+
+        // Place the Lalamove order
+        const result = await placeLalamoveOrderFromNotifications(quotationData, customerInfo);
+
+        // Success feedback
+        if (clickedButton) {
+            clickedButton.innerHTML = '<i class="fas fa-check"></i> Order Placed!';
+            clickedButton.classList.remove('btn-warning');
+            clickedButton.classList.add('btn-success');
+        }
+
+        showToast('Lalamove order placed successfully! 🎉', 'success');
+        console.log('[notifications.js] Lalamove order result:', result);
+
+        // Reset button after delay
+        setTimeout(() => {
+            if (clickedButton) {
+                clickedButton.innerHTML = originalButtonText;
+                clickedButton.classList.remove('btn-success');
+                clickedButton.classList.add('btn-warning');
+                clickedButton.disabled = false;
+            }
+        }, 3000);
+
+    } catch (error) {
+        console.error('[notifications.js] Lalamove Ready failed:', error);
+        
+        // Error feedback
+        if (clickedButton) {
+            clickedButton.innerHTML = '<i class="fas fa-times"></i> Failed!';
+            clickedButton.classList.remove('btn-warning');
+            clickedButton.classList.add('btn-danger');
+        }
+
+        // Show detailed error message
+        let errorMsg = 'Lalamove order failed: ';
+        if (error.message.includes('expired')) {
+            errorMsg += 'Quotation expired and could not be refreshed';
+        } else if (error.message.includes('422')) {
+            errorMsg += 'Invalid order data (422 error)';
+        } else if (error.message.includes('quotation')) {
+            errorMsg += 'No valid quotation found for this order';
+        } else {
+            errorMsg += (error.message || error);
+        }
+        
+        showToast(errorMsg, 'error');
+        
+        // Reset button after delay
+        setTimeout(() => {
+            if (clickedButton) {
+                clickedButton.innerHTML = originalButtonText;
+                clickedButton.classList.remove('btn-danger');
+                clickedButton.classList.add('btn-warning');
+                clickedButton.disabled = false;
+            }
+        }, 3000);
+    }
+}
+
+// Function to show toast messages (enhanced for Lalamove integration)
+function showToast(message, type = "info", duration = 3000) {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+        `;
+        document.body.appendChild(toastContainer);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : type === 'warning' ? '#ffc107' : '#17a2b8';
+    const textColor = type === 'warning' ? '#000' : '#fff';
+
+    toast.style.cssText = `
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 15px 20px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        word-wrap: break-word;
+        max-width: 100%;
+    `;
+
+    // Add icon based on type
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+    toast.innerHTML = `${icon} ${message}`;
+
+    toastContainer.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 100);
+
+    // Auto remove after specified duration
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, duration);
 }
