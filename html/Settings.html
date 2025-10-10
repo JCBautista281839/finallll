@@ -57,8 +57,9 @@
                     <img src="../src/Icons/user.png" alt="user" class="nav-icon">
                     <div class="nav-text">Users</div>
                 </a>
-                <br>
-                <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+                <div style="flex-grow: 1;"></div>
+                
+                <a href="../html/Settings.html" class="nav-link text-white" title="Settings">
                     <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
                     <div class="nav-text">Settings</div>
                 </a>
@@ -103,10 +104,6 @@
                             <div class="menu-item active" data-section="team">
                                 <i class="bi bi-people me-2"></i>
                                 <span>Team Management</span>
-                            </div>
-                            <div class="menu-item" data-section="admin">
-                                <i class="bi bi-shield-check me-2"></i>
-                                <span>Admin Settings</span>
                             </div>
                         </div>
                     </div>
@@ -211,54 +208,6 @@
                             </div>
                         </div>
 
-                        <!-- Admin Settings Section -->
-                        <div id="adminSection" class="settings-section">
-                            <div class="section-header">
-                                <h2>Admin Settings</h2>
-                            </div>
-
-                            <div class="admin-settings">
-                                <div class="setting-group">
-                                    <h5>Restaurant Information</h5>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Restaurant Name</label>
-                                            <input type="text" class="form-control" value="Viktoria's Bistro">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Contact Number</label>
-                                            <input type="tel" class="form-control" placeholder="+1 (555) 123-4567">
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label">Address</label>
-                                            <textarea class="form-control" rows="2"
-                                                placeholder="Restaurant Address"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="setting-group">
-                                    <h5>System Settings</h5>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="notificationsSwitch"
-                                            checked>
-                                        <label class="form-check-label" for="notificationsSwitch">
-                                            Enable Notifications
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="autoBackupSwitch" checked>
-                                        <label class="form-check-label" for="autoBackupSwitch">
-                                            Auto Backup Data
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="setting-group">
-                                    <button class="btn btn-primary">Save Settings</button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

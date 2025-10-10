@@ -57,8 +57,9 @@
                     <img src="../src/Icons/user.png" alt="user" class="nav-icon">
                     <div class="nav-text">Users</div>
                 </a>
-                <br>
-                <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+                <div style="flex-grow: 1;"></div>
+                
+                <a href="../html/Settings.html" class="nav-link text-white" title="Settings">
                     <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
                     <div class="nav-text">Settings</div>
                 </a>
@@ -124,7 +125,7 @@
                         </div>
 
                         <!-- Right Panel - Personal Information -->
-                        <div class="info-panel flex-grow-1">
+                        <div class="info-panel flex-grow-1" id="personalInfoPanel">
                             <h2 class="info-title">Personal Information</h2>
 
                             <!-- Firebase Connection Status -->
@@ -193,6 +194,81 @@
                                 </div>
                             </form>
                         </div>
+
+                        <!-- Right Panel - Login & Password -->
+                        <div class="info-panel flex-grow-1" id="loginPasswordPanel" style="display: none;">
+                            <h2 class="info-title">Login & Password</h2>
+
+                            <!-- Firebase Connection Status -->
+                            <div id="connectionStatus2" class="alert alert-info" style="display: none;">
+                                <i class="bi bi-cloud"></i> Connecting to Firebase...
+                            </div>
+
+                            <form class="login-password-form" id="loginPasswordForm"
+                                onsubmit="event.preventDefault(); return false;">
+                                
+                                <!-- Current Password -->
+                                <div class="mb-3">
+                                    <label for="currentPassword" class="form-label">Current Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="currentPassword"
+                                            placeholder="Enter current password" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleCurrentPassword">
+                                            <i class="bi bi-eye" id="currentPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text" id="currentPasswordStatus" style="display: none;">
+                                        <i class="bi bi-check-circle text-success me-1"></i>
+                                        <span class="text-success">Current password verified</span>
+                                    </div>
+                                </div>
+
+                                <!-- New Password -->
+                                <div class="mb-3">
+                                    <label for="newPassword" class="form-label">New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="newPassword"
+                                            placeholder="Enter new password" required disabled>
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword" disabled>
+                                            <i class="bi bi-eye" id="newPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        Password must be at least 6 characters long.
+                                    </div>
+                                </div>
+
+                                <!-- Confirm New Password -->
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirmPassword"
+                                            placeholder="Confirm new password" required disabled>
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword" disabled>
+                                            <i class="bi bi-eye" id="confirmPasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Password Strength Indicator -->
+                                <div class="mb-3">
+                                    <div class="password-strength" id="passwordStrength" style="display: none;">
+                                        <div class="strength-bar">
+                                            <div class="strength-fill" id="strengthFill"></div>
+                                        </div>
+                                        <div class="strength-text" id="strengthText"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Save Button -->
+                                <div class="d-flex justify-content-end mt-4">
+                                    <button type="button" class="btn btn-primary" id="savePasswordData"
+                                        onclick="handlePasswordSaveClick()" disabled>
+                                        <i class="bi bi-check-circle me-2"></i>Update Password
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -226,6 +302,281 @@
                 console.error('Error signing out:', error);
                 window.location.href = '../index.html';
             });
+        }
+
+        // Menu toggle functionality
+        function toggleMenu(menuId) {
+            // Remove active class from all menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Add active class to clicked menu item
+            document.getElementById(menuId).classList.add('active');
+
+            // Hide all panels
+            document.getElementById('personalInfoPanel').style.display = 'none';
+            document.getElementById('loginPasswordPanel').style.display = 'none';
+
+            // Show selected panel
+            if (menuId === 'personalInfoMenu') {
+                document.getElementById('personalInfoPanel').style.display = 'block';
+            } else if (menuId === 'loginPasswordMenu') {
+                document.getElementById('loginPasswordPanel').style.display = 'block';
+            }
+        }
+
+        // Password visibility toggle functions
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 8) {
+                strength += 25;
+            } else {
+                feedback.push('At least 8 characters');
+            }
+            
+            if (/[a-z]/.test(password)) {
+                strength += 25;
+            } else {
+                feedback.push('Lowercase letter');
+            }
+            
+            if (/[A-Z]/.test(password)) {
+                strength += 25;
+            } else {
+                feedback.push('Uppercase letter');
+            }
+            
+            if (/[0-9]/.test(password)) {
+                strength += 25;
+            } else {
+                feedback.push('Number');
+            }
+            
+            return { strength, feedback };
+        }
+
+        // Update password strength indicator
+        function updatePasswordStrength(password) {
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            if (password.length > 0) {
+                const result = checkPasswordStrength(password);
+                strengthDiv.style.display = 'block';
+                
+                strengthFill.style.width = result.strength + '%';
+                
+                if (result.strength < 50) {
+                    strengthFill.style.backgroundColor = '#dc3545';
+                    strengthText.textContent = 'Weak password';
+                    strengthText.style.color = '#dc3545';
+                } else if (result.strength < 75) {
+                    strengthFill.style.backgroundColor = '#ffc107';
+                    strengthText.textContent = 'Medium password';
+                    strengthText.style.color = '#ffc107';
+                } else {
+                    strengthFill.style.backgroundColor = '#28a745';
+                    strengthText.textContent = 'Strong password';
+                    strengthText.style.color = '#28a745';
+                }
+            } else {
+                strengthDiv.style.display = 'none';
+            }
+        }
+
+        // Password change functionality
+        function handlePasswordSaveClick() {
+            console.log('Password save button clicked');
+
+            // Get form data
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validate required fields
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                if (window.showMessage) {
+                    window.showMessage('Please fill in all password fields.', 'error');
+                }
+                return;
+            }
+
+            // Validate password length
+            if (newPassword.length < 6) {
+                if (window.showMessage) {
+                    window.showMessage('New password must be at least 6 characters long.', 'error');
+                }
+                return;
+            }
+
+            // Validate password confirmation
+            if (newPassword !== confirmPassword) {
+                if (window.showMessage) {
+                    window.showMessage('New passwords do not match.', 'error');
+                }
+                return;
+            }
+
+            // Check password strength
+            const strengthResult = checkPasswordStrength(newPassword);
+            if (strengthResult.strength < 50) {
+                if (window.showMessage) {
+                    window.showMessage('Password is too weak. Please choose a stronger password.', 'error');
+                }
+                return;
+            }
+
+            // Show loading state
+            const saveButton = document.getElementById('savePasswordData');
+            const originalText = saveButton.innerHTML;
+            saveButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Verifying...';
+            saveButton.disabled = true;
+
+            // Update password in Firebase (current password already verified)
+            saveButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Updating...';
+            
+            updateUserPassword(currentPassword, newPassword)
+                .then(() => {
+                    console.log('✅ Password updated successfully');
+                    if (window.showMessage) {
+                        window.showMessage('✅ Password updated successfully!', 'success');
+                    }
+
+                    // Clear form
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    document.getElementById('passwordStrength').style.display = 'none';
+
+                    // Add visual feedback
+                    document.querySelectorAll('#loginPasswordForm .form-control').forEach(field => {
+                        field.classList.add('is-valid');
+                        field.classList.remove('is-invalid');
+                    });
+
+                })
+                .catch((error) => {
+                    console.error('❌ Error updating password:', error);
+                    
+                    let errorMessage = 'Failed to update password.';
+                    
+                    if (error.code === 'auth/wrong-password') {
+                        errorMessage = 'Current password is incorrect. Please try again.';
+                        // Highlight current password field as invalid
+                        document.getElementById('currentPassword').classList.add('is-invalid');
+                        document.getElementById('currentPassword').classList.remove('is-valid');
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = 'New password is too weak. Please choose a stronger password.';
+                    } else if (error.code === 'auth/requires-recent-login') {
+                        errorMessage = 'Please log out and log back in, then try again.';
+                    } else {
+                        errorMessage = `Failed to update password: ${error.message}`;
+                    }
+                    
+                    if (window.showMessage) {
+                        window.showMessage(`❌ ${errorMessage}`, 'error');
+                    }
+
+                    // Add visual feedback for errors
+                    document.querySelectorAll('#loginPasswordForm .form-control').forEach(field => {
+                        field.classList.add('is-invalid');
+                        field.classList.remove('is-valid');
+                    });
+                })
+                .finally(() => {
+                    // Reset button state
+                    saveButton.disabled = false;
+                    saveButton.innerHTML = originalText;
+                });
+        }
+
+        // Verify current password function
+        async function verifyCurrentPassword(currentPassword) {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                throw new Error('No user is currently signed in');
+            }
+
+            // Create credential with current password
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+            
+            // Re-authenticate to verify current password
+            await user.reauthenticateWithCredential(credential);
+            
+            return true; // If no error thrown, password is correct
+        }
+
+        // Automatic current password verification
+        async function verifyCurrentPasswordAutomatically(currentPassword) {
+            const currentPasswordInput = document.getElementById('currentPassword');
+            const statusDiv = document.getElementById('currentPasswordStatus');
+            
+            try {
+                await verifyCurrentPassword(currentPassword);
+                
+                console.log('✅ Current password verified automatically');
+                
+                // Enable new password fields
+                document.getElementById('newPassword').disabled = false;
+                document.getElementById('confirmPassword').disabled = false;
+                document.getElementById('toggleNewPassword').disabled = false;
+                document.getElementById('toggleConfirmPassword').disabled = false;
+                document.getElementById('savePasswordData').disabled = false;
+
+                // Add visual feedback to current password field
+                currentPasswordInput.classList.add('is-valid');
+                currentPasswordInput.classList.remove('is-invalid');
+                
+                // Show success status
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i><span class="text-success">Current password verified</span>';
+
+            } catch (error) {
+                console.error('❌ Error verifying current password automatically:', error);
+                
+                // Add visual feedback for errors
+                currentPasswordInput.classList.add('is-invalid');
+                currentPasswordInput.classList.remove('is-valid');
+                
+                // Show error status
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = '<i class="bi bi-x-circle text-danger me-1"></i><span class="text-danger">Current password is incorrect</span>';
+            }
+        }
+
+        // Firebase password update function
+        async function updateUserPassword(currentPassword, newPassword) {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                throw new Error('No user is currently signed in');
+            }
+
+            // Re-authenticate user with current password
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+            await user.reauthenticateWithCredential(credential);
+
+            // Update password
+            await user.updatePassword(newPassword);
         }
 
         // User Management Functions
@@ -597,6 +948,101 @@
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 logoutBtn.addEventListener('click', handleLogout);
+            }
+
+            // Setup menu click handlers
+            const personalInfoMenu = document.getElementById('personalInfoMenu');
+            const loginPasswordMenu = document.getElementById('loginPasswordMenu');
+            
+            if (personalInfoMenu) {
+                personalInfoMenu.addEventListener('click', () => toggleMenu('personalInfoMenu'));
+            }
+            
+            if (loginPasswordMenu) {
+                loginPasswordMenu.addEventListener('click', () => toggleMenu('loginPasswordMenu'));
+            }
+
+            // Setup password visibility toggle handlers
+            const toggleCurrentPassword = document.getElementById('toggleCurrentPassword');
+            const toggleNewPassword = document.getElementById('toggleNewPassword');
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            
+            if (toggleCurrentPassword) {
+                toggleCurrentPassword.addEventListener('click', () => 
+                    togglePasswordVisibility('currentPassword', 'currentPasswordIcon'));
+            }
+            
+            if (toggleNewPassword) {
+                toggleNewPassword.addEventListener('click', () => 
+                    togglePasswordVisibility('newPassword', 'newPasswordIcon'));
+            }
+            
+            if (toggleConfirmPassword) {
+                toggleConfirmPassword.addEventListener('click', () => 
+                    togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon'));
+            }
+
+            // Setup password strength checker
+            const newPasswordInput = document.getElementById('newPassword');
+            if (newPasswordInput) {
+                newPasswordInput.addEventListener('input', function() {
+                    updatePasswordStrength(this.value);
+                });
+            }
+
+            // Setup password confirmation checker
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', function() {
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = this.value;
+                    
+                    if (confirmPassword.length > 0) {
+                        if (newPassword === confirmPassword) {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                        } else {
+                            this.classList.remove('is-valid');
+                            this.classList.add('is-invalid');
+                        }
+                    } else {
+                        this.classList.remove('is-valid', 'is-invalid');
+                    }
+                });
+            }
+
+            // Setup automatic current password verification
+            const currentPasswordInput = document.getElementById('currentPassword');
+            let verificationTimeout;
+            
+            if (currentPasswordInput) {
+                currentPasswordInput.addEventListener('input', function() {
+                    const currentPassword = this.value;
+                    
+                    // Clear previous timeout
+                    if (verificationTimeout) {
+                        clearTimeout(verificationTimeout);
+                    }
+                    
+                    // Reset status
+                    this.classList.remove('is-valid', 'is-invalid');
+                    document.getElementById('currentPasswordStatus').style.display = 'none';
+                    
+                    // Disable new password fields while verifying
+                    document.getElementById('newPassword').disabled = true;
+                    document.getElementById('confirmPassword').disabled = true;
+                    document.getElementById('toggleNewPassword').disabled = true;
+                    document.getElementById('toggleConfirmPassword').disabled = true;
+                    document.getElementById('savePasswordData').disabled = true;
+                    
+                    // Only verify if password is at least 6 characters
+                    if (currentPassword.length >= 6) {
+                        // Debounce verification - wait 1 second after user stops typing
+                        verificationTimeout = setTimeout(() => {
+                            verifyCurrentPasswordAutomatically(currentPassword);
+                        }, 1000);
+                    }
+                });
             }
 
             // Wait for Firebase to be ready, then load user data
