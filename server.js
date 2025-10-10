@@ -26,7 +26,7 @@ function initializeFirebaseAdmin() {
       console.log('Using Firebase service account from environment variable');
     } else {
       // Try to load from file
-      serviceAccount = require('./firebase-service-account.example.json');
+      serviceAccount = require('./firebase-service-account.json');
       console.log('Using Firebase service account from file');
     }
 
