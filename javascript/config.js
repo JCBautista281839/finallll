@@ -15,7 +15,8 @@ const API_CONFIG = {
         // Check if we're on a development port
         const isDevPort = window.location.port === '5500' || 
                          window.location.port === '3000' || 
-                         window.location.port === '5001';
+                         window.location.port === '5001' ||
+                         window.location.port === '5002';
         
         // Check if we're on the production domain
         const isProduction = window.location.hostname === 'viktoriasbistro.restaurant' ||
