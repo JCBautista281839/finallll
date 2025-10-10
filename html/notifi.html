@@ -21,7 +21,7 @@
                 <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
             </div>
             <nav class="nav flex-column w-100 text-center">
-                <a href="../html/Dashboard.html" class="nav-link text-white" title="Home">
+                <a href="../html/Dashboard.html" class="nav-link text-white" title="Home" id="homeNavLink">
                     <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
                     <div class="nav-text">Home</div>
                 </a>
@@ -53,8 +53,10 @@
                     <div class="nav-text">Reports</div>
                 </a>
                 <!-- Users nav removed -->
-                <br>
-                <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+                
+                <div style="flex-grow: 1;"></div>
+                
+                <a href="../html/Settings.html" class="nav-link text-white" title="Settings">
                     <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
                     <div class="nav-text">Settings</div>
                 </a>
@@ -92,7 +94,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="../javascript/notifications.js"></script>
-    <script src="../notifications-fix.js"></script>
     <script src="../main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -102,6 +103,9 @@
             if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
                 return;
             }
+
+            // Setup kitchen role access control
+            setupKitchenNotificationsAccess();
 
             loadNotifications();
             setInterval(loadNotifications, 30000);

@@ -198,8 +198,8 @@ async function handleLogin(email, password) {
 
         // Check if the selected type matches the user's actual role
         if (selectedUserType === 'admin') {
-            // Admin login - only allow admin, manager, server, kitchen roles
-            if (!['admin', 'manager', 'server', 'kitchen'].includes(userRole)) {
+            // Admin login - only allow admin, manager, kitchen roles
+            if (!['admin', 'manager', 'kitchen'].includes(userRole)) {
                 await firebase.auth().signOut(); // Sign out the user
                 throw new Error(`Access denied. This account has '${userRole}' role and is not authorized for admin access. Please use customer login or contact administrator.`);
             }
