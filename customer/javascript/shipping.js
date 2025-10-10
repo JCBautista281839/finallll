@@ -1420,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', function () {
             sender: {
               stopId: quotation.data.stops[0].stopId || quotation.data.stops[0].id || 'SENDER_STOP',
               name: 'Restaurant',
-              phone: '09123456789'
+              phone: '+639568992189' // Hardcoded restaurant phone for testing
             },
             recipients: [
               {
@@ -1434,7 +1434,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
         };
-
+        
         console.log('[shipping.js] 📤 Sending Lalamove order with valid quotation:', {
           quotationId: payload.data.quotationId,
           senderStopId: payload.data.sender.stopId,
