@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Customer menu page loaded, initializing Firebase...');
-  
+
   // Wait for Firebase to be ready
   function waitForFirebase() {
     if (window.isFirebaseReady && window.isFirebaseReady()) {
@@ -11,32 +11,32 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(waitForFirebase, 100);
     }
   }
-  
+
   function initializeCustomerMenu() {
     console.log('Initializing customer menu system...');
     loadMenuFromFirebase();
     setupEventListeners();
     setupAuthStateMonitoring();
   }
-  
+
   function loadMenuFromFirebase() {
     console.log('Loading menu from Firebase...');
     const db = firebase.firestore();
-    
+
     // Get all menu items from Firebase (simplified query to avoid index requirement)
     db.collection('menu').onSnapshot((querySnapshot) => {
       console.log('Firebase query completed, documents found:', querySnapshot.size);
-      
+
       if (querySnapshot.empty) {
         console.log('No menu items found');
         showEmptyMenu();
         return;
       }
-      
+
       // Filter available items and group by category
       const menuByCategory = {};
       const allItems = [];
-      
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         // Only include available items
@@ -47,70 +47,69 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
       });
-      
+
       // Sort items by creation date (newest first)
       allItems.sort((a, b) => {
         const dateA = new Date(a.createdAt || 0);
         const dateB = new Date(b.createdAt || 0);
         return dateB - dateA;
       });
-      
+
       // Group by category
       allItems.forEach(item => {
         const category = item.category || 'General';
-        
+
         if (!menuByCategory[category]) {
           menuByCategory[category] = [];
         }
-        
+
         menuByCategory[category].push(item);
       });
-      
+
       // Check if we have any available items
       if (allItems.length === 0) {
         console.log('No available menu items found');
         showEmptyMenu();
         return;
       }
-      
+
       // Update categories and menu items
       updateCategories(menuByCategory);
       displayMenuItems(menuByCategory);
-      
+
     }, (error) => {
       console.error('Error loading menu:', error);
       showErrorMenu();
     });
   }
-  
+
   function updateCategories(menuByCategory) {
     const categoriesContainer = document.querySelector('.menu-categories');
     const categoryLinksContainer = document.querySelector('.category-links-container');
-    
+
     if (!categoriesContainer || !categoryLinksContainer) return;
-    
+
     // Clear the loading state
     categoryLinksContainer.innerHTML = '';
-    
+
     // Define all possible categories (even if no data exists)
     const allPossibleCategories = [
       'All',
-      'Appetizers', 
-      'Specials', 
-      'Pasta', 
-      'Pansit', 
-      'Bilao', 
-      'Burgers', 
-      'Sandwiches', 
-      'Feast', 
-      'Rice Bowls', 
-      'Sizzlings', 
+      'Appetizers',
+      'Specials',
+      'Silog',
+      'More Loved',
+      'Pasta',
+      'Pansit',
+      'Bilao',
+      'Burgers',
+      'Sandwiches',
+      'Feast',
+      'Rice Bowls',
       'Drinks',
-      'Desserts',
-      'Main Course',
-      'Soup'
+      'Sizzlings',
     ];
-    
+
     // Add all category links
     allPossibleCategories.forEach(category => {
       const link = document.createElement('a');
@@ -118,25 +117,25 @@ document.addEventListener('DOMContentLoaded', () => {
       link.className = 'category-link';
       link.textContent = category;
       link.setAttribute('data-category', category);
-      
+
       // Add click event
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        
+
         if (category === 'All') {
           showAllItems(menuByCategory);
         } else {
           showCategory(category, menuByCategory[category] || []);
         }
-        
+
         // Update active state
         document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
       });
-      
+
       categoryLinksContainer.appendChild(link);
     });
-    
+
     // Add chevron arrow for more categories
     const chevronBtn = document.createElement('a');
     chevronBtn.href = '#';
@@ -144,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chevronBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
     chevronBtn.title = 'More categories';
     categoryLinksContainer.appendChild(chevronBtn);
-    
+
     // Set "All" as active by default
     const allLink = categoryLinksContainer.querySelector('[data-category="All"]');
     if (allLink) {
@@ -152,43 +151,43 @@ document.addEventListener('DOMContentLoaded', () => {
       showAllItems(menuByCategory);
     }
   }
-  
+
   function showAllItems(menuByCategory) {
     const menuGrid = document.querySelector('.menu-items-grid');
     if (!menuGrid) return;
-    
+
     menuGrid.innerHTML = '';
-    
+
     // Get all items from all categories
     const allItems = [];
     Object.values(menuByCategory).forEach(categoryItems => {
       allItems.push(...categoryItems);
     });
-    
+
     // Display all items
     allItems.forEach(item => {
       const menuItem = createMenuItem(item);
       menuGrid.appendChild(menuItem);
     });
   }
-  
+
   function displayMenuItems(menuByCategory) {
     const menuGrid = document.querySelector('.menu-items-grid');
     if (!menuGrid) return;
-    
+
     // Clear existing items
     menuGrid.innerHTML = '';
-    
+
     // Show all items by default (this will be handled by updateCategories)
     showAllItems(menuByCategory);
   }
-  
+
   function showCategory(categoryName, items) {
     const menuGrid = document.querySelector('.menu-items-grid');
     if (!menuGrid) return;
-    
+
     menuGrid.innerHTML = '';
-    
+
     if (!items || items.length === 0) {
       // Show empty state for categories with no items
       menuGrid.innerHTML = `
@@ -200,19 +199,20 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       return;
     }
-    
+
     items.forEach(item => {
       const menuItem = createMenuItem(item);
       menuGrid.appendChild(menuItem);
     });
   }
-  
+
   function createMenuItem(item) {
     const col = document.createElement('div');
-    col.className = 'col-lg-3 col-md-4 col-6';
-    
+    // 6 items per row on large screens (col-lg-2), 4 per row on md (col-md-3), 2 per row on xs (col-6)
+    col.className = 'col-lg-2 col-md-3 col-6';
+
     const imageUrl = item.photoUrl || '/src/Icons/menu.png';
-    
+
     col.innerHTML = `
       <div class="menu-item">
         <img src="${imageUrl}" alt="${item.name}" class="menu-item-img" 
@@ -227,14 +227,14 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `;
-    
+
     return col;
   }
-  
+
   function showEmptyMenu() {
     const menuGrid = document.querySelector('.menu-items-grid');
     if (!menuGrid) return;
-    
+
     menuGrid.innerHTML = `
       <div class="col-12 text-center py-5">
         <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
@@ -243,11 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
   }
-  
+
   function showErrorMenu() {
     const menuGrid = document.querySelector('.menu-items-grid');
     if (!menuGrid) return;
-    
+
     menuGrid.innerHTML = `
       <div class="col-12 text-center py-5">
         <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
   }
-  
+
   function setupEventListeners() {
     // Function to check if user is authenticated
     function checkUserAuthentication() {
@@ -275,10 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', async (e) => {
       if (e.target.classList.contains('add-to-cart-btn')) {
         e.preventDefault();
-        
+
         // Check if user is logged in
         const isAuthenticated = await checkUserAuthentication();
-        
+
         if (!isAuthenticated) {
           // Show elegant notification and redirect to login page
           showLoginRequiredNotification();
@@ -287,10 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 2000);
           return;
         }
-        
+
         // Get the menu item data from the button's data attribute
         const itemData = JSON.parse(e.target.getAttribute('data-item'));
-        
+
         // Use the global addToCart function
         if (window.addToCart) {
           window.addToCart({
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             description: itemData.description,
             photoUrl: itemData.photoUrl
           });
-          
+
           // Show success feedback
           showAddToCartSuccess(itemData.name);
         }
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="notification-progress"></div>
       </div>
     `;
-    
+
     // Add styles
     notification.style.cssText = `
       position: fixed;
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
       transform: translateX(100%);
       transition: transform 0.3s ease-in-out;
     `;
-    
+
     // Add content styles
     const content = notification.querySelector('.notification-content');
     content.style.cssText = `
@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gap: 10px;
       position: relative;
     `;
-    
+
     // Add progress bar styles
     const progress = notification.querySelector('.notification-progress');
     progress.style.cssText = `
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
       border-radius: 0 0 10px 10px;
       overflow: hidden;
     `;
-    
+
     // Add progress animation
     const progressBar = document.createElement('div');
     progressBar.style.cssText = `
@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
       animation: progress 2s linear forwards;
     `;
     progress.appendChild(progressBar);
-    
+
     // Add CSS animation
     const style = document.createElement('style');
     style.textContent = `
@@ -411,15 +411,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     `;
     document.head.appendChild(style);
-    
+
     // Add to body
     document.body.appendChild(notification);
-    
+
     // Animate in
     setTimeout(() => {
       notification.style.transform = 'translateX(0)';
     }, 100);
-    
+
     // Remove notification after 2 seconds
     setTimeout(() => {
       notification.style.transform = 'translateX(100%)';
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="notification-progress"></div>
       </div>
     `;
-    
+
     // Add styles
     notification.style.cssText = `
       position: fixed;
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
       transform: translateX(100%);
       transition: transform 0.3s ease-in-out;
     `;
-    
+
     // Add content styles
     const content = notification.querySelector('.notification-content');
     content.style.cssText = `
@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gap: 10px;
       position: relative;
     `;
-    
+
     // Add progress bar styles
     const progress = notification.querySelector('.notification-progress');
     progress.style.cssText = `
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
       border-radius: 0 0 10px 10px;
       overflow: hidden;
     `;
-    
+
     // Add progress animation
     const progressBar = document.createElement('div');
     progressBar.style.cssText = `
@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
       animation: progress 1.5s linear forwards;
     `;
     progress.appendChild(progressBar);
-    
+
     // Add CSS animation
     const style = document.createElement('style');
     style.textContent = `
@@ -506,15 +506,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     `;
     document.head.appendChild(style);
-    
+
     // Add to body
     document.body.appendChild(notification);
-    
+
     // Animate in
     setTimeout(() => {
       notification.style.transform = 'translateX(0)';
     }, 100);
-    
+
     // Remove notification after 1.5 seconds
     setTimeout(() => {
       notification.style.transform = 'translateX(100%)';
@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 300);
     }, 1500);
   }
-  
+
   // Start the Firebase initialization
   waitForFirebase();
 });

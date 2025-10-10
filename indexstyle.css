@@ -124,6 +124,11 @@ body {
   transition: .3s;
 }
 
+/* Active nav link (current page) */
+.nav-link.active {
+  color: #96392d !important;
+}
+
 .search-img {
   width: 20px;
   height: 20px;

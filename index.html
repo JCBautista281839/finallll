@@ -677,6 +677,23 @@
     });
   </script>
 
+  <!-- Set active nav link for current page -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        const isIndex = location.pathname === '/' || location.pathname.endsWith('index.html');
+        if (isIndex) {
+          const homeLink = document.querySelector('.nav-list .nav-link[href="index.html"]');
+          if (homeLink) homeLink.classList.add('active');
+          const homeFs = document.querySelector('.fullscreen-nav-link[href="index.html"]');
+          if (homeFs) homeFs.classList.add('active');
+        }
+      } catch (e) {
+        console.error('Error setting active nav link', e);
+      }
+    });
+  </script>
+
 </body>
 
 </html>
