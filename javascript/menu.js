@@ -4,16 +4,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const categoryDropdown = document.getElementById('categoryDropdown');
     const menuTableBody = document.getElementById('menuTableBody');
     if (filterBtn && categoryDropdown) {
-        filterBtn.addEventListener('click', function(e) {
+        filterBtn.addEventListener('click', function (e) {
             e.preventDefault();
             categoryDropdown.style.display = categoryDropdown.style.display === 'none' ? 'block' : 'none';
         });
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!categoryDropdown.contains(e.target) && e.target !== filterBtn) {
                 categoryDropdown.style.display = 'none';
             }
         });
-        categoryDropdown.addEventListener('click', function(e) {
+        categoryDropdown.addEventListener('click', function (e) {
             if (e.target.classList.contains('dropdown-item')) {
                 const selectedCategory = e.target.getAttribute('data-category');
                 filterMenuByCategory(selectedCategory);
@@ -49,10 +49,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     console.log('Menu page loaded, initializing Firebase...');
-    
-   
+
+
     function waitForFirebase() {
-       
+
         if (window.isFirebaseReady && window.isFirebaseReady()) {
             console.log('Firebase is ready from main.js!');
             initializeMenu();
@@ -67,12 +67,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function initializeMenu() {
         console.log('Initializing menu system...');
-        
-       
+
+
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-       
+
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 console.log('User authenticated:', user.email);
@@ -91,13 +91,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                
+
                 firebase.auth().signOut().then(() => {
                     console.log('User signed out successfully');
                     window.location.href = '../index.html';
                 }).catch((error) => {
                     console.error('Sign out error:', error);
-                   
+
                     window.location.href = '../index.html';
                 });
             });
@@ -107,22 +107,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadMenuFromFirebase() {
         console.log('Loading menu from Firebase...');
         const tbody = document.getElementById('menuTableBody');
-        
+
         if (!tbody) {
             console.error('Menu table body not found');
             return;
         }
 
-       
+
         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Loading menu from Firebase...</td></tr>';
 
-       
+
         const db = firebase.firestore();
-        
-       
+
+
         db.collection('menu').orderBy('createdAt', 'desc').onSnapshot((querySnapshot) => {
             console.log('Firebase query completed, documents found:', querySnapshot.size);
-            
+
             if (querySnapshot.empty) {
                 console.log('Collection is empty');
                 tbody.innerHTML = `
@@ -143,13 +143,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-           
+
             tbody.innerHTML = '';
-            
+
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 console.log('Document data:', data);
-                
+
                 const row = createMenuRow(doc.id, data);
                 tbody.appendChild(row);
             });
@@ -165,8 +165,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function createMenuRow(docId, data) {
         const row = document.createElement('tr');
         row.setAttribute('data-doc-id', docId);
-        
-       
+
+
         let imageHtml = '';
         if (data.photoUrl) {
             imageHtml = `
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             `;
         }
-        
+
         row.innerHTML = `
             <td>
                 <div class="d-flex align-items-center">
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </td>
         `;
-        
+
         return row;
     }
 
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setupEventListeners() {
-       
+
         const editBtn = document.getElementById('editBtn');
         if (editBtn) {
             editBtn.addEventListener('click', function (e) {
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-       
+
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function (e) {
@@ -235,10 +235,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-       
+
         const searchInput = document.querySelector('.search-input');
         if (searchInput) {
-            searchInput.addEventListener('input', function(e) {
+            searchInput.addEventListener('input', function (e) {
                 const searchTerm = e.target.value.toLowerCase();
                 filterMenuTable(searchTerm);
             });
@@ -248,36 +248,58 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleEditMode() {
         const editBtn = document.getElementById('editBtn');
         const addProductSection = document.getElementById('addProductSection');
-        
+
         if (editBtn.textContent.includes('Edit')) {
-           
+            // Enter edit mode
             editBtn.innerHTML = '<img src="../src/Icons/edit.png" alt="Done" class="edit-icon me-2">Done';
             editBtn.classList.remove('btn-outline-primary');
             editBtn.classList.add('btn-primary');
-            
-           
+
             if (addProductSection) {
+                // Move the Add Product section to the top of the menu container so it's visible first
+                const menuContainer = document.querySelector('.menu-container');
+                const tableContainer = menuContainer ? menuContainer.querySelector('.menu-table-container') : null;
+                try {
+                    if (menuContainer) {
+                        if (tableContainer) {
+                            menuContainer.insertBefore(addProductSection, tableContainer);
+                        } else {
+                            menuContainer.insertBefore(addProductSection, menuContainer.firstChild);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Could not move Add Product section:', err);
+                }
+
+                // Ensure it's visible and focusable for accessibility, then scroll into view
                 addProductSection.style.display = 'block';
+                addProductSection.tabIndex = -1; // make focusable
+                addProductSection.focus && addProductSection.focus();
+                addProductSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            
-           
+
             addEditButtonsToRows();
-           
+
             enableAvailabilityEditing();
         } else {
-           
+            // Exit edit mode
             editBtn.innerHTML = '<img src="../src/Icons/edit.png" alt="Edit" class="edit-icon me-2">Edit';
             editBtn.classList.remove('btn-primary');
             editBtn.classList.add('btn-outline-primary');
-            
-           
+
             if (addProductSection) {
+                // Hide the section and move it back to the bottom of the menu container to keep DOM stable
                 addProductSection.style.display = 'none';
+                const menuContainer = document.querySelector('.menu-container');
+                try {
+                    if (menuContainer) menuContainer.appendChild(addProductSection);
+                } catch (err) {
+                    console.warn('Could not restore Add Product section position:', err);
+                }
             }
-            
-           
+
             removeEditButtonsFromRows();
-           
+
             disableAvailabilityEditing();
         }
     }
@@ -298,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log('Availability updated for', docId, '=>', checkbox.checked);
                 } catch (err) {
                     console.error('Failed to update availability', err);
-                   
+
                     checkbox.checked = !checkbox.checked;
                 }
             }, { once: false });
@@ -322,18 +344,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 editBtn.className = 'btn btn-sm btn-success edit-row-btn me-2';
                 editBtn.innerHTML = 'Edit';
                 editBtn.title = 'Edit this item';
-                
-               
+
+
                 const firstCell = row.querySelector('td:first-child');
                 if (firstCell) {
                     const productContainer = firstCell.querySelector('.d-flex');
                     if (productContainer) {
-                       
+
                         productContainer.insertBefore(editBtn, productContainer.firstChild);
                     }
                 }
-                
-                editBtn.addEventListener('click', function(e) {
+
+                editBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
                     openEditModal(row);
                 });
@@ -348,13 +370,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openEditModal(row) {
         const docId = row.getAttribute('data-doc-id');
-        
-       
+
+
         window.location.href = `/html/editproduct.html?id=${docId}`;
     }
 
     function showEditForm(name, description, category, price, available) {
-       
+
         const overlay = document.createElement('div');
         overlay.className = 'edit-overlay';
         overlay.style.cssText = `
@@ -369,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
             align-items: center;
             z-index: 1000;
         `;
-        
+
         overlay.innerHTML = `
             <div class="edit-form bg-white p-4 rounded" style="min-width: 400px;">
                 <h5 class="mb-3">Edit Menu Item</h5>
@@ -410,11 +432,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 </form>
             </div>
         `;
-        
+
         document.body.appendChild(overlay);
-        
-       
-        document.getElementById('editMenuForm').addEventListener('submit', function(e) {
+
+
+        document.getElementById('editMenuForm').addEventListener('submit', function (e) {
             e.preventDefault();
             saveMenuItemChanges();
         });
@@ -492,20 +514,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function openAddProductModal() {
-       
+
         window.location.href = '/html/addproduct.html';
     }
 
     function filterMenuTable(searchTerm) {
         const rows = document.querySelectorAll('#menuTableBody tr[data-doc-id]');
-        
+
         rows.forEach(row => {
             const nameCell = row.querySelector('.product-name');
             const categoryCell = row.querySelector('.category-badge');
-            
+
             const name = nameCell ? nameCell.textContent.toLowerCase() : '';
             const category = categoryCell ? categoryCell.textContent.toLowerCase() : '';
-            
+
             if (name.includes(searchTerm) || category.includes(searchTerm)) {
                 row.style.display = '';
             } else {
@@ -526,40 +548,40 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-// --- AUTO UNCHECK AVAILABILITY IF INGREDIENTS EMPTY ---
-async function autoUpdateMenuAvailability() {
-    const db = firebase.firestore();
-    // Get all ingredients that are empty
-    const emptyIngredients = [];
-    const inventorySnapshot = await db.collection('inventory').where('quantity', '==', 0).get();
-    inventorySnapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.name) emptyIngredients.push(data.name);
-    });
-    // For each menu item, check if it uses any empty ingredient
-    const menuSnapshot = await db.collection('menu').get();
-    menuSnapshot.forEach(async menuDoc => {
-        const menuData = menuDoc.data();
-        // Assume menuData.ingredients is an array of ingredient names used by the product
-        if (Array.isArray(menuData.ingredients)) {
-            const usesEmpty = menuData.ingredients.some(ing => emptyIngredients.includes(ing));
-            if (usesEmpty && menuData.available !== false) {
-                await db.collection('menu').doc(menuDoc.id).update({ available: false });
-                // Also update UI checkbox if present
-                const row = document.querySelector(`#menuTableBody tr[data-doc-id='${menuDoc.id}']`);
-                if (row) {
-                    const checkbox = row.querySelector('.form-check-input');
-                    if (checkbox) checkbox.checked = false;
+    // --- AUTO UNCHECK AVAILABILITY IF INGREDIENTS EMPTY ---
+    async function autoUpdateMenuAvailability() {
+        const db = firebase.firestore();
+        // Get all ingredients that are empty
+        const emptyIngredients = [];
+        const inventorySnapshot = await db.collection('inventory').where('quantity', '==', 0).get();
+        inventorySnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.name) emptyIngredients.push(data.name);
+        });
+        // For each menu item, check if it uses any empty ingredient
+        const menuSnapshot = await db.collection('menu').get();
+        menuSnapshot.forEach(async menuDoc => {
+            const menuData = menuDoc.data();
+            // Assume menuData.ingredients is an array of ingredient names used by the product
+            if (Array.isArray(menuData.ingredients)) {
+                const usesEmpty = menuData.ingredients.some(ing => emptyIngredients.includes(ing));
+                if (usesEmpty && menuData.available !== false) {
+                    await db.collection('menu').doc(menuDoc.id).update({ available: false });
+                    // Also update UI checkbox if present
+                    const row = document.querySelector(`#menuTableBody tr[data-doc-id='${menuDoc.id}']`);
+                    if (row) {
+                        const checkbox = row.querySelector('.form-check-input');
+                        if (checkbox) checkbox.checked = false;
+                    }
                 }
             }
-        }
-    });
-}
-// Call this after inventory or menu updates
-window.autoUpdateMenuAvailability = autoUpdateMenuAvailability;
+        });
+    }
+    // Call this after inventory or menu updates
+    window.autoUpdateMenuAvailability = autoUpdateMenuAvailability;
 
 
 
-   
+
     waitForFirebase();
 });
