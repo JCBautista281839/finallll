@@ -1,132 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/nav.css">
     <link rel="stylesheet" href="../css/stylePayment.css">
+    <link rel="icon" type="image/png" href="/src/IMG/Logo.png">
 </head>
+
 <body>
     <div class="dashboard-container d-flex">
         <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
-      <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
-        <i class="bi bi-list"></i>
-      </button>
-      <div class="brand mb-1">
-        <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
-      </div>
-      <nav class="nav flex-column w-100 text-center">
-        <a href="../html/Dashboard.html" class="nav-link text-white" title="Home">
-          <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
-          <div class="nav-text">Home</div>
-        </a>
-                
-        <a  class="nav-link text-white" title="Notifications" style="position:relative;">
-          <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon" >
-          <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
-          <div class="nav-text">Notifications</div>
-        </a>
-                
-        <a href="../html/Order.html" class="nav-link text-white" title="Orders">
-          <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
-          <div class="nav-text">Orders</div>
-        </a>
-        <a href="../html/pos.html" class="nav-link text-white" title="POS">
-          <img src="../src/Icons/cashier-machine.png" alt="POS" class="nav-icon">
-          <div class="nav-text">POS</div>
-        </a>
-        <a href="../html/menu.html" class="nav-link text-white" title="Menu">
-          <img src="../src/Icons/menu (1).png" alt="Menu" class="nav-icon">
-          <div class="nav-text">Menu</div>
-        </a>
-        <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
-          <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
-          <div class="nav-text">Inventory</div>
-        </a>
-        <a href="../html/analytics.html" class="nav-link text-white" title="Reports">
-          <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
-          <div class="nav-text">Reports</div>
-        </a>
-        <a href="../html/user.html" class="nav-link text-white" title="Users">
-          <img src="../src/Icons/user.png" alt="user" class="nav-icon">
-          <div class="nav-text">Users</div>
-        </a>
-        <br>
-        <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
-          <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
-          <div class="nav-text">Settings</div>
-        </a>
-        <a href="#" class="nav-link text-white" title="Logout">
-          <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
-          <div class="nav-text">Logout</div>
-        </a>
-      </nav>
-     <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
-      <div id="notificationDropdown" class="notification-dropdown" style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
-          <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
-              <img src="../src/Icons/bell.png" alt="Notifications" style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
-              <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
-              <img src="../src/Icons/close.png" id="closeDropdown" alt="Close" style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
-          </div>
-          <div class="dropdown-body p-2" id="dropdownNotificationsList">
-              <!-- Notifications will be loaded here dynamically -->
-              <div class="text-center text-muted py-3">No notifications</div>
-          </div>
-          <div class="dropdown-footer p-2 text-center border-top">
-              <a href="../html/notifi.html" class="see-all-link" style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
-          </div>
-      </div>
+            <button id="burgerBtn" class="btn btn-outline-light d-md-none mb-3">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="brand mb-1">
+                <img src="../src/Canva Scratch (3).png" class="rounded-circle" alt="Logo">
+            </div>
+            <nav class="nav flex-column w-100 text-center">
+                <a href="../html/Dashboard.html" class="nav-link text-white" title="Home">
+                    <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
+                    <div class="nav-text">Home</div>
+                </a>
+
+                <a class="nav-link text-white" title="Notifications" style="position:relative;">
+                    <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon">
+                    <span class="notification-badge"
+                        style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+                    <div class="nav-text">Notifications</div>
+                </a>
+
+                <a href="../html/Order.html" class="nav-link text-white" title="Orders">
+                    <img src="../src/Icons/shopping-bag.png" alt="Sales" class="nav-icon">
+                    <div class="nav-text">Orders</div>
+                </a>
+                <a href="../html/pos.html" class="nav-link text-white" title="POS">
+                    <img src="../src/Icons/cashier-machine.png" alt="POS" class="nav-icon">
+                    <div class="nav-text">POS</div>
+                </a>
+                <a href="../html/menu.html" class="nav-link text-white" title="Menu">
+                    <img src="../src/Icons/menu (1).png" alt="Menu" class="nav-icon">
+                    <div class="nav-text">Menu</div>
+                </a>
+                <a href="../html/Inventory.html" class="nav-link text-white" title="Inventory">
+                    <img src="../src/Icons/inventory.png" alt="Inventory" class="nav-icon">
+                    <div class="nav-text">Inventory</div>
+                </a>
+                <a href="../html/analytics.html" class="nav-link text-white" title="Reports">
+                    <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
+                    <div class="nav-text">Reports</div>
+                </a>
+                <a href="../html/user.html" class="nav-link text-white" title="Users">
+                    <img src="../src/Icons/user.png" alt="user" class="nav-icon">
+                    <div class="nav-text">Users</div>
+                </a>
+                <br>
+                <a href="../html/Settings.html" class="nav-link text-white mt-auto" title="Settings">
+                    <img src="../src/Icons/setting.png" alt="Settings" class="nav-icon">
+                    <div class="nav-text">Settings</div>
+                </a>
+                <a href="#" class="nav-link text-white" title="Logout">
+                    <img src="../src/Icons/log-out.png" alt="Logout" class="nav-icon">
+                    <div class="nav-text">Logout</div>
+                </a>
+            </nav>
+            <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+            <div id="notificationDropdown" class="notification-dropdown"
+                style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
+                <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
+                    <img src="../src/Icons/bell.png" alt="Notifications"
+                        style="width:32px;height:32px;object-fit:contain;filter:brightness(1.2);">
+                    <span style="font-weight:600;font-size:1.1rem;margin-left:8px;">Notifications</span>
+                    <img src="../src/Icons/close.png" id="closeDropdown" alt="Close"
+                        style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
+                </div>
+                <div class="dropdown-body p-2" id="dropdownNotificationsList">
+                    <!-- Notifications will be loaded here dynamically -->
+                    <div class="text-center text-muted py-3">No notifications</div>
+                </div>
+                <div class="dropdown-footer p-2 text-center border-top">
+                    <a href="../html/notifi.html" class="see-all-link"
+                        style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+                </div>
+            </div>
         </aside>
-        
+
         <main class="main-content flex-grow-1 p-4">
-            
+
             <div class="top-bar d-flex justify-content-between align-items-center mb-4">
                 <div class="back-button d-flex align-items-center" role="button" style="cursor: pointer;">
                     <img src="../src/Icons/left-arrow.png" alt="Back" class="me-2" style="width: 40px; height: 40px;">
                     <span class="back-text">Back</span>
                 </div>
-                
+
                 <div class="datetime-display" id="currentDateTime">
                     12:00 PM Monday
                 </div>
-                
-                
+
+
             </div>
 
-            
+
             <div class="payment-content d-flex gap-4">
-                
+
                 <div class="payment-panel flex-grow-1">
-                    
+
                     <div class="amount-section mb-4">
                         <div class="amount-display">
                             <div class="amount-value">₱0.00</div>
                             <hr class="amount-divider">
                             <div class="amount-label">Amount</div>
                         </div>
-                        
-                        
+
+
                         <div class="mt-3" id="cashInputRow" style="display: none; text-align:center;">
-                            <input type="number" id="cashReceived" min="0" step="0.01" placeholder="0.00" aria-label="Amount Received">
+                            <input type="number" id="cashReceived" min="0" step="0.01" placeholder="0.00"
+                                aria-label="Amount Received">
                             <hr class="cash-divider">
                             <div class="cash-label">Amount Received</div>
                         </div>
-                        
+
                         <div class="mt-3" id="gcashInputRow" style="display: none; text-align:center;">
-                            <input type="text" id="gcashReference" placeholder="GCash Reference Number" aria-label="GCash Reference Number">
+                            <input type="text" id="gcashReference" placeholder="GCash Reference Number"
+                                aria-label="GCash Reference Number">
                             <hr class="gcash-divider">
                             <div class="gcash-label">Reference Number</div>
                         </div>
 
                         <div class="mt-3" id="cardInputRow" style="display: none; text-align:center;">
-                            <input type="text" id="cardReference" placeholder="Card Reference Number" aria-label="Card Reference Number">
+                            <input type="text" id="cardReference" placeholder="Card Reference Number"
+                                aria-label="Card Reference Number">
                             <hr class="card-divider">
                             <div class="card-label">Reference Number</div>
                         </div>
-                        
+
                         <div class="change-display" id="changeDisplay">
                             <div class="change-value">₱0.00</div>
                             <hr class="change-divider">
@@ -134,11 +145,11 @@
                         </div>
                     </div>
 
-                    
+
                     <div class="payment-methods-section">
                         <h5 class="payment-methods-title">Payment Methods</h5>
                         <p class="payment-methods-subtitle">Choose Payment Method</p>
-                        
+
                         <div class="payment-methods-grid">
                             <button class="payment-method-btn ">
                                 <img src="../src/Icons/peso.png" alt="Cash" style="width: 50px; height: 50px;">
@@ -155,7 +166,7 @@
                         </div>
                     </div>
 
-                    
+
                     <div class="receipt-proceed-section">
                         <div class="action-buttons d-flex justify-content-between align-items-center">
                             <button class="later-btn">Later</button>
@@ -164,24 +175,24 @@
                     </div>
                 </div>
 
-                
+
                 <div class="order-panel">
                     <div class="order-card">
-                        
+
                         <div class="order-header">
                             <span class="order-label">Order No.</span>
                             <div class="order-number" id="orderNumber">Order No.</div>
                             <i class="bi bi-trash trash-icon"></i>
                         </div>
-                        
+
                         <div class="order-type">
                             <span>Dine in</span>
                         </div>
 
-                        
+
                         <div class="order-items"></div>
 
-                        
+
                         <div class="order-summary">
                             <div class="summary-row">
                                 <span class="summary-label">Subtotal</span>
@@ -192,21 +203,25 @@
                                 <span class="summary-value"></span>
                             </div>
                             <div class="summary-row">
-                                    <span class="summary-label">Discount</span>
-                                    <span class="summary-value summary-discount-value"></span>
-                                </div>
-                                <div class="summary-row discount-name-row" style="display:none;">
-                                    <span class="summary-label">Name</span>
-                                    <input type="text" id="discount-name-input" class="form-control" style="height:32px;max-width:180px;display:inline-block;" maxlength="40" autocomplete="off" placeholder="">
-                                </div>
-                                <div class="summary-row discount-id-row" style="display:none;">
-                                    <span class="summary-label">ID Number</span>
-                                    <input type="text" id="discount-id-input" class="form-control" style="height:32px;max-width:180px;display:inline-block;" maxlength="30" autocomplete="off" placeholder="">
-                                </div>
-                                <div class="summary-row total-row">
-                                    <span class="summary-label">Total</span>
-                                    <span class="summary-value"></span>
-                                </div>
+                                <span class="summary-label">Discount</span>
+                                <span class="summary-value summary-discount-value"></span>
+                            </div>
+                            <div class="summary-row discount-name-row" style="display:none;">
+                                <span class="summary-label">Name</span>
+                                <input type="text" id="discount-name-input" class="form-control"
+                                    style="height:32px;max-width:180px;display:inline-block;" maxlength="40"
+                                    autocomplete="off" placeholder="">
+                            </div>
+                            <div class="summary-row discount-id-row" style="display:none;">
+                                <span class="summary-label">ID Number</span>
+                                <input type="text" id="discount-id-input" class="form-control"
+                                    style="height:32px;max-width:180px;display:inline-block;" maxlength="30"
+                                    autocomplete="off" placeholder="">
+                            </div>
+                            <div class="summary-row total-row">
+                                <span class="summary-label">Total</span>
+                                <span class="summary-value"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -220,25 +235,26 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    
+
     <script src="../main.js"></script>
-<script src="../javascript/navnotifi.js"></script>
+    <script src="../javascript/navnotifi.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../javascript/payment.js"></script>
-<script src="../javascript/restoreInventory.js"></script>
+    <script src="../javascript/restoreInventory.js"></script>
 
-    
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
             var notifLink = document.querySelector('.nav-link[title="Notifications"]');
             if (notifLink) {
-                notifLink.addEventListener('click', function() {
+                notifLink.addEventListener('click', function () {
                     if (typeof loadNotifications === 'function') {
                         loadNotifications();
                     }
                 });
             }
         });
-        </script>
+    </script>
 </body>
+
 </html>

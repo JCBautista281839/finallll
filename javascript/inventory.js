@@ -335,37 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Error loading inventory: ' + error.message);
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading inventory. Please try again.</td></tr>';
             });
-        const row = document.createElement('tr');
-        row.setAttribute('data-doc-id', docId);
-        row.setAttribute('data-restock-threshold', data.minQuantity || 10);
 
-        // Always display in kg/L/pcs (never g/ml/piece)
-        let displayUom = data.unitOfMeasure;
-        let displayQty = data.quantity || 0;
-        if (displayUom) {
-            displayUom = displayUom.toLowerCase();
-            if (displayUom === 'kg') {
-                displayUom = 'kg';
-            } else if (displayUom === 'l') {
-                displayUom = 'L';
-            } else if (displayUom === 'pcs' || displayUom === 'piece') {
-                displayUom = 'pcs';
-            }
-        }
-        // Format quantity to 2 decimals for kg/L
-        if ((displayUom === 'kg' || displayUom === 'L') && typeof displayQty === 'number') {
-            displayQty = displayQty % 1 === 0 ? displayQty : displayQty.toFixed(2).replace(/\.00$/, '');
-        }
-        row.innerHTML = `
-            <td>${data.name || 'N/A'}</td>
-            <td>${displayQty}</td>
-            <td>${displayUom || 'N/A'}</td>
-            <td></td>
-        `;
-
-
-        updateRowStatus(row);
-        return row;
     }
 
     // Track notified items to prevent duplicate notifications
