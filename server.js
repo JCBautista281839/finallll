@@ -52,7 +52,7 @@ function initializeFirebaseAdmin() {
     console.log('📝 To enable Firebase Admin features for password reset:');
     console.log('   1. Go to Firebase Console > Project Settings > Service accounts');
     console.log('   2. Generate new private key and download JSON file');
-    console.log('   3. Save as firebase-service-account.json in project root');
+    console.log('   3. Set FIREBASE_SERVICE_ACCOUNT environment variable with JSON content');
     console.log('   4. Restart the server');
     console.log('   5. See FIREBASE_SETUP.md for detailed instructions');
     return false;
