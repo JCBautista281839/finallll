@@ -208,7 +208,7 @@
       <h2 class="signature-title">OUR SIGNATURE DISHES</h2>
       <div class="row justify-content-center g-4 signature-row">
         <div class="col-6 col-sm-4 col-md-3">
-          <div class="dish">
+          <div class="dish" onclick="navigateToKareKare()" style="cursor: pointer;">
             <div class="dish-plate"></div>
             <img class="dish-img" src="src/IMG/kk.png" alt="Best Sellers">
             <div class="dish-hover-text">Kare Kare</div>
@@ -216,7 +216,7 @@
           </div>
         </div>
         <div class="col-6 col-sm-4 col-md-3">
-          <div class="dish">
+          <div class="dish" onclick="navigateToCrispyPata()" style="cursor: pointer;">
             <div class="dish-plate"></div>
             <img class="dish-img" src="src/IMG/cp.png" alt="Feast">
             <div class="dish-hover-text">Crispy Pata</div>
@@ -224,7 +224,7 @@
           </div>
         </div>
         <div class="col-6 col-sm-4 col-md-3">
-          <div class="dish">
+          <div class="dish" onclick="navigateToChicksilog()" style="cursor: pointer;">
             <div class="dish-plate"></div>
             <img class="dish-img" src="src/IMG/cs.png" alt="Solo Meals">
             <div class="dish-hover-text">Chicksilog</div>
@@ -232,7 +232,7 @@
           </div>
         </div>
         <div class="col-6 col-sm-4 col-md-3">
-          <div class="dish">
+          <div class="dish" onclick="navigateToMangoTapioca()" style="cursor: pointer;">
             <div class="dish-plate"></div>
             <img class="dish-img" src="src/IMG/mt.png" alt="Desserts">
             <div class="dish-hover-text">Mango Tapioca</div>
@@ -692,6 +692,30 @@
         console.error('Error setting active nav link', e);
       }
     });
+
+    // Function to navigate to Kare Kare in customer menu
+    function navigateToKareKare() {
+      // Navigate to customer menu with parameter to scroll to Crispy Kare Kare
+      window.location.href = '/customer/html/menucustomer.html?scrollTo=Crispy Kare-Kare';
+    }
+
+    // Function to navigate to Crispy Pata in customer menu
+    function navigateToCrispyPata() {
+      // Navigate to customer menu with parameter to scroll to Crispy Pata
+      window.location.href = '/customer/html/menucustomer.html?scrollTo=Crispy Pata';
+    }
+
+    // Function to navigate to Chicksilog in customer menu
+    function navigateToChicksilog() {
+      // Navigate to customer menu with parameter to scroll to Chicksilog
+      window.location.href = '/customer/html/menucustomer.html?scrollTo=Chicksilog';
+    }
+
+    // Function to navigate to Mango Tapioca in customer menu
+    function navigateToMangoTapioca() {
+      // Navigate to customer menu with parameter to scroll to Mango Tapioca
+      window.location.href = '/customer/html/menucustomer.html?scrollTo=Mango Tapioca';
+    }
   </script>
 
 </body>
