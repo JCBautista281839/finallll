@@ -984,22 +984,26 @@ function viewOrderDetails(orderNumber) {
                     orderDate = fallbackDate;
                 }
 
-                // Format the date using the obtained date object
-                dateTimeStr = orderDate.toLocaleString('en-US', {
+                // Format the date using the obtained date object in the form:
+                // Saturday, October 11, 2025 at 01:03 AM
+                const datePart = orderDate.toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric',
+                    day: 'numeric'
+                });
+                const timePart = orderDate.toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: true
                 });
+                dateTimeStr = datePart + ' at ' + timePart;
             } catch (error) {
                 console.error('Error formatting date:', error);
             }
 
             // Calculate subtotal from items
-            let itemsHtml = '<tr><td colspan="4" class="text-center text-muted">No items in this order</td></tr>';
+            let itemsHtml = '<tr><td colspan="3" class="text-center text-muted">No items in this order</td></tr>';
             let computedSubtotal = 0;
             if (orderData.items && Array.isArray(orderData.items) && orderData.items.length > 0) {
                 itemsHtml = orderData.items.map(item => {
@@ -1011,7 +1015,6 @@ function viewOrderDetails(orderNumber) {
                         '<td>' + (item.name || 'Unnamed Item') + '</td>' +
                         '<td class="text-center">' + qty + '</td>' +
                         '<td class="text-end">₱' + price.toFixed(2) + '</td>' +
-                        '<td class="text-end">₱' + lineTotal.toFixed(2) + '</td>' +
                         '</tr>';
                 }).join('');
             }
@@ -1046,7 +1049,7 @@ function viewOrderDetails(orderNumber) {
                 '<div class="col-md-6">' +
                 '<p><strong>Table:</strong> ' + (orderData.tableNumber || 'N/A') + '</p>' +
                 '<p><strong>Pax:</strong> ' + (orderData.paxNumber || orderData.pax || 'N/A') + '</p>' +
-                '<p><strong>Order #:</strong> ' + (orderData.orderNumberFormatted || orderData.orderNumber || 'N/A') + '</p>' +
+                '<p><strong>Order ID:</strong> ' + (orderData.orderNumberFormatted || orderData.orderNumber || 'N/A') + '</p>' +
                 (orderData.specialInstructions ?
                     '<p><strong>Special Instructions:</strong><br>' +
                     '<small class="text-muted">' + orderData.specialInstructions + '</small></p>' : '') +
@@ -1059,7 +1062,6 @@ function viewOrderDetails(orderNumber) {
                 '<th>Item</th>' +
                 '<th class="text-center">Quantity</th>' +
                 '<th class="text-end">Unit Price</th>' +
-                '<th class="text-end">Total</th>' +
                 '</tr>' +
                 '</thead>' +
                 '<tbody>' +
@@ -1067,16 +1069,16 @@ function viewOrderDetails(orderNumber) {
                 '</tbody>' +
                 '<tfoot>' +
                 '<tr>' +
-                '<td colspan="3" class="text-end"><strong>Subtotal:</strong></td>' +
+                '<td colspan="2" class="text-end"><strong>Subtotal:</strong></td>' +
                 '<td class="text-end">₱' + computedSubtotal.toFixed(2) + '</td>' +
                 '</tr>' +
                 '<tr>' +
-                '<td colspan="3" class="text-end"><strong>Tax:</strong></td>' +
+                '<td colspan="2" class="text-end"><strong>Tax:</strong></td>' +
                 '<td class="text-end">₱' + computedTax.toFixed(2) + '</td>' +
                 '</tr>' +
                 ((computedDiscount > 0 || (orderData.discountType && orderData.discountPercent)) ? (
                     '<tr>' +
-                    '<td colspan="3" class="text-end"><strong>Discount:</strong></td>' +
+                    '<td colspan="2" class="text-end"><strong>Discount:</strong></td>' +
                     '<td class="text-end">' +
                     (
                         (orderData.discountType && orderData.discountPercent)
@@ -1087,7 +1089,7 @@ function viewOrderDetails(orderNumber) {
                     '</tr>'
                 ) : '') +
                 '<tr>' +
-                '<td colspan="3" class="text-end"><strong>Total:</strong></td>' +
+                '<td colspan="2" class="text-end"><strong>Total:</strong></td>' +
                 '<td class="text-end"><strong>₱' + savedTotal.toFixed(2) + '</strong></td>' +
                 '</tr>' +
                 '</tfoot>' +

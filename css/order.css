@@ -6,8 +6,8 @@
 }
 
 @font-face {
-  font-family: 'PoppinsBlack';
-  src: url('../src/fonts/Poppins-Black.woff') format('woff');
+  font-family: 'PoppinsSemiBold';
+  src: url('../src/fonts/Poppins-SemiBold.woff') format('woff');
   font-weight: 200;
   font-style: normal;
 }
@@ -24,15 +24,6 @@
   src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
   font-weight: 200;
   font-style: normal;
-}
-
-.dark-mode .dashboard-container {
-  background: #080808 !important;
-}
-
-.dark-mode .body {
-  background: #121212 !important;
-  color: #e0e0e0 !important;
 }
 
 .main-content {
@@ -101,19 +92,11 @@
   vertical-align: middle;
 }
 
-/* Clickable row styles - only for pending payment orders */
-
-
-
-
 
 /* Status cell fix (stable height, no jumping) */
 .pending-payment-row .status-cell {
   min-height: 65px;
 }
-
-/* Edit hint text */
-
 
 /* Table layout - ensures columns maintain fixed widths */
 .table {
@@ -121,22 +104,16 @@
   width: 100%;
 }
 
-/* Lock Actions column header and cells - prevents shifting */
 .order-table th:last-child,
 .order-table td:last-child {
   width: 140px;
-  /* Fixed width instead of percentage */
   min-width: 140px;
-  /* Ensures minimum space */
   max-width: 140px;
-  /* Prevents expansion */
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
   padding: 8px 4px;
-  /* Consistent padding */
   box-sizing: border-box;
-  /* Include padding in width calculation */
 }
 
 /* Ensure Actions header text stays in place */
@@ -611,6 +588,125 @@ input[type="date"] {
   background-color: rgba(13, 110, 253, 0.1);
 }
 
+#orderDetailsModal .modal-dialog {
+  max-width: 900px;
+  height: 200px !important;
+  margin-bottom: 15px !important;
+}
+
+#orderDetailsModal .modal-content {
+  border-radius: 20px !important;
+  padding: 20px;
+  font-family: 'PoppinsRegular';
+}
+
+#orderDetailsModal .modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-top: -10px;
+  font-family: 'PoppinsSemiBold';
+  color: #890404 !important;
+  font-size: larger;
+}
+
+.modal-body {
+  font-family: 'PoppinsRegular';
+  color: #333;
+  font-size: 15px;
+  line-height: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#orderDetailsModal table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#orderDetailsModal table th {
+  text-align: right !important;
+  padding: 10px;
+  border-bottom: 1px solid #e9e9e9;
+  font-weight: 600;
+  color: #646363;
+  font-family: 'PoppinsRegular';
+  font-weight: 100;
+}
+
+#orderDetailsModal table td {
+  text-align: right !important;
+  padding: 10px;
+  border-bottom: 1px solid #ffffff;
+  font-family: 'PoppinsRegular';
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.order-details-modal .table tfoot td {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-top: 1px solid #000 !important;
+  text-align: right !important;
+}
+
+.order-details-modal .table tfoot .total-row strong {
+  font-size: 1rem;
+}
+
+.order-details-modal .table tfoot .total-amount strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+#orderDetailsModal .table tfoot td {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  text-align: right !important;
+}
+
+#orderDetailsModal .table tfoot .total-row strong {
+  font-size: 1rem;
+}
+
+#orderDetailsModal .table tfoot .total-amount strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+#orderDetailsModal .modal-footer .btn {
+min-width: 200px;
+padding: 10px 18px;
+border-radius: 15px;
+font-size: 14px;
+box-shadow: none;
+transition: background-color 0.15s ease, transform 0.08s ease;
+}
+
+#orderDetailsModal .modal-footer .btn.btn-secondary {
+background-color: #6c757d; /* muted gray like your screenshot */
+color: #fff;
+border: none;
+}
+
+#orderDetailsModal .modal-footer .btn.btn-secondary:hover {
+background-color: #5b6268;
+}
+
+#orderDetailsModal .modal-footer .btn.btn-primary {
+background-color: #96392d; /* Bootstrap primary blue (tweak as needed) */
+color: #fff;
+border-color: #96392d;
+}
+
+#orderDetailsModal .modal-footer .btn.btn-primary:hover {
+background-color: #890404;
+}
+
+#orderDetailsModal .modal-footer .btn + .btn {
+margin-left: 12px; /* gap between Close and Print */
+}
+
 
 @media (max-width: 768px) {
   .main-content {
@@ -630,78 +726,4 @@ input[type="date"] {
   .date-input {
     width: 100%;
   }
-}
-
-
-/* Dark Mode Overrides */
-.dark-mode .main-content {
-  background: #232323 !important;
-  color: #f1f1f1 !important;
-}
-
-.dark-mode .container-fluid {
-  background: transparent !important;
-  color: #f1f1f1 !important;
-}
-
-.dark-mode .table th,
-.dark-mode .table td {
-  color: #e0e0e0 !important;
-  background: transparent !important;
-}
-
-.dark-mode .table thead tr {
-  border-bottom: 1px solid #444 !important;
-}
-
-.dark-mode .table tbody tr+tr td {
-  border-top: 1px solid #333 !important;
-}
-
-.dark-mode .table th {
-  background-color: transparent !important;
-}
-
-.dark-mode .table td {
-  background-color: transparent !important;
-}
-
-.dark-mode .card {
-  background-color: #232323 !important;
-  color: #f1f1f1 !important;
-}
-
-.dark-mode .badge.bg-success {
-  background-color: #1e8c5a !important;
-  color: #fff !important;
-}
-
-.dark-mode .badge.bg-warning {
-  background-color: #bfa600 !important;
-  color: #232323 !important;
-}
-
-.dark-mode .search-input,
-.dark-mode .date-input,
-.dark-mode .form-control {
-  background-color: #2d2d2d !important;
-  color: #e0e0e0 !important;
-  border-color: #444 !important;
-}
-
-.dark-mode .search-input::placeholder {
-  color: #aaa !important;
-}
-
-.dark-mode .calendar-icon,
-.dark-mode .search-icon {
-  filter: invert(80%) sepia(10%) saturate(500%) hue-rotate(180deg) brightness(90%) contrast(90%) !important;
-}
-
-.dark-mode .pending-payment-row {
-  background-color: rgba(13, 110, 253, 0.10) !important;
-}
-
-.dark-mode .pending-payment-row:hover {
-  background-color: rgba(13, 110, 253, 0.18) !important;
 }
