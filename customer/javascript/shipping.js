@@ -1291,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', function () {
           data: {
             serviceType: expiredQuotation.data.serviceType || 'MOTORCYCLE',
             specialRequests: expiredQuotation.data.specialRequests || [],
-            language: expiredQuotation.data.language || 'en_PH',
+            language: 'en_PH', // Always use lowercase, don't inherit from expired quotation
             stops: [
               {
                 coordinates: {
