@@ -2,31 +2,72 @@
 
 let currentAdminUser = null;
 
-// Check authentication - SIMPLIFIED
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-        console.log("User is signed in:", user.uid);
-        currentAdminUser = user;
-        // Fetch user role from Firestore
-        const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            // Role-based page access
-            if (userData.role && userData.role.toLowerCase() === 'kitchen') {
-                if (!window.location.pathname.endsWith('/html/kitchen.html')) {
-                    window.location.href = '/html/kitchen.html';
-                    return;
+// Wait for Firebase to be ready before checking authentication
+function waitForFirebase() {
+    return new Promise((resolve) => {
+        const checkFirebase = () => {
+            if (typeof firebase !== 'undefined' && 
+                firebase.auth && 
+                firebase.firestore && 
+                firebase.apps && 
+                firebase.apps.length > 0) {
+                console.log('Firebase is ready');
+                resolve();
+            } else if (typeof firebase !== 'undefined' && 
+                       firebase.auth && 
+                       firebase.firestore && 
+                       window.firebaseConfig) {
+                // Firebase SDK is loaded but not initialized, initialize it
+                console.log('Firebase SDK loaded but not initialized, initializing...');
+                try {
+                    firebase.initializeApp(window.firebaseConfig);
+                    console.log('Firebase initialized successfully');
+                    resolve();
+                } catch (error) {
+                    console.error('Error initializing Firebase:', error);
+                    setTimeout(checkFirebase, 100);
                 }
+            } else {
+                console.log('Waiting for Firebase initialization...');
+                setTimeout(checkFirebase, 100);
             }
-            // Add more role-based redirects here if needed
+        };
+        checkFirebase();
+    });
+}
+
+// Check authentication - SIMPLIFIED
+async function initializeAuthListener() {
+    await waitForFirebase();
+    
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+            console.log("User is signed in:", user.uid);
+            currentAdminUser = user;
+            // Fetch user role from Firestore
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                // Role-based page access
+                if (userData.role && userData.role.toLowerCase() === 'kitchen') {
+                    if (!window.location.pathname.endsWith('/html/kitchen.html')) {
+                        window.location.href = '/html/kitchen.html';
+                        return;
+                    }
+                }
+                // Add more role-based redirects here if needed
+            }
+            initializeSettings();
+            loadTeamMembers();
+        } else {
+            console.log("No user signed in");
+            window.location.href = '/index.html';
         }
-        initializeSettings();
-        loadTeamMembers();
-    } else {
-        console.log("No user signed in");
-        window.location.href = '/index.html';
-    }
-});
+    });
+}
+
+// Initialize auth listener
+initializeAuthListener();
 
 // Initialize settings functionality
 function initializeSettings() {
@@ -118,6 +159,9 @@ async function addTeamMemberSimple(e) {
     addButton.disabled = true;
 
     try {
+        // Wait for Firebase to be ready
+        await waitForFirebase();
+        
         // Get current user's auth before creating new user
         const currentUser = firebase.auth().currentUser;
 
@@ -206,6 +250,9 @@ async function loadTeamMembers() {
 
         teamList.innerHTML = '<div class="loading"><i class="bi bi-hourglass-split"></i><br>Loading team members...</div>';
 
+        // Wait for Firebase to be ready
+        await waitForFirebase();
+
         // Get team members from team_members collection
         const teamSnapshot = await firebase.firestore().collection('team_members')
             .orderBy('createdAt', 'desc')
@@ -250,6 +297,21 @@ async function loadTeamMembers() {
 
     } catch (error) {
         console.error('❌ Error loading team members:', error);
+        
+        const teamList = document.getElementById('teamList');
+        if (teamList) {
+            teamList.innerHTML = `
+                <div class="team-member">
+                    <div class="member-cell name-col">
+                        <span class="text-danger">Error loading team members</span>
+                    </div>
+                    <div class="member-cell email-col">Please refresh the page</div>
+                    <div class="member-cell role-col">-</div>
+                    <div class="member-cell actions-col">-</div>
+                </div>
+            `;
+        }
+        
         showToast('Error loading team members: ' + error.message, 'error');
     }
 }
@@ -301,16 +363,19 @@ function createTeamMemberElement(userId, userData) {
 }
 
 // Edit user role - SIMPLIFIED
-function editUserRole(userId, currentRole) {
-    const newRole = prompt(`Enter new role for user (current: ${currentRole}):\n- admin\n- manager\n- server\n- kitchen\n- user`);
+async function editUserRole(userId, currentRole) {
+    const newRole = prompt(`Enter new role for user (current: ${currentRole}):\n- admin\n- manager\n- kitchen\n- user`);
 
     if (newRole && newRole !== currentRole) {
-        const validRoles = ['admin', 'manager', 'server', 'kitchen', 'user'];
+        const validRoles = ['admin', 'manager', 'kitchen', 'user'];
         if (!validRoles.includes(newRole.toLowerCase())) {
-            showToast('Invalid role. Please choose: admin, manager, server, kitchen, or user', 'error');
+            showToast('Invalid role. Please choose: admin, manager, kitchen, or user', 'error');
             return;
         }
 
+        // Wait for Firebase to be ready
+        await waitForFirebase();
+        
         firebase.firestore().collection('users').doc(userId).update({
             role: newRole.toLowerCase(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -325,16 +390,19 @@ function editUserRole(userId, currentRole) {
 }
 
 // Remove user - SIMPLIFIED
-function removeUser(userId) {
+async function removeUser(userId) {
     if (confirm('Are you sure you want to remove this user? This action cannot be undone.')) {
-        firebase.firestore().collection('users').doc(userId).delete()
-            .then(() => {
-                showToast('User removed successfully', 'success');
-                loadTeamMembers();
-            }).catch(error => {
-                console.error('Error removing user:', error);
-                showToast('Error removing user', 'error');
-            });
+        try {
+            // Wait for Firebase to be ready
+            await waitForFirebase();
+            
+            await firebase.firestore().collection('users').doc(userId).delete();
+            showToast('User removed successfully', 'success');
+            loadTeamMembers();
+        } catch (error) {
+            console.error('Error removing user:', error);
+            showToast('Error removing user', 'error');
+        }
     }
 }
 
@@ -375,7 +443,7 @@ function testAddTeamMember() {
         firstName: 'Test',
         lastName: 'User',
         email: 'test@example.com',
-        role: 'server'
+        role: 'kitchen'
     };
 
     firebase.firestore().collection('team_members').add({
