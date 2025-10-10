@@ -286,23 +286,43 @@
     min-height: 100vh;
 }
 
+/* Kitchen content layout */
+.kitchen-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    margin-left: 20px; /* Reduced spacing from sidebar */
+}
+
+/* Orders container - 4 column grid */
+.orders-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 20px;
+    margin-left: 20px; /* Reduced spacing from sidebar */
+    max-width: calc(100vw - 160px); /* Adjusted for reduced margin */
+}
+
 /* Order card */
 .order-card {
     font-family: 'PoppinsRegular', sans-serif;
     background: white;
     border-radius: 25px;
-    padding: 25px;
+    padding: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     border: 1px solid #e9ecef;
     transition: all 0.3s ease;
     width: 100%;
-    min-width: 320px;
-    max-width: 360px;
+    min-width: 280px;
+    max-width: 320px;
     height: 350px;
     min-height: 220px;
     max-height: 400px;
-    margin-left: 30px;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .order-card:hover {
@@ -747,11 +767,31 @@
 }
 
 
+/* Responsive design for different screen sizes */
+@media (max-width: 1400px) {
+    .orders-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 1100px) {
+    .orders-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .kitchen-content {
         padding: 1rem;
         gap: 1rem;
         justify-content: center;
+        margin-left: 10px;
+    }
+    
+    .orders-container {
+        grid-template-columns: 1fr;
+        margin-left: 10px;
+        padding: 10px;
     }
     
     .order-summary-card {
@@ -786,6 +826,13 @@
 }
 
 @media (max-width: 480px) {
+    .orders-container {
+        grid-template-columns: 1fr;
+        margin-left: 5px;
+        padding: 5px;
+        gap: 10px;
+    }
+    
     .order-date-time {
         flex-direction: column;
         align-items: flex-start;
@@ -802,6 +849,7 @@
     
     .kitchen-content {
         gap: 0.5rem;
+        margin-left: 5px;
     }
     
     .overlay-date-time {

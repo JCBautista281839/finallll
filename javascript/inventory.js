@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const dashboardNavLink = document.querySelector('a[href*="Dashboard.html"]');
         const posNavLink = document.querySelector('a[href*="pos.html"]');
         const menuNavLink = document.querySelector('a[href*="menu.html"]');
-        const homeNavLink = document.querySelector('a[href*="Dashboard.html"]');
+        const homeNavLink = document.querySelector('#homeNavLink') || document.querySelector('a[href*="Dashboard.html"]');
 
         if (userRole === 'kitchen') {
             console.log('🍳 Kitchen role detected - Setting up limited access');
@@ -246,7 +246,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 homeNavLink.title = 'Kitchen Dashboard';
             }
 
-            // Hide navigation items that kitchen staff shouldn't access
+            // Hide ALL navigation items except Home (kitchen.html), Notifications (notifi.html), and Inventory
+            const allNavLinks = document.querySelectorAll('.nav-link');
+            allNavLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                const title = link.getAttribute('title');
+                
+                // Keep only Home (kitchen.html), Notifications (notifi.html), and Inventory
+                if (href && !href.includes('kitchen.html') && 
+                    !href.includes('notifi.html') && 
+                    !href.includes('Inventory.html') && 
+                    title !== 'Logout') {
+                    link.style.display = 'none';
+                }
+            });
+
+            // Specifically hide these navigation items
             if (settingsNavLink) {
                 settingsNavLink.style.display = 'none';
             }
@@ -264,6 +279,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (menuNavLink) {
                 menuNavLink.style.display = 'none';
+            }
+            
+            // Hide Orders navigation
+            const ordersNavLink = document.querySelector('a[href*="Order.html"]');
+            if (ordersNavLink) {
+                ordersNavLink.style.display = 'none';
             }
 
         } else if (userRole === 'admin' || userRole === 'manager') {
@@ -335,7 +356,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Error loading inventory: ' + error.message);
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading inventory. Please try again.</td></tr>';
             });
-
     }
 
     // Track notified items to prevent duplicate notifications

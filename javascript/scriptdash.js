@@ -18,6 +18,29 @@ function updateTime() {
   el.textContent = `${time} ${weekday}`;
 }
 
+// Kitchen role access control
+function setupKitchenAccess() {
+  firebase.auth().onAuthStateChanged(async function(user) {
+    if (!user) return;
+    
+    try {
+      const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        const userRole = userData.role || 'user';
+        
+        if (userRole === 'kitchen') {
+          console.log('🍳 Kitchen role detected - Redirecting to kitchen dashboard');
+          window.location.href = '/html/kitchen.html';
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+    }
+  });
+}
+
 // Google Charts initialization
 google.charts.load('current', {'packages':['corechart']});
 
@@ -1084,6 +1107,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize Firebase authentication
   initializeFirebaseAuth();
+  
+  // Setup kitchen role access control
+  setupKitchenAccess();
   
   // Set up real-time updates for sales data
   setupSalesDataListener();
