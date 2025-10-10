@@ -150,14 +150,15 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
 
 
-        button.addEventListener('click', function () {
-            showIngredientDetail(docId, data);
+        button.addEventListener('click', function (e) {
+            // Pass the clicked tag element so the detail card is positioned below it
+            showIngredientDetail(docId, data, button);
         });
 
         return button;
     }
 
-    function showIngredientDetail(docId, data) {
+    function showIngredientDetail(docId, data, anchorElement) {
         const detailCard = document.getElementById('ingredientDetailCard');
         const detailTitle = document.getElementById('ingredientDetailTitle');
         const quantityInput = document.getElementById('ingredientQuantity');
@@ -183,6 +184,71 @@ document.addEventListener('DOMContentLoaded', function () {
 
         detailCard.style.display = 'block';
 
+        // Position the detail card right after the clicked tag when possible
+        try {
+            const tagsContainer = document.getElementById('ingredientsTags');
+            const ingredientsPanel = tagsContainer ? tagsContainer.closest('.ingredients-panel') : null;
+
+            if (anchorElement) {
+                // If the tags container is a grid, insert the card as a grid child so it can span the row
+                const tagsContainer = document.getElementById('ingredientsTags');
+                if (tagsContainer) {
+                    // Determine the visible children (ignore no-match placeholder)
+                    const children = Array.from(tagsContainer.children).filter(c => !c.classList || !c.classList.contains('no-ingredient-match'));
+                    const idx = children.indexOf(anchorElement);
+                    // Default to appending if index not found
+                    let insertBefore = null;
+                    const computedStyle = window.getComputedStyle(tagsContainer);
+                    let columns = 1;
+                    try {
+                        const cols = computedStyle.getPropertyValue('grid-template-columns');
+                        if (cols) columns = cols.split(' ').length || 1;
+                    } catch (e) {
+                        columns = 2; // fallback
+                    }
+
+                    const row = Math.floor(Math.max(0, idx) / columns);
+                    const insertIndex = (row + 1) * columns; // position after the row
+                    if (insertIndex < children.length) {
+                        insertBefore = children[insertIndex];
+                    }
+
+                    // Ensure the detail card is a child of the tagsContainer and spans full width
+                    detailCard.style.gridColumn = '1 / -1';
+                    detailCard.style.width = 'auto';
+                    detailCard.style.marginTop = '8px';
+
+                    if (insertBefore) tagsContainer.insertBefore(detailCard, insertBefore);
+                    else tagsContainer.appendChild(detailCard);
+
+                    // Scroll the ingredients panel to make the card visible but avoid jumping to bottom
+                    if (ingredientsPanel) {
+                        const cardOffset = detailCard.offsetTop - ingredientsPanel.offsetTop;
+                        const panelTop = ingredientsPanel.scrollTop;
+                        const panelHeight = ingredientsPanel.clientHeight;
+                        if (cardOffset > panelTop + panelHeight - 40) {
+                            ingredientsPanel.scrollTo({ top: Math.max(0, cardOffset - 40), behavior: 'smooth' });
+                        } else if (cardOffset < panelTop) {
+                            ingredientsPanel.scrollTo({ top: Math.max(0, cardOffset - 12), behavior: 'smooth' });
+                        }
+                    } else {
+                        detailCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                } else if (anchorElement.insertAdjacentElement) {
+                    // fallback: insert after anchor
+                    anchorElement.insertAdjacentElement('afterend', detailCard);
+                }
+            } else if (tagsContainer && tagsContainer.parentNode) {
+                // Fallback: place after tags container (older behavior)
+                tagsContainer.parentNode.insertBefore(detailCard, tagsContainer.nextSibling);
+                if (ingredientsPanel) {
+                    const offset = detailCard.offsetTop - ingredientsPanel.offsetTop - 12;
+                    ingredientsPanel.scrollTo({ top: offset, behavior: 'smooth' });
+                }
+            }
+        } catch (e) {
+            console.warn('Could not reposition or scroll ingredient detail card:', e);
+        }
 
         document.querySelectorAll('.ingredient-tag').forEach(tag => {
             tag.classList.remove('active');
