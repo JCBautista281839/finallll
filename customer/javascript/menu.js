@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Define all possible categories (even if no data exists)
     const allPossibleCategories = [
       'All',
-      'Appetizers',
+      'Appetizer',
       'Specials',
       'Silog',
       'More Loved',
@@ -534,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function checkScrollToParameter() {
     const urlParams = new URLSearchParams(window.location.search);
     const scrollTo = urlParams.get('scrollTo');
-    
+
     if (scrollTo) {
       console.log('Scroll to parameter found:', scrollTo);
       // Wait for menu to load, then scroll to the specific dish
@@ -547,43 +547,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to scroll to a specific dish
   function scrollToDish(dishName) {
     console.log('Attempting to scroll to dish:', dishName);
-    
+
     // Find the menu item by name (case-insensitive)
     const menuItems = document.querySelectorAll('.menu-item');
     let targetItem = null;
-    
+
     menuItems.forEach(item => {
       const itemName = item.querySelector('.menu-item-name');
       if (itemName) {
         const name = itemName.textContent.trim();
         // Check for exact match or partial match (for "Crispy Kare-Kare" vs "Crispy Kare Kare")
-        if (name.toLowerCase().includes(dishName.toLowerCase()) || 
-            dishName.toLowerCase().includes(name.toLowerCase())) {
+        if (name.toLowerCase().includes(dishName.toLowerCase()) ||
+          dishName.toLowerCase().includes(name.toLowerCase())) {
           targetItem = item;
         }
       }
     });
-    
+
     if (targetItem) {
       console.log('Found target dish, scrolling to it...');
-      
+
       // Scroll to the item with smooth behavior
       targetItem.scrollIntoView({
         behavior: 'smooth',
         block: 'center'
       });
-      
+
       // Add a highlight effect
       targetItem.style.boxShadow = '0 0 20px rgba(229, 115, 90, 0.5)';
       targetItem.style.transform = 'scale(1.05)';
       targetItem.style.transition = 'all 0.3s ease';
-      
+
       // Remove highlight after 3 seconds
       setTimeout(() => {
         targetItem.style.boxShadow = '';
         targetItem.style.transform = '';
       }, 3000);
-      
+
       // Show a notification
       showDishFoundNotification(dishName);
     } else {
