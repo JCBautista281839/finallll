@@ -15,7 +15,8 @@ const API_CONFIG = {
         // Check if we're on a development port
         const isDevPort = window.location.port === '5500' || 
                          window.location.port === '3000' || 
-                         window.location.port === '5001';
+                         window.location.port === '5001' ||
+                         window.location.port === '5002';
         
         // Check if we're on the production domain
         const isProduction = window.location.hostname === 'viktoriasbistro.restaurant' ||
@@ -28,7 +29,7 @@ const API_CONFIG = {
             return 'https://viktoriasbistro.restaurant';
         } else if (isLocal && isDevPort) {
             console.log('🔧 Development environment detected, using local server');
-            return 'http://localhost:5001';
+            return 'http://localhost:5002';
         } else {
             // For all other environments, use production server
             console.log('🚀 Production mode: using production server');
