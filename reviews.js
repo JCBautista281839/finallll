@@ -2,6 +2,61 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Reviews system loaded, initializing Firebase...');
 
+  /* Integrated right-side popup helper (to replace alert()) */
+  function ensureToastStyles() {
+    if (document.getElementById('site-toast-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'site-toast-styles';
+    style.textContent = `
+      .site-toast-container { position: fixed; right: 18px; top: 18px; z-index: 11000; display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+      .site-toast { background: #231517; color: #fff; padding: 18px 20px; border-radius: 12px; min-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); font-family: 'PoppinsRegular', sans-serif; }
+      .site-toast .toast-body { color: #f1e9e9; font-size: 14px; margin-bottom: 8px; }
+      .site-toast .toast-actions { display:flex; gap:8px; justify-content:flex-end; }
+      .site-toast .btn-toast { background:#ffd1dc; color:#6b0f14; border:none; padding:8px 14px; border-radius:999px; cursor:pointer; font-weight:600; }
+      .site-toast.success { border-left: 6px solid #4CAF50; }
+      .site-toast.error { border-left: 6px solid #f44336; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function getToastContainer() {
+    let container = document.querySelector('.site-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'site-toast-container';
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+
+  function showInlineAlert(message, options = {}) {
+    ensureToastStyles();
+    const { type = 'info', autoHide = true, duration = 3500 } = options;
+    const container = getToastContainer();
+
+    const toast = document.createElement('div');
+    toast.className = `site-toast ${type}`;
+    toast.innerHTML = `
+      <div class="toast-body">${message}</div>
+      <div class="toast-actions"><button class="btn-toast">OK</button></div>
+    `;
+
+    const btn = toast.querySelector('.btn-toast');
+    btn.addEventListener('click', () => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    });
+
+    container.appendChild(toast);
+
+    if (autoHide) {
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, duration);
+    }
+
+    return toast;
+  }
+
   // Wait for Firebase to be ready
   function waitForFirebase() {
     if (window.isFirebaseReady && window.isFirebaseReady()) {
@@ -238,19 +293,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // If not authenticated, show alert only
       if (!isUserAuthenticated()) {
-        alert('Please sign in to submit your review.');
+        showInlineAlert('Please sign in to submit your review.', { type: 'error', autoHide: false });
         return;
       }
 
       const comment = ratingForm.querySelector('.rating-textarea').value.trim();
 
       if (selectedRating === 0) {
-        alert('Please select a rating before submitting.');
+        showInlineAlert('Please select a rating before submitting.', { type: 'error', autoHide: false });
         return;
       }
 
       if (!comment) {
-        alert('Please write a comment before submitting.');
+        showInlineAlert('Please write a comment before submitting.', { type: 'error', autoHide: false });
         return;
       }
 
@@ -375,31 +430,17 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch((error) => {
           console.error('Error submitting review:', error);
-          alert('Sorry, there was an error submitting your review. Please try again.');
+          showInlineAlert('Sorry, there was an error submitting your review. Please try again.', { type: 'error' });
         });
     } catch (error) {
       console.error('Error accessing Firebase:', error);
-      alert('Sorry, there was an error accessing the database. Please try again.');
+      showInlineAlert('Sorry, there was an error accessing the database. Please try again.', { type: 'error' });
     }
   }
 
   function showSuccessMessage() {
-    // Create a temporary success message
-    const successMsg = document.createElement('div');
-    successMsg.className = 'review-success-message';
-    successMsg.innerHTML = `
-      <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center;">
-        ✓ Thank you for your review! It has been submitted successfully.
-      </div>
-    `;
-
-    const ratingForm = document.querySelector('.rating-form');
-    ratingForm.insertBefore(successMsg, ratingForm.firstChild);
-
-    // Remove message after 3 seconds
-    setTimeout(() => {
-      successMsg.remove();
-    }, 3000);
+    // Use the integrated right-side toast for success
+    showInlineAlert('✓ Thank you for your review! It has been submitted successfully.', { type: 'success', autoHide: true, duration: 3000 });
   }
 
   function resetReviewForm() {

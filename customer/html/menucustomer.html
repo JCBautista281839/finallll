@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Menu</title>
 
-  <link rel="icon" type="image/png" href="/src/IMG/Logo.png">
+  <link rel="icon" type="image/png" href="../../src/IMG/Logo.png">
 
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -41,15 +41,15 @@
             <div class="header-actions">
               <div class="search-bar">
                 <input type="text" placeholder="Search" class="search-input">
-                <img class="search-img" src="/src/Icons/search.png" alt="Search Icon">
+                <img class="search-img" src="../../src/Icons/search.png" alt="Search Icon">
               </div>
               <div class="header-icons">
                 <a href="html/login.html" class="icon-link">
-                  <img class="user-img" src="/src/Icons/user (1).png" alt="User Icon">
+                  <img class="user-img" src="../../src/Icons/user (1).png" alt="User Icon">
                 </a>
                 <a href="#" class="icon-link" id="shopping-bag-btn">
                   <div class="bag-container">
-                    <img class="bag-img" src="/src/Icons/bag (1).png" alt="Shopping Bag Icon">
+                    <img class="bag-img" src="../../src/Icons/bag (1).png" alt="Shopping Bag Icon">
                     <span class="item-counter" id="item-counter">0</span>
                   </div>
                 </a>
@@ -97,17 +97,7 @@
         <button class="close-btn" id="close-popup">&times;</button>
       </div>
 
-      <div class="address-section">
-        <h5>Your Address</h5>
-        <div class="address-details">
-          <img src="/src/Icons/stroke.png" alt="Location Icon" class="location-icon">
-          <div class="address-text">
-            <span class="address-name">No address set</span>
-            <button class="change-btn">Add Address</button>
-            <p>Please add your delivery address to continue with your order.</p>
-          </div>
-        </div>
-      </div>
+
 
       <div class="order-menu">
         <!-- Cart items will be loaded dynamically -->
@@ -346,12 +336,11 @@
         if (cartItems.length === 0) {
           orderMenuDiv.innerHTML = `
               <h5>Order Menu</h5>
-              <div class="empty-cart">
-                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Your cart is empty</h5>
-                <p class="text-muted">Add some delicious items from our menu to get started!</p>
-                <button class="btn btn-primary" onclick="this.closest('.shopping-bag-popup').style.display='none'">Browse Menu</button>
-              </div>
+                  <div class="empty-cart">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Your cart is empty</h5>
+                    <p class="text-muted">Add some delicious items from our menu to get started!</p>
+                  </div>
             `;
           orderTotalDiv.querySelector('.order-total-price').textContent = 'Php 0';
         } else {
