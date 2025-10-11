@@ -8,7 +8,8 @@
 // Firebase Order Management Class
 // Check if FirebaseOrderManager is already declared to prevent redeclaration errors
 if (typeof FirebaseOrderManager === 'undefined') {
-  class FirebaseOrderManager {
+  // Define the FirebaseOrderManager class
+  window.FirebaseOrderManager = class FirebaseOrderManager {
     constructor() {
       this.db = null;
       this.isInitialized = false;
