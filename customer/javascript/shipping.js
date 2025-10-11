@@ -52,13 +52,23 @@ window.parsePrice = parsePrice;
 // Function to send payment verification notification to admin
 window.sendPaymentVerificationNotification = async function (paymentInfo) {
   console.log('🔔 Starting payment verification notification process...');
-  
-  // Get cart items before they're cleared
+  console.log('Payment info received:', paymentInfo);
+
+  // Get cart items and order details
   const cartItems = JSON.parse(sessionStorage.getItem('cartItems') || '[]');
+  console.log('📦 Cart Items:', cartItems);
+
   const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
   const deliveryFee = parseFloat(sessionStorage.getItem('deliveryFee') || '0');
   const totalAmount = orderSubtotal + deliveryFee;
-  console.log('Payment info received:', paymentInfo);
+
+  console.log('💰 Order Summary:', {
+    cartItems: cartItems,
+    orderSubtotal: orderSubtotal,
+    deliveryFee: deliveryFee,
+    totalAmount: totalAmount,
+    orderType: sessionStorage.getItem('orderType') || 'delivery'
+  });
 
   // Validate payment info
   if (!paymentInfo || typeof paymentInfo !== 'object') {
@@ -111,13 +121,8 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
       // Don't try to authenticate for notifications - just proceed
     }
 
-    // Get cart items from session storage
-    const cartItems = JSON.parse(sessionStorage.getItem('cartItems') || '[]');
-    const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
-    const deliveryFee = parseFloat(sessionStorage.getItem('deliveryFee') || '0');
-    const totalAmount = orderSubtotal + deliveryFee;
-
     // Create notification data with proper validation
+    console.log('📝 Creating notification data...');
     const notificationData = {
       type: 'payment_verification',
       message: `Payment verification required for ${formData.firstName} ${formData.lastName} (${(paymentInfo.type || 'Unknown').toUpperCase()}) - Reference: ${paymentInfo.reference || 'No reference'}`,
@@ -154,10 +159,26 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
       requiresAction: true // Flag to show this needs admin action
     };
 
-    console.log('📝 Notification data to be sent:', notificationData);
+    console.log('📝 Notification data to be sent:', {
+      ...notificationData,
+      orderDetails: {
+        items: notificationData.orderDetails.items.length,
+        subtotal: notificationData.orderDetails.subtotal,
+        totalAmount: notificationData.orderDetails.totalAmount,
+        orderType: notificationData.orderDetails.orderType
+      }
+    });
+
+    // Validate order details before sending
+    if (!notificationData.orderDetails || !notificationData.orderDetails.items || notificationData.orderDetails.items.length === 0) {
+      console.warn('⚠️ No order details found in notification data!');
+    }
 
     // Add to notifications collection with timeout
-    console.log('💾 Adding notification to Firestore...');
+    console.log('💾 Adding notification to Firestore...', {
+      itemCount: notificationData.orderDetails.items.length,
+      total: notificationData.orderDetails.totalAmount
+    });
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Firestore operation timeout')), 10000)
     );
