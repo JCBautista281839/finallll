@@ -2,15 +2,35 @@
 async function initializeManagers() {
   console.log('[SHIPPING] Starting manager initialization...');
 
-  // Wait for Firebase to be available
-  let attempts = 0;
-  while (typeof firebase === 'undefined' && attempts < 50) {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    attempts++;
-  }
+  try {
+    // Wait for Firebase to be available
+    let attempts = 0;
+    while (typeof firebase === 'undefined' && attempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
 
-  if (typeof firebase === 'undefined') {
-    throw new Error('Firebase failed to initialize');
+    if (typeof firebase === 'undefined') {
+      throw new Error('Firebase failed to initialize');
+    }
+
+    // Initialize Firebase if not already initialized
+    if (!firebase.apps?.length) {
+      if (typeof firebaseConfig === 'undefined') {
+        throw new Error('Firebase configuration not found');
+      }
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    // Initialize Firestore
+    const db = firebase.firestore();
+    if (!db) {
+      throw new Error('Firestore failed to initialize');
+    }
+    console.log('[SHIPPING] Firebase and Firestore initialized successfully');
+  } catch (error) {
+    console.error('[SHIPPING] Error during initialization:', error);
+    throw error;
   }
 
   // Initialize Firebase Order Manager

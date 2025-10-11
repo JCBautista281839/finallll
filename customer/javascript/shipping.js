@@ -105,6 +105,12 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
       // Don't try to authenticate for notifications - just proceed
     }
 
+    // Get cart items from session storage
+    const cartItems = JSON.parse(sessionStorage.getItem('cartItems') || '[]');
+    const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
+    const deliveryFee = parseFloat(sessionStorage.getItem('deliveryFee') || '0');
+    const totalAmount = orderSubtotal + deliveryFee;
+
     // Create notification data with proper validation
     const notificationData = {
       type: 'payment_verification',
@@ -122,6 +128,19 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         receiptData: paymentInfo.receiptData || null,
         receiptUrl: paymentInfo.receiptUrl || null,
         timestamp: paymentInfo.timestamp || new Date().toISOString()
+      },
+      orderDetails: {
+        items: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          subtotal: item.quantity * item.price,
+          specialInstructions: item.specialInstructions || ''
+        })),
+        subtotal: orderSubtotal,
+        deliveryFee: deliveryFee,
+        totalAmount: totalAmount,
+        orderType: sessionStorage.getItem('orderType') || 'delivery'
       },
       status: 'pending', // pending, approved, declined
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),

@@ -795,6 +795,13 @@ async function loadNotifications() {
     if (!notificationStatus) return;
     notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Loading notifications...</td></tr>';
 
+    let notificationsContainer = document.querySelector('.notifications-container');
+    if (!notificationsContainer) {
+        notificationsContainer = document.createElement('div');
+        notificationsContainer.className = 'notifications-container';
+        notificationStatus.parentElement.appendChild(notificationsContainer);
+    }
+
     // Check user role to determine which notifications to show
     let userRole = 'admin'; // Default to admin
     try {
