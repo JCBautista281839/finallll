@@ -52,6 +52,12 @@ window.parsePrice = parsePrice;
 // Function to send payment verification notification to admin
 window.sendPaymentVerificationNotification = async function (paymentInfo) {
   console.log('🔔 Starting payment verification notification process...');
+  
+  // Get cart items before they're cleared
+  const cartItems = JSON.parse(sessionStorage.getItem('cartItems') || '[]');
+  const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
+  const deliveryFee = parseFloat(sessionStorage.getItem('deliveryFee') || '0');
+  const totalAmount = orderSubtotal + deliveryFee;
   console.log('Payment info received:', paymentInfo);
 
   // Validate payment info

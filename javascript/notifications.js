@@ -656,7 +656,28 @@ async function refreshUnseenNotificationBadge() {
 
     queryPromise
         .then(function (querySnapshot) {
-            var unseenCount = querySnapshot.size;
+            if (querySnapshot.empty) {
+                notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center">No notifications found</td></tr>';
+                return;
+            }
+
+            // Create table structure
+            const table = document.createElement('table');
+            table.className = 'table table-hover notification-table';
+            
+            // Process notifications
+            querySnapshot.forEach(doc => {
+                const notification = { id: doc.id, ...doc.data() };
+                const row = createNotificationRow(notification);
+                table.appendChild(row);
+            });
+
+            // Clear and append new content
+            notificationStatus.innerHTML = '';
+            notificationStatus.appendChild(table);
+
+            // Update badge count
+            const unseenCount = querySnapshot.docs.filter(doc => !doc.data().seen).length;
             badge.textContent = unseenCount > 99 ? '99+' : unseenCount;
             badge.style.display = unseenCount > 0 ? 'inline-block' : 'none';
         })
@@ -795,12 +816,123 @@ async function loadNotifications() {
     if (!notificationStatus) return;
     notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Loading notifications...</td></tr>';
 
-    let notificationsContainer = document.querySelector('.notifications-container');
-    if (!notificationsContainer) {
-        notificationsContainer = document.createElement('div');
-        notificationsContainer.className = 'notifications-container';
-        notificationStatus.parentElement.appendChild(notificationsContainer);
+    // Helper functions for notification display
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP',
+            minimumFractionDigits: 2
+        }).format(amount);
     }
+
+    function formatDate(timestamp) {
+        if (!timestamp) return 'N/A';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleString('en-PH', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true
+        });
+    }
+
+    function createOrderDetailsHTML(orderDetails) {
+        if (!orderDetails || !orderDetails.items) return '';
+        
+        return `
+            <div class="order-details-section">
+                <span class="order-type-badge">${orderDetails.orderType}</span>
+                <h5>Order Details</h5>
+                <div class="order-items-list">
+                    <div class="order-item header">
+                        <span>Item</span>
+                        <span>Qty</span>
+                        <span>Price</span>
+                        <span>Subtotal</span>
+                    </div>
+                    ${orderDetails.items.map(item => `
+                        <div class="order-item">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-quantity">${item.quantity}</span>
+                            <span class="item-price">${formatCurrency(item.price)}</span>
+                            <span class="item-subtotal">${formatCurrency(item.subtotal)}</span>
+                            ${item.specialInstructions ? `
+                                <div class="special-instructions">
+                                    <small>Note: ${item.specialInstructions}</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span>${formatCurrency(orderDetails.subtotal)}</span>
+                    </div>
+                    ${orderDetails.deliveryFee > 0 ? `
+                        <div class="summary-row">
+                            <span>Delivery Fee:</span>
+                            <span>${formatCurrency(orderDetails.deliveryFee)}</span>
+                        </div>
+                    ` : ''}
+                    <div class="summary-row total">
+                        <span>Total Amount:</span>
+                        <span>${formatCurrency(orderDetails.totalAmount)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function createNotificationRow(notification) {
+        const row = document.createElement('tr');
+        row.className = 'notification-row ' + (notification.seen ? '' : 'unread');
+        
+        // Message cell
+        const messageCell = document.createElement('td');
+        messageCell.className = 'message-cell';
+        messageCell.innerHTML = `
+            <div class="notification-header">
+                <strong>${notification.customerInfo.name}</strong>
+                <span class="notification-time">${formatDate(notification.timestamp)}</span>
+            </div>
+            <div class="notification-message">
+                <p>${notification.message}</p>
+                <div class="notification-details">
+                    <p><strong>Phone:</strong> ${notification.customerInfo.phone}</p>
+                    <p><strong>Payment:</strong> ${notification.paymentInfo.type.toUpperCase()}</p>
+                    <p><strong>Reference:</strong> ${notification.paymentInfo.reference}</p>
+                </div>
+                ${createOrderDetailsHTML(notification.orderDetails)}
+            </div>
+        `;
+
+        // Actions cell
+        const actionsCell = document.createElement('td');
+        actionsCell.className = 'actions-cell';
+        actionsCell.innerHTML = `
+            <button onclick="handleApprove('${notification.id}')" class="btn btn-success btn-sm">
+                <i class="fas fa-check"></i> Accept
+            </button>
+            <button onclick="handleDecline('${notification.id}')" class="btn btn-danger btn-sm">
+                <i class="fas fa-times"></i> Decline
+            </button>
+            ${notification.paymentInfo.receiptUrl ? `
+                <button onclick="viewReceipt('${notification.paymentInfo.receiptUrl}')" class="btn btn-info btn-sm">
+                    <i class="fas fa-receipt"></i> View Receipt
+                </button>
+            ` : ''}
+        `;
+
+        row.appendChild(messageCell);
+        row.appendChild(actionsCell);
+        return row;
+    }
+
+    // Clear existing notifications
+    notificationStatus.innerHTML = '';
 
     // Check user role to determine which notifications to show
     let userRole = 'admin'; // Default to admin
