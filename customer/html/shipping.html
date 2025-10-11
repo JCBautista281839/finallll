@@ -252,30 +252,32 @@
       }
     });
   </script>
-  <!-- Firebase SDK (version 8.10.0) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
 
   <!-- Firebase Configuration -->
   <script src="../firebase-config.js"></script>
 
-  <!-- Core Libraries -->
+  <!-- Cloudinary Integration -->
   <script src="../../cloud.js"></script>
+
+  <!-- Authentication Manager for Auto Logout -->
+  <script src="../javascript/auth-manager.js"></script>
+
+  <!-- Firebase Order Management -->
+  <script src="../javascript/firebase-orders.js"></script>
+
+  <!-- Price Utilities -->
   <script src="../javascript/price-utils.js"></script>
 
-  <!-- Firebase Managers -->
-  <script src="../javascript/auth-manager.js"></script>
-  <script src="../javascript/firebase-orders.js"></script>
+  <!-- Firebase Order Summary -->
   <script src="../javascript/firebase-order-summary.js"></script>
+
+  <!-- Firestore Cart Manager -->
   <script src="../javascript/firestore-cart.js"></script>
-
-  <!-- Integration Libraries -->
   <script src="../javascript/lalamove-quotation-manager.js"></script>
-
-  <!-- Shipping Page Logic -->
-  <script src="../javascript/shipping-init.js"></script>
   <script src="../javascript/shipping.js"></script>
 </body>
 

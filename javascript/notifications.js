@@ -654,112 +654,9 @@ async function refreshUnseenNotificationBadge() {
             .get();
     }
 
-    // Handle approval of payment verification
-    window.handleApprove = async function(notificationId) {
-        console.log('🔄 Processing approval for notification:', notificationId);
-        
-        try {
-            // Get the notification data
-            const notificationDoc = await db.collection('notifications').doc(notificationId).get();
-            if (!notificationDoc.exists) {
-                console.error('❌ Notification not found:', notificationId);
-                alert('Error: Notification not found');
-                return;
-            }
-
-            const notification = notificationDoc.data();
-            console.log('📦 Notification data:', notification);
-
-            // Validate order details exist
-            if (!notification.orderDetails || !notification.orderDetails.items || notification.orderDetails.items.length === 0) {
-                console.error('❌ No order details found in notification:', notificationId);
-                alert('Error: Cannot approve payment - No order details found');
-                return;
-            }
-
-            // Validate total amount
-            if (!notification.orderDetails.totalAmount || notification.orderDetails.totalAmount <= 0) {
-                console.error('❌ Invalid order amount:', notification.orderDetails.totalAmount);
-                alert('Error: Cannot approve payment - Invalid order amount');
-                return;
-            }
-
-            // Confirm approval
-            if (!confirm('Are you sure you want to approve this payment?\nOrder Total: ₱' + notification.orderDetails.totalAmount.toFixed(2))) {
-                return;
-            }
-
-            // Update notification status
-            await db.collection('notifications').doc(notificationId).update({
-                status: 'approved',
-                approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                seen: true
-            });
-
-            // Create order in orders collection
-            const orderData = {
-                ...notification.orderDetails,
-                customerInfo: notification.customerInfo,
-                paymentInfo: {
-                    ...notification.paymentInfo,
-                    status: 'approved',
-                    approvedAt: new Date().toISOString()
-                },
-                status: 'preparing',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            // Save to orders collection
-            const orderRef = await db.collection('orders').add(orderData);
-            console.log('✅ Order created successfully:', orderRef.id);
-
-            // Refresh notifications
-            loadNotifications();
-            alert('Payment approved successfully!');
-
-        } catch (error) {
-            console.error('❌ Error approving payment:', error);
-            alert('Error approving payment: ' + error.message);
-        }
-    };
-
     queryPromise
         .then(function (querySnapshot) {
-            console.log('📥 Received notifications:', querySnapshot.size);
-            
-            if (querySnapshot.empty) {
-                notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center">No notifications found</td></tr>';
-                return;
-            }
-
-            // Create table structure
-            const table = document.createElement('table');
-            table.className = 'table table-hover notification-table';
-            
-            // Debug log first notification
-            if (querySnapshot.docs[0]) {
-                const firstNotification = querySnapshot.docs[0].data();
-                console.log('🔍 First notification details:', {
-                    type: firstNotification.type,
-                    hasOrderDetails: !!firstNotification.orderDetails,
-                    itemCount: firstNotification.orderDetails?.items?.length || 0,
-                    total: firstNotification.orderDetails?.totalAmount
-                });
-            }
-            
-            // Process notifications
-            querySnapshot.forEach(doc => {
-                const notification = { id: doc.id, ...doc.data() };
-                const row = createNotificationRow(notification);
-                table.appendChild(row);
-            });
-
-            // Clear and append new content
-            notificationStatus.innerHTML = '';
-            notificationStatus.appendChild(table);
-
-            // Update badge count
-            const unseenCount = querySnapshot.docs.filter(doc => !doc.data().seen).length;
+            var unseenCount = querySnapshot.size;
             badge.textContent = unseenCount > 99 ? '99+' : unseenCount;
             badge.style.display = unseenCount > 0 ? 'inline-block' : 'none';
         })
@@ -897,130 +794,6 @@ async function loadNotifications() {
     var notificationStatus = document.getElementById('notificationStatus');
     if (!notificationStatus) return;
     notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Loading notifications...</td></tr>';
-
-    // Helper functions for notification display
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-PH', {
-            style: 'currency',
-            currency: 'PHP',
-            minimumFractionDigits: 2
-        }).format(amount);
-    }
-
-    function formatDate(timestamp) {
-        if (!timestamp) return 'N/A';
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        return date.toLocaleString('en-PH', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: true
-        });
-    }
-
-    function createOrderDetailsHTML(orderDetails) {
-        if (!orderDetails || !orderDetails.items) return '';
-        
-        let itemsHtml = orderDetails.items.map(item => {
-            let specialInstructions = item.specialInstructions ? 
-                '<div class="special-instructions"><small>Note: ' + item.specialInstructions + '</small></div>' : '';
-                
-            return '<div class="order-item">' +
-                '<span class="item-name">' + item.name + '</span>' +
-                '<span class="item-quantity">' + item.quantity + '</span>' +
-                '<span class="item-price">' + formatCurrency(item.price) + '</span>' +
-                '<span class="item-subtotal">' + formatCurrency(item.subtotal) + '</span>' +
-                specialInstructions +
-            '</div>';
-        }).join('');
-
-        let deliveryFeeHtml = orderDetails.deliveryFee > 0 ? 
-            '<div class="summary-row">' +
-                '<span>Delivery Fee:</span>' +
-                '<span>' + formatCurrency(orderDetails.deliveryFee) + '</span>' +
-            '</div>' : '';
-        
-        return '<div class="order-details-section">' +
-            '<span class="order-type-badge">' + orderDetails.orderType + '</span>' +
-            '<h5>Order Details</h5>' +
-            '<div class="order-items-list">' +
-                '<div class="order-item header">' +
-                    '<span>Item</span>' +
-                    '<span>Qty</span>' +
-                    '<span>Price</span>' +
-                    '<span>Subtotal</span>' +
-                '</div>' +
-                itemsHtml +
-            '</div>' +
-            '<div class="order-summary">' +
-                '<div class="summary-row">' +
-                    '<span>Subtotal:</span>' +
-                    '<span>' + formatCurrency(orderDetails.subtotal) + '</span>' +
-                '</div>' +
-                deliveryFeeHtml +
-                '<div class="summary-row total">' +
-                    '<span>Total Amount:</span>' +
-                    '<span>' + formatCurrency(orderDetails.totalAmount) + '</span>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
-    }
-
-    function createNotificationRow(notification) {
-        console.log('🎨 Creating notification row:', {
-            id: notification.id,
-            type: notification.type,
-            hasOrderDetails: !!notification.orderDetails,
-            itemCount: notification.orderDetails?.items?.length || 0
-        });
-
-        const row = document.createElement('tr');
-        row.className = 'notification-row ' + (notification.seen ? '' : 'unread');
-        
-        // Message cell
-        const messageCell = document.createElement('td');
-        messageCell.className = 'message-cell';
-        messageCell.innerHTML = 
-            '<div class="notification-header">' +
-                '<strong>' + notification.customerInfo.name + '</strong>' +
-                '<span class="notification-time">' + formatDate(notification.timestamp) + '</span>' +
-            '</div>' +
-            '<div class="notification-message">' +
-                '<p>' + notification.message + '</p>' +
-                '<div class="notification-details">' +
-                    '<p><strong>Phone:</strong> ' + notification.customerInfo.phone + '</p>' +
-                    '<p><strong>Payment:</strong> ' + notification.paymentInfo.type.toUpperCase() + '</p>' +
-                    '<p><strong>Reference:</strong> ' + notification.paymentInfo.reference + '</p>' +
-                '</div>' +
-                createOrderDetailsHTML(notification.orderDetails) +
-            '</div>';
-
-        // Actions cell
-        const actionsCell = document.createElement('td');
-        actionsCell.className = 'actions-cell';
-        actionsCell.innerHTML = `
-            <button onclick="handleApprove('${notification.id}')" class="btn btn-success btn-sm">
-                <i class="fas fa-check"></i> Accept
-            </button>
-            <button onclick="handleDecline('${notification.id}')" class="btn btn-danger btn-sm">
-                <i class="fas fa-times"></i> Decline
-            </button>
-            ${notification.paymentInfo.receiptUrl ? `
-                <button onclick="viewReceipt('${notification.paymentInfo.receiptUrl}')" class="btn btn-info btn-sm">
-                    <i class="fas fa-receipt"></i> View Receipt
-                </button>
-            ` : ''}
-        `;
-
-        row.appendChild(messageCell);
-        row.appendChild(actionsCell);
-        return row;
-    }
-
-    // Clear existing notifications
-    notificationStatus.innerHTML = '';
 
     // Check user role to determine which notifications to show
     let userRole = 'admin'; // Default to admin
@@ -1385,29 +1158,15 @@ async function initializeNotifications() {
             await initializeFirebase();
         }
         
-        // Wait for Firebase Auth to be ready
-        await new Promise((resolve, reject) => {
-            const unsubscribe = firebase.auth().onAuthStateChanged(user => {
-                unsubscribe();
-                resolve();
-            }, reject);
-            
-            // Timeout after 10 seconds
-            setTimeout(() => {
-                unsubscribe();
-                reject(new Error('Firebase initialization timeout'));
-            }, 10000);
-        });
+        // Wait a bit for Firebase to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         // Now load notifications
-        await loadNotifications();
+        loadNotifications();
     } catch (error) {
         console.error('Error initializing notifications:', error);
-        // Show error message to user
-        const notificationStatus = document.getElementById('notificationStatus');
-        if (notificationStatus) {
-            notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error loading notifications. Please refresh the page.</td></tr>';
-        }
+        // Fallback: try to load notifications anyway
+        setTimeout(loadNotifications, 1000);
     }
 }
 
@@ -1441,7 +1200,7 @@ window.handlePaymentVerification = async function (docId, action) {
         const paymentType = data.paymentInfo?.type?.toUpperCase() || 'UNKNOWN';
         const reference = data.paymentInfo?.reference || 'Unknown';
 
-        if (!confirm('Are you sure you want to ' + action + ' the payment verification for ' + customerName + ' (' + paymentType + ' - ' + reference + ')?')) {
+        if (!confirm(`Are you sure you want to ${action} the payment verification for ${customerName} (${paymentType} - ${reference})?`)) {
             return;
         }
 
@@ -1520,7 +1279,7 @@ window.handlePaymentVerification = async function (docId, action) {
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     admin: 'Admin'
                 },
-                message: 'Payment verification ' + action + ' for ' + customerName + ' (' + paymentType + ') - Reference: ' + reference + '. Redirecting to POS for order processing.'
+                message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}. Redirecting to POS for order processing.`
             });
 
             // Redirect to POS with order data
@@ -1545,7 +1304,7 @@ window.handlePaymentVerification = async function (docId, action) {
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     admin: 'Admin'
                 },
-                message: 'Payment verification ' + action + ' for ' + customerName + ' (' + paymentType + ') - Reference: ' + reference
+                message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}`
             });
 
             // If order was found, mark it as declined
@@ -1579,14 +1338,42 @@ window.viewReceipt = function (receiptData, fileName) {
 
     // Create modal to display receipt
     const modal = document.createElement('div');
-    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 10000;';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
 
     const content = document.createElement('div');
-    content.style.cssText = 'background: white; padding: 20px; border-radius: 8px; max-width: 90%; max-height: 90%; overflow: auto; position: relative;';
+    content.style.cssText = `
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: auto;
+        position: relative;
+    `;
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '&times;';
-    closeBtn.style.cssText = 'position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    `;
     closeBtn.onclick = () => document.body.removeChild(modal);
 
     const title = document.createElement('h3');
@@ -1690,7 +1477,7 @@ async function approveOrder(orderId, notificationId) {
             requiresAction: false,
             actionTaken: 'approved',
             actionTakenAt: firebase.firestore.FieldValue.serverTimestamp(),
-            message: 'Order #' + orderId + ' has been APPROVED by admin and sent to kitchen'
+            message: `Order #${orderId} has been APPROVED by admin and sent to kitchen`
         });
 
         // Send notification to kitchen/orders
@@ -1742,7 +1529,7 @@ async function declineOrder(orderId, notificationId) {
             actionTaken: 'declined',
             actionTakenAt: firebase.firestore.FieldValue.serverTimestamp(),
             declineReason: reason,
-            message: 'Order #' + orderId + ' has been DECLINED by admin - Reason: ' + reason
+            message: `Order #${orderId} has been DECLINED by admin - Reason: ${reason}`
         });
 
         // Reload notifications to update UI
@@ -1774,7 +1561,7 @@ async function sendOrderToKitchen(orderId) {
         await db.collection('notifications').add({
             type: 'kitchen_order',
             orderId: orderId,
-            message: 'New approved order #' + orderId + ' for ' + orderData.customerInfo.fullName + ' - ' + orderData.shippingInfo.method,
+            message: `New approved order #${orderId} for ${orderData.customerInfo.fullName} - ${orderData.shippingInfo.method}`,
             customerName: orderData.customerInfo.fullName,
             shippingMethod: orderData.shippingInfo.method,
             items: orderData.items,
@@ -1796,7 +1583,7 @@ window.handleLalamoveReady = async function (docId) {
     console.log('[notifications.js] Lalamove Ready button clicked for:', docId);
 
     // Find the button that was clicked for visual feedback
-    const clickedButton = document.querySelector('button[onclick*="handleLalamoveReady(\'' + docId + '\')"]');
+    const clickedButton = document.querySelector(`button[onclick*="handleLalamoveReady('${docId}')"]`);
     let originalButtonText = '';
     
     if (clickedButton) {
