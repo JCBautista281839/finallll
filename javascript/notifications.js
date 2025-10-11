@@ -654,6 +654,75 @@ async function refreshUnseenNotificationBadge() {
             .get();
     }
 
+    // Handle approval of payment verification
+    window.handleApprove = async function(notificationId) {
+        console.log('🔄 Processing approval for notification:', notificationId);
+        
+        try {
+            // Get the notification data
+            const notificationDoc = await db.collection('notifications').doc(notificationId).get();
+            if (!notificationDoc.exists) {
+                console.error('❌ Notification not found:', notificationId);
+                alert('Error: Notification not found');
+                return;
+            }
+
+            const notification = notificationDoc.data();
+            console.log('📦 Notification data:', notification);
+
+            // Validate order details exist
+            if (!notification.orderDetails || !notification.orderDetails.items || notification.orderDetails.items.length === 0) {
+                console.error('❌ No order details found in notification:', notificationId);
+                alert('Error: Cannot approve payment - No order details found');
+                return;
+            }
+
+            // Validate total amount
+            if (!notification.orderDetails.totalAmount || notification.orderDetails.totalAmount <= 0) {
+                console.error('❌ Invalid order amount:', notification.orderDetails.totalAmount);
+                alert('Error: Cannot approve payment - Invalid order amount');
+                return;
+            }
+
+            // Confirm approval
+            if (!confirm(\`Are you sure you want to approve this payment?\nOrder Total: ₱\${notification.orderDetails.totalAmount.toFixed(2)}\`)) {
+                return;
+            }
+
+            // Update notification status
+            await db.collection('notifications').doc(notificationId).update({
+                status: 'approved',
+                approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                seen: true
+            });
+
+            // Create order in orders collection
+            const orderData = {
+                ...notification.orderDetails,
+                customerInfo: notification.customerInfo,
+                paymentInfo: {
+                    ...notification.paymentInfo,
+                    status: 'approved',
+                    approvedAt: new Date().toISOString()
+                },
+                status: 'preparing',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Save to orders collection
+            const orderRef = await db.collection('orders').add(orderData);
+            console.log('✅ Order created successfully:', orderRef.id);
+
+            // Refresh notifications
+            loadNotifications();
+            alert('Payment approved successfully!');
+
+        } catch (error) {
+            console.error('❌ Error approving payment:', error);
+            alert('Error approving payment: ' + error.message);
+        }
+    };
+
     queryPromise
         .then(function (querySnapshot) {
             console.log('📥 Received notifications:', querySnapshot.size);
