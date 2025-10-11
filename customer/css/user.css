@@ -165,7 +165,7 @@ body {
 
 .edit-profile-btn:hover {
   color: #760000;
-  background: rgba(118, 0, 0, 0.1);
+  background: none;
 }
 
 .edit-profile-btn i {
