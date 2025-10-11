@@ -213,6 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
     col.className = 'col-lg-2 col-md-3 col-6';
 
     const imageUrl = item.photoUrl || '/src/Icons/menu.png';
+    
+    // Safely escape the item data for HTML attribute
+    const safeItemData = JSON.stringify(item).replace(/"/g, '&quot;');
 
     col.innerHTML = `
       <div class="menu-item">
@@ -224,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="menu-item-description">${item.description || ''}</div>
             <div class="menu-item-price">₱${item.price}</div>
           </div>
-          <button class="add-to-cart-btn" data-item='${JSON.stringify(item)}'>+</button>
+          <button class="add-to-cart-btn" data-item="${safeItemData}">+</button>
         </div>
       </div>
     `;
@@ -290,7 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Get the menu item data from the button's data attribute
-        const itemData = JSON.parse(e.target.getAttribute('data-item'));
+        const rawData = e.target.getAttribute('data-item');
+        const itemData = JSON.parse(rawData.replace(/&quot;/g, '"'));
 
         // Use the global addToCart function
         if (window.addToCart) {
