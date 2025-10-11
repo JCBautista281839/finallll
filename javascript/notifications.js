@@ -685,7 +685,7 @@ async function refreshUnseenNotificationBadge() {
             }
 
             // Confirm approval
-            if (!confirm(\`Are you sure you want to approve this payment?\nOrder Total: ₱\${notification.orderDetails.totalAmount.toFixed(2)}\`)) {
+            if (!confirm('Are you sure you want to approve this payment?\nOrder Total: ₱' + notification.orderDetails.totalAmount.toFixed(2))) {
                 return;
             }
 
@@ -923,49 +923,49 @@ async function loadNotifications() {
     function createOrderDetailsHTML(orderDetails) {
         if (!orderDetails || !orderDetails.items) return '';
         
-        return `
-            <div class="order-details-section">
-                <span class="order-type-badge">${orderDetails.orderType}</span>
-                <h5>Order Details</h5>
-                <div class="order-items-list">
-                    <div class="order-item header">
-                        <span>Item</span>
-                        <span>Qty</span>
-                        <span>Price</span>
-                        <span>Subtotal</span>
-                    </div>
-                    ${orderDetails.items.map(item => `
-                        <div class="order-item">
-                            <span class="item-name">${item.name}</span>
-                            <span class="item-quantity">${item.quantity}</span>
-                            <span class="item-price">${formatCurrency(item.price)}</span>
-                            <span class="item-subtotal">${formatCurrency(item.subtotal)}</span>
-                            ${item.specialInstructions ? `
-                                <div class="special-instructions">
-                                    <small>Note: ${item.specialInstructions}</small>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="order-summary">
-                    <div class="summary-row">
-                        <span>Subtotal:</span>
-                        <span>${formatCurrency(orderDetails.subtotal)}</span>
-                    </div>
-                    ${orderDetails.deliveryFee > 0 ? `
-                        <div class="summary-row">
-                            <span>Delivery Fee:</span>
-                            <span>${formatCurrency(orderDetails.deliveryFee)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="summary-row total">
-                        <span>Total Amount:</span>
-                        <span>${formatCurrency(orderDetails.totalAmount)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
+        let itemsHtml = orderDetails.items.map(item => {
+            let specialInstructions = item.specialInstructions ? 
+                '<div class="special-instructions"><small>Note: ' + item.specialInstructions + '</small></div>' : '';
+                
+            return '<div class="order-item">' +
+                '<span class="item-name">' + item.name + '</span>' +
+                '<span class="item-quantity">' + item.quantity + '</span>' +
+                '<span class="item-price">' + formatCurrency(item.price) + '</span>' +
+                '<span class="item-subtotal">' + formatCurrency(item.subtotal) + '</span>' +
+                specialInstructions +
+            '</div>';
+        }).join('');
+
+        let deliveryFeeHtml = orderDetails.deliveryFee > 0 ? 
+            '<div class="summary-row">' +
+                '<span>Delivery Fee:</span>' +
+                '<span>' + formatCurrency(orderDetails.deliveryFee) + '</span>' +
+            '</div>' : '';
+        
+        return '<div class="order-details-section">' +
+            '<span class="order-type-badge">' + orderDetails.orderType + '</span>' +
+            '<h5>Order Details</h5>' +
+            '<div class="order-items-list">' +
+                '<div class="order-item header">' +
+                    '<span>Item</span>' +
+                    '<span>Qty</span>' +
+                    '<span>Price</span>' +
+                    '<span>Subtotal</span>' +
+                '</div>' +
+                itemsHtml +
+            '</div>' +
+            '<div class="order-summary">' +
+                '<div class="summary-row">' +
+                    '<span>Subtotal:</span>' +
+                    '<span>' + formatCurrency(orderDetails.subtotal) + '</span>' +
+                '</div>' +
+                deliveryFeeHtml +
+                '<div class="summary-row total">' +
+                    '<span>Total Amount:</span>' +
+                    '<span>' + formatCurrency(orderDetails.totalAmount) + '</span>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
     }
 
     function createNotificationRow(notification) {
@@ -982,21 +982,20 @@ async function loadNotifications() {
         // Message cell
         const messageCell = document.createElement('td');
         messageCell.className = 'message-cell';
-        messageCell.innerHTML = `
-            <div class="notification-header">
-                <strong>${notification.customerInfo.name}</strong>
-                <span class="notification-time">${formatDate(notification.timestamp)}</span>
-            </div>
-            <div class="notification-message">
-                <p>${notification.message}</p>
-                <div class="notification-details">
-                    <p><strong>Phone:</strong> ${notification.customerInfo.phone}</p>
-                    <p><strong>Payment:</strong> ${notification.paymentInfo.type.toUpperCase()}</p>
-                    <p><strong>Reference:</strong> ${notification.paymentInfo.reference}</p>
-                </div>
-                ${createOrderDetailsHTML(notification.orderDetails)}
-            </div>
-        `;
+        messageCell.innerHTML = 
+            '<div class="notification-header">' +
+                '<strong>' + notification.customerInfo.name + '</strong>' +
+                '<span class="notification-time">' + formatDate(notification.timestamp) + '</span>' +
+            '</div>' +
+            '<div class="notification-message">' +
+                '<p>' + notification.message + '</p>' +
+                '<div class="notification-details">' +
+                    '<p><strong>Phone:</strong> ' + notification.customerInfo.phone + '</p>' +
+                    '<p><strong>Payment:</strong> ' + notification.paymentInfo.type.toUpperCase() + '</p>' +
+                    '<p><strong>Reference:</strong> ' + notification.paymentInfo.reference + '</p>' +
+                '</div>' +
+                createOrderDetailsHTML(notification.orderDetails) +
+            '</div>';
 
         // Actions cell
         const actionsCell = document.createElement('td');
@@ -1386,15 +1385,29 @@ async function initializeNotifications() {
             await initializeFirebase();
         }
         
-        // Wait a bit for Firebase to be fully ready
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for Firebase Auth to be ready
+        await new Promise((resolve, reject) => {
+            const unsubscribe = firebase.auth().onAuthStateChanged(user => {
+                unsubscribe();
+                resolve();
+            }, reject);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                unsubscribe();
+                reject(new Error('Firebase initialization timeout'));
+            }, 10000);
+        });
         
         // Now load notifications
-        loadNotifications();
+        await loadNotifications();
     } catch (error) {
         console.error('Error initializing notifications:', error);
-        // Fallback: try to load notifications anyway
-        setTimeout(loadNotifications, 1000);
+        // Show error message to user
+        const notificationStatus = document.getElementById('notificationStatus');
+        if (notificationStatus) {
+            notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error loading notifications. Please refresh the page.</td></tr>';
+        }
     }
 }
 
@@ -1428,7 +1441,7 @@ window.handlePaymentVerification = async function (docId, action) {
         const paymentType = data.paymentInfo?.type?.toUpperCase() || 'UNKNOWN';
         const reference = data.paymentInfo?.reference || 'Unknown';
 
-        if (!confirm(`Are you sure you want to ${action} the payment verification for ${customerName} (${paymentType} - ${reference})?`)) {
+        if (!confirm('Are you sure you want to ' + action + ' the payment verification for ' + customerName + ' (' + paymentType + ' - ' + reference + ')?')) {
             return;
         }
 
@@ -1507,7 +1520,7 @@ window.handlePaymentVerification = async function (docId, action) {
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     admin: 'Admin'
                 },
-                message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}. Redirecting to POS for order processing.`
+                message: 'Payment verification ' + action + ' for ' + customerName + ' (' + paymentType + ') - Reference: ' + reference + '. Redirecting to POS for order processing.'
             });
 
             // Redirect to POS with order data
@@ -1532,7 +1545,7 @@ window.handlePaymentVerification = async function (docId, action) {
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     admin: 'Admin'
                 },
-                message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}`
+                message: 'Payment verification ' + action + ' for ' + customerName + ' (' + paymentType + ') - Reference: ' + reference
             });
 
             // If order was found, mark it as declined
@@ -1566,42 +1579,14 @@ window.viewReceipt = function (receiptData, fileName) {
 
     // Create modal to display receipt
     const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-    `;
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 10000;';
 
     const content = document.createElement('div');
-    content.style.cssText = `
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        max-width: 90%;
-        max-height: 90%;
-        overflow: auto;
-        position: relative;
-    `;
+    content.style.cssText = 'background: white; padding: 20px; border-radius: 8px; max-width: 90%; max-height: 90%; overflow: auto; position: relative;';
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '&times;';
-    closeBtn.style.cssText = `
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #666;
-    `;
+    closeBtn.style.cssText = 'position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;';
     closeBtn.onclick = () => document.body.removeChild(modal);
 
     const title = document.createElement('h3');
@@ -1705,7 +1690,7 @@ async function approveOrder(orderId, notificationId) {
             requiresAction: false,
             actionTaken: 'approved',
             actionTakenAt: firebase.firestore.FieldValue.serverTimestamp(),
-            message: `Order #${orderId} has been APPROVED by admin and sent to kitchen`
+            message: 'Order #' + orderId + ' has been APPROVED by admin and sent to kitchen'
         });
 
         // Send notification to kitchen/orders
@@ -1757,7 +1742,7 @@ async function declineOrder(orderId, notificationId) {
             actionTaken: 'declined',
             actionTakenAt: firebase.firestore.FieldValue.serverTimestamp(),
             declineReason: reason,
-            message: `Order #${orderId} has been DECLINED by admin - Reason: ${reason}`
+            message: 'Order #' + orderId + ' has been DECLINED by admin - Reason: ' + reason
         });
 
         // Reload notifications to update UI
@@ -1789,7 +1774,7 @@ async function sendOrderToKitchen(orderId) {
         await db.collection('notifications').add({
             type: 'kitchen_order',
             orderId: orderId,
-            message: `New approved order #${orderId} for ${orderData.customerInfo.fullName} - ${orderData.shippingInfo.method}`,
+            message: 'New approved order #' + orderId + ' for ' + orderData.customerInfo.fullName + ' - ' + orderData.shippingInfo.method,
             customerName: orderData.customerInfo.fullName,
             shippingMethod: orderData.shippingInfo.method,
             items: orderData.items,
@@ -1811,7 +1796,7 @@ window.handleLalamoveReady = async function (docId) {
     console.log('[notifications.js] Lalamove Ready button clicked for:', docId);
 
     // Find the button that was clicked for visual feedback
-    const clickedButton = document.querySelector(`button[onclick*="handleLalamoveReady('${docId}')"]`);
+    const clickedButton = document.querySelector('button[onclick*="handleLalamoveReady(\'' + docId + '\')"]');
     let originalButtonText = '';
     
     if (clickedButton) {
