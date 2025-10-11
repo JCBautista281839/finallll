@@ -188,10 +188,27 @@ async function storeLalamoveQuotation(quotationData, orderData) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
   console.log('[SHIPPING] DOMContentLoaded event fired, starting initialization...');
 
   try {
+    // Wait for Firebase to be fully initialized
+    let firebaseInitAttempts = 0;
+    while (typeof firebase === 'undefined' && firebaseInitAttempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      firebaseInitAttempts++;
+    }
+
+    if (typeof firebase === 'undefined') {
+      throw new Error('Firebase failed to initialize');
+    }
+
+    // Ensure we're connected to Firestore
+    const db = firebase.firestore();
+    if (!db) {
+      throw new Error('Firestore is not initialized');
+    }
+    console.log('[SHIPPING] Firebase and Firestore initialized successfully');
 
     // Initialize Firebase with error handling
     function initializeFirebaseForShipping() {
