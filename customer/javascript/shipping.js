@@ -1778,6 +1778,21 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     const orderId = await Promise.race([createPromise, timeoutPromise]);
 
     console.log('[shipping.js] Order created successfully with ID:', orderId);
+
+    // Store Lalamove quotation if it exists and has quotationId
+    if (quotationData?.data?.quotationId) {
+      try {
+        console.log('[shipping.js] Storing Lalamove quotation data:', quotationData);
+        await quotationManager.storeQuotation(quotationData, {
+          orderId: orderId,
+          customerInfo: orderData.customerInfo
+        });
+        console.log('[shipping.js] Lalamove quotation stored successfully');
+      } catch (quotationError) {
+        console.error('[shipping.js] Error storing Lalamove quotation:', quotationError);
+        // Continue with order process even if quotation storage fails
+      }
+    }
     return orderId;
 
   } catch (error) {
