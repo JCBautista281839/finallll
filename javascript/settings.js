@@ -1,6 +1,9 @@
 // Settings Page Management
 
 let currentAdminUser = null;
+let otpService = null;
+let pendingEmailUpdate = null;
+let pendingPasswordUpdate = null;
 
 // Wait for Firebase to be ready before checking authentication
 function waitForFirebase() {
@@ -71,6 +74,14 @@ initializeAuthListener();
 
 // Initialize settings functionality
 function initializeSettings() {
+    // Initialize OTP service
+    if (typeof SendGridOTPService !== 'undefined') {
+        otpService = new SendGridOTPService();
+        console.log('✅ OTP Service initialized');
+    } else {
+        console.error('❌ SendGridOTPService not available');
+    }
+
     // Settings menu navigation
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function () {
@@ -80,6 +91,11 @@ function initializeSettings() {
             // Update active menu item
             document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
             this.classList.add('active');
+
+            // Load current user data when security section is opened
+            if (section === 'security') {
+                loadCurrentUserData();
+            }
         });
     });
 
@@ -94,6 +110,9 @@ function initializeSettings() {
     if (clearFormBtn) {
         clearFormBtn.addEventListener('click', clearAddTeamForm);
     }
+
+    // Security form handlers
+    initializeSecurityForms();
 
     // Logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
@@ -457,6 +476,441 @@ function testAddTeamMember() {
     }).catch(error => {
         console.error('❌ Error adding test member:', error);
     });
+}
+
+// Load current user data for security section
+function loadCurrentUserData() {
+    if (currentAdminUser) {
+        const currentEmailInput = document.getElementById('currentEmail');
+        if (currentEmailInput) {
+            currentEmailInput.value = currentAdminUser.email;
+        }
+    }
+}
+
+// Initialize security forms
+function initializeSecurityForms() {
+    // Email update form
+    const updateEmailForm = document.getElementById('updateEmailForm');
+    if (updateEmailForm) {
+        updateEmailForm.addEventListener('submit', handleEmailUpdate);
+    }
+
+    // Email OTP form
+    const emailOTPForm = document.getElementById('emailOTPForm');
+    if (emailOTPForm) {
+        emailOTPForm.addEventListener('submit', handleEmailOTPVerification);
+    }
+
+    // Password update form
+    const updatePasswordForm = document.getElementById('updatePasswordForm');
+    if (updatePasswordForm) {
+        updatePasswordForm.addEventListener('submit', handlePasswordUpdate);
+    }
+
+    // Password OTP form
+    const passwordOTPForm = document.getElementById('passwordOTPForm');
+    if (passwordOTPForm) {
+        passwordOTPForm.addEventListener('submit', handlePasswordOTPVerification);
+    }
+
+    // Cancel buttons
+    const cancelEmailBtn = document.getElementById('cancelEmailUpdate');
+    if (cancelEmailBtn) {
+        cancelEmailBtn.addEventListener('click', cancelEmailUpdate);
+    }
+
+    const cancelPasswordBtn = document.getElementById('cancelPasswordUpdate');
+    if (cancelPasswordBtn) {
+        cancelPasswordBtn.addEventListener('click', cancelPasswordUpdate);
+    }
+
+    // Resend OTP buttons
+    const resendEmailOTPBtn = document.getElementById('resendEmailOTP');
+    if (resendEmailOTPBtn) {
+        resendEmailOTPBtn.addEventListener('click', resendEmailOTP);
+    }
+
+    const resendPasswordOTPBtn = document.getElementById('resendPasswordOTP');
+    if (resendPasswordOTPBtn) {
+        resendPasswordOTPBtn.addEventListener('click', resendPasswordOTP);
+    }
+
+    // Password visibility toggles
+    initializePasswordToggles();
+}
+
+// Initialize password visibility toggles
+function initializePasswordToggles() {
+    const toggles = [
+        { button: 'toggleCurrentPassword', input: 'currentPassword' },
+        { button: 'toggleNewPassword', input: 'newPassword' },
+        { button: 'toggleConfirmNewPassword', input: 'confirmNewPassword' }
+    ];
+
+    toggles.forEach(toggle => {
+        const button = document.getElementById(toggle.button);
+        const input = document.getElementById(toggle.input);
+        
+        if (button && input) {
+            button.addEventListener('click', function() {
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                
+                const icon = button.querySelector('i');
+                icon.classList.toggle('bi-eye');
+                icon.classList.toggle('bi-eye-slash');
+            });
+        }
+    });
+}
+
+// Handle email update
+async function handleEmailUpdate(e) {
+    e.preventDefault();
+    
+    const newEmail = document.getElementById('newEmail').value.trim();
+    const currentEmail = currentAdminUser.email;
+
+    if (!newEmail) {
+        showToast('Please enter a new email address', 'error');
+        return;
+    }
+
+    if (newEmail === currentEmail) {
+        showToast('New email must be different from current email', 'error');
+        return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+    }
+
+    const updateBtn = document.getElementById('updateEmailBtn');
+    const originalText = updateBtn.innerHTML;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending OTP...';
+    updateBtn.disabled = true;
+
+    try {
+        if (!otpService) {
+            throw new Error('OTP service not available');
+        }
+
+        // Send OTP to new email
+        const result = await otpService.sendEmailOTP(newEmail, newEmail.split('@')[0]);
+        
+        if (result.success) {
+            // Store pending update
+            pendingEmailUpdate = {
+                newEmail: newEmail,
+                otp: result.otp
+            };
+
+            // Show OTP section
+            document.getElementById('emailOTPSection').style.display = 'block';
+            document.getElementById('updateEmailForm').style.display = 'none';
+
+            showToast('OTP sent to your new email address', 'success');
+        } else {
+            throw new Error(result.message || 'Failed to send OTP');
+        }
+    } catch (error) {
+        console.error('Error sending email OTP:', error);
+        showToast('Error sending OTP: ' + error.message, 'error');
+    }
+
+    updateBtn.innerHTML = originalText;
+    updateBtn.disabled = false;
+}
+
+// Handle email OTP verification
+async function handleEmailOTPVerification(e) {
+    e.preventDefault();
+    
+    const otpCode = document.getElementById('emailOTP').value.trim();
+    
+    if (!otpCode || otpCode.length !== 6) {
+        showToast('Please enter a valid 6-digit OTP', 'error');
+        return;
+    }
+
+    if (!pendingEmailUpdate) {
+        showToast('No pending email update found', 'error');
+        return;
+    }
+
+    const verifyBtn = document.getElementById('verifyEmailOTP');
+    const originalText = verifyBtn.innerHTML;
+    verifyBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Verifying...';
+    verifyBtn.disabled = true;
+
+    try {
+        if (!otpService) {
+            throw new Error('OTP service not available');
+        }
+
+        // Verify OTP
+        const result = await otpService.verifyEmailOTP(pendingEmailUpdate.newEmail, otpCode);
+        
+        if (result.success) {
+            // Update Firebase Auth email
+            await currentAdminUser.updateEmail(pendingEmailUpdate.newEmail);
+            
+            // Update Firestore user document
+            await firebase.firestore().collection('users').doc(currentAdminUser.uid).update({
+                email: pendingEmailUpdate.newEmail,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            showToast('Email updated successfully!', 'success');
+            
+            // Reset forms
+            resetEmailUpdateForm();
+            
+            // Reload page to reflect changes
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            throw new Error(result.message || 'Invalid OTP');
+        }
+    } catch (error) {
+        console.error('Error verifying email OTP:', error);
+        
+        if (error.code === 'auth/requires-recent-login') {
+            showToast('Please log in again to update your email', 'error');
+        } else {
+            showToast('Error verifying OTP: ' + error.message, 'error');
+        }
+    }
+
+    verifyBtn.innerHTML = originalText;
+    verifyBtn.disabled = false;
+}
+
+// Handle password update
+async function handlePasswordUpdate(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showToast('Please fill in all password fields', 'error');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', 'error');
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        showToast('New password must be at least 6 characters', 'error');
+        return;
+    }
+
+    const updateBtn = document.getElementById('updatePasswordBtn');
+    const originalText = updateBtn.innerHTML;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending OTP...';
+    updateBtn.disabled = true;
+
+    try {
+        // First verify current password by re-authenticating
+        const credential = firebase.auth.EmailAuthProvider.credential(
+            currentAdminUser.email, 
+            currentPassword
+        );
+        
+        await currentAdminUser.reauthenticateWithCredential(credential);
+
+        if (!otpService) {
+            throw new Error('OTP service not available');
+        }
+
+        // Send OTP to current email
+        const result = await otpService.sendEmailOTP(currentAdminUser.email, currentAdminUser.displayName || currentAdminUser.email.split('@')[0]);
+        
+        if (result.success) {
+            // Store pending update
+            pendingPasswordUpdate = {
+                newPassword: newPassword,
+                otp: result.otp
+            };
+
+            // Show OTP section
+            document.getElementById('passwordOTPSection').style.display = 'block';
+            document.getElementById('updatePasswordForm').style.display = 'none';
+
+            showToast('OTP sent to your email address', 'success');
+        } else {
+            throw new Error(result.message || 'Failed to send OTP');
+        }
+    } catch (error) {
+        console.error('Error sending password OTP:', error);
+        
+        if (error.code === 'auth/wrong-password') {
+            showToast('Current password is incorrect', 'error');
+        } else {
+            showToast('Error sending OTP: ' + error.message, 'error');
+        }
+    }
+
+    updateBtn.innerHTML = originalText;
+    updateBtn.disabled = false;
+}
+
+// Handle password OTP verification
+async function handlePasswordOTPVerification(e) {
+    e.preventDefault();
+    
+    const otpCode = document.getElementById('passwordOTP').value.trim();
+    
+    if (!otpCode || otpCode.length !== 6) {
+        showToast('Please enter a valid 6-digit OTP', 'error');
+        return;
+    }
+
+    if (!pendingPasswordUpdate) {
+        showToast('No pending password update found', 'error');
+        return;
+    }
+
+    const verifyBtn = document.getElementById('verifyPasswordOTP');
+    const originalText = verifyBtn.innerHTML;
+    verifyBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
+    verifyBtn.disabled = true;
+
+    try {
+        if (!otpService) {
+            throw new Error('OTP service not available');
+        }
+
+        // Verify OTP
+        const result = await otpService.verifyEmailOTP(currentAdminUser.email, otpCode);
+        
+        if (result.success) {
+            // Update Firebase Auth password
+            await currentAdminUser.updatePassword(pendingPasswordUpdate.newPassword);
+            
+            showToast('Password updated successfully!', 'success');
+            
+            // Reset forms
+            resetPasswordUpdateForm();
+        } else {
+            throw new Error(result.message || 'Invalid OTP');
+        }
+    } catch (error) {
+        console.error('Error verifying password OTP:', error);
+        showToast('Error verifying OTP: ' + error.message, 'error');
+    }
+
+    verifyBtn.innerHTML = originalText;
+    verifyBtn.disabled = false;
+}
+
+// Cancel email update
+function cancelEmailUpdate() {
+    resetEmailUpdateForm();
+    showToast('Email update cancelled', 'info');
+}
+
+// Cancel password update
+function cancelPasswordUpdate() {
+    resetPasswordUpdateForm();
+    showToast('Password update cancelled', 'info');
+}
+
+// Reset email update form
+function resetEmailUpdateForm() {
+    document.getElementById('emailOTPSection').style.display = 'none';
+    document.getElementById('updateEmailForm').style.display = 'block';
+    document.getElementById('newEmail').value = '';
+    document.getElementById('emailOTP').value = '';
+    pendingEmailUpdate = null;
+}
+
+// Reset password update form
+function resetPasswordUpdateForm() {
+    document.getElementById('passwordOTPSection').style.display = 'none';
+    document.getElementById('updatePasswordForm').style.display = 'block';
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmNewPassword').value = '';
+    document.getElementById('passwordOTP').value = '';
+    pendingPasswordUpdate = null;
+}
+
+// Resend email OTP
+async function resendEmailOTP() {
+    if (!pendingEmailUpdate) {
+        showToast('No pending email update found', 'error');
+        return;
+    }
+
+    const resendBtn = document.getElementById('resendEmailOTP');
+    const originalText = resendBtn.innerHTML;
+    resendBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending...';
+    resendBtn.disabled = true;
+
+    try {
+        if (!otpService) {
+            throw new Error('OTP service not available');
+        }
+
+        const result = await otpService.sendEmailOTP(pendingEmailUpdate.newEmail, pendingEmailUpdate.newEmail.split('@')[0]);
+        
+        if (result.success) {
+            pendingEmailUpdate.otp = result.otp;
+            showToast('OTP resent successfully', 'success');
+        } else {
+            throw new Error(result.message || 'Failed to resend OTP');
+        }
+    } catch (error) {
+        console.error('Error resending email OTP:', error);
+        showToast('Error resending OTP: ' + error.message, 'error');
+    }
+
+    resendBtn.innerHTML = originalText;
+    resendBtn.disabled = false;
+}
+
+// Resend password OTP
+async function resendPasswordOTP() {
+    if (!pendingPasswordUpdate) {
+        showToast('No pending password update found', 'error');
+        return;
+    }
+
+    const resendBtn = document.getElementById('resendPasswordOTP');
+    const originalText = resendBtn.innerHTML;
+    resendBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Sending...';
+    resendBtn.disabled = true;
+
+    try {
+        if (!otpService) {
+            throw new Error('OTP service not available');
+        }
+
+        const result = await otpService.sendEmailOTP(currentAdminUser.email, currentAdminUser.displayName || currentAdminUser.email.split('@')[0]);
+        
+        if (result.success) {
+            pendingPasswordUpdate.otp = result.otp;
+            showToast('OTP resent successfully', 'success');
+        } else {
+            throw new Error(result.message || 'Failed to resend OTP');
+        }
+    } catch (error) {
+        console.error('Error resending password OTP:', error);
+        showToast('Error resending OTP: ' + error.message, 'error');
+    }
+
+    resendBtn.innerHTML = originalText;
+    resendBtn.disabled = false;
 }
 
 // Initialize when DOM is loaded
