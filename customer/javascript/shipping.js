@@ -54,22 +54,6 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
   console.log('🔔 Starting payment verification notification process...');
   console.log('Payment info received:', paymentInfo);
 
-  // Get cart items and order details
-  const cartItems = JSON.parse(sessionStorage.getItem('cartItems') || '[]');
-  console.log('📦 Cart Items:', cartItems);
-
-  const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
-  const deliveryFee = parseFloat(sessionStorage.getItem('deliveryFee') || '0');
-  const totalAmount = orderSubtotal + deliveryFee;
-
-  console.log('💰 Order Summary:', {
-    cartItems: cartItems,
-    orderSubtotal: orderSubtotal,
-    deliveryFee: deliveryFee,
-    totalAmount: totalAmount,
-    orderType: sessionStorage.getItem('orderType') || 'delivery'
-  });
-
   // Validate payment info
   if (!paymentInfo || typeof paymentInfo !== 'object') {
     console.warn('Invalid payment info provided:', paymentInfo);
@@ -122,7 +106,6 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     }
 
     // Create notification data with proper validation
-    console.log('📝 Creating notification data...');
     const notificationData = {
       type: 'payment_verification',
       message: `Payment verification required for ${formData.firstName} ${formData.lastName} (${(paymentInfo.type || 'Unknown').toUpperCase()}) - Reference: ${paymentInfo.reference || 'No reference'}`,
@@ -140,45 +123,16 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         receiptUrl: paymentInfo.receiptUrl || null,
         timestamp: paymentInfo.timestamp || new Date().toISOString()
       },
-      orderDetails: {
-        items: cartItems.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          subtotal: item.quantity * item.price,
-          specialInstructions: item.specialInstructions || ''
-        })),
-        subtotal: orderSubtotal,
-        deliveryFee: deliveryFee,
-        totalAmount: totalAmount,
-        orderType: sessionStorage.getItem('orderType') || 'delivery'
-      },
       status: 'pending', // pending, approved, declined
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       seen: false,
       requiresAction: true // Flag to show this needs admin action
     };
 
-    console.log('📝 Notification data to be sent:', {
-      ...notificationData,
-      orderDetails: {
-        items: notificationData.orderDetails.items.length,
-        subtotal: notificationData.orderDetails.subtotal,
-        totalAmount: notificationData.orderDetails.totalAmount,
-        orderType: notificationData.orderDetails.orderType
-      }
-    });
-
-    // Validate order details before sending
-    if (!notificationData.orderDetails || !notificationData.orderDetails.items || notificationData.orderDetails.items.length === 0) {
-      console.warn('⚠️ No order details found in notification data!');
-    }
+    console.log('📝 Notification data to be sent:', notificationData);
 
     // Add to notifications collection with timeout
-    console.log('💾 Adding notification to Firestore...', {
-      itemCount: notificationData.orderDetails.items.length,
-      total: notificationData.orderDetails.totalAmount
-    });
+    console.log('💾 Adding notification to Firestore...');
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Firestore operation timeout')), 10000)
     );
@@ -234,27 +188,10 @@ async function storeLalamoveQuotation(quotationData, orderData) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', function () {
   console.log('[SHIPPING] DOMContentLoaded event fired, starting initialization...');
 
   try {
-    // Wait for Firebase to be fully initialized
-    let firebaseInitAttempts = 0;
-    while (typeof firebase === 'undefined' && firebaseInitAttempts < 50) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      firebaseInitAttempts++;
-    }
-
-    if (typeof firebase === 'undefined') {
-      throw new Error('Firebase failed to initialize');
-    }
-
-    // Ensure we're connected to Firestore
-    const db = firebase.firestore();
-    if (!db) {
-      throw new Error('Firestore is not initialized');
-    }
-    console.log('[SHIPPING] Firebase and Firestore initialized successfully');
 
     // Initialize Firebase with error handling
     function initializeFirebaseForShipping() {
