@@ -1782,6 +1782,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     // Store Lalamove quotation if it exists and has quotationId
     if (quotationData?.data?.quotationId) {
       try {
+        console.log('[shipping.js] Current auth state:', firebase.auth().currentUser);
         console.log('[shipping.js] Storing Lalamove quotation data:', quotationData);
         await quotationManager.storeQuotation(quotationData, {
           orderId: orderId,
