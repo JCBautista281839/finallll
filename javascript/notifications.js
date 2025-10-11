@@ -656,6 +656,8 @@ async function refreshUnseenNotificationBadge() {
 
     queryPromise
         .then(function (querySnapshot) {
+            console.log('📥 Received notifications:', querySnapshot.size);
+            
             if (querySnapshot.empty) {
                 notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center">No notifications found</td></tr>';
                 return;
@@ -664,6 +666,17 @@ async function refreshUnseenNotificationBadge() {
             // Create table structure
             const table = document.createElement('table');
             table.className = 'table table-hover notification-table';
+            
+            // Debug log first notification
+            if (querySnapshot.docs[0]) {
+                const firstNotification = querySnapshot.docs[0].data();
+                console.log('🔍 First notification details:', {
+                    type: firstNotification.type,
+                    hasOrderDetails: !!firstNotification.orderDetails,
+                    itemCount: firstNotification.orderDetails?.items?.length || 0,
+                    total: firstNotification.orderDetails?.totalAmount
+                });
+            }
             
             // Process notifications
             querySnapshot.forEach(doc => {
@@ -887,6 +900,13 @@ async function loadNotifications() {
     }
 
     function createNotificationRow(notification) {
+        console.log('🎨 Creating notification row:', {
+            id: notification.id,
+            type: notification.type,
+            hasOrderDetails: !!notification.orderDetails,
+            itemCount: notification.orderDetails?.items?.length || 0
+        });
+
         const row = document.createElement('tr');
         row.className = 'notification-row ' + (notification.seen ? '' : 'unread');
         
