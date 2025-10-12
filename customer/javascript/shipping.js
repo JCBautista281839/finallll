@@ -1322,7 +1322,7 @@ document.addEventListener('DOMContentLoaded', function () {
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          total: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
+          total: (typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.]/g, '')) : parseFloat(item.price)) * item.quantity
         })),
         subtotal: subtotal,
         shippingFee: shippingCost,
