@@ -5,25 +5,25 @@ async function setupKitchenPageAccess() {
         if (typeof initializeFirebase === 'function') {
             await initializeFirebase();
         }
-        
+
         // Wait a bit for Firebase to be fully ready
         await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
         console.error('Error initializing Firebase for kitchen page access:', error);
     }
-    
-    firebase.auth().onAuthStateChanged(async function(user) {
+
+    firebase.auth().onAuthStateChanged(async function (user) {
         if (!user) return;
-        
+
         try {
             const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 const userRole = userData.role || 'user';
-                
+
                 if (userRole === 'kitchen') {
                     console.log('🍳 Kitchen role detected - Ensuring Home link is visible');
-                    
+
                     // Ensure Home link is visible and points to kitchen.html
                     const homeNavLink = document.querySelector('a[title="Home"]');
                     if (homeNavLink) {
@@ -47,41 +47,41 @@ async function setupKitchenNotificationsAccess() {
         if (typeof initializeFirebase === 'function') {
             await initializeFirebase();
         }
-        
+
         // Wait a bit for Firebase to be fully ready
         await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
         console.error('Error initializing Firebase for kitchen notifications access:', error);
     }
-    
-    firebase.auth().onAuthStateChanged(async function(user) {
+
+    firebase.auth().onAuthStateChanged(async function (user) {
         if (!user) return;
-        
+
         try {
             const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 const userRole = userData.role || 'user';
-                
+
                 if (userRole === 'kitchen') {
                     console.log('🍳 Kitchen role detected - Setting up limited navigation');
-                    
+
                     // Hide navigation items except Home (kitchen.html), Notifications (notifi.html), and Inventory
                     const allNavLinks = document.querySelectorAll('.nav-link');
                     allNavLinks.forEach(link => {
                         const href = link.getAttribute('href');
                         const title = link.getAttribute('title');
-                        
+
                         // Keep only Home (kitchen.html), Notifications (notifi.html), and Inventory
-                        if (href && !href.includes('kitchen.html') && 
-                            !href.includes('notifi.html') && 
-                            !href.includes('Inventory.html') && 
-                            title !== 'Logout' && 
+                        if (href && !href.includes('kitchen.html') &&
+                            !href.includes('notifi.html') &&
+                            !href.includes('Inventory.html') &&
+                            title !== 'Logout' &&
                             title !== 'Home') {
                             link.style.display = 'none';
                         }
                     });
-                    
+
                     // Redirect home link to kitchen dashboard
                     const homeNavLink = document.querySelector('#homeNavLink') || document.querySelector('a[href*="Dashboard.html"]');
                     if (homeNavLink) {
@@ -100,13 +100,13 @@ async function setupKitchenNotificationsAccess() {
                                 <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
                                 <div class="nav-text">Home</div>
                             `;
-                            
+
                             // Insert at the beginning of the nav
                             navContainer.insertBefore(homeLink, navContainer.firstChild);
                             console.log('🍳 Kitchen: Created new home link to kitchen.html');
                         }
                     }
-                    
+
                     // Update page title and subtitle for kitchen users
                     const pageTitle = document.querySelector('.inventory-title');
                     const pageSubtitle = document.querySelector('.inventory-subtitle');
@@ -174,33 +174,33 @@ function formatPhoneNumber(phone) {
 // Function to check if quotation has expired
 function isQuotationExpired(quotationData) {
     console.log('[notifications.js] 🕐 Checking quotation expiry...');
-    
+
     if (!quotationData?.data?.expiresAt) {
         console.log('[notifications.js] ⚠️ No expiry date found in quotation');
         return false;
     }
-    
+
     try {
         const expiresAt = new Date(quotationData.data.expiresAt);
         const now = new Date();
         const isExpired = now >= expiresAt;
-        
+
         const timeUntilExpiry = expiresAt.getTime() - now.getTime();
         const minutesUntilExpiry = Math.round(timeUntilExpiry / (1000 * 60));
-        
+
         console.log('[notifications.js] 📅 Quotation expiry check:', {
             expiresAt: expiresAt.toISOString(),
             now: now.toISOString(),
             isExpired: isExpired,
             minutesUntilExpiry: minutesUntilExpiry
         });
-        
+
         if (isExpired) {
             console.log('[notifications.js] ❌ Quotation has EXPIRED');
         } else {
             console.log(`[notifications.js] ✅ Quotation valid for ${minutesUntilExpiry} more minutes`);
         }
-        
+
         return isExpired;
     } catch (error) {
         console.error('[notifications.js] Error checking quotation expiry:', error);
@@ -211,23 +211,23 @@ function isQuotationExpired(quotationData) {
 // Function to refresh expired quotation with same addresses
 async function refreshExpiredQuotation(expiredQuotation) {
     console.log('[notifications.js] 🔄 Refreshing expired quotation...');
-    
+
     try {
         if (!expiredQuotation?.data?.stops || expiredQuotation.data.stops.length < 2) {
             throw new Error('Invalid expired quotation structure - missing stops');
         }
-        
+
         const stops = expiredQuotation.data.stops;
         const pickupStop = stops[0];
         const deliveryStop = stops[1];
-        
+
         console.log('[notifications.js] 📍 Extracting addresses from expired quotation:', {
             pickup: pickupStop.address,
             delivery: deliveryStop.address,
             pickupCoords: pickupStop.coordinates,
             deliveryCoords: deliveryStop.coordinates
         });
-        
+
         // Create fresh quotation request using same addresses and coordinates
         const bodyObj = {
             data: {
@@ -259,37 +259,37 @@ async function refreshExpiredQuotation(expiredQuotation) {
                 }
             }
         };
-        
+
         console.log('[notifications.js] 📤 Sending fresh quotation request:', bodyObj);
-        
+
         // Call quotation API
         const response = await fetch('/api/quotation', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bodyObj)
         });
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Fresh quotation API failed: ${response.status} ${errorText}`);
         }
-        
+
         const freshQuotation = await response.json();
         console.log('[notifications.js] ✅ Fresh quotation received:', freshQuotation);
-        
+
         // Validate fresh quotation
         if (!freshQuotation.data || !freshQuotation.data.quotationId) {
             throw new Error('Fresh quotation response is invalid');
         }
-        
+
         console.log('[notifications.js] 🆕 Fresh quotation validated successfully:', {
             newQuotationId: freshQuotation.data.quotationId,
             newExpiresAt: freshQuotation.data.expiresAt,
             stops: freshQuotation.data.stops?.length || 0
         });
-        
+
         return freshQuotation;
-        
+
     } catch (error) {
         console.error('[notifications.js] ❌ Error refreshing quotation:', error);
         throw new Error(`Failed to refresh quotation: ${error.message}`);
@@ -300,7 +300,7 @@ async function refreshExpiredQuotation(expiredQuotation) {
 async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) {
     try {
         console.log('[notifications.js] ====== PLACE LALAMOVE ORDER START ======');
-        
+
         if (!quotationData) {
             throw new Error('No quotation data provided');
         }
@@ -321,20 +321,20 @@ async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) 
         // Check if quotation has expired and refresh if needed
         if (isQuotationExpired(quotation)) {
             console.log('[notifications.js] 🔄 Quotation expired, attempting to refresh...');
-            
+
             try {
                 // Get fresh quotation using same addresses
                 const freshQuotation = await refreshExpiredQuotation(quotation);
-                
+
                 // Update quotation variable with fresh data
                 quotation = freshQuotation;
-                
+
                 console.log('[notifications.js] ✅ Successfully refreshed expired quotation:', {
                     oldQuotationId: quotationData.data.quotationId,
                     newQuotationId: freshQuotation.data.quotationId,
                     newExpiresAt: freshQuotation.data.expiresAt
                 });
-                
+
             } catch (refreshError) {
                 console.error('[notifications.js] ❌ Failed to refresh expired quotation:', refreshError);
                 throw new Error(`Quotation expired and refresh failed: ${refreshError.message}`);
@@ -368,7 +368,7 @@ async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) 
                 }
             }
         };
-        
+
         console.log('[notifications.js] 📤 Sending Lalamove order with valid quotation:', {
             quotationId: payload.data.quotationId,
             senderStopId: payload.data.sender.stopId,
@@ -395,7 +395,7 @@ async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) 
 
         console.log('[notifications.js] ✅ Lalamove order placed successfully:', result);
         console.log('[notifications.js] ====== PLACE LALAMOVE ORDER SUCCESS ======');
-        
+
         return result;
     } catch (error) {
         console.error('[notifications.js] ❌ placeLalamoveOrderFromNotifications error:', error);
@@ -404,10 +404,90 @@ async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) 
     }
 }
 
+// Function to get quotation data by quotation ID from Firestore
+async function getQuotationById(quotationId) {
+    console.log('[notifications.js] 🔍 Getting quotation data for quotation ID:', quotationId);
+    
+    try {
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            throw new Error('Database not available');
+        }
+
+        // Query lalamove_quotations collection by quotationId
+        const quotationQuery = await db.collection('lalamove_quotations')
+            .where('quotationId', '==', quotationId)
+            .limit(1)
+            .get();
+
+        if (quotationQuery.empty) {
+            throw new Error(`No quotation found with ID: ${quotationId}`);
+        }
+
+        const quotationDoc = quotationQuery.docs[0];
+        const quotationData = quotationDoc.data();
+        
+        console.log('[notifications.js] ✅ Found quotation in Firestore:', {
+            firestoreDocId: quotationDoc.id,
+            quotationId: quotationData.quotationId,
+            orderId: quotationData.orderId,
+            serviceType: quotationData.quotationData?.serviceType,
+            price: quotationData.quotationData?.price,
+            status: quotationData.status
+        });
+
+        // Check if quotation is still active/valid
+        if (quotationData.status !== 'active') {
+            console.warn('[notifications.js] ⚠️ Quotation status is not active:', quotationData.status);
+        }
+
+        // Check if quotation is expired
+        if (quotationData.quotationData?.expiresAt) {
+            const expiresAt = quotationData.quotationData.expiresAt.toDate ? 
+                quotationData.quotationData.expiresAt.toDate() : 
+                new Date(quotationData.quotationData.expiresAt);
+            const now = new Date();
+            
+            if (expiresAt < now) {
+                console.warn('[notifications.js] ⚠️ Quotation has expired:', {
+                    expiresAt: expiresAt.toISOString(),
+                    now: now.toISOString()
+                });
+                throw new Error('Quotation has expired. Please create a new quotation.');
+            }
+        }
+
+        return {
+            firestoreDocId: quotationDoc.id,
+            quotationId: quotationData.quotationId,
+            orderId: quotationData.orderId,
+            customerInfo: quotationData.customerInfo,
+            quotationData: quotationData.quotationData,
+            status: quotationData.status,
+            createdAt: quotationData.createdAt,
+            updatedAt: quotationData.updatedAt,
+            // Format for compatibility with existing functions
+            data: {
+                quotationId: quotationData.quotationId,
+                serviceType: quotationData.quotationData?.serviceType,
+                priceBreakdown: {
+                    total: quotationData.quotationData?.price,
+                    currency: quotationData.quotationData?.currency || 'PHP'
+                },
+                expiresAt: quotationData.quotationData?.expiresAt
+            }
+        };
+
+    } catch (error) {
+        console.error('[notifications.js] ❌ Error retrieving quotation by ID:', error);
+        throw error;
+    }
+}
+
 // Function to get quotation data from order document
 async function getOrderQuotationData(orderId) {
     console.log('[notifications.js] 🔍 Getting quotation data for order:', orderId);
-    
+
     try {
         const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
         if (!db) {
@@ -429,7 +509,7 @@ async function getOrderQuotationData(orderId) {
 
         // Try to get quotation data from various possible locations
         let quotationData = null;
-        
+
         // Check for quotation in shippingInfo
         if (orderData.shippingInfo?.quotationData) {
             quotationData = orderData.shippingInfo.quotationData;
@@ -471,7 +551,7 @@ async function getOrderQuotationData(orderId) {
         });
 
         return quotationData;
-        
+
     } catch (error) {
         console.error('[notifications.js] ❌ Error getting quotation data:', error);
         throw error;
@@ -481,7 +561,7 @@ async function getOrderQuotationData(orderId) {
 // Function to get customer info from order document
 async function getCustomerInfoFromOrder(orderId) {
     console.log('[notifications.js] 👤 Getting customer info for order:', orderId);
-    
+
     try {
         const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
         if (!db) {
@@ -495,7 +575,7 @@ async function getCustomerInfoFromOrder(orderId) {
         }
 
         const orderData = orderDoc.data();
-        
+
         // Extract customer info from various possible locations
         let customerInfo = {
             name: 'Guest',
@@ -504,11 +584,11 @@ async function getCustomerInfoFromOrder(orderId) {
 
         // Try customerInfo field first
         if (orderData.customerInfo) {
-            customerInfo.name = orderData.customerInfo.fullName || 
-                               orderData.customerInfo.name || 
-                               (orderData.customerInfo.firstName ? 
-                                (orderData.customerInfo.firstName + (orderData.customerInfo.lastName ? ' ' + orderData.customerInfo.lastName : '')) : 
-                                'Guest');
+            customerInfo.name = orderData.customerInfo.fullName ||
+                orderData.customerInfo.name ||
+                (orderData.customerInfo.firstName ?
+                    (orderData.customerInfo.firstName + (orderData.customerInfo.lastName ? ' ' + orderData.customerInfo.lastName : '')) :
+                    'Guest');
             customerInfo.phone = orderData.customerInfo.phone || '';
         }
         // Try top-level fields as fallback
@@ -523,7 +603,7 @@ async function getCustomerInfoFromOrder(orderId) {
         });
 
         return customerInfo;
-        
+
     } catch (error) {
         console.error('[notifications.js] ❌ Error getting customer info:', error);
         throw error;
@@ -590,14 +670,14 @@ async function refreshUnseenNotificationBadge() {
         if (typeof initializeFirebase === 'function') {
             await initializeFirebase();
         }
-        
+
         // Wait a bit for Firebase to be fully ready
         await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
         console.error('Error initializing Firebase for notification badge:', error);
         return;
     }
-    
+
     var sidebarNotifLink = document.querySelector('.nav-link[title="Notifications"]');
     if (!sidebarNotifLink) return;
     var badge = sidebarNotifLink.querySelector('.notification-badge');
@@ -635,7 +715,7 @@ async function refreshUnseenNotificationBadge() {
     }
 
     let queryPromise;
-    
+
     if (userRole === 'kitchen') {
         // Kitchen users only count inventory-related notifications - OPTIMIZED BADGE QUERY
         console.log('🍳 Kitchen: FAST BADGE - Counting inventory notifications...');
@@ -643,7 +723,7 @@ async function refreshUnseenNotificationBadge() {
             .where('type', 'in', ['empty', 'restock', 'inventory'])
             .where('seen', '==', false)
             .get()
-            .then(function(querySnapshot) {
+            .then(function (querySnapshot) {
                 console.log('🍳 Kitchen: Badge count:', querySnapshot.size, 'unseen inventory notifications');
                 return querySnapshot;
             });
@@ -717,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         let queryPromise;
-        
+
         if (userRole === 'kitchen') {
             // Kitchen users only mark inventory notifications as seen - OPTIMIZED MARK SEEN QUERY
             console.log('🍳 Kitchen: FAST MARK SEEN - Marking inventory notifications as seen...');
@@ -725,7 +805,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .where('type', 'in', ['empty', 'restock', 'inventory'])
                 .where('seen', '==', false)
                 .get()
-                .then(function(querySnapshot) {
+                .then(function (querySnapshot) {
                     console.log('🍳 Kitchen: Marking', querySnapshot.size, 'inventory notifications as seen');
                     return querySnapshot;
                 });
@@ -770,7 +850,7 @@ async function loadNotifications() {
         if (typeof initializeFirebase === 'function') {
             await initializeFirebase();
         }
-        
+
         // Use global db instance from main.js if available
         var db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
         if (!db) {
@@ -819,7 +899,7 @@ async function loadNotifications() {
     console.log('📊 User role:', userRole, '- Loading notifications...');
 
     let queryPromise;
-    
+
     if (userRole === 'kitchen') {
         // Kitchen users only see inventory-related notifications - SIMPLE QUERY
         console.log('🍳 Kitchen: Loading inventory notifications with simple query...');
@@ -827,35 +907,35 @@ async function loadNotifications() {
             .where('type', 'in', ['empty', 'restock', 'inventory'])
             .limit(50)
             .get()
-            .then(function(querySnapshot) {
+            .then(function (querySnapshot) {
                 console.log('🍳 Kitchen: Loaded', querySnapshot.size, 'inventory notifications');
                 // Sort by timestamp in JavaScript to avoid composite index requirement
                 const docs = [];
-                querySnapshot.forEach(function(doc) {
+                querySnapshot.forEach(function (doc) {
                     docs.push(doc);
                 });
-                docs.sort(function(a, b) {
+                docs.sort(function (a, b) {
                     const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
                     const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
                     return timestampB - timestampA; // Descending order
                 });
                 return { docs: docs };
             })
-            .catch(function(error) {
+            .catch(function (error) {
                 console.log('🍳 Kitchen: Index error, using simple query:', error);
                 // Final fallback - get all notifications and filter client-side
                 return db.collection('notifications')
                     .limit(100)
                     .get()
-                    .then(function(querySnapshot) {
+                    .then(function (querySnapshot) {
                         const docs = [];
-                        querySnapshot.forEach(function(doc) {
+                        querySnapshot.forEach(function (doc) {
                             const data = doc.data();
                             if (['empty', 'restock', 'inventory'].includes(data.type)) {
                                 docs.push(doc);
                             }
                         });
-                        docs.sort(function(a, b) {
+                        docs.sort(function (a, b) {
                             const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
                             const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
                             return timestampB - timestampA;
@@ -866,7 +946,7 @@ async function loadNotifications() {
     } else {
         // Admin users see all notifications - using simple query to avoid index issues
         console.log('👑 Admin: Querying for all notifications with simple query...');
-        
+
         queryPromise = db.collection('notifications')
             .orderBy('timestamp', 'desc')
             .limit(50)
@@ -877,14 +957,14 @@ async function loadNotifications() {
                 return db.collection('notifications')
                     .limit(50)
                     .get()
-                    .then(function(querySnapshot) {
+                    .then(function (querySnapshot) {
                         console.log('👑 Admin: Fallback loaded', querySnapshot.size, 'notifications (no ordering)');
                         // Sort by timestamp in JavaScript
                         const docs = [];
-                        querySnapshot.forEach(function(doc) {
+                        querySnapshot.forEach(function (doc) {
                             docs.push(doc);
                         });
-                        docs.sort(function(a, b) {
+                        docs.sort(function (a, b) {
                             const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
                             const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
                             return timestampB - timestampA; // Descending order
@@ -924,74 +1004,74 @@ async function loadNotifications() {
             forEachMethod.call(docs, function (doc) {
                 try {
                     var data = doc.data();
-                    
+
                     // Skip non-inventory notifications for kitchen users
                     if (userRole === 'kitchen' && !['empty', 'restock', 'inventory'].includes(data.type)) {
                         console.log('🍳 Kitchen: Skipping non-inventory notification:', data.type);
                         return; // Skip this notification
                     }
-                
-                notifCount++;
 
-                // Count payment verification notifications
-                if (data.type === 'payment_verification') {
-                    paymentVerificationCount++;
-                }
+                    notifCount++;
 
-                console.log('🔔 Admin: Processing notification', notifCount, ':', {
-                    id: doc.id,
-                    type: data.type,
-                    status: data.status,
-                    timestamp: data.timestamp ? data.timestamp.toDate() : 'No timestamp',
-                    message: data.message ? data.message.substring(0, 50) + '...' : 'No message'
-                });
-
-                var typeText = '';
-                if (data.type === 'empty') {
-                    typeText = 'Empty';
-                } else if (data.type === 'restock') {
-                    typeText = 'Restock';
-                } else if (data.type === 'payment_verification') {
-                    typeText = 'Payment Verification';
-                } else if (data.type === 'order_approval') {
-                    typeText = 'Order Approval';
-                } else {
-                    typeText = data.type || 'Other';
-                }
-                var time = '';
-                try {
-                    if (data.timestamp) {
-                        if (data.timestamp.toDate && typeof data.timestamp.toDate === 'function') {
-                            // Firestore timestamp
-                            time = timeAgo(data.timestamp.toDate());
-                        } else if (typeof data.timestamp === 'string') {
-                            // ISO string timestamp
-                            time = timeAgo(new Date(data.timestamp));
-                        } else if (data.timestamp instanceof Date) {
-                            // Already a Date object
-                            time = timeAgo(data.timestamp);
-                        } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
-                            // Firestore timestamp object format
-                            time = timeAgo(new Date(data.timestamp.seconds * 1000));
-                        } else {
-                            // Fallback
-                            time = 'Unknown time';
-                        }
-                    } else {
-                        time = 'No timestamp';
+                    // Count payment verification notifications
+                    if (data.type === 'payment_verification') {
+                        paymentVerificationCount++;
                     }
-                } catch (timestampError) {
-                    console.warn('Error processing timestamp for notification:', doc.id, timestampError);
-                    time = 'Invalid timestamp';
-                }
-                if (!data.seen) {
-                    unseenCount++;
-                    batch.update(doc.ref, { seen: true });
-                }
 
-                // Handle payment verification notifications with action buttons (only for admin users)
-                if (data.type === 'payment_verification' && data.status === 'pending' && userRole !== 'kitchen') {
-                    rows += `<tr class="payment-verification-row" data-doc-id="${doc.id}">
+                    console.log('🔔 Admin: Processing notification', notifCount, ':', {
+                        id: doc.id,
+                        type: data.type,
+                        status: data.status,
+                        timestamp: data.timestamp ? data.timestamp.toDate() : 'No timestamp',
+                        message: data.message ? data.message.substring(0, 50) + '...' : 'No message'
+                    });
+
+                    var typeText = '';
+                    if (data.type === 'empty') {
+                        typeText = 'Empty';
+                    } else if (data.type === 'restock') {
+                        typeText = 'Restock';
+                    } else if (data.type === 'payment_verification') {
+                        typeText = 'Payment Verification';
+                    } else if (data.type === 'order_approval') {
+                        typeText = 'Order Approval';
+                    } else {
+                        typeText = data.type || 'Other';
+                    }
+                    var time = '';
+                    try {
+                        if (data.timestamp) {
+                            if (data.timestamp.toDate && typeof data.timestamp.toDate === 'function') {
+                                // Firestore timestamp
+                                time = timeAgo(data.timestamp.toDate());
+                            } else if (typeof data.timestamp === 'string') {
+                                // ISO string timestamp
+                                time = timeAgo(new Date(data.timestamp));
+                            } else if (data.timestamp instanceof Date) {
+                                // Already a Date object
+                                time = timeAgo(data.timestamp);
+                            } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
+                                // Firestore timestamp object format
+                                time = timeAgo(new Date(data.timestamp.seconds * 1000));
+                            } else {
+                                // Fallback
+                                time = 'Unknown time';
+                            }
+                        } else {
+                            time = 'No timestamp';
+                        }
+                    } catch (timestampError) {
+                        console.warn('Error processing timestamp for notification:', doc.id, timestampError);
+                        time = 'Invalid timestamp';
+                    }
+                    if (!data.seen) {
+                        unseenCount++;
+                        batch.update(doc.ref, { seen: true });
+                    }
+
+                    // Handle payment verification notifications with action buttons (only for admin users)
+                    if (data.type === 'payment_verification' && data.status === 'pending' && userRole !== 'kitchen') {
+                        rows += `<tr class="payment-verification-row" data-doc-id="${doc.id}">
                         <td><span style='font-weight:600; color: #ff9800;'>${typeText}</span></td>
                         <td>
                             <div class="payment-notification-content">
@@ -1013,30 +1093,30 @@ async function loadNotifications() {
                                 <div class="order-summary" style="margin-top: 5px; padding: 5px; background: #f8f9fa; border-radius: 4px;">
                                     <small>
                                         <strong>Order Summary:</strong><br>
-                                        ${data.orderSummary?.items?.map(item => 
-                                            `${item.name} x${item.quantity} - ₱${(typeof item.total === 'number' ? item.total.toFixed(2) : '0.00')}`
-                                        ).join('<br>') || 'No items'}<br>
+                                        ${data.orderSummary?.items?.map(item =>
+                            `${item.name} x${item.quantity} - ₱${(typeof item.total === 'number' ? item.total.toFixed(2) : '0.00')}`
+                        ).join('<br>') || 'No items'}<br>
                                         <strong>Subtotal:</strong> ₱${(typeof data.orderSummary?.subtotal === 'number' ? data.orderSummary.subtotal.toFixed(2) : '0.00')} | 
                                         <strong>Shipping:</strong> ₱${(typeof data.orderSummary?.shippingFee === 'number' ? data.orderSummary.shippingFee.toFixed(2) : '0.00')} | 
                                         <strong>Total:</strong> ₱${(typeof data.orderSummary?.total === 'number' ? data.orderSummary.total.toFixed(2) : '0.00')}
                                     </small>
                                 </div>
                                 ${data.paymentInfo?.receiptUrl ?
-                            `<div class="receipt-preview">
+                                `<div class="receipt-preview">
                                         <small><strong>Receipt:</strong> 
                                         <a href="#" onclick="viewReceipt('${data.paymentInfo.receiptUrl}', '${data.paymentInfo.receiptName || 'receipt.jpg'}')" 
                                            style="color: #007bff; text-decoration: underline;">View Receipt</a>
                                         </small>
                                     </div>` :
-                            (data.paymentInfo?.receiptData ?
-                                `<div class="receipt-preview">
+                                (data.paymentInfo?.receiptData ?
+                                    `<div class="receipt-preview">
                                             <small><strong>Receipt:</strong> 
                                             <a href="#" onclick="viewReceipt('${data.paymentInfo.receiptData}', '${data.paymentInfo.receiptName || 'receipt.jpg'}')" 
                                                style="color: #007bff; text-decoration: underline;">View Receipt</a>
                                             </small>
                                         </div>` : ''
-                            )
-                        }
+                                )
+                            }
                                 <div class="action-buttons" style="margin-top: 10px;">
                                     <button class="btn btn-success btn-sm me-2" onclick="handlePaymentVerification('${doc.id}', 'approved')" 
                                             style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
@@ -1055,9 +1135,9 @@ async function loadNotifications() {
                         </td>
                         <td>${time}</td>
                     </tr>`;
-                } else if (data.type === 'order_approval' && data.requiresAction) {
-                    // Handle order approval notifications with action buttons
-                    rows += `<tr class="order-approval-row" data-doc-id="${doc.id}">
+                    } else if (data.type === 'order_approval' && data.requiresAction) {
+                        // Handle order approval notifications with action buttons
+                        rows += `<tr class="order-approval-row" data-doc-id="${doc.id}">
                         <td><span style='font-weight:600; color: #007bff;'>${typeText}</span></td>
                         <td>
                             <div class="order-notification-content">
@@ -1070,21 +1150,21 @@ async function loadNotifications() {
                                     <strong>Reference:</strong> ${data.paymentDetails?.reference || 'Unknown'}</small>
                                 </div>
                                 ${data.paymentDetails?.receiptUrl ?
-                            `<div class="receipt-preview">
+                                `<div class="receipt-preview">
                                         <small><strong>Receipt:</strong> 
                                         <a href="#" onclick="viewReceipt('${data.paymentDetails.receiptUrl}', '${data.paymentDetails.receiptName || 'receipt.jpg'}')" 
                                            style="color: #007bff; text-decoration: underline;">View Receipt</a>
                                         </small>
                                     </div>` :
-                            (data.paymentDetails?.receiptData ?
-                                `<div class="receipt-preview">
+                                (data.paymentDetails?.receiptData ?
+                                    `<div class="receipt-preview">
                                             <small><strong>Receipt:</strong> 
                                             <a href="#" onclick="viewReceipt('${data.paymentDetails.receiptData}', '${data.paymentDetails.receiptName || 'receipt.jpg'}')" 
                                                style="color: #007bff; text-decoration: underline;">View Receipt</a>
                                             </small>
                                         </div>` : ''
-                            )
-                        }
+                                )
+                            }
                                 <div class="action-buttons" style="margin-top: 10px;">
                                     <button class="btn btn-success btn-sm me-2" onclick="approveOrder('${data.orderId}', '${doc.id}')" 
                                             style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
@@ -1103,20 +1183,20 @@ async function loadNotifications() {
                         </td>
                         <td>${time}</td>
                     </tr>`;
-                } else {
-                    // Regular notification display (skip payment verification for kitchen users)
-                    if (userRole === 'kitchen' && data.type === 'payment_verification') {
-                        console.log('🍳 Kitchen: Skipping payment verification notification');
-                        return; // Skip this notification for kitchen users
+                    } else {
+                        // Regular notification display (skip payment verification for kitchen users)
+                        if (userRole === 'kitchen' && data.type === 'payment_verification') {
+                            console.log('🍳 Kitchen: Skipping payment verification notification');
+                            return; // Skip this notification for kitchen users
+                        }
+
+                        var statusColor = '';
+                        if (data.type === 'payment_verification') {
+                            if (data.status === 'approved') statusColor = 'color: #28a745;';
+                            else if (data.status === 'declined') statusColor = 'color: #dc3545;';
+                        }
+                        rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
                     }
-                    
-                    var statusColor = '';
-                    if (data.type === 'payment_verification') {
-                        if (data.status === 'approved') statusColor = 'color: #28a745;';
-                        else if (data.status === 'declined') statusColor = 'color: #dc3545;';
-                    }
-                    rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
-                }
                 } catch (notificationError) {
                     console.error('Error processing notification:', doc.id, notificationError);
                     // Skip this notification and continue with the next one
@@ -1131,13 +1211,13 @@ async function loadNotifications() {
                 console.log('⚠️ Admin: No payment verification notifications found - they might be newer than the 50 limit or have timestamp issues');
             }
 
-    notificationStatus.innerHTML = rows;
-    updateNotificationBadge(unseenCount);
-    
-    // Hide "See all incoming activity" link for kitchen users
-    if (typeof hideSeeAllLinkForKitchen === 'function') {
-        hideSeeAllLinkForKitchen(userRole);
-    }
+            notificationStatus.innerHTML = rows;
+            updateNotificationBadge(unseenCount);
+
+            // Hide "See all incoming activity" link for kitchen users
+            if (typeof hideSeeAllLinkForKitchen === 'function') {
+                hideSeeAllLinkForKitchen(userRole);
+            }
             // Mark all loaded notifications as seen
             if (unseenCount > 0) {
                 batch.commit();
@@ -1175,10 +1255,10 @@ async function initializeNotifications() {
         if (typeof initializeFirebase === 'function') {
             await initializeFirebase();
         }
-        
+
         // Wait a bit for Firebase to be fully ready
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         // Now load notifications
         loadNotifications();
     } catch (error) {
@@ -1426,7 +1506,7 @@ if (window.location.pathname.endsWith('notifi.html')) {
     document.addEventListener('DOMContentLoaded', function () {
         // Setup kitchen role access control
         setupKitchenNotificationsAccess();
-        
+
         // Hide badge on notifications page
         var sidebarNotif = document.querySelector('.nav-link[title="Notifications"]');
         if (sidebarNotif) {
@@ -1603,7 +1683,7 @@ window.handleLalamoveReady = async function (docId) {
     // Find the button that was clicked for visual feedback
     const clickedButton = document.querySelector(`button[onclick*="handleLalamoveReady('${docId}')"]`);
     let originalButtonText = '';
-    
+
     if (clickedButton) {
         originalButtonText = clickedButton.innerHTML;
         clickedButton.disabled = true;
@@ -1612,42 +1692,67 @@ window.handleLalamoveReady = async function (docId) {
 
     try {
         // Show initial status
-        showToast('Checking order and quotation data...', 'info');
+        showToast('Checking quotation and order data...', 'info');
+
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            throw new Error('Database not available');
+        }
+
+        // Get notification data to extract quotation ID
+        let notificationData = null;
+        let quotationId = null;
+        let orderId = null;
+
+        if (clickedButton) {
+            clickedButton.innerHTML = '<i class="fas fa-search"></i> Getting notification data...';
+        }
+
+        console.log('[notifications.js] 🔍 Getting notification data for docId:', docId);
         
-        // First, try to get order ID from the notification or use docId as order ID
-        let orderId = docId;
-        
-        // Check if docId is a notification ID and get the actual order ID
-        try {
-            const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
-            if (db) {
-                const notificationDoc = await db.collection('notifications').doc(docId).get();
-                if (notificationDoc.exists) {
-                    const notificationData = notificationDoc.data();
-                    // Check if this notification has an associated order ID
-                    if (notificationData.orderId) {
-                        orderId = notificationData.orderId;
-                        console.log('[notifications.js] Found order ID from notification:', orderId);
-                    }
-                }
-            }
-        } catch (notifError) {
-            console.log('[notifications.js] Could not get order ID from notification, using docId as order ID');
+        // Get the notification document to extract quotation ID
+        const notificationDoc = await db.collection('notifications').doc(docId).get();
+        if (notificationDoc.exists) {
+            notificationData = notificationDoc.data();
+            quotationId = notificationData.quotation?.id;
+            orderId = notificationData.orderId;
+            
+            console.log('[notifications.js] 📋 Notification data:', {
+                type: notificationData.type,
+                quotationId: quotationId,
+                orderId: orderId,
+                hasQuotationData: !!notificationData.quotation
+            });
+        } else {
+            throw new Error('Notification not found');
+        }
+
+        if (!quotationId) {
+            throw new Error('No quotation ID found in notification. Cannot place Lalamove order.');
         }
 
         if (clickedButton) {
-            clickedButton.innerHTML = '<i class="fas fa-search"></i> Getting order data...';
+            clickedButton.innerHTML = '<i class="fas fa-search"></i> Retrieving quotation...';
         }
 
-        // Get quotation data and customer info
-        const quotationData = await getOrderQuotationData(orderId);
-        const customerInfo = await getCustomerInfoFromOrder(orderId);
+        // Get quotation data using the quotation ID
+        console.log('[notifications.js] 🔍 Retrieving quotation with ID:', quotationId);
+        const quotationData = await getQuotationById(quotationId);
+        
+        // Get customer info from notification (it should be there)
+        const customerInfo = {
+            fullName: notificationData.customerInfo?.name || 'Unknown Customer',
+            email: notificationData.customerInfo?.email || 'no-email@example.com',
+            phone: notificationData.customerInfo?.phone || 'Unknown Phone',
+            address: notificationData.customerInfo?.address || 'Unknown Address'
+        };
 
         if (clickedButton) {
-            clickedButton.innerHTML = '<i class="fas fa-motorcycle"></i> Placing order...';
+            clickedButton.innerHTML = '<i class="fas fa-motorcycle"></i> Placing Lalamove order...';
         }
 
-        // Place the Lalamove order
+        // Place the Lalamove order using retrieved quotation
+        console.log('[notifications.js] 🚀 Placing Lalamove order with quotation:', quotationId);
         const result = await placeLalamoveOrderFromNotifications(quotationData, customerInfo);
 
         // Success feedback
@@ -1657,8 +1762,45 @@ window.handleLalamoveReady = async function (docId) {
             clickedButton.classList.add('btn-success');
         }
 
-        showToast('Lalamove order placed successfully! 🎉', 'success');
-        console.log('[notifications.js] Lalamove order result:', result);
+        // Update notification status to indicate Lalamove order was placed
+        try {
+            await db.collection('notifications').doc(docId).update({
+                lalamoveOrderPlaced: true,
+                lalamoveOrderId: result.data?.id || null,
+                lalamoveOrderStatus: result.data?.status || 'unknown',
+                lalamoveOrderPlacedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lalamoveOrderPlacedBy: 'admin', // or get current user if available
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('[notifications.js] ✅ Updated notification with Lalamove order info');
+        } catch (updateError) {
+            console.warn('[notifications.js] ⚠️ Failed to update notification with Lalamove info:', updateError);
+        }
+
+        // Create a success notification for admin
+        try {
+            await db.collection('notifications').add({
+                type: 'lalamove_order_success',
+                message: `Lalamove order placed successfully! Order ID: ${result.data?.id || 'Unknown'} | Quotation ID: ${quotationId}`,
+                lalamoveOrderId: result.data?.id || null,
+                quotationId: quotationId,
+                originalNotificationId: docId,
+                orderDetails: {
+                    customerName: customerInfo.fullName,
+                    customerPhone: customerInfo.phone,
+                    status: result.data?.status || 'unknown'
+                },
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                seen: false,
+                priority: 'normal'
+            });
+            console.log('[notifications.js] ✅ Created success notification for Lalamove order');
+        } catch (notificationError) {
+            console.warn('[notifications.js] ⚠️ Failed to create success notification:', notificationError);
+        }
+
+        showToast(`Lalamove order placed successfully! 🎉<br>Quotation ID: ${quotationId}<br>Order ID: ${result.data?.id || 'N/A'}`, 'success');
+        console.log('[notifications.js] ✅ Lalamove order result:', result);
 
         // Reset button after delay
         setTimeout(() => {
@@ -1671,8 +1813,42 @@ window.handleLalamoveReady = async function (docId) {
         }, 3000);
 
     } catch (error) {
-        console.error('[notifications.js] Lalamove Ready failed:', error);
-        
+        console.error('[notifications.js] ❌ Lalamove Ready failed:', error);
+
+        // Log error details for debugging
+        const errorDetails = {
+            message: error.message,
+            stack: error.stack,
+            docId: docId,
+            quotationId: quotationId,
+            orderId: orderId,
+            timestamp: new Date().toISOString()
+        };
+        console.error('[notifications.js] 📋 Error details:', errorDetails);
+
+        // Create error notification for tracking
+        try {
+            const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+            if (db) {
+                await db.collection('notifications').add({
+                    type: 'lalamove_order_error',
+                    message: `Lalamove order failed: ${error.message}`,
+                    error: {
+                        message: error.message,
+                        quotationId: quotationId,
+                        orderId: orderId,
+                        originalNotificationId: docId
+                    },
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    seen: false,
+                    priority: 'high'
+                });
+                console.log('[notifications.js] ✅ Created error notification for Lalamove failure');
+            }
+        } catch (notificationError) {
+            console.warn('[notifications.js] ⚠️ Failed to create error notification:', notificationError);
+        }
+
         // Error feedback
         if (clickedButton) {
             clickedButton.innerHTML = '<i class="fas fa-times"></i> Failed!';
@@ -1683,17 +1859,17 @@ window.handleLalamoveReady = async function (docId) {
         // Show detailed error message
         let errorMsg = 'Lalamove order failed: ';
         if (error.message.includes('expired')) {
-            errorMsg += 'Quotation expired and could not be refreshed';
-        } else if (error.message.includes('422')) {
-            errorMsg += 'Invalid order data (422 error)';
-        } else if (error.message.includes('quotation')) {
-            errorMsg += 'No valid quotation found for this order';
+            errorMsg += 'Quotation has expired. Please create a new quotation.';
+        } else if (error.message.includes('not found')) {
+            errorMsg += 'Quotation not found in database.';
+        } else if (error.message.includes('Database not available')) {
+            errorMsg += 'Database connection error. Please try again.';
         } else {
-            errorMsg += (error.message || error);
+            errorMsg += error.message;
         }
-        
+
         showToast(errorMsg, 'error');
-        
+
         // Reset button after delay
         setTimeout(() => {
             if (clickedButton) {
