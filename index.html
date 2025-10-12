@@ -718,6 +718,72 @@
     }
   </script>
 
+  <!-- Cart hint popup -->
+  <div id="cartHint"
+    style="position:fixed; right:18px; top:90px; background:#8B2E20; color: white; padding:12px 16px; box-shadow:0 8px 24px rgba(0,0,0,0.12); border-radius:8px; z-index:3000; display:none; opacity:0; transition:opacity 0.3s ease;">
+    Proceed to Menu to View Cart</div>
+
+  <script>
+    (function () {
+      function showCartHint() {
+        try {
+          const el = document.getElementById('cartHint');
+          if (!el) return;
+          console.debug('[cartHint] showCartHint');
+          el.style.display = 'block';
+          el.style.opacity = '1';
+          clearTimeout(window.__cartHintTimeout);
+          window.__cartHintTimeout = setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.style.display = 'none', 300); }, 1000);
+        } catch (e) { console.error('[cartHint] error in showCartHint', e); }
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        try {
+          console.debug('[cartHint] DOMContentLoaded - attaching handlers');
+
+          // header bag: find the img.bag-img and attach to its parent anchor
+          const headerBagImg = document.querySelector('.header .header-icons img.bag-img');
+          console.debug('[cartHint] headerBagImg:', headerBagImg);
+          if (headerBagImg) {
+            const anchor = headerBagImg.closest('a') || headerBagImg;
+            anchor.addEventListener('click', function (e) { e.preventDefault(); console.debug('[cartHint] header bag clicked'); showCartHint(); });
+          }
+
+          // fullscreen bag: find the img inside fullscreen actions (the bag icon)
+          const fsBagImg = document.querySelector('.fullscreen-actions img[src*="bag"]');
+          console.debug('[cartHint] fsBagImg:', fsBagImg);
+          if (fsBagImg) {
+            const anchor = fsBagImg.closest('a') || fsBagImg;
+            anchor.addEventListener('click', function (e) { e.preventDefault(); console.debug('[cartHint] fullscreen bag clicked'); showCartHint(); });
+          }
+
+          // Broad fallback: delegated handler for any clicked element that looks like a bag/cart
+          document.body.addEventListener('click', function (e) {
+            try {
+              const target = e.target;
+              if (!target) return;
+              let img = null;
+              if (target.tagName === 'IMG') img = target;
+              else if (target.querySelector) img = target.querySelector('img');
+
+              const isBagImg = img && (img.classList.contains('bag-img') || /bag/i.test(img.src || '') || /bag/i.test(img.alt || ''));
+              const targetClass = (target.getAttribute && target.getAttribute('class')) || '';
+              const isCartAnchor = /cart|bag|shopping/i.test(targetClass) || (target.tagName === 'A' && img && /bag|cart/i.test(img.src || ''));
+
+              if (isBagImg || isCartAnchor) {
+                console.debug('[cartHint] delegated detected bag/cart click', target);
+                e.preventDefault();
+                showCartHint();
+              }
+            } catch (inner) { /* swallow */ }
+          }, true);
+
+          console.debug('[cartHint] handlers attached');
+        } catch (e) { console.error('[cartHint] attach handlers error', e); }
+      });
+    })();
+  </script>
+
 </body>
 
 </html>
