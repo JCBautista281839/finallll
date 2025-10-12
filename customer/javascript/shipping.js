@@ -135,6 +135,8 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         distance: quotationData.data?.distance || null,
         estimatedTime: quotationData.data?.estimatedTime || null
       },
+      // Add order ID
+      orderId: paymentInfo.orderId || null,
       // Add order summary
       orderSummary: {
         items: Object.values(cartData).map(item => ({
@@ -950,10 +952,24 @@ document.addEventListener('DOMContentLoaded', function () {
           return;
         }
 
+        // Pre-generate Order ID for consistent usage throughout the flow
+        let preGeneratedOrderId = sessionStorage.getItem('preGeneratedOrderId');
+        if (!preGeneratedOrderId) {
+          // Generate a unique order ID that will be used consistently
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+          preGeneratedOrderId = `ORD_${timestamp}_${randomSuffix}`;
+          sessionStorage.setItem('preGeneratedOrderId', preGeneratedOrderId);
+          console.log('🆔 Pre-generated Order ID:', preGeneratedOrderId);
+        } else {
+          console.log('🆔 Using existing pre-generated Order ID:', preGeneratedOrderId);
+        }
+
         console.log('Payment confirmation values:', {
           refCode,
           currentPaymentType,
-          uploadedFileName: uploadedFile.name
+          uploadedFileName: uploadedFile.name,
+          orderId: preGeneratedOrderId
         });
 
         if (!refCode || refCode.length < 5) {
@@ -1016,7 +1032,8 @@ document.addEventListener('DOMContentLoaded', function () {
             receiptName: uploadedFile.name,
             timestamp: new Date().toISOString(),
             orderSummary: orderSummary,
-            quotationId: orderSummary.quotationId
+            quotationId: orderSummary.quotationId,
+            orderId: preGeneratedOrderId // Add the pre-generated order ID
           };
 
           sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
@@ -1055,7 +1072,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 reference: refCode,
                 receiptData: e.target.result, // base64 fallback
                 receiptName: uploadedFile.name,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                orderId: preGeneratedOrderId // Add the pre-generated order ID
               };
 
               sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
@@ -1266,12 +1284,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Try to create Firebase order first
         let orderId = null;
+        
+        // Use the pre-generated order ID from payment confirmation
+        const preGeneratedOrderId = sessionStorage.getItem('preGeneratedOrderId');
+        if (preGeneratedOrderId) {
+          console.log('🆔 Using pre-generated Order ID for order creation:', preGeneratedOrderId);
+          orderId = preGeneratedOrderId;
+        }
+        
         try {
-          orderId = await createFirebaseOrder(formData, cartData, quotationData, payment, selectedPaymentMethod);
+          // Create order with the pre-generated ID
+          await createFirebaseOrder(formData, cartData, quotationData, payment, selectedPaymentMethod, orderId);
+          console.log('✅ Order created successfully with ID:', orderId);
         } catch (error) {
           console.error('Firebase order creation failed:', error);
-          // Create a fallback order ID
-          orderId = 'ORDER_FALLBACK_' + Date.now();
+          // If no pre-generated ID exists, create a fallback
+          if (!orderId) {
+            orderId = 'ORDER_FALLBACK_' + Date.now();
+            console.log('🆔 Created fallback Order ID:', orderId);
+          }
         }
 
         if (orderId) {
@@ -1286,6 +1317,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Store order ID for confirmation page
           sessionStorage.setItem('orderId', orderId);
+          
+          // Clear the pre-generated order ID since it's been used
+          sessionStorage.removeItem('preGeneratedOrderId');
 
           showStatus('Order placed successfully! Admin will be notified for approval.', false);
 
@@ -1656,7 +1690,7 @@ async function sendOrderNotificationToAdmin(orderId, orderData) {
 }
 
 // Function to create Firebase order
-async function createFirebaseOrder(formData, cartData, quotationData, paymentInfo, paymentMethod) {
+async function createFirebaseOrder(formData, cartData, quotationData, paymentInfo, paymentMethod, preGeneratedOrderId) {
   try {
     // Initialize Lalamove Quotation Manager
     const quotationManager = new LalamoveQuotationManager();
@@ -1664,6 +1698,11 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     // Check if Firebase is available
     if (typeof firebase === 'undefined') {
       console.warn('Firebase not available for order creation');
+      // Return the pre-generated order ID if available, otherwise create a mock one
+      if (preGeneratedOrderId) {
+        console.log('Using pre-generated Order ID (Firebase unavailable):', preGeneratedOrderId);
+        return preGeneratedOrderId;
+      }
       // Create a mock order ID for testing
       const mockOrderId = 'ORDER_MOCK_' + Date.now();
       console.log('Created mock order ID:', mockOrderId);
@@ -1690,7 +1729,11 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     }
 
     if (!firebaseReady) {
-      console.warn('Firebase not ready, creating mock order');
+      console.warn('Firebase not ready, using pre-generated or mock order');
+      if (preGeneratedOrderId) {
+        console.log('Using pre-generated Order ID (Firebase not ready):', preGeneratedOrderId);
+        return preGeneratedOrderId;
+      }
       const mockOrderId = 'ORDER_MOCK_' + Date.now();
       return mockOrderId;
     }
@@ -1701,7 +1744,10 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
 
       // Fallback: Create order directly with Firestore
       const db = firebase.firestore();
-      const orderId = 'ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      
+      // Use pre-generated order ID or create new one
+      const orderId = preGeneratedOrderId || ('ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
+      console.log('Using Order ID for Firestore creation:', orderId);
 
       // Convert cart data to items array
       const items = Object.values(cartData).map(item => ({
@@ -1793,6 +1839,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
 
     // Prepare order data
     const orderData = {
+      orderId: preGeneratedOrderId || ('ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
       customerInfo: {
         firstName: formData.firstName || '',
         lastName: formData.lastName || '',
@@ -1862,9 +1909,14 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
   } catch (error) {
     console.error('[shipping.js] Error creating Firebase order:', error);
 
-    // Create a fallback order ID so the process doesn't completely fail
-    const fallbackOrderId = 'ORDER_FALLBACK_' + Date.now();
-    console.log('[shipping.js] Created fallback order ID:', fallbackOrderId);
+    // Use pre-generated order ID if available, otherwise create fallback
+    let fallbackOrderId = preGeneratedOrderId;
+    if (!fallbackOrderId) {
+      fallbackOrderId = 'ORDER_FALLBACK_' + Date.now();
+      console.log('[shipping.js] Created fallback order ID:', fallbackOrderId);
+    } else {
+      console.log('[shipping.js] Using pre-generated order ID for fallback:', fallbackOrderId);
+    }
 
     // Store order data in session storage as backup
     try {
