@@ -1009,8 +1009,9 @@ async function loadNotifications() {
                                     <strong>Payment:</strong> ${data.paymentInfo?.type?.toUpperCase() || 'Unknown'} | 
                                     <strong>Reference:</strong> ${data.paymentInfo?.reference || 'Unknown'}</small>
                                 </div>
-                                <div class="quotation-details" style="margin-top: 5px;">
+                                <div class="order-details" style="margin-top: 5px;">
                                     <small>
+                                        <strong>Order ID:</strong> ${data.orderId || 'N/A'} | 
                                         <strong>Quotation ID:</strong> ${data.quotation?.id || 'N/A'} | 
                                         <strong>Service:</strong> ${data.quotation?.serviceType || 'N/A'} | 
                                         <strong>Est. Time:</strong> ${data.quotation?.estimatedTime || 'N/A'}
@@ -1121,55 +1122,7 @@ async function loadNotifications() {
                         if (data.status === 'approved') statusColor = 'color: #28a745;';
                         else if (data.status === 'declined') statusColor = 'color: #dc3545;';
                     }
-                    
-                    // Enhanced notification display with Quotation ID and Order Summary
-                    var enhancedMessage = data.message || '';
-                    
-                    // Add Quotation ID if available
-                    if (data.quotation?.id || data.quotationId) {
-                        var quotationId = data.quotation?.id || data.quotationId;
-                        enhancedMessage += `<br><small><strong>Quotation ID:</strong> ${quotationId}`;
-                        
-                        // Add service type if available
-                        if (data.quotation?.serviceType) {
-                            enhancedMessage += ` | <strong>Service:</strong> ${data.quotation.serviceType}`;
-                        }
-                        
-                        // Add estimated time if available
-                        if (data.quotation?.estimatedTime) {
-                            enhancedMessage += ` | <strong>Est. Time:</strong> ${data.quotation.estimatedTime}`;
-                        }
-                        
-                        enhancedMessage += `</small>`;
-                    }
-                    
-                    // Add Order Summary if available
-                    if (data.orderSummary) {
-                        enhancedMessage += `<br><div style="margin-top: 5px; padding: 5px; background: #f8f9fa; border-radius: 4px;">
-                            <small><strong>Order Summary:</strong><br>`;
-                        
-                        // Display order items
-                        if (data.orderSummary.items && data.orderSummary.items.length > 0) {
-                            enhancedMessage += data.orderSummary.items.map(item => 
-                                `${item.name} x${item.quantity} - ₱${item.total ? item.total.toFixed(2) : '0.00'}`
-                            ).join('<br>') + '<br>';
-                        }
-                        
-                        // Display totals
-                        enhancedMessage += `<strong>Subtotal:</strong> ₱${data.orderSummary.subtotal ? data.orderSummary.subtotal.toFixed(2) : '0.00'}`;
-                        
-                        if (data.orderSummary.shippingFee !== undefined) {
-                            enhancedMessage += ` | <strong>Shipping:</strong> ₱${data.orderSummary.shippingFee.toFixed(2)}`;
-                        }
-                        
-                        enhancedMessage += ` | <strong>Total:</strong> ₱${data.orderSummary.total ? data.orderSummary.total.toFixed(2) : '0.00'}`;
-                        enhancedMessage += `</small></div>`;
-                    } else if (data.orderDetails?.total) {
-                        // Fallback to orderDetails if orderSummary is not available
-                        enhancedMessage += `<br><small><strong>Order Total:</strong> ₱${data.orderDetails.total}</small>`;
-                    }
-                    
-                    rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${enhancedMessage}</td><td>${time}</td></tr>`;
+                    rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
                 }
             });
 
