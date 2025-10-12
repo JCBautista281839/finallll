@@ -922,13 +922,14 @@ async function loadNotifications() {
             // Handle both QuerySnapshot.forEach and array iteration
             const forEachMethod = docs.forEach || Array.prototype.forEach;
             forEachMethod.call(docs, function (doc) {
-                var data = doc.data();
-                
-                // Skip non-inventory notifications for kitchen users
-                if (userRole === 'kitchen' && !['empty', 'restock', 'inventory'].includes(data.type)) {
-                    console.log('🍳 Kitchen: Skipping non-inventory notification:', data.type);
-                    return; // Skip this notification
-                }
+                try {
+                    var data = doc.data();
+                    
+                    // Skip non-inventory notifications for kitchen users
+                    if (userRole === 'kitchen' && !['empty', 'restock', 'inventory'].includes(data.type)) {
+                        console.log('🍳 Kitchen: Skipping non-inventory notification:', data.type);
+                        return; // Skip this notification
+                    }
                 
                 notifCount++;
 
@@ -958,19 +959,30 @@ async function loadNotifications() {
                     typeText = data.type || 'Other';
                 }
                 var time = '';
-                if (data.timestamp) {
-                    if (data.timestamp.toDate) {
-                        // Firestore timestamp
-                        time = timeAgo(data.timestamp.toDate());
-                    } else if (typeof data.timestamp === 'string') {
-                        // ISO string timestamp
-                        time = timeAgo(new Date(data.timestamp));
+                try {
+                    if (data.timestamp) {
+                        if (data.timestamp.toDate && typeof data.timestamp.toDate === 'function') {
+                            // Firestore timestamp
+                            time = timeAgo(data.timestamp.toDate());
+                        } else if (typeof data.timestamp === 'string') {
+                            // ISO string timestamp
+                            time = timeAgo(new Date(data.timestamp));
+                        } else if (data.timestamp instanceof Date) {
+                            // Already a Date object
+                            time = timeAgo(data.timestamp);
+                        } else if (typeof data.timestamp === 'object' && data.timestamp.seconds) {
+                            // Firestore timestamp object format
+                            time = timeAgo(new Date(data.timestamp.seconds * 1000));
+                        } else {
+                            // Fallback
+                            time = 'Unknown time';
+                        }
                     } else {
-                        // Fallback
-                        time = 'Unknown time';
+                        time = 'No timestamp';
                     }
-                } else {
-                    time = 'No timestamp';
+                } catch (timestampError) {
+                    console.warn('Error processing timestamp for notification:', doc.id, timestampError);
+                    time = 'Invalid timestamp';
                 }
                 if (!data.seen) {
                     unseenCount++;
@@ -1104,6 +1116,10 @@ async function loadNotifications() {
                         else if (data.status === 'declined') statusColor = 'color: #dc3545;';
                     }
                     rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
+                }
+                } catch (notificationError) {
+                    console.error('Error processing notification:', doc.id, notificationError);
+                    // Skip this notification and continue with the next one
                 }
             });
 
