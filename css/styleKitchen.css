@@ -151,15 +151,6 @@
     font-style: normal;
 }
 
-.kitchen-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem;
-    align-items: flex-start;
-    justify-content: flex-start;
-    margin-left: 25px;
-    margin-top: 15px;
-}
 
 .order-card-header {
     display: flex;
@@ -210,7 +201,7 @@
     overflow-x: hidden;
     position: relative;
     padding-bottom: 0.5em;
-    
+
 }
 
 .items-list::-webkit-scrollbar {
@@ -232,15 +223,7 @@
     scrollbar-color: transparent transparent;
 }
 
-.scrollable-items-list {
-    max-height: 180px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
 
-.items-list::after {
-    display: none !important;
-}
 
 .item-row {
     display: flex;
@@ -667,7 +650,7 @@
 }
 
 .order-number {
-    font-size: 1.3rem;
+    font-size: 18px;
     font-weight: 600;
     color: #333;
     margin-bottom: 0.5rem;
@@ -690,30 +673,6 @@
 }
 
 
-.order-divider {
-    border: none;
-    height: 1px;
-    background: #00c46c;
-    border: none;
-    color: #fff;
-    height: 45px;
-    width: 80%;
-    border-radius: 22px;
-    font-size: 1.08rem;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: auto;
-    margin: 0 auto;
-    position: static;
-    font-family: inherit;
-    font-size: 0.95rem;
-}
 
 .items-column {
     flex: 1;
@@ -734,6 +693,7 @@
     flex: 1;
     color: #333;
     font-weight: 500;
+    font-size: 14px !important;
 }
 
 .item-quantity {
@@ -744,10 +704,6 @@
 }
 
 
-.order-ready-container {
-    text-align: center;
-    margin-top: 2rem;
-}
 
 .order-ready-btn {
     background: #28a745;
