@@ -973,13 +973,18 @@ document.addEventListener('DOMContentLoaded', function () {
           const cloudinaryResult = await Promise.race([uploadPromise, timeoutPromise]);
           console.log('Cloudinary upload result:', cloudinaryResult);
 
+          // Get order summary
+          const orderSummary = prepareOrderSummary();
+          
           const paymentInfo = {
             type: currentPaymentType,
             reference: refCode,
             receiptUrl: cloudinaryResult.secure_url,
             receiptPublicId: cloudinaryResult.public_id,
             receiptName: uploadedFile.name,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            orderSummary: orderSummary,
+            quotationId: orderSummary.quotationId
           };
 
           sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
@@ -1278,6 +1283,34 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       return 'gcash'; // default
+    }
+
+    // Function to prepare order summary for notification
+    function prepareOrderSummary() {
+      const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
+      const subtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
+      const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+      const shippingCost = quotationData.data?.priceBreakdown?.total || 0;
+      
+      const orderSummary = {
+        items: Object.values(cartData).map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
+        })),
+        subtotal: subtotal,
+        shippingFee: shippingCost,
+        total: subtotal + parseFloat(shippingCost),
+        quotationId: quotationData.data?.quotationId || null,
+        deliveryDetails: {
+          serviceType: quotationData.data?.serviceType || 'PICKUP',
+          distance: quotationData.data?.distance || null,
+          estimatedTime: quotationData.data?.estimatedTime || null
+        }
+      };
+
+      return orderSummary;
     }
 
     // Function to check if quotation has expired
