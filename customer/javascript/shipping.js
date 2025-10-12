@@ -1095,24 +1095,77 @@ document.addEventListener('DOMContentLoaded', function () {
       // Initialize shipping options
       initShippingOptions();
 
-      // Initialize payment modal
-      initPaymentModal();
-
       // Find and modify the payment button
       const paymentBtn = document.querySelector('.continue-btn');
       if (paymentBtn) {
         // Remove the onclick attribute (if present)
         paymentBtn.removeAttribute('onclick');
 
-        // Enable the button immediately so users can place orders without
-        // being blocked by payment/customer verifications.
+        // Enable the button
         paymentBtn.disabled = false;
         paymentBtn.textContent = 'Place Order';
         paymentBtn.style.opacity = '1';
         paymentBtn.style.cursor = 'pointer';
 
-        // Attach handler
-        paymentBtn.addEventListener('click', handlePayment);
+        // Attach direct order handler
+        paymentBtn.addEventListener('click', async (event) => {
+          event.preventDefault();
+          
+          try {
+            // Disable button while processing
+            paymentBtn.disabled = true;
+            paymentBtn.textContent = 'Processing...';
+
+            // Get the cart data
+            const cartData = await loadCartData();
+            const formData = JSON.parse(sessionStorage.getItem('orderFormData') || sessionStorage.getItem('formData') || '{}');
+            const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+
+            // Generate order ID
+            const orderId = 'ORD' + Date.now();
+
+            // Create order in Firebase
+            const orderData = await createFirebaseOrder(formData, cartData, quotationData);
+
+            // Send notification to admin
+            await sendOrderNotificationToAdmin(orderId, orderData);
+
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              background: #28a745;
+              color: white;
+              padding: 20px;
+              border-radius: 8px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              z-index: 1000;
+              text-align: center;
+            `;
+            successMsg.innerHTML = `
+              <h4 style="margin: 0 0 10px 0;">Order Sent Successfully!</h4>
+              <p style="margin: 0;">Your order has been sent to the admin for review.</p>
+            `;
+            document.body.appendChild(successMsg);
+
+            // Remove success message after 3 seconds
+            setTimeout(() => {
+              successMsg.remove();
+              // Clear cart and redirect to menu
+              sessionStorage.removeItem('cart');
+              window.location.href = '../customer/html/menucustomer.html';
+            }, 3000);
+
+          } catch (error) {
+            console.error('Error processing order:', error);
+            paymentBtn.disabled = false;
+            paymentBtn.textContent = 'Place Order';
+            alert('There was an error processing your order. Please try again.');
+          }
+        });
 
         console.log('[shipping.js] Payment button enabled and handler attached');
 
