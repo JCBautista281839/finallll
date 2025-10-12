@@ -223,6 +223,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result.success) {
                     console.log('✅ Password reset successfully');
                     
+                    // Check if client-side update is required
+                    if (result.requiresClientUpdate && result.customToken) {
+                        console.log('🔧 Performing client-side password update with custom token');
+                        
+                        try {
+                            // Sign in with custom token
+                            const userCredential = await firebase.auth().signInWithCustomToken(result.customToken);
+                            console.log('✅ Signed in with custom token');
+                            
+                            // Update password
+                            await userCredential.user.updatePassword(newPassword);
+                            console.log('✅ Password updated successfully on client side');
+                            
+                            // Sign out
+                            await firebase.auth().signOut();
+                            console.log('✅ Signed out after password update');
+                            
+                        } catch (clientError) {
+                            console.error('❌ Client-side password update failed:', clientError);
+                            throw new Error('Password reset completed but client-side update failed. Please try logging in with your new password.');
+                        }
+                    }
+                    
                     // Clear session storage
                     sessionStorage.removeItem('passwordResetEmail');
                     sessionStorage.removeItem('passwordResetVerified');
@@ -259,6 +282,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (result.success) {
                     console.log('✅ Password reset successfully');
+                    
+                    // Check if client-side update is required
+                    if (result.requiresClientUpdate && result.customToken) {
+                        console.log('🔧 Performing client-side password update with custom token');
+                        
+                        try {
+                            // Sign in with custom token
+                            const userCredential = await firebase.auth().signInWithCustomToken(result.customToken);
+                            console.log('✅ Signed in with custom token');
+                            
+                            // Update password
+                            await userCredential.user.updatePassword(newPassword);
+                            console.log('✅ Password updated successfully on client side');
+                            
+                            // Sign out
+                            await firebase.auth().signOut();
+                            console.log('✅ Signed out after password update');
+                            
+                        } catch (clientError) {
+                            console.error('❌ Client-side password update failed:', clientError);
+                            throw new Error('Password reset completed but client-side update failed. Please try logging in with your new password.');
+                        }
+                    }
                     
                     // Clear session storage
                     sessionStorage.removeItem('passwordResetEmail');
