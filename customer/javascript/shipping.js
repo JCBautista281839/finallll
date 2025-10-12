@@ -624,9 +624,6 @@ document.addEventListener('DOMContentLoaded', function () {
       const filePreview = document.getElementById('file-preview');
       const previewImage = document.getElementById('preview-image');
       const removeFile = document.getElementById('remove-file');
-      
-      let selectedPaymentMethod = '';
-      let uploadedFile = null;
 
       // Debug: Check if all elements are found
       console.log('Payment modal elements check:', {
@@ -651,124 +648,20 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      // Show payment modal
-      function showPaymentModal(paymentType) {
-        selectedPaymentMethod = paymentType;
-        paymentModal.style.display = 'flex';
-        modalTitle.textContent = paymentType === 'gcash' ? 'GCash Payment' : 'Bank Transfer';
-        // Show appropriate QR code
-        qrCodeImage.src = paymentType === 'gcash' ? '../src/IMG/gcash-qr.jpg' : '../src/IMG/bank-qr.jpg';
-      }
-
-      // Hide payment modal
-      function hidePaymentModal() {
-        paymentModal.style.display = 'none';
-        resetPaymentForm();
-      }
-
-      // Reset payment form
-      function resetPaymentForm() {
-        if (referenceCode) referenceCode.value = '';
-        if (receiptUpload) receiptUpload.value = '';
-        if (filePreview) filePreview.style.display = 'none';
-        if (previewImage) previewImage.src = '';
-        uploadedFile = null;
-      }
-
-      // Handle file selection
-      function handleFileSelect(file) {
-        if (!file.type.match('image.*')) {
-          alert('Please upload an image file');
-          return;
-        }
-
-        uploadedFile = file;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          previewImage.src = e.target.result;
-          filePreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      }
-
-      // Event Listeners
-      if (gcashPayment) {
-        gcashPayment.addEventListener('click', () => showPaymentModal('gcash'));
-      }
-
-      if (bankTransferPayment) {
-        bankTransferPayment.addEventListener('click', () => showPaymentModal('bank_transfer'));
-      }
-
-      if (modalClose) {
-        modalClose.addEventListener('click', hidePaymentModal);
-      }
-
-      if (paymentCancel) {
-        paymentCancel.addEventListener('click', hidePaymentModal);
-      }
-
-      if (receiptUpload) {
-        receiptUpload.addEventListener('change', (e) => {
-          if (e.target.files && e.target.files[0]) {
-            handleFileSelect(e.target.files[0]);
-          }
-        });
-      }
-
-      if (removeFile) {
-        removeFile.addEventListener('click', () => {
-          resetPaymentForm();
-        });
-      }
-
-      if (paymentConfirm) {
-        paymentConfirm.addEventListener('click', async () => {
-          if (!referenceCode.value || !uploadedFile) {
-            alert('Please provide both reference number and payment receipt');
-            return;
-          }
-
-          try {
-            const reader = new FileReader();
-            reader.readAsDataURL(uploadedFile);
-            reader.onload = async () => {
-              const paymentInfo = {
-                type: selectedPaymentMethod,
-                reference: referenceCode.value,
-                receiptData: reader.result.split(',')[1],
-                receiptName: uploadedFile.name,
-                timestamp: new Date().toISOString()
-              };
-
-              // Store payment info in session
-              sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
-              
-              // Hide modal and process the order
-              hidePaymentModal();
-              
-              // Handle the payment submission
-              handlePayment(new Event('click'));
-            };
-          } catch (error) {
-            console.error('Error processing payment:', error);
-            alert('Error processing payment. Please try again.');
-          }
-        });
-      }
-
-      // Close modal when clicking outside
-      window.addEventListener('click', (e) => {
-        if (e.target === paymentModal) {
-          hidePaymentModal();
-        }
-      });
-
       // QR Code images - replace these paths with your actual QR code images
       const qrCodes = {
         gcash: '../src/IMG/gcash-qr.png', // Replace with your GCash QR code
         bank_transfer: '../src/IMG/bank-transfer-qr.png'    // Replace with your Bank Transfer QR code
       };
+
+      // Fallback QR code text for when images are not available
+      const qrCodeFallback = {
+        gcash: 'GCash QR Code - Please scan or use: 09XX-XXX-XXXX',
+        bank_transfer: 'Bank Transfer Details - Account: XXXX-XXXX-XXXX'
+      };
+
+      let uploadedFile = null;
+      let currentPaymentType = '';
 
       // Show payment modal
       function showPaymentModal(paymentType) {
@@ -1202,77 +1095,24 @@ document.addEventListener('DOMContentLoaded', function () {
       // Initialize shipping options
       initShippingOptions();
 
+      // Initialize payment modal
+      initPaymentModal();
+
       // Find and modify the payment button
       const paymentBtn = document.querySelector('.continue-btn');
       if (paymentBtn) {
         // Remove the onclick attribute (if present)
         paymentBtn.removeAttribute('onclick');
 
-        // Enable the button
+        // Enable the button immediately so users can place orders without
+        // being blocked by payment/customer verifications.
         paymentBtn.disabled = false;
         paymentBtn.textContent = 'Place Order';
         paymentBtn.style.opacity = '1';
         paymentBtn.style.cursor = 'pointer';
 
-        // Attach direct order handler
-        paymentBtn.addEventListener('click', async (event) => {
-          event.preventDefault();
-          
-          try {
-            // Disable button while processing
-            paymentBtn.disabled = true;
-            paymentBtn.textContent = 'Processing...';
-
-            // Get the cart data
-            const cartData = await loadCartData();
-            const formData = JSON.parse(sessionStorage.getItem('orderFormData') || sessionStorage.getItem('formData') || '{}');
-            const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
-
-            // Generate order ID
-            const orderId = 'ORD' + Date.now();
-
-            // Create order in Firebase
-            const orderData = await createFirebaseOrder(formData, cartData, quotationData);
-
-            // Send notification to admin
-            await sendOrderNotificationToAdmin(orderId, orderData);
-
-            // Show success message
-            const successMsg = document.createElement('div');
-            successMsg.style.cssText = `
-              position: fixed;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              background: #28a745;
-              color: white;
-              padding: 20px;
-              border-radius: 8px;
-              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-              z-index: 1000;
-              text-align: center;
-            `;
-            successMsg.innerHTML = `
-              <h4 style="margin: 0 0 10px 0;">Order Sent Successfully!</h4>
-              <p style="margin: 0;">Your order has been sent to the admin for review.</p>
-            `;
-            document.body.appendChild(successMsg);
-
-            // Remove success message after 3 seconds
-            setTimeout(() => {
-              successMsg.remove();
-              // Clear cart and redirect to menu
-              sessionStorage.removeItem('cart');
-              window.location.href = '../customer/html/menucustomer.html';
-            }, 3000);
-
-          } catch (error) {
-            console.error('Error processing order:', error);
-            paymentBtn.disabled = false;
-            paymentBtn.textContent = 'Place Order';
-            alert('There was an error processing your order. Please try again.');
-          }
-        });
+        // Attach handler
+        paymentBtn.addEventListener('click', handlePayment);
 
         console.log('[shipping.js] Payment button enabled and handler attached');
 
@@ -1354,19 +1194,19 @@ document.addEventListener('DOMContentLoaded', function () {
       event.preventDefault();
 
       try {
-        // Get payment information
-        let paymentInfo = {};
+        // Relaxed behavior: don't block order creation for missing payment
+        // or customer verification. Use sensible defaults where necessary.
+        let selectedPaymentMethod = getSelectedPaymentMethod();
+        if (!selectedPaymentMethod) selectedPaymentMethod = 'none';
+
+        let payment = {};
         try {
           const raw = sessionStorage.getItem('paymentInfo');
-          if (raw) {
-            paymentInfo = JSON.parse(raw);
-          } else {
-            throw new Error('Payment information not found');
-          }
+          if (raw) payment = JSON.parse(raw) || {};
         } catch (e) {
-          console.error('[shipping.js] Error getting payment info:', e);
-          alert('Please complete the payment process first');
-          return;
+          console.warn('[shipping.js] Failed to parse paymentInfo; proceeding without it');
+          payment = {};
+          sessionStorage.removeItem('paymentInfo');
         }
 
         // Show loading status
@@ -1734,32 +1574,11 @@ async function sendOrderNotificationToAdmin(orderId, orderData) {
       type: 'order_approval',
       orderId: orderId,
       message: notificationMessage,
-      // Customer Information
-      customerInfo: {
-        name: orderData.customerInfo.fullName,
-        email: orderData.customerInfo.email,
-        phone: orderData.customerInfo.phone
-      },
-      // Payment Details
-      paymentDetails: {
-        method: orderData.paymentMethod,
-        reference: orderData.paymentInfo.reference,
-        receiptUrl: orderData.paymentInfo.receiptUrl,
-        receiptData: orderData.paymentInfo.receiptData,
-        receiptName: orderData.paymentInfo.receiptName
-      },
-      // Order Details
-      orderDetails: {
-        items: orderData.items,
-        subtotal: orderData.subtotal,
-        shippingCost: orderData.shippingCost,
-        total: orderData.total,
-        shippingMethod: orderData.shippingInfo?.method || 'Standard'
-      },
-      shippingCost: orderData.shippingCost,
-      shippingMethod: orderData.shippingInfo.method,
-      // Additional Details
-      notes: orderData.notes,
+      customerName: orderData.customerInfo.fullName,
+      customerEmail: orderData.customerInfo.email,
+      orderTotal: orderData.total,
+      paymentMethod: orderData.paymentMethod,
+      paymentReference: orderData.paymentInfo.reference,
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       seen: false,
       requiresAction: true
