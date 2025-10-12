@@ -16,6 +16,8 @@
 
   <!-- Your Custom Styles -->
   <link rel="stylesheet" href="../css/menu.css">
+  <link rel="stylesheet" href="../css/menu-responsive.css">
+ 
 
 </head>
 
@@ -30,7 +32,10 @@
             <span>MENU</span>
           </a>
         </div>
-        <div class="col-lg-9 col-md-8 col-6">
+        
+   
+        
+        <div class="col-lg-9 col-md-8 d-none d-lg-block">
           <div class="header-right-content">
             <nav class="main-nav d-none d-lg-flex">
               <ul class="nav-list">
@@ -57,13 +62,87 @@
             </div>
           </div>
         </div>
+
+        <!-- Mobile and Tablet Burger Menu Button -->
+        <div class="col-6 d-flex d-lg-none justify-content-start">
+          <button class="navbar-toggler hamburger-menu" type="button" 
+            aria-label="Toggle navigation" id="hamburgerMenu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+          </button>
+        </div>
   </header>
+  <!-- Fullscreen Menu Overlay -->
+  <div class="fullscreen-menu-overlay" id="fullscreenMenu">
+   <div class="fullscreen-menu-content">
+     <!-- Close Button -->
+     <button class="fullscreen-close-btn" id="fullscreenCloseBtn">
+       <span class="close-icon">×</span>
+     </button>
+
+     <!-- Navigation Menu -->
+    <nav class="fullscreen-nav">
+      <ul class="fullscreen-nav-list">
+         <li class="fullscreen-nav-item">
+           <a href="/index.html" class="fullscreen-nav-link">
+             <span class="nav-text">Home</span>
+             <span class="nav-highlight"></span>
+           </a>
+         </li>
+        <li class="fullscreen-nav-item">
+          <a href="/customer/html/menucustomer.html" class="fullscreen-nav-link">
+            <span class="nav-text">Menu</span>
+            <span class="nav-highlight"></span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Action Icons -->
+    <div class="fullscreen-actions">
+      <div class="action-item">
+         <a href="#" class="action-link" id="fullscreenUserProfile" onclick="handleUserProfileClick(event)">
+           <div class="action-icon">
+             <img src="../../src/Icons/user (1).png" alt="User Icon">
+           </div>
+           <span class="action-text">Account</span>
+         </a>
+        <!-- User dropdown for fullscreen menu -->
+        <div class="fullscreen-user-dropdown" id="fullscreenUserDropdown" style="display: none;">
+          <div class="fullscreen-user-info" id="fullscreenUserInfo">
+            <div class="fullscreen-user-name" id="fullscreenUserName">Loading...</div>
+            <div class="fullscreen-user-email" id="fullscreenUserEmail">Loading...</div>
+          </div>
+          <div class="fullscreen-dropdown-divider"></div>
+          <a href="customer/html/account.html" class="fullscreen-dropdown-item">
+            <i class="fas fa-user"></i> My Account
+          </a>
+          <div class="fullscreen-dropdown-divider"></div>
+          <a href="#" class="fullscreen-dropdown-item logout-item" onclick="handleLogout(event)">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+
+       <div class="action-item">
+         <a href="#" class="action-link" id="fullscreenShoppingBag">
+           <div class="action-icon">
+             <img src="../../src/Icons/bag (1).png" alt="Shopping Bag Icon">
+           </div>
+           <span class="action-text">Bag</span>
+         </a>
+       </div>
+    </div>
+  </div>
+</div>
 
   <!-- Main Content -->
-  <main class="menu-page container-fluid">
-    <div class="row">
-      <!-- Left: Menu Items -->
-      <div class="col-lg-8">
+  <main class="menu-page">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Left: Menu Items -->
+        <div class="col-12">
         <div class="menu-categories">
           <!-- Categories will be loaded dynamically from Firebase -->
           <div class="category-links-container">
@@ -141,6 +220,95 @@
       }
     });
   </script>
+
+  <!-- Burger Menu JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const hamburgerMenu = document.getElementById('hamburgerMenu');
+      const fullscreenMenu = document.getElementById('fullscreenMenu');
+
+      // Function to open menu
+      function openMenu() {
+        console.log('Opening fullscreen menu...');
+        fullscreenMenu.classList.add('active');
+        if (hamburgerMenu) hamburgerMenu.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        console.log('Menu opened, classes added:', {
+          fullscreenActive: fullscreenMenu.classList.contains('active'),
+          hamburgerActive: hamburgerMenu ? hamburgerMenu.classList.contains('active') : false
+        });
+      }
+
+      // Function to close menu
+      function closeMenu() {
+        console.log('Closing fullscreen menu...');
+        fullscreenMenu.classList.remove('active');
+        if (hamburgerMenu) hamburgerMenu.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        console.log('Menu closed, classes removed');
+      }
+
+      // Toggle fullscreen menu with hamburger button
+      if (hamburgerMenu) {
+        hamburgerMenu.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Hamburger menu clicked!');
+          
+          if (fullscreenMenu.classList.contains('active')) {
+            console.log('Closing menu...');
+            closeMenu();
+          } else {
+            console.log('Opening menu...');
+            openMenu();
+          }
+        });
+      }
+
+      // Close menu when clicking outside the content
+      if (fullscreenMenu) {
+        fullscreenMenu.addEventListener('click', function (e) {
+          if (e.target === fullscreenMenu) {
+            closeMenu();
+          }
+        });
+      }
+
+      // Close menu with close button
+      const fullscreenCloseBtn = document.getElementById('fullscreenCloseBtn');
+      if (fullscreenCloseBtn) {
+        fullscreenCloseBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Close button clicked!');
+          closeMenu();
+        });
+      }
+
+      // Handle fullscreen shopping bag click
+      const fullscreenShoppingBag = document.getElementById('fullscreenShoppingBag');
+      if (fullscreenShoppingBag) {
+        fullscreenShoppingBag.addEventListener('click', function (e) {
+          e.preventDefault();
+          // Close the fullscreen menu first
+          closeMenu();
+          // Then trigger the shopping bag popup
+          const shoppingBagBtn = document.getElementById('shopping-bag-btn');
+          if (shoppingBagBtn) {
+            shoppingBagBtn.click();
+          }
+        });
+      }
+
+      // Close menu with Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && fullscreenMenu.classList.contains('active')) {
+          closeMenu();
+        }
+      });
+    });
+  </script>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       // Shopping bag popup functionality
@@ -992,4 +1160,5 @@
   </script>
 </body>
 
+</html>
 </html>
