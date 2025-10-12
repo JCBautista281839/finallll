@@ -1574,11 +1574,21 @@ async function sendOrderNotificationToAdmin(orderId, orderData) {
       type: 'order_approval',
       orderId: orderId,
       message: notificationMessage,
+      // Customer Information
       customerName: orderData.customerInfo.fullName,
       customerEmail: orderData.customerInfo.email,
+      customerPhone: orderData.customerInfo.phone,
+      // Payment Information
       orderTotal: orderData.total,
       paymentMethod: orderData.paymentMethod,
       paymentReference: orderData.paymentInfo.reference,
+      // Order Summary
+      items: orderData.items,
+      subtotal: orderData.subtotal,
+      shippingCost: orderData.shippingCost,
+      shippingMethod: orderData.shippingInfo.method,
+      // Additional Details
+      notes: orderData.notes,
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       seen: false,
       requiresAction: true

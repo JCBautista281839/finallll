@@ -1050,12 +1050,40 @@ async function loadNotifications() {
                         <td>
                             <div class="order-notification-content">
                                 <p><strong>${data.message || ''}</strong></p>
+                                
+                                <!-- Customer Information -->
+                                <div class="order-details mb-2">
+                                    <small>
+                                        <strong>Customer:</strong> ${data.customerName || 'Unknown'} |
+                                        <strong>Email:</strong> ${data.customerEmail || 'Unknown'} |
+                                        <strong>Phone:</strong> ${data.customerPhone || 'N/A'}
+                                    </small>
+                                </div>
+                                
+                                <!-- Order Summary -->
+                                <div class="order-items mb-2" style="background: #f8f9fa; padding: 8px; border-radius: 4px;">
+                                    ${data.items ? data.items.map(item => `
+                                        <div class="item-row" style="font-size: 0.9em; margin-bottom: 4px;">
+                                            <small>${item.name} × ${item.quantity} = ₱${(item.price * item.quantity).toFixed(2)}</small>
+                                        </div>
+                                    `).join('') : '<small>No items available</small>'}
+                                    
+                                    <div class="order-totals" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #dee2e6;">
+                                        <small>
+                                            <strong>Subtotal:</strong> ₱${data.subtotal?.toFixed(2) || '0.00'} |
+                                            <strong>Shipping:</strong> ₱${data.shippingCost?.toFixed(2) || '0.00'} |
+                                            <strong>Total:</strong> ₱${data.total?.toFixed(2) || '0.00'}
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Payment and Shipping -->
                                 <div class="order-details">
-                                    <small><strong>Customer:</strong> ${data.customerInfo?.name || 'Unknown'} | 
-                                    <strong>Email:</strong> ${data.customerInfo?.email || 'Unknown'} | 
-                                    <strong>Total:</strong> ₱${data.orderDetails?.total || 'Unknown'} | 
-                                    <strong>Payment:</strong> ${data.paymentDetails?.method?.toUpperCase() || 'Unknown'} | 
-                                    <strong>Reference:</strong> ${data.paymentDetails?.reference || 'Unknown'}</small>
+                                    <small>
+                                        <strong>Payment:</strong> ${data.paymentMethod?.toUpperCase() || 'Unknown'} |
+                                        <strong>Reference:</strong> ${data.paymentReference || 'N/A'} |
+                                        <strong>Shipping:</strong> ${data.shippingMethod || 'N/A'}
+                                    </small>
                                 </div>
                                 ${data.paymentDetails?.receiptUrl ?
                             `<div class="receipt-preview">
