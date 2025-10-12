@@ -105,6 +105,12 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
       // Don't try to authenticate for notifications - just proceed
     }
 
+    // Get quotation data and order summary
+    const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
+    const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
+    const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
+    const shippingCost = quotationData.data?.priceBreakdown?.total || 0;
+
     // Create notification data with proper validation
     const notificationData = {
       type: 'payment_verification',
@@ -114,6 +120,25 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         phone: formData.phone || customerPhone,
         email: formData.email || 'No email provided',
         address: formData.fullAddress || formData.address || 'No address provided'
+      },
+      // Add quotation ID and delivery details
+      quotation: {
+        id: quotationData.data?.quotationId || null,
+        serviceType: quotationData.data?.serviceType || 'PICKUP',
+        distance: quotationData.data?.distance || null,
+        estimatedTime: quotationData.data?.estimatedTime || null
+      },
+      // Add order summary
+      orderSummary: {
+        items: Object.values(cartData).map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
+        })),
+        subtotal: orderSubtotal,
+        shippingFee: shippingCost,
+        total: orderSubtotal + parseFloat(shippingCost)
       },
       paymentInfo: {
         type: paymentInfo.type || 'unknown',
@@ -279,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Helper function to enable the Place Order button
     function enablePlaceOrderButton(buttonElement = null) {
-      const placeOrderBtn = buttonElement || document.getElementById('place-order-btn') || document.querySelector('.continue-btn');
+      const placeOrderBtn = buttonElement || document.getElementById('place-order-btn') || document.querySelector('.z-btn');
       if (placeOrderBtn) {
         placeOrderBtn.disabled = false;
         placeOrderBtn.textContent = 'Place Order';
