@@ -3,48 +3,19 @@ function generateUniqueId() {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-// Helper function to update order timestamp
-function updateOrderTimestamp(orderNumber) {
-    const db = firebase.firestore();
-    const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-    return db.collection("orders").where("orderNumber", "==", orderNumber)
-        .get()
-        .then(querySnapshot => {
-            if (querySnapshot.empty) {
-                console.warn('No order found with order number:', orderNumber);
-                return Promise.reject('Order not found');
-            }
-            const batch = db.batch();
-            querySnapshot.forEach(doc => {
-                const data = doc.data();
-                const subtotal = parseFloat(data.subtotal) || 0;
-                const tax = parseFloat(data.tax) || 0;
-                const discount = parseFloat(data.discount) || 0;
-                const total = subtotal + tax - discount;
-                batch.update(doc.ref, {
-                    lastUpdated: timestamp,
-                    updatedAt: timestamp,
-                    total: total
-                });
-            });
-            return batch.commit();
-        })
-        .then(() => {
-            console.log('Order timestamp and total updated successfully for order:', orderNumber);
-        })
-        .catch(error => {
-            console.error('Error updating order timestamp:', error);
-            return Promise.reject(error);
-        });
-}
+// Note: updateOrderTimestamp is implemented later in the file with a single-document update
+// to avoid ambiguous behavior when orderNumber is used as a document id.
 
 // Store orders globally for filtering
 let allOrders = [];
 let retryCount = 0;
 const maxRetries = 5;
 
+// Track order IDs to prevent duplicates
+const seenOrderIds = new Set();
+
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('Order page loaded, initializing...');
+    console.debug('Order page loaded, initializing...');
 
     // Ensure Firebase is properly loaded
     if (typeof firebase === 'undefined') {
@@ -137,6 +108,34 @@ function sanitizeOrderData(orderData) {
     }
 }
 
+// Helper to return the Firestore document id we should use for an order
+function getDocId(order) {
+    if (!order) return '';
+    return order.id || order.orderNumberFormatted || order.orderNumber || '';
+}
+
+// Helper to create a hash of order data for duplicate detection
+function createOrderHash(orderData) {
+    if (!orderData) return '';
+
+    // Create a hash based on key order properties
+    const keyData = {
+        orderNumber: orderData.orderNumberFormatted || orderData.orderNumber || orderData.id,
+        status: orderData.status,
+        total: orderData.total,
+        items: orderData.items ? orderData.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice
+        })) : [],
+        timestamp: orderData.timestamp,
+        orderType: orderData.orderType,
+        tableNumber: orderData.tableNumber
+    };
+
+    return JSON.stringify(keyData);
+}
+
 // Show loading state while connecting
 function showLoadingState() {
     const tableBody = document.querySelector('table tbody');
@@ -156,7 +155,7 @@ function showLoadingState() {
 
 // Automatic retry mechanism for Firebase connection
 async function autoRetryFirebaseConnection() {
-    console.log(`🔄 Attempting Firebase connection (attempt ${retryCount + 1}/${maxRetries})`);
+    console.debug(`🔄 Attempting Firebase connection (attempt ${retryCount + 1}/${maxRetries})`);
 
     try {
         const success = await testFirebaseConnection();
@@ -206,7 +205,7 @@ function showFinalErrorState() {
 
 async function testFirebaseConnection() {
     try {
-        console.log('🔍 Testing Firebase connection...');
+        console.debug('🔍 Testing Firebase connection...');
 
         if (typeof firebase === 'undefined') {
             throw new Error('Firebase is not loaded');
@@ -225,8 +224,8 @@ async function testFirebaseConnection() {
 
         // Test basic connectivity by trying to read orders collection
         const testQuery = await db.collection('orders').limit(1).get();
-        console.log('✅ Firebase connection successful');
-        console.log('📦 Orders collection accessible:', !testQuery.empty);
+        console.debug('✅ Firebase connection successful');
+        console.debug('📦 Orders collection accessible:', !testQuery.empty);
 
         return true;
     } catch (error) {
@@ -250,7 +249,7 @@ async function testFirebaseConnection() {
 }
 
 function initializeOrdersListener() {
-    console.log('Initializing orders listener...');
+    console.debug('Initializing orders listener...');
 
     // Wait for Firebase to be ready
     if (typeof firebase === 'undefined' || !firebase.firestore) {
@@ -286,8 +285,21 @@ function initializeOrdersListener() {
     // Listen for all orders - use a more flexible query
     db.collection('orders')
         .onSnapshot((snapshot) => {
-            console.log('Received orders update:', snapshot.size, 'orders');
-            allOrders = []; // Clear existing orders
+            console.debug('Received orders update:', snapshot.size, 'orders');
+            console.debug('Snapshot docs:', snapshot.docs.map(doc => ({
+                id: doc.id,
+                data: doc.data()
+            })));
+
+            // AGGRESSIVE CLEANUP - Clear everything
+            allOrders = [];
+            seenOrderIds.clear();
+
+            // Clear the table completely before processing
+            const tableBody = document.querySelector('table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '';
+            }
 
             if (snapshot.empty) {
                 console.log('No orders found in Firebase');
@@ -295,8 +307,19 @@ function initializeOrdersListener() {
                 return;
             }
 
+            // Process documents with aggressive duplicate prevention
+            const processedDocs = new Set();
+            const processedOrderIds = new Set();
+
             snapshot.forEach((doc) => {
                 try {
+                    // Skip if we've already processed this document
+                    if (processedDocs.has(doc.id)) {
+                        console.warn('🚫 DUPLICATE DOCUMENT SKIPPED:', doc.id);
+                        return;
+                    }
+                    processedDocs.add(doc.id);
+
                     // Get the raw order data
                     const rawOrderData = {
                         id: doc.id,
@@ -307,7 +330,16 @@ function initializeOrdersListener() {
                     const orderData = sanitizeOrderData(rawOrderData);
 
                     if (orderData) {
-                        console.log('Processing order:', orderData.id || doc.id);
+                        const orderId = getDocId(orderData) || doc.id;
+
+                        // AGGRESSIVE duplicate check
+                        if (processedOrderIds.has(orderId)) {
+                            console.warn('🚫 DUPLICATE ORDER ID SKIPPED:', orderId);
+                            return;
+                        }
+                        processedOrderIds.add(orderId);
+
+                        console.debug('✅ Processing unique order:', orderId, 'doc.id:', doc.id);
                         allOrders.push(orderData);
                     } else {
                         console.error('Failed to process order:', doc.id);
@@ -380,7 +412,7 @@ function initializeOrdersListener() {
                 return getOrderDate(b) - getOrderDate(a); // Newest first
             });
 
-            console.log('Displaying', allOrders.length, 'orders');
+            console.debug('Displaying', allOrders.length, 'orders');
             // Display all orders initially
             displayOrders(allOrders);
         }, (error) => {
@@ -389,7 +421,7 @@ function initializeOrdersListener() {
             if (tableBody) {
                 tableBody.innerHTML =
                     '<tr>' +
-                    '<td colspan="7" class="text-center py-4 text-danger">' +
+                    '<td colspan="8" class="text-center py-4 text-danger">' +
                     '<i class="fa fa-exclamation-triangle fa-2x mb-2 d-block"></i>' +
                     '<div>Error loading orders from Firebase</div>' +
                     '<small class="text-muted">' + error.message + '</small>' +
@@ -405,7 +437,9 @@ function initializeOrdersListener() {
 
 function createOrderRow(orderData) {
     const row = document.createElement('tr');
-    const isPendingPayment = orderData.status === 'Pending Payment';
+    // Normalize status comparison (case-insensitive)
+    const statusLower = String(orderData.status || '').toLowerCase();
+    const isPendingPayment = statusLower === 'pending payment';
 
     // Only make pending payment orders clickable
     if (isPendingPayment) {
@@ -415,7 +449,7 @@ function createOrderRow(orderData) {
         row.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
 
-            console.log('Opening pending order in POS edit mode:', orderData.id);
+            console.debug('Opening pending order in POS edit mode:', getDocId(orderData));
 
             try {
                 // First sanitize the order data to ensure it has all required fields
@@ -446,7 +480,7 @@ function createOrderRow(orderData) {
                 sessionStorage.setItem('editingOrder', JSON.stringify(orderForNavigation));
                 sessionStorage.setItem('isEditMode', 'true');
                 sessionStorage.setItem('shouldRestoreOrder', 'true');
-                sessionStorage.setItem('originalOrderId', orderData.id);
+                sessionStorage.setItem('originalOrderId', getDocId(orderData));
 
                 // ✅ Show loading spinner
                 const loadingDiv = document.createElement('div');
@@ -524,20 +558,18 @@ function createOrderRow(orderData) {
         // Always use the saved total for display
         '<td class="align-middle text-center">₱' + total.toFixed(2) + '</td>' +
         '<td class="align-middle text-center status-cell">' +
-        (orderData.status === 'Pending Payment' ?
-            '<span class="badge badge-pending-payment">' +
-            orderData.status +
-            '</span>' :
-            '<span class="badge ' + getStatusBadgeClass(orderData.status || 'Processing') + '">' +
-            (orderData.status || 'Processing') +
-            '</span>'
-        ) +
+        (() => {
+            const normalizedStatus = normalizeOrderStatus(orderData.status);
+            return normalizedStatus === 'Pending Payment' ?
+                '<span class="badge badge-pending-payment">' + normalizedStatus + '</span>' :
+                '<span class="badge ' + getStatusBadgeClass(normalizedStatus) + '">' + (normalizedStatus || 'Unknown') + '</span>';
+        })() +
         '<small class="edit-hint" style="visibility: ' + (isPendingPayment ? 'visible' : 'hidden') + ';">' +
         '<i class="fas fa-edit"></i>' +
         '</small>' +
         '</td>' +
         '<td class="align-middle text-center">' +
-        '<button class="btn btn-sm btn-outline-primary me-2" onclick="viewOrderDetails(\'' + orderData.orderNumberFormatted + '\')">' +
+        '<button class="btn btn-sm btn-outline-primary me-2" onclick="viewOrderDetails(\'' + getDocId(orderData) + '\')">' +
         'View' +
         '</button>' +
         '<small class="edit-hint" style="visibility: ' + (isPendingPayment ? 'visible' : 'hidden') + ';">' +
@@ -726,25 +758,63 @@ function getStatusBadgeClass(status) {
     switch (status?.toLowerCase()) {
         case 'completed':
             return 'bg-success';
-        case 'processing':
-            return 'bg-warning text-dark';
         case 'pending payment':
             return 'badge-pending-payment'; // Special class for clickable pending payment orders
         case 'in the kitchen':
             return 'bg-info text-dark';
-        case 'ready':
-            return 'bg-success';
-        case 'cancelled':
-            return 'bg-danger';
         default:
+            // For any invalid status, default to secondary
             return 'bg-secondary';
     }
+}
+
+// Function to validate and normalize order status
+function normalizeOrderStatus(status) {
+    if (!status) return null;
+
+    const statusLower = status.toLowerCase().trim();
+    const originalStatus = status;
+
+    // Map invalid statuses to valid ones
+    let normalizedStatus;
+    switch (statusLower) {
+        case 'processing':
+        case 'payment approved':
+            normalizedStatus = 'In the Kitchen';
+            break;
+        case 'ready':
+            normalizedStatus = 'Completed';
+            break;
+        case 'cancelled':
+            normalizedStatus = null; // Don't show cancelled orders
+            break;
+        case 'in the kitchen':
+            normalizedStatus = 'In the Kitchen';
+            break;
+        case 'pending payment':
+            normalizedStatus = 'Pending Payment';
+            break;
+        case 'completed':
+            normalizedStatus = 'Completed';
+            break;
+        default:
+            console.warn('Unknown order status:', status);
+            normalizedStatus = null; // Don't show orders with unknown status
+            break;
+    }
+
+    // Log status normalization for debugging
+    if (originalStatus !== normalizedStatus && normalizedStatus !== null) {
+        console.log(`Order status normalized: "${originalStatus}" → "${normalizedStatus}"`);
+    }
+
+    return normalizedStatus;
 }
 
 // Function to determine the display status based on the order status
 function getDisplayStatus(orderData) {
     // Only use the normal status, ignoring any kitchen status
-    return orderData.status || 'Unknown';
+    return normalizeOrderStatus(orderData.status) || 'Unknown';
 }
 
 function formatOrderItems(items) {
@@ -815,7 +885,7 @@ function filterOrders(searchTerm) {
     if (filteredOrders.length === 0) {
         tableBody.innerHTML =
             '<tr>' +
-            '<td colspan="6" class="text-center py-4">' +
+            '<td colspan="8" class="text-center py-4">' +
             '<div class="text-muted">No orders found matching "' + searchTerm + '"</div>' +
             '</td>' +
             '</tr>';
@@ -829,22 +899,83 @@ function displayOrders(orders) {
     const tableBody = document.querySelector('table tbody');
     if (!tableBody) return;
 
-    console.log('Displaying orders:', orders.length);
+    console.debug('Displaying orders:', orders.length);
+    console.debug('Orders before filtering:', orders.map(o => ({
+        id: getDocId(o),
+        status: o.status,
+        total: o.total,
+        timestamp: o.timestamp
+    })));
+
+    // Check for exact duplicates in the input array
+    const inputOrderIds = orders.map(o => getDocId(o));
+    const duplicateIds = inputOrderIds.filter((id, index) => inputOrderIds.indexOf(id) !== index);
+    if (duplicateIds.length > 0) {
+        console.warn('Duplicate order IDs in input array:', duplicateIds);
+    }
 
     if (orders.length === 0) {
         tableBody.innerHTML =
             '<tr>' +
-            '<td colspan="7" class="text-center py-4 text-muted">' +
+            '<td colspan="8" class="text-center py-4 text-muted">' +
             '<i class="bi bi-search me-2"></i>No orders found' +
             '</td>' +
             '</tr>';
         return;
     }
 
+    // NUCLEAR DOM CLEANUP - Remove everything
     tableBody.innerHTML = '';
-    // Filter out orders with status 'Processing' (cancelled via POS Back)
-    const filteredOrders = orders.filter(orderData => (orderData.status || '').toLowerCase() !== 'processing');
-    filteredOrders.forEach(orderData => {
+
+    // Remove all existing rows
+    const existingRows = tableBody.querySelectorAll('tr');
+    existingRows.forEach(row => row.remove());
+
+    // Force complete cleanup
+    while (tableBody.firstChild) {
+        tableBody.removeChild(tableBody.firstChild);
+    }
+
+    // Additional safety - clear any lingering data attributes
+    tableBody.removeAttribute('data-processed');
+    tableBody.removeAttribute('data-orders-count');
+
+    // Only show orders with valid statuses: 'In the Kitchen', 'Pending Payment', 'Completed'
+    const filteredOrders = orders.filter(orderData => {
+        const normalizedStatus = normalizeOrderStatus(orderData.status);
+        return normalizedStatus !== null; // Only show orders with valid statuses
+    });
+
+    // NUCLEAR OPTION - Multiple layers of duplicate prevention
+    const seenIds = new Set();
+    const seenDocIds = new Set();
+    const seenOrderNumbers = new Set();
+
+    const finalUniqueOrders = filteredOrders.filter(orderData => {
+        const orderId = getDocId(orderData);
+        const docId = orderData.id;
+        const orderNumber = orderData.orderNumberFormatted || orderData.orderNumber;
+
+        // TRIPLE CHECK for duplicates
+        if (seenIds.has(orderId) || seenDocIds.has(docId) || seenOrderNumbers.has(orderNumber)) {
+            console.warn('🚫🚫🚫 TRIPLE DUPLICATE DETECTED AND BLOCKED:', {
+                orderId,
+                docId,
+                orderNumber,
+                status: orderData.status
+            });
+            return false; // Skip duplicate
+        }
+
+        seenIds.add(orderId);
+        seenDocIds.add(docId);
+        seenOrderNumbers.add(orderNumber);
+        return true;
+    });
+
+    console.debug('Final unique orders to display:', finalUniqueOrders.length);
+
+    finalUniqueOrders.forEach(orderData => {
         // Create a log-friendly version of the order for debugging
         const orderSummary = {
             id: orderData.id,
@@ -854,9 +985,22 @@ function displayOrders(orders) {
             items: orderData.items?.length || 0,
             total: orderData.total
         };
-        console.log('Creating row for order:', orderSummary);
+        console.debug('Creating row for order:', orderSummary);
         try {
             const orderRow = createOrderRow(orderData);
+
+            // Add unique identifier to prevent DOM duplicates
+            const uniqueId = `order-${orderData.id}-${Date.now()}`;
+            orderRow.setAttribute('data-order-id', orderData.id);
+            orderRow.setAttribute('data-unique-id', uniqueId);
+
+            // Check if this order already exists in DOM
+            const existingRow = tableBody.querySelector(`[data-order-id="${orderData.id}"]`);
+            if (existingRow) {
+                console.warn('🚫 DOM DUPLICATE PREVENTED:', orderData.id);
+                return;
+            }
+
             tableBody.appendChild(orderRow);
         } catch (error) {
             console.error('Error creating row for order:', error, orderSummary);
