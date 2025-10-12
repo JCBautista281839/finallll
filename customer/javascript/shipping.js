@@ -121,6 +121,13 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         email: formData.email || 'No email provided',
         address: formData.fullAddress || formData.address || 'No address provided'
       },
+      paymentInfo: {
+        type: paymentInfo.type,
+        reference: paymentInfo.reference,
+        receiptUrl: paymentInfo.receiptUrl,
+        receiptName: paymentInfo.receiptName,
+        timestamp: paymentInfo.timestamp
+      },
       // Add quotation ID and delivery details
       quotation: {
         id: quotationData.data?.quotationId || null,
@@ -134,7 +141,7 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          total: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
+          total: (typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''))) * item.quantity
         })),
         subtotal: orderSubtotal,
         shippingFee: shippingCost,
@@ -1701,7 +1708,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         name: item.name,
         price: item.price,
         quantity: item.quantity,
-        totalPrice: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
+        totalPrice: (typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.]/g, '')) : parseFloat(item.price)) * item.quantity
       }));
 
       // Calculate totals
@@ -1760,14 +1767,12 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     }
 
     // Convert cart data to items array
-    const items = Object.values(cartData).map(item => ({
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      totalPrice: parseFloat(item.price.replace(/[^\d.]/g, '')) * item.quantity
-    }));
-
-    // Calculate totals
+      const items = Object.values(cartData).map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        totalPrice: (typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''))) * item.quantity
+      }));    // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
     const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
     const total = subtotal + shippingCost;
@@ -1922,7 +1927,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
     // Calculate totals for display
     const items = Object.values(cartData);
     const subtotal = items.reduce((sum, item) => {
-      const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+      const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.]/g, '')) : parseFloat(item.price);
       return sum + (price * item.quantity);
     }, 0);
     const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
@@ -2014,7 +2019,7 @@ async function sendNotificationViaServer(orderId, formData, cartData, quotationD
   try {
     const items = Object.values(cartData);
     const subtotal = items.reduce((sum, item) => {
-      const price = parseFloat(item.price.replace(/[^\d.]/g, ''));
+      const price = typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''));
       return sum + (price * item.quantity);
     }, 0);
     const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
