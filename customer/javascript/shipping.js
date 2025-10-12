@@ -624,6 +624,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const filePreview = document.getElementById('file-preview');
       const previewImage = document.getElementById('preview-image');
       const removeFile = document.getElementById('remove-file');
+      
+      let selectedPaymentMethod = '';
+      let uploadedFile = null;
 
       // Debug: Check if all elements are found
       console.log('Payment modal elements check:', {
@@ -648,20 +651,124 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      // Show payment modal
+      function showPaymentModal(paymentType) {
+        selectedPaymentMethod = paymentType;
+        paymentModal.style.display = 'flex';
+        modalTitle.textContent = paymentType === 'gcash' ? 'GCash Payment' : 'Bank Transfer';
+        // Show appropriate QR code
+        qrCodeImage.src = paymentType === 'gcash' ? '../src/IMG/gcash-qr.jpg' : '../src/IMG/bank-qr.jpg';
+      }
+
+      // Hide payment modal
+      function hidePaymentModal() {
+        paymentModal.style.display = 'none';
+        resetPaymentForm();
+      }
+
+      // Reset payment form
+      function resetPaymentForm() {
+        if (referenceCode) referenceCode.value = '';
+        if (receiptUpload) receiptUpload.value = '';
+        if (filePreview) filePreview.style.display = 'none';
+        if (previewImage) previewImage.src = '';
+        uploadedFile = null;
+      }
+
+      // Handle file selection
+      function handleFileSelect(file) {
+        if (!file.type.match('image.*')) {
+          alert('Please upload an image file');
+          return;
+        }
+
+        uploadedFile = file;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImage.src = e.target.result;
+          filePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Event Listeners
+      if (gcashPayment) {
+        gcashPayment.addEventListener('click', () => showPaymentModal('gcash'));
+      }
+
+      if (bankTransferPayment) {
+        bankTransferPayment.addEventListener('click', () => showPaymentModal('bank_transfer'));
+      }
+
+      if (modalClose) {
+        modalClose.addEventListener('click', hidePaymentModal);
+      }
+
+      if (paymentCancel) {
+        paymentCancel.addEventListener('click', hidePaymentModal);
+      }
+
+      if (receiptUpload) {
+        receiptUpload.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleFileSelect(e.target.files[0]);
+          }
+        });
+      }
+
+      if (removeFile) {
+        removeFile.addEventListener('click', () => {
+          resetPaymentForm();
+        });
+      }
+
+      if (paymentConfirm) {
+        paymentConfirm.addEventListener('click', async () => {
+          if (!referenceCode.value || !uploadedFile) {
+            alert('Please provide both reference number and payment receipt');
+            return;
+          }
+
+          try {
+            const reader = new FileReader();
+            reader.readAsDataURL(uploadedFile);
+            reader.onload = async () => {
+              const paymentInfo = {
+                type: selectedPaymentMethod,
+                reference: referenceCode.value,
+                receiptData: reader.result.split(',')[1],
+                receiptName: uploadedFile.name,
+                timestamp: new Date().toISOString()
+              };
+
+              // Store payment info in session
+              sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
+              
+              // Hide modal and process the order
+              hidePaymentModal();
+              
+              // Handle the payment submission
+              handlePayment(new Event('click'));
+            };
+          } catch (error) {
+            console.error('Error processing payment:', error);
+            alert('Error processing payment. Please try again.');
+          }
+        });
+      }
+
+      // Close modal when clicking outside
+      window.addEventListener('click', (e) => {
+        if (e.target === paymentModal) {
+          hidePaymentModal();
+        }
+      });
+
       // QR Code images - replace these paths with your actual QR code images
       const qrCodes = {
         gcash: '../src/IMG/gcash-qr.png', // Replace with your GCash QR code
         bank_transfer: '../src/IMG/bank-transfer-qr.png'    // Replace with your Bank Transfer QR code
       };
-
-      // Fallback QR code text for when images are not available
-      const qrCodeFallback = {
-        gcash: 'GCash QR Code - Please scan or use: 09XX-XXX-XXXX',
-        bank_transfer: 'Bank Transfer Details - Account: XXXX-XXXX-XXXX'
-      };
-
-      let uploadedFile = null;
-      let currentPaymentType = '';
 
       // Show payment modal
       function showPaymentModal(paymentType) {
@@ -1247,19 +1354,19 @@ document.addEventListener('DOMContentLoaded', function () {
       event.preventDefault();
 
       try {
-        // Relaxed behavior: don't block order creation for missing payment
-        // or customer verification. Use sensible defaults where necessary.
-        let selectedPaymentMethod = getSelectedPaymentMethod();
-        if (!selectedPaymentMethod) selectedPaymentMethod = 'none';
-
-        let payment = {};
+        // Get payment information
+        let paymentInfo = {};
         try {
           const raw = sessionStorage.getItem('paymentInfo');
-          if (raw) payment = JSON.parse(raw) || {};
+          if (raw) {
+            paymentInfo = JSON.parse(raw);
+          } else {
+            throw new Error('Payment information not found');
+          }
         } catch (e) {
-          console.warn('[shipping.js] Failed to parse paymentInfo; proceeding without it');
-          payment = {};
-          sessionStorage.removeItem('paymentInfo');
+          console.error('[shipping.js] Error getting payment info:', e);
+          alert('Please complete the payment process first');
+          return;
         }
 
         // Show loading status
@@ -1628,16 +1735,27 @@ async function sendOrderNotificationToAdmin(orderId, orderData) {
       orderId: orderId,
       message: notificationMessage,
       // Customer Information
-      customerName: orderData.customerInfo.fullName,
-      customerEmail: orderData.customerInfo.email,
-      customerPhone: orderData.customerInfo.phone,
-      // Payment Information
-      orderTotal: orderData.total,
-      paymentMethod: orderData.paymentMethod,
-      paymentReference: orderData.paymentInfo.reference,
-      // Order Summary
-      items: orderData.items,
-      subtotal: orderData.subtotal,
+      customerInfo: {
+        name: orderData.customerInfo.fullName,
+        email: orderData.customerInfo.email,
+        phone: orderData.customerInfo.phone
+      },
+      // Payment Details
+      paymentDetails: {
+        method: orderData.paymentMethod,
+        reference: orderData.paymentInfo.reference,
+        receiptUrl: orderData.paymentInfo.receiptUrl,
+        receiptData: orderData.paymentInfo.receiptData,
+        receiptName: orderData.paymentInfo.receiptName
+      },
+      // Order Details
+      orderDetails: {
+        items: orderData.items,
+        subtotal: orderData.subtotal,
+        shippingCost: orderData.shippingCost,
+        total: orderData.total,
+        shippingMethod: orderData.shippingInfo?.method || 'Standard'
+      },
       shippingCost: orderData.shippingCost,
       shippingMethod: orderData.shippingInfo.method,
       // Additional Details
