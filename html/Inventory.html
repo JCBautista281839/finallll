@@ -13,6 +13,16 @@
     <link rel="icon" type="image/png" href="/src/IMG/IN.png">
 
     <style>
+        /* Hide admin navigation by default for security */
+        .nav-link[title="Orders"],
+        .nav-link[title="POS"],
+        .nav-link[title="Menu"],
+        .nav-link[title="Reports"],
+        .nav-link[title="Users"],
+        .nav-link[title="Settings"] {
+            display: none !important;
+        }
+
         .upload-dropzone {
             border: 2px dashed #ccc;
             border-radius: 10px;
@@ -309,6 +319,48 @@
     <script src="../javascript/auth-manager.js"></script>
     <script src="../javascript/inventory.js"></script>
     <script src="../javascript/notifications.js"></script>
+
+    <!-- Role-based navigation control -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            firebase.auth().onAuthStateChanged(async function (user) {
+                if (!user) {
+                    window.location.href = '/html/login.html';
+                    return;
+                }
+
+                // Get user role from Firestore
+                const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                const userData = userDoc.data();
+
+                // If user is admin, show admin navigation items
+                if (userData && userData.role === 'admin') {
+                    // Show admin navigation items for admin users
+                    const adminNavItems = [
+                        'Orders', 'POS', 'Menu', 'Reports', 'Users', 'Settings'
+                    ];
+
+                    adminNavItems.forEach(title => {
+                        const navLink = document.querySelector(`.nav-link[title="${title}"]`);
+                        if (navLink) {
+                            navLink.style.display = 'block';
+                        }
+                    });
+                }
+                // If user is kitchen staff, show kitchen navigation but keep full inventory functionality
+                else if (userData && userData.role === 'kitchen') {
+                    // Update home link to go to kitchen
+                    const homeLink = document.getElementById('homeNavLink');
+                    if (homeLink) {
+                        homeLink.href = '../html/kitchen.html';
+                    }
+
+                    // Keep all inventory functionality - kitchen users can manage inventory
+                    // No restrictions on inventory management for kitchen users
+                }
+            });
+        });
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var notifLink = document.querySelector('.nav-link[title="Notifications"]');
