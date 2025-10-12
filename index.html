@@ -30,16 +30,15 @@
       </a>
 
       <!-- Hamburger Menu Button -->
-      <button class="navbar-toggler hamburger-menu" type="button" data-bs-toggle="collapse"
-        data-bs-target="#headerCollapse" aria-controls="headerCollapse" aria-expanded="false"
+      <button class="navbar-toggler hamburger-menu" type="button" 
         aria-label="Toggle navigation" id="hamburgerMenu">
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
       </button>
 
-      <!-- Collapsible Content -->
-      <div class="collapse navbar-collapse" id="headerCollapse">
+      <!-- Desktop Navigation -->
+      <div class="desktop-nav">
         <!-- Navigation -->
         <nav class="main-nav mx-auto">
           <ul class="nav-list navbar-nav">
@@ -609,23 +608,36 @@
 
       // Function to open menu
       function openMenu() {
+        console.log('Opening fullscreen menu...');
         fullscreenMenu.classList.add('active');
         hamburgerMenu.classList.add('active');
         document.body.style.overflow = 'hidden';
+        console.log('Menu opened, classes added:', {
+          fullscreenActive: fullscreenMenu.classList.contains('active'),
+          hamburgerActive: hamburgerMenu.classList.contains('active')
+        });
       }
 
       // Function to close menu
       function closeMenu() {
+        console.log('Closing fullscreen menu...');
         fullscreenMenu.classList.remove('active');
         hamburgerMenu.classList.remove('active');
         document.body.style.overflow = 'auto';
+        console.log('Menu closed, classes removed');
       }
 
       // Toggle fullscreen menu with hamburger button
-      hamburgerMenu.addEventListener('click', function () {
+      hamburgerMenu.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Hamburger menu clicked!');
+        
         if (fullscreenMenu.classList.contains('active')) {
+          console.log('Closing menu...');
           closeMenu();
         } else {
+          console.log('Opening menu...');
           openMenu();
         }
       });

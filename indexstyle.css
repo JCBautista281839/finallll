@@ -79,6 +79,8 @@ body {
   background-color: #ffffff;
   color: #333;
   overflow-x: hidden;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 /* Header Styles */
@@ -100,7 +102,7 @@ body {
 
 .main-nav {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .nav-list {
@@ -108,7 +110,7 @@ body {
   display: flex;
   gap: 40px;
   margin: 0;
-  margin-left: 610px;
+  margin-right: 30px;
 }
 
 .nav-link {
@@ -136,6 +138,13 @@ body {
   right: 15px;
 }
 
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -154,7 +163,7 @@ body {
   padding: 10px 40px 10px 15px;
   border: 1px solid #eeeeee;
   border-radius: 25px;
-  width: 300px;
+  width: 200px;
   font-size: 15px;
   font-family: 'PoppinsExtraLight';
 }
@@ -234,7 +243,8 @@ body {
   margin-right: 20px;
 }
 
-/* Hide hamburger menu on desktop, show on mobile */
+
+/* Hamburger Menu Button Styles */
 .hamburger-menu {
   display: none;
   flex-direction: column;
@@ -246,27 +256,22 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
-  order: 3;
   z-index: 1001;
-}
-
-@media (max-width: 992px) {
-  .hamburger-menu {
-    display: flex;
-  }
+  position: relative;
 }
 
 .hamburger-line {
+  display: block;
   width: 25px;
   height: 3px;
-  background-color: #333;
+  background-color: #8B2E20;
   margin: 3px 0;
   transition: all 0.3s ease;
   border-radius: 2px;
 }
 
 .hamburger-menu.active .hamburger-line:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+  transform: rotate(45deg) translate(6px, 6px);
 }
 
 .hamburger-menu.active .hamburger-line:nth-child(2) {
@@ -274,7 +279,7 @@ body {
 }
 
 .hamburger-menu.active .hamburger-line:nth-child(3) {
-  transform: rotate(-45deg) translate(7px, -6px);
+  transform: rotate(-45deg) translate(6px, -6px);
 }
 
 /* Fullscreen Menu Overlay - Only show on mobile */
@@ -298,12 +303,6 @@ body {
   align-items: center;
 }
 
-@media (max-width: 992px) {
-  .fullscreen-menu-overlay {
-    display: flex;
-    /* Show on mobile */
-  }
-}
 
 .fullscreen-menu-overlay.active {
   opacity: 1;
@@ -571,7 +570,7 @@ body {
 
 
 .info-section {
-  margin-top: -100px;
+  margin-top: -90px;
   margin-bottom: 80px;
   margin-left: 30px;
 }
@@ -628,9 +627,9 @@ body {
 .filipino {
   display: block;
   font-family: 'pinyon-script';
-  font-size: 150px;
+  font-size: 100px;
   color: #8B2E20;
-  margin-bottom: -60px;
+  margin-bottom: -40px;
   position: relative;
   z-index: 2;
   margin-left: 40px;
@@ -639,12 +638,12 @@ body {
 .comfort-food {
   font-family: 'PoppinsRegular';
   display: block;
-  font-size: 90px;
+  font-size: 60px;
   color: #000;
   text-transform: uppercase;
-  letter-spacing: -6px;
+  letter-spacing: -3px;
   z-index: 0;
-  margin-top: -40px;
+  margin-top: -25px;
   margin-left: 20px;
   position: relative;
   z-index: 1;
@@ -768,6 +767,7 @@ body {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
+  margin-left: 20px;
 }
 
 .cta-btn {
@@ -779,7 +779,7 @@ body {
   border-radius: 30px;
   font-size: 16px;
   transition: background-color 0.3s ease;
-  margin-left: -440px;
+
 }
 
 .cta-btn:hover {
@@ -925,7 +925,7 @@ body {
 
 .dine-option-title {
   font-family: 'pinyon-script';
-  font-size: 150px !important;
+  font-size: 150px;
   font-weight: normal;
   text-transform: none;
   letter-spacing: normal;
@@ -935,7 +935,7 @@ body {
 /* Customer Reviews & Feedback Section Styles */
 .customer-reviews-section {
   background: #ffffff;
-  padding: 40px 0 0 0;
+  padding: 80px 0 0 0;
   margin-bottom: 0;
   position: relative;
 }
@@ -943,11 +943,14 @@ body {
 .customer-reviews-flex {
   display: flex;
   gap: 40px;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
   flex-wrap: wrap;
   margin-bottom: 40px;
-  padding: 0 20px;
+  padding: 0 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .customer-reviews-list {
@@ -961,18 +964,18 @@ body {
   text-align: center;
   color: #8B2E20;
   font-family: 'PoppinsRegular', sans-serif;
-  font-size: 50px !important;
-  margin-bottom: 0.1em;
-  margin-top: -15px;
+  font-size: 45px !important;
+  margin-bottom: 0.5em;
+  margin-top: 0;
 }
 
 .customer-reviews-subtitle {
   font-family: 'PoppinsLight', sans-serif;
   text-align: center;
   color: #888;
-  font-size: 20px !important;
-  margin-bottom: 1.5em;
-  margin-top: -15px;
+  font-size: 18px !important;
+  margin-bottom: 3em;
+  margin-top: 0;
 }
 
 .customer-reviews-quote-bg {
@@ -993,7 +996,7 @@ body {
 .customer-reviews-cards {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   position: relative;
   z-index: 2;
 }
@@ -1001,9 +1004,9 @@ body {
 .review-card {
   display: flex;
   align-items: flex-start;
-  background-color: transparent;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+  background-color: #ffffff;
+  border: 1px solid #8B2E20;
+  border-radius: 20px;
   padding: 20px 24px;
   gap: 16px;
   min-height: auto;
@@ -1134,8 +1137,8 @@ body {
   min-width: 320px;
   height: auto;
   background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 25px !important;
+  border: 1px solid #8B2E20;
+  border-radius: 20px !important;
   padding: 24px 24px 20px 24px;
   z-index: 2;
   display: flex;
@@ -1176,12 +1179,6 @@ body {
   margin-left: auto;
 }
 
-.rating-form .rating-stars-input {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-}
 
 .rating-form-title-stars-row .rating-form-title {
   font-size: 1.4rem;
@@ -1200,6 +1197,10 @@ body {
   display: inline-flex;
   align-items: center;
   /* vertically center the star icons */
+  position: static;
+  right: auto;
+  top: auto;
+  transform: none;
 }
 
 .rating-stars-input {
@@ -1220,11 +1221,13 @@ body {
 }
 
 .rating-categories {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 10px;
   margin-bottom: 18px;
   margin-left: 10px;
-  flex-wrap: wrap;
+  max-width: 500px;
 }
 
 .rating-category-btn {
@@ -1233,9 +1236,8 @@ body {
   border: 1px solid #ddd;
   border-radius: 25px;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 11px;
   font-family: 'PoppinsRegular', 'Poppins', sans-serif;
-  margin-right: 8px;
   margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -1255,8 +1257,8 @@ body {
 }
 
 .rating-textarea {
-  width: 555px;
-  height: 200px;
+  
+  height: 140px;
   border-radius: 8px;
   border: 1px solid #ddd;
   padding: 15px;
@@ -1292,443 +1294,12 @@ body {
   color: #ffb700;
 }
 
-@media (min-width: 901px) {
-  .customer-reviews-flex {
-    justify-content: space-between;
-    gap: 40px;
-  }
 
-  .customer-reviews-list {
-    flex: 1 1 50%;
-    max-width: 50%;
-    min-width: 45%;
-  }
-
-  .rating-form {
-    flex: 1 1 50%;
-    max-width: 50%;
-    margin-right: 0;
-    align-self: flex-start;
-    min-width: 45%;
-  }
-}
-
-/* Tablets Landscape (1024px and above) */
-@media (min-width: 1024px) and (orientation: landscape) {
-  .customer-reviews-section {
-    padding: 40px 30px 0 30px;
-  }
-
-  .customer-reviews-flex {
-    gap: 35px;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 0 20px;
-  }
-
-  .customer-reviews-title {
-    font-size: 2.4rem;
-    margin-bottom: 0.2em;
-    margin-top: -15px;
-  }
-
-  .customer-reviews-subtitle {
-    font-size: 1.1rem;
-    margin-bottom: 1.6em;
-  }
-
-  .customer-reviews-list {
-    flex: 1 1 48%;
-    max-width: 48%;
-    min-width: 45%;
-  }
-
-  .customer-reviews-quote-bg {
-    font-size: 220px;
-    left: 50%;
-    top: 50px;
-    transform: translateX(-50%);
-    opacity: 0.3;
-  }
-
-  .review-card {
-    width: 100%;
-    margin-left: 0;
-    max-width: 100%;
-    padding: 22px 28px;
-    border-radius: 22px;
-    min-height: 120px;
-  }
-
-  .review-avatar {
-    width: 85px;
-    height: 85px;
-    font-size: 2.1rem;
-  }
-
-  .review-name {
-    font-size: 19px;
-  }
-
-  .review-text {
-    font-size: 14px;
-    line-height: 1.4;
-  }
-
-  .rating-form {
-    flex: 1 1 48%;
-    max-width: 48%;
-    min-width: 45%;
-    margin-right: 0;
-    margin-top: 0;
-    height: auto;
-    padding: 28px 28px 20px 28px;
-    border-radius: 22px;
-  }
-
-  .rating-form-title {
-    font-size: 1.45rem;
-    margin-bottom: 16px;
-  }
-
-  .rating-category-btn {
-    padding: 8px 16px;
-    font-size: 1rem;
-    border-radius: 18px;
-  }
-
-  .rating-textarea {
-    min-height: 140px;
-    border-radius: 15px;
-    padding: 14px;
-  }
-
-  .share-btn {
-    width: 160px;
-    padding: 11px 0;
-    font-size: 1.1rem;
-    border-radius: 28px;
-  }
-}
 
 /* Laptops and smaller desktops (1200px - 1600px) */
-@media (min-width: 1200px) and (max-width: 1600px) {
-  .customer-reviews-section {
-    padding: 50px 40px 0 40px;
-  }
 
-  .customer-reviews-flex {
-    gap: 45px;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 0 30px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
 
-  .customer-reviews-title {
-    font-size: 2.6rem;
-    margin-bottom: 0.15em;
-    margin-top: -15px;
-  }
 
-  .customer-reviews-subtitle {
-    font-size: 1.15rem;
-    margin-bottom: 1.8em;
-  }
-
-  .customer-reviews-list {
-    flex: 1 1 50%;
-    max-width: 50%;
-  }
-
-  .customer-reviews-quote-bg {
-    font-size: 280px;
-    left: 50%;
-    top: 60px;
-    transform: translateX(-50%);
-    opacity: 0.35;
-  }
-
-  .review-card {
-    padding: 26px 32px;
-    border-radius: 25px;
-    min-height: 130px;
-    gap: 12px;
-  }
-
-  .review-avatar {
-    width: 95px;
-    height: 95px;
-    font-size: 2.4rem;
-  }
-
-  .review-name {
-    font-size: 21px;
-    margin-bottom: -8px;
-  }
-
-  .review-text {
-    font-size: 14px;
-    line-height: 1.45;
-  }
-
-  .rating-form {
-    flex: 1 1 45%;
-    max-width: 500px;
-    margin-right: 0;
-    margin-top: 0;
-    padding: 32px 32px 24px 32px;
-    border-radius: 25px;
-  }
-
-  .rating-form-title {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-  }
-
-  .rating-category-btn {
-    padding: 9px 18px;
-    font-size: 1.05rem;
-    margin-right: 10px;
-    margin-bottom: 8px;
-  }
-
-  .rating-textarea {
-
-    border-radius: 16px;
-    padding: 15px;
-  }
-
-  .share-btn {
-    width: 170px;
-    padding: 12px 0;
-    font-size: 1.15rem;
-  }
-}
-
-/* Large Desktops (1600px+) */
-@media (min-width: 1600px) {
-  .customer-reviews-section {
-    padding: 60px 50px 0 50px;
-  }
-
-  .customer-reviews-flex {
-    gap: 60px;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 0 40px;
-    max-width: 1600px;
-    margin: 0 auto;
-  }
-
-  .customer-reviews-title {
-    font-size: 2.8rem;
-    margin-bottom: 0.1em;
-    margin-top: -15px;
-  }
-
-  .customer-reviews-subtitle {
-    font-size: 1.2rem;
-    margin-bottom: 2em;
-  }
-
-  .customer-reviews-list {
-    flex: 1 1 52%;
-    max-width: 52%;
-  }
-
-  .customer-reviews-quote-bg {
-    font-size: 320px;
-    left: 50%;
-    top: 70px;
-    transform: translateX(-50%);
-    opacity: 0.35;
-  }
-
-  .review-card {
-    padding: 30px 36px;
-    border-radius: 28px;
-    min-height: 140px;
-    gap: 14px;
-  }
-
-  .review-avatar {
-    width: 100px;
-    height: 100px;
-    font-size: 2.5rem;
-  }
-
-  .review-name {
-    font-size: 22px;
-    margin-bottom: -8px;
-  }
-
-  .review-text {
-    font-size: 15px;
-    line-height: 1.5;
-  }
-
-  .rating-form {
-    flex: 1 1 42%;
-    max-width: 600px;
-    margin-right: 0;
-    margin-top: 0;
-    padding: 36px 36px 28px 36px;
-    border-radius: 28px;
-
-  }
-
-  .rating-form-title {
-    font-size: 1.6rem;
-    margin-bottom: 22px;
-  }
-
-  .rating-category-btn {
-    padding: 10px 20px;
-    font-size: 1.1rem;
-    margin-right: 12px;
-    margin-bottom: 10px;
-  }
-
-  .rating-textarea {
-    min-height: 180px;
-    border-radius: 18px;
-    padding: 18px;
-  }
-
-  .share-btn {
-    width: 180px;
-    padding: 14px 0;
-    font-size: 1.2rem;
-  }
-}
-
-@media (max-width: 1200px) {
-  .customer-reviews-section {
-    padding: 30px 20px 0 20px;
-  }
-
-  .customer-reviews-flex {
-    gap: 25px;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .customer-reviews-list {
-    flex: 1 1 50%;
-    max-width: 50%;
-    min-width: 45%;
-  }
-
-  .customer-reviews-quote-bg {
-    font-size: 180px;
-    left: 50%;
-    top: 40px;
-    transform: translateX(-50%);
-    opacity: 0.25;
-  }
-
-  .review-card {
-    width: 100%;
-    margin-left: 0;
-    max-width: 100%;
-    padding: 20px 25px;
-  }
-
-  .rating-form {
-    flex: 1 1 50%;
-    margin-right: 0;
-    margin-top: 0;
-    height: auto;
-  }
-
-  .rating-textarea {
-    height: 30%;
-  }
-}
-
-@media (max-width: 900px) {
-  .customer-reviews-section {
-    padding: 20px 15px 0 15px;
-  }
-
-  .customer-reviews-title {
-    font-size: 1.8rem;
-    margin-bottom: 0.5em;
-  }
-
-  .customer-reviews-subtitle {
-    font-size: 0.9rem;
-    margin-bottom: 1.2em;
-  }
-
-  .customer-reviews-flex {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 20px;
-    padding: 0 10px;
-  }
-
-  .customer-reviews-list {
-    flex: none;
-    max-width: 100%;
-    min-width: 100%;
-    margin: 0;
-  }
-
-  .customer-reviews-quote-bg {
-    font-size: 120px;
-    left: 50%;
-    top: 20px;
-    transform: translateX(-50%);
-    opacity: 0.2;
-  }
-
-  .review-card {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 15px 20px;
-    width: 100%;
-    margin-left: 0;
-    max-width: 100%;
-    min-height: auto;
-  }
-
-  .review-content {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .review-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .review-avatar {
-    width: 60px;
-    height: 60px;
-    font-size: 1.8rem;
-    flex-shrink: 0;
-  }
-
-  .review-name {
-    font-size: 16px;
-  }
-
-  .review-text {
-    font-size: 12px;
-    line-height: 1.4;
-  }
-
-  .rating-form {
-    margin-right: 0;
-    margin-top: 20px;
-  }
-}
 
 /* Footer Styles */
 .footer {
@@ -1800,24 +1371,26 @@ body {
 }
 
 .footer-content {
-  display: block !important;
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
   padding: 18px 40px;
-  text-align: center;
+  text-align: left;
 }
 
 .footer-social,
 .footer-copyright,
 .footer-links {
-  display: block;
+  display: flex;
   padding: 6px 12px;
-  text-align: center;
+  text-align: left;
 }
 
 .footer-social {
   display: flex;
   margin-left: 0;
   gap: 15px;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 
@@ -1841,7 +1414,7 @@ body {
 }
 
 .footer-copyright {
-  text-align: center;
+  text-align: left;
 }
 
 .footer-copyright span {
@@ -1851,7 +1424,7 @@ body {
 }
 
 .footer-links {
-  text-align: center;
+  text-align: left;
 }
 
 .footer-links a {
@@ -1864,28 +1437,6 @@ body {
   color: #8B2E20;
 }
 
-/* Responsive: stack footer items on narrow viewports and center-align text */
-@media (max-width: 600px) {
-  .footer-content {
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .footer-social,
-  .footer-copyright,
-  .footer-links {
-    flex: none;
-    width: 100%;
-    padding: 6px 12px;
-    text-align: center;
-    min-width: 0;
-  }
-
-  .footer-social {
-    justify-content: center;
-  }
-}
 
 .social-icon {
   color: #ffffff;
@@ -1907,549 +1458,6 @@ body {
 
 .social-icon i {
   font-size: 12px;
-}
-
-/* Laptop - (max-width: 1200px) */
-@media (max-width: 1200px) {
-  .nav-list {
-    gap: 30px;
-  }
-
-  .search-input {
-    width: 170px;
-  }
-
-  .filipino {
-    font-size: 100px;
-    margin-bottom: -40px;
-  }
-
-  .comfort-food {
-    font-size: 70px;
-    letter-spacing: -5px;
-    margin-top: -35px;
-  }
-
-  .description {
-    font-size: 21px;
-  }
-
-  .dine-option-title {
-    font-size: 130px;
-  }
-
-  .footer-social {
-    justify-content: center;
-  }
-}
-
-/* iPad Pro - (max-width: 1024px) */
-@media (max-width: 1024px) and (orientation: portrait) {
-  .filipino {
-    font-size: 120px;
-    margin-bottom: -45px;
-  }
-
-  .comfort-food {
-    font-size: 80px;
-    letter-spacing: -5px;
-    margin-top: -35px;
-  }
-
-  .dish-plate {
-    width: 180px;
-    height: 120px;
-  }
-
-  .dish-img {
-    width: 200px;
-    height: 200px;
-    margin-top: -210px;
-  }
-
-}
-
-@media (max-width: 1024px) {
-
-  /* Header fixes for tablets */
-  .header {
-    padding: 15px 0;
-
-  }
-
-  .logo-img {
-    height: 80px;
-    margin-left: 20px;
-  }
-
-  .nav-list {
-    gap: 30px;
-    margin-left: 400px;
-  }
-
-  .nav-link {
-    font-size: 16px;
-  }
-
-  .search-input {
-    width: 200px;
-  }
-
-  .header-actions {
-    gap: 15px;
-  }
-
-  .filipino {
-    font-size: 110px;
-    margin-bottom: -40px;
-  }
-
-  .comfort-food {
-    font-size: 75px;
-    letter-spacing: -4px;
-    margin-top: -30px;
-  }
-
-  .description {
-    font-size: 20px;
-  }
-
-  .signature-section {
-    padding: 30px 20px 40px;
-  }
-
-  .signature-title {
-    font-size: 1.8rem;
-    margin-bottom: 20px;
-  }
-
-  .dish-plate {
-    width: 180px;
-    height: 120px;
-  }
-
-  .dish-img {
-    width: 210px;
-    height: 210px;
-    margin-top: -220px;
-  }
-
-  .dish-name {
-    font-size: 18px;
-    margin-top: 8px;
-  }
-
-  .dine-option-title {
-    font-size: 125px;
-  }
-
-}
-
-/* Tablet - (max-width: 992px) */
-@media (max-width: 992px) {
-  .header {
-    padding: 12px 0;
-  }
-
-  .logo-img {
-    height: 65px;
-    margin-left: 15px;
-  }
-
-  /* Show hamburger menu and hide regular navigation on tablets and below */
-  .navbar-collapse {
-    display: none !important;
-  }
-
-  .hamburger-menu {
-    display: flex !important;
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .container-fluid {
-    position: relative;
-
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .filipino {
-    font-size: 120px;
-    margin-bottom: -40px;
-  }
-
-  .comfort-food {
-    font-size: 70px;
-    letter-spacing: -4px;
-    margin-top: -30px;
-  }
-
-  .description {
-    font-size: 20px;
-  }
-
-  .signature-section {
-    padding: 25px 15px 35px;
-  }
-
-  .signature-title {
-    font-size: 1.6rem;
-    margin-bottom: 18px;
-  }
-
-  .dish-plate {
-    width: 160px;
-    height: 105px;
-  }
-
-  .dish-img {
-    width: 180px;
-    height: 180px;
-    margin-top: -190px;
-  }
-
-  .dish-name {
-    font-size: 16px;
-    margin-top: 6px;
-  }
-
-  .dish-hover-text {
-    font-size: 1rem;
-    padding: 10px 20px;
-  }
-
-  .dine-option-title {
-    font-size: 120px;
-  }
-
-  /* Adjust fullscreen menu for tablets */
-  .fullscreen-nav-link {
-    font-size: 36px;
-  }
-
-  .fullscreen-actions {
-    margin-top: 40px;
-    gap: 40px;
-  }
-
-  .action-icon {
-    width: 50px;
-    height: 50px;
-  }
-
-  .action-icon img {
-    width: 25px;
-    height: 25px;
-  }
-}
-
-@media (max-width: 768px) {
-
-  .scroll-left,
-  .scroll-right {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-
-  .header .row>[class*="col-"] {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 15px;
-  }
-
-  .header .row>[class*="col-"]:last-child {
-    margin-bottom: 0;
-  }
-
-  /* Hamburger menu positioning for mobile */
-  .hamburger-menu {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .content-left {
-    padding: 20px;
-    text-align: center;
-  }
-
-  .location {
-    justify-content: center;
-  }
-
-  .filipino {
-    font-size: 70px;
-    margin-bottom: -30px;
-    margin-left: -30px;
-  }
-
-  .comfort-food {
-    font-size: 40px;
-    letter-spacing: -2px;
-    margin-top: -20px;
-  }
-
-  .signature-section {
-    margin-top: -250px;
-  }
-
-}
-
-.cta-section {
-  justify-content: center;
-}
-
-.food-image-container {
-  margin-top: 40px;
-}
-
-.rating-badge {
-  bottom: -30px;
-}
-
-.dine-option-title {
-  font-size: 80px;
-}
-
-.footer-content {
-  flex-direction: column;
-  gap: 15px;
-}
-
-.footer-social,
-.footer-copyright,
-.footer-links {
-  text-align: center;
-  width: 100%;
-}
-
-/* Mobile fullscreen menu adjustments */
-.fullscreen-nav-link {
-  font-size: 32px;
-  padding: 15px 30px;
-}
-
-.fullscreen-nav-item {
-  margin: 20px 0;
-}
-
-.fullscreen-nav {
-  margin-bottom: 40px;
-}
-
-.fullscreen-actions {
-  margin-top: 30px;
-  gap: 30px;
-}
-
-.action-icon {
-  width: 45px;
-  height: 45px;
-}
-
-.action-icon img {
-  width: 20px;
-  height: 20px;
-}
-
-.action-text {
-  font-size: 14px;
-}
-
-.menu-close {
-  top: 20px;
-  right: 20px;
-  width: 35px;
-  height: 35px;
-}
-
-.close-line {
-  width: 25px;
-  height: 2px;
-}
-
-/* Mobile Review Section Improvements */
-.customer-reviews-section {
-  padding: 35px 10px 0 10px;
-}
-
-.customer-reviews-title {
-  font-size: 1.5rem;
-  margin-bottom: 0.3em;
-}
-
-.customer-reviews-subtitle {
-  font-size: 0.8rem;
-  margin-bottom: 1em;
-}
-
-.customer-reviews-flex {
-  gap: 15px;
-  padding: 0 5px;
-}
-
-.customer-reviews-quote-bg {
-  font-size: 80px;
-  top: 10px;
-}
-
-.review-card {
-  padding: 12px 15px;
-  gap: 10px;
-  border-radius: 15px;
-}
-
-.review-avatar {
-  width: 50px;
-  height: 50px;
-  font-size: 1.5rem;
-}
-
-.review-name {
-  font-size: 14px;
-  margin-bottom: -5px;
-}
-
-.review-stars {
-  font-size: 0.8rem;
-}
-
-.review-text {
-  font-size: 11px;
-  line-height: 1.3;
-}
-
-.rating-form {
-  padding: 20px 15px;
-  height: 440px;
-  border-radius: 15px;
-}
-
-.rating-form-title {
-  font-size: 1.1rem;
-  margin-bottom: 12px;
-}
-
-.rating-form-title-stars-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 12px;
-  width: 100%;
-}
-
-.rating-stars-input {
-  font-size: 1.2rem;
-  margin-left: 0;
-  gap: 4px;
-}
-
-.rating-stars-input .star-input {
-  width: 24px;
-  height: 24px;
-}
-
-.rating-categories {
-  gap: 6px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.rating-category-btn {
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  margin-right: 4px;
-  margin-bottom: 6px;
-  border-radius: 15px;
-}
-
-.rating-textarea {
-
-  margin-bottom: 5px;
-  padding: 10px;
-  border-radius: 12px;
-  font-size: 0.9rem;
-}
-
-.share-btn {
-  width: 220px;
-  padding: 8px 0;
-  font-size: 1rem;
-}
-
-/* Mobile star sizing */
-.review-stars .star-filled,
-.review-stars .star-empty {
-  width: 20px;
-  height: 20px;
-  margin-right: 2px;
-}
-
-
-@media (max-width: 576px) {
-  .header {
-    padding: 10px 0;
-  }
-
-  .logo-img {
-    height: 60px;
-  }
-
-  .nav-list {
-    gap: 15px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .nav-link {
-    font-size: 16px;
-  }
-
-  .filipino {
-    margin-left: -40px;
-    font-size: 80px;
-    margin-bottom: -30px;
-  }
-
-  .comfort-food {
-    font-size: 40px;
-    letter-spacing: -1px;
-    margin-top: -15px;
-  }
-
-  .description {
-    font-size: 16px;
-  }
-
-  .signature-section {
-    margin-top: 50px;
-  }
-
-  .dish-plate {
-    width: 140px;
-    height: 110px;
-  }
-
-  .dish-img {
-    width: 150px;
-    height: 150px;
-    margin-top: -190px;
-  }
-
-  .dine-option-title {
-    font-size: 60px;
-  }
-
-  .dish-hover-text {
-    font-size: 14px;
-  }
-
 }
 
 /* Styles for disabled form elements in sign-in state */
@@ -2494,8 +1502,8 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-}
+    justify-content: center;
+  }
 
 .user-dropdown {
   position: absolute;
@@ -2563,14 +1571,6 @@ body {
 .logout-item:hover {
   background-color: #f8d7da;
   color: #dc3545;
-}
-
-/* Responsive adjustments for user dropdown */
-@media (max-width: 768px) {
-  .user-dropdown {
-    right: -50px;
-    min-width: 180px;
-  }
 }
 
 /* Anonymous toggle styling */
@@ -2668,125 +1668,762 @@ body {
   height: 200px;
 }
 
-/* Small screen fullscreen menu adjustments */
-@media (max-width: 576px) {
-  .fullscreen-nav-link {
-    font-size: 28px;
-    padding: 12px 25px;
-  }
+/* ==============================================
+   RESPONSIVE DESIGN - MOBILE FIRST APPROACH
+   ============================================== */
 
-  .fullscreen-actions {
-    margin-top: 25px;
-    gap: 25px;
+/* ==============================================
+   MOBILE DEVICES (max-width: 600px)
+   ============================================== */
+@media (max-width: 600px) {
+  /* Header adjustments for mobile */
+  .header {
+    padding: 1rem 0;
   }
-
-  .action-icon {
-    width: 40px;
-    height: 40px;
+  
+  .logo-img {
+    height: 4rem;
+    margin-left: 1rem;
   }
-
-  .action-icon img {
-    width: 18px;
-    height: 18px;
+  
+  /* Show hamburger menu on mobile */
+  .hamburger-menu {
+    display: flex;
+    margin-right: 1rem;
   }
-
-  .action-text {
-    font-size: 12px;
+  
+  /* Hide desktop navigation on mobile */
+  .desktop-nav {
+    display: none;
   }
-
-  .menu-close {
-    top: 15px;
-    right: 15px;
-    width: 30px;
-    height: 30px;
+  
+  /* Show fullscreen menu overlay on mobile */
+  .fullscreen-menu-overlay {
+    display: flex;
   }
-
-  .close-line {
-    width: 20px;
-    height: 2px;
+  
+  /* Hide search bar on mobile */
+  .search-bar {
+    display: none;
   }
-
-  /* Smaller mobile star sizing */
+  
+  .header-actions {
+    gap: 1rem;
+    margin-right: 0.5rem;
+  }
+  
+  .user-img,
+  .bag-img {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  /* Main content adjustments */
+  .main-content {
+    padding: 2rem 0;
+  }
+  
+  .content-left {
+    padding: 1rem;
+  }
+  
+  .info-section {
+    margin-top: -3rem;
+    margin-bottom: 2rem;
+    margin-left: 1rem;
+  }
+  
+  
+  
+  .description {
+    font-size: 1rem;
+    margin-left: 1rem;
+    margin-top: -1rem;
+  }
+  
+  /* Signature dishes */
+  .signature-section {
+    padding: 2rem 0 3rem;
+  }
+  
+  .signature-title {
+    font-size: 1.5rem;
+    margin-top: -2rem;
+  }
+  
+  .dish-plate {
+    width: 12rem;
+    height: 8rem;
+  }
+  
+  .dish-img {
+    width: 10rem;
+    height: 10rem;
+    margin-top: -12rem;
+  }
+  
+  .dish-name {
+    font-size: 1rem;
+  }
+  
+  .cta-btn {
+    width: 10rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Dine options */
+  .dine-option {
+    height: 30vh;
+    min-height: 15rem;
+  }
+  
+  .dine-option-title {
+    font-size: 5rem !important;
+  }
+  
+  .dine-option-content {
+    padding: 0 4%;
+  }
+  
+  /* Customer Reviews Section - Mobile */
+  .customer-reviews-section {
+    padding: 40px 0 0 0;
+  }
+  
+  .customer-reviews-title {
+    font-size: 24px !important;
+    margin-bottom: 0.5em;
+  }
+  
+  .customer-reviews-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 2em;
+  }
+  
+  .customer-reviews-flex {
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 20px;
+  }
+  
+  .customer-reviews-list {
+    flex: 1 1 auto;
+    min-width: auto;
+    max-width: 100%;
+  }
+  
+  .customer-reviews-quote-bg {
+    font-size: 200px;
+    margin-left: -40px;
+    margin-top: -50px;
+  }
+  
+  .review-card {
+    padding: 15px 18px;
+    gap: 12px;
+  }
+  
+  .review-avatar {
+    width: 45px;
+    height: 45px;
+    margin-top: 15px;
+    margin-left: 5px;
+    font-size: 1.2rem;
+  }
+  
+  .review-name {
+    font-size: 14px;
+    margin-top: -15px;
+    margin-bottom: -25px !important;
+  }
+  
+  .review-stars {
+    margin-top: 15px;
+    margin-right: 5px;
+  }
+  
   .review-stars .star-filled,
   .review-stars .star-empty {
-    width: 18px;
-    height: 18px;
-    margin-right: 1px;
+    width: 14px;
+    height: 14px;
   }
-
-  /* Smaller mobile rating form */
+  
+  .review-text {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  
   .rating-form {
-    padding: 15px 12px;
-    margin-top: 10px;
-    border-radius: 12px;
-
+    flex: 1 1 auto;
+    min-width: auto;
+    max-width: 100%;
+    padding: 18px 18px 15px 18px;
   }
-
+  
   .rating-form-title {
-    font-size: 1rem;
-    margin-bottom: 10px;
+    font-size: 16px;
+    margin-left: 5px;
   }
-
-  .rating-form-title-stars-row {
-    gap: 6px;
-    margin-bottom: 10px;
+  
+  .rating-form-title-stars-row .rating-form-title {
+    font-size: 1.2rem;
   }
-
-  /* Undo absolute positioning on very small screens so stars stack */
-  .rating-form .rating-stars-input {
-    position: static;
-    right: auto;
-    top: auto;
-    transform: none;
-  }
-
-  .rating-stars-input .star-input {
-    width: 20px;
-    height: 20px;
-  }
-
+  
   .rating-categories {
-    gap: 4px;
-    margin-bottom: 10px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-left: 5px;
   }
-
+  
   .rating-category-btn {
-    padding: 5px 10px;
-    font-size: 0.8rem;
-    margin-right: 3px;
-    margin-bottom: 4px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 10px;
   }
-
+  
   .rating-textarea {
-    min-height: 80px;
-    margin-bottom: 10px;
-    padding: 8px;
-    border-radius: 10px;
-    font-size: 0.85rem;
+    height: 100px;
+    margin-left: 5px;
+    margin-bottom: 12px;
+    font-size: 13px;
   }
-
-  .anonymous-checkbox {
-    font-size: 0.85rem;
-  }
-
-  .checkmark {
-    width: 16px;
-    height: 16px;
-    margin-right: 6px;
-  }
-
+  
   .share-btn {
-    width: 150px;
-    padding: 6px 0;
-    font-size: 0.9rem;
+    width: 100px;
+    padding: 8px 16px;
+    font-size: 13px;
   }
-
+  
+  /* Footer adjustments */
+  .footer-content {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .footer-social,
+  .footer-copyright,
+  .footer-links {
+    text-align: center;
+  }
+  
   .footer-social {
     justify-content: center;
   }
-
-  .footer-social span {
-    margin-bottom: 8px;
+  
+  .footer-social span,
+  .footer-copyright span,
+  .footer-links a {
+    font-size: 0.75rem;
   }
 }
+
+/* ==============================================
+   TABLET DEVICES (max-width: 992px)
+   ============================================== */
+@media (max-width: 992px) {
+  /* Header adjustments for tablet */
+  .nav-list {
+    margin-left: 2rem;
+    gap: 2rem;
+  }
+  
+  .search-input {
+    width: 20rem;
+  }
+ 
+  
+  /* Show hamburger menu on tablet */
+  .hamburger-menu {
+    display: flex;
+    margin-right: 1rem;
+  }
+  
+  /* Hide desktop navigation on tablet */
+  .desktop-nav {
+    display: none;
+  }
+  
+  /* Show fullscreen menu overlay on tablet */
+  .fullscreen-menu-overlay {
+    display: flex;
+  }
+}
+
+/* ==============================================
+   TABLET LANDSCAPE (768px - 1024px)
+   ============================================== */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  /* Show desktop navigation on tablet landscape */
+  .desktop-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  /* Hide hamburger menu on tablet landscape */
+  .hamburger-menu {
+    display: none;
+  }
+  
+  /* Hide fullscreen menu overlay on tablet landscape */
+  .fullscreen-menu-overlay {
+    display: none;
+  }
+  
+  /* Adjust navigation for tablet landscape - desktop style */
+  .main-nav {
+    display: flex;
+    justify-content: flex-start;
+  }
+  
+  .nav-list {
+    margin-right: 30px;
+    gap: 40px;
+  }
+  
+  .search-input {
+    width: 200px;
+  }
+  
+  /* Adjust header actions */
+  .header-actions {
+    gap: 25px;
+    justify-content: flex-end;
+    margin-right: 10px;
+  }
+  
+  /* Adjust main content for tablet landscape */
+  .content-left {
+    padding: 40px 40px 40px 20px;
+  }
+  
+  .info-section {
+    margin-top: -90px;
+    margin-bottom: 80px;
+    margin-left: 30px;
+  }
+  
+  .info-title {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: -0.5px;
+  }
+  
+  .hours {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+    font-size: 16px;
+    font-weight: lighter;
+    margin-top: 0;
+    margin-left: -5px;
+  }
+  
+  .filipino {
+    font-size: 100px;
+    margin-left: 40px;
+    margin-bottom: -40px;
+  }
+  
+  .comfort-food {
+    font-size: 60px;
+    margin-left: 20px;
+    margin-top: -25px;
+    letter-spacing: -3px;
+  }
+  
+  .description {
+    font-size: 18px;
+    margin-left: 30px;
+    margin-top: -20px;
+  }
+  
+  /* Signature dishes - desktop style */
+  .signature-section {
+    padding: 40px 0 60px;
+  }
+  
+  .signature-title {
+    font-size: 45px;
+    margin-top: -50px;
+  }
+  
+  .dish-plate {
+    width: 260px;
+    height: 170px;
+  }
+  
+  .dish-img {
+    width: 295px;
+    height: 295px;
+    margin-top: -300px;
+  }
+  
+  .dish-name {
+    font-size: 20px;
+  }
+  
+  .cta-btn {
+    width: 200px;
+    padding: 15px 30px;
+    font-size: 16px;
+  }
+  
+  /* Dine options - desktop style */
+  .dine-option {
+    height: 50vh;
+    min-height: 350px;
+  }
+  
+  .dine-option-title {
+    font-size: 150px;
+  }
+  
+  .dine-option-content {
+    padding: 0 8%;
+  }
+}
+  
+  /* Main content adjustments */
+  .content-left {
+    padding: 2rem;
+  }
+  
+  .description {
+    font-size: 1.125rem;
+    margin-left: 2rem;
+    margin-top: -1rem;
+  }
+  
+  /* Signature dishes */
+  .signature-section {
+    padding: 3rem 0 4rem;
+  }
+  
+  .signature-title {
+    font-size: 2rem;
+    margin-top: -3rem;
+  }
+  
+  .dish-plate {
+    width: 10rem;
+    height: 6rem;
+    margin-top: -20px;
+    
+  }
+  
+  .dish-img {
+    width: 10rem;
+    height: 10rem;
+    margin-top: -12rem;
+  }
+  
+  .dish-name {
+    font-size: 1.125rem;
+  }
+  
+  .cta-btn {
+    width: 12rem;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+  
+  /* Dine options */
+  .dine-option {
+    height: 40vh;
+    min-height: 20rem;
+  }
+  
+  .dine-option-title {
+    font-size: 4rem;
+
+  }
+  
+  .dine-option-content {
+    padding: 0 6%;
+  }
+  
+  /* Customer Reviews Section - Tablet */
+  .customer-reviews-section {
+    padding: 60px 0 0 0;
+  }
+  
+  .customer-reviews-title {
+    font-size: 32px !important;
+  }
+  
+  .customer-reviews-subtitle {
+    font-size: 16px !important;
+  }
+  
+  .customer-reviews-flex {
+    gap: 30px;
+    padding: 0 30px;
+  }
+  
+  .customer-reviews-quote-bg {
+    font-size: 250px;
+    margin-left: -60px;
+    margin-top: -75px;
+  }
+  
+  .review-card {
+    padding: 18px 20px;
+    gap: 14px;
+  }
+  
+  .review-avatar {
+    width: 50px;
+    height: 50px;
+    margin-top: 20px;
+    margin-left: 8px;
+    font-size: 1.3rem;
+  }
+  
+  .review-name {
+    font-size: 15px;
+    margin-top: -18px;
+    margin-bottom: -28px !important;
+  }
+  
+  .review-stars .star-filled,
+  .review-stars .star-empty {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .review-text {
+    font-size: 14px;
+  }
+  
+  .rating-form {
+    padding: 20px 20px 18px 20px;
+  }
+  
+  .rating-form-title {
+    font-size: 17px;
+  }
+  
+  .rating-categories {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 9px;
+  }
+  
+  .rating-category-btn {
+    padding: 7px 14px;
+    font-size: 11px;
+  }
+  
+  .rating-textarea {
+    height: 120px;
+    font-size: 14px;
+  }
+  
+  .share-btn {
+    width: 110px;
+    padding: 9px 18px;
+    font-size: 14px;
+  }
+  
+  /* Footer adjustments */
+  .footer-content {
+    padding: 1.5rem 2rem;
+    text-align: center;
+  }
+  
+  .footer-social,
+  .footer-copyright,
+  .footer-links {
+    text-align: center;
+  }
+  
+  .footer-social {
+    justify-content: center;
+  }
+}
+
+/* ==============================================
+   DESKTOP DEVICES (max-width: 1200px)
+   ============================================== */
+@media (max-width: 1200px) {
+  /* Header adjustments for desktop */
+  .nav-list {
+    margin-left: 4rem;
+    gap: 2.5rem;
+  }
+  
+  .search-input {
+    width: 20rem;
+  }
+  .info-section {
+    margin-top: -90px;
+    margin-bottom: 80px;
+    margin-left: 30px;
+  }
+  /* Main content adjustments */
+  .content-left {
+    padding: 3rem;
+  }
+  
+  .description {
+    font-size: 1.25rem;
+    margin-left: 2.5rem;
+    margin-top: -1.5rem;
+  }
+  
+  /* Signature dishes */
+  .signature-section {
+    padding: 4rem 0 5rem;
+  }
+  
+  .signature-title {
+    font-size: 2.5rem;
+    margin-top: -4rem;
+  }
+  
+  .dish-plate {
+    width: 10rem;
+    height: 5rem;
+  }
+  
+  .dish-img {
+    width: 12rem;
+    height: 12rem;
+    margin-top: -13rem;
+  }
+  
+  .dish-name {
+    font-size: 1.25rem;
+  }
+  
+  .cta-btn {
+    width: 14rem;
+    padding: 1.25rem 2.5rem;
+    font-size: 1.125rem;
+  }
+  
+  /* Dine options */
+  .dine-option {
+    height: 45vh;
+    min-height: 25rem;
+  }
+  
+  .dine-option-title {
+    font-size: 7rem;
+  }
+  
+  .dine-option-content {
+    padding: 0 7%;
+  }
+  
+  /* Footer adjustments */
+  .footer-content {
+    padding: 2rem 3rem;
+  }
+}
+
+/* ==============================================
+   LARGE DESKTOP DEVICES (above 1200px)
+   ============================================== */
+@media (min-width: 1400px) {
+  /* Header adjustments for large desktop */
+  .nav-list {
+    margin-left: 8rem;
+    gap: 3rem;
+  }
+    .info-section {
+    margin-top: -90px;
+    margin-bottom: 80px;
+    margin-left: 30px;
+  }
+  .search-input {
+    width: 20rem;
+  }
+  
+  /* Main content adjustments */
+  .content-left {
+    padding: 4rem;
+  }
+  
+  .filipino {
+    font-size: 9rem;
+    margin-left: 4rem;
+    margin-bottom: -5rem;
+  }
+  
+  .comfort-food {
+    font-size: 5rem;
+    margin-left: 2rem;
+    margin-top: 1.3rem;
+    letter-spacing: -5px;
+  }
+  
+  .description {
+    font-size: 1.5rem;
+    margin-left: 3rem;
+    margin-top: -2rem;
+  }
+  
+  /* Signature dishes */
+  .signature-section {
+    padding: 5rem 0 6rem;
+  }
+  
+  .signature-title {
+    font-size: 3rem;
+    margin-top: -5rem;
+  }
+  
+  .dish-plate {
+    width: 20rem;
+    height: 10rem;
+  }
+  
+  .dish-img {
+    width: 20rem;
+    height: 20rem;
+    margin-top: -20rem;
+  }
+  
+  .dish-name {
+    font-size: 1.5rem;
+  }
+  
+  .cta-btn {
+    width: 16rem;
+    padding: 1.5rem 3rem;
+    font-size: 1.25rem;
+  }
+  
+  /* Dine options */
+  .dine-option {
+    height: 50vh;
+    min-height: 30rem;
+  }
+  
+  .dine-option-title {
+    font-size: 9rem;
+  }
+  
+  .dine-option-content {
+    padding: 0 8%;
+  }
+  
+  /* Footer adjustments */
+  .footer-content {
+    padding: 2.5rem 4rem;
+  }
+}
+
