@@ -1002,11 +1002,11 @@ async function loadNotifications() {
                                     <small>
                                         <strong>Order Summary:</strong><br>
                                         ${data.orderSummary?.items?.map(item => 
-                                            `${item.name} x${item.quantity} - ₱${item.total.toFixed(2)}`
+                                            `${item.name} x${item.quantity} - ₱${(typeof item.total === 'number' ? item.total.toFixed(2) : '0.00')}`
                                         ).join('<br>') || 'No items'}<br>
-                                        <strong>Subtotal:</strong> ₱${data.orderSummary?.subtotal?.toFixed(2) || '0.00'} | 
-                                        <strong>Shipping:</strong> ₱${data.orderSummary?.shippingFee?.toFixed(2) || '0.00'} | 
-                                        <strong>Total:</strong> ₱${data.orderSummary?.total?.toFixed(2) || '0.00'}
+                                        <strong>Subtotal:</strong> ₱${(typeof data.orderSummary?.subtotal === 'number' ? data.orderSummary.subtotal.toFixed(2) : '0.00')} | 
+                                        <strong>Shipping:</strong> ₱${(typeof data.orderSummary?.shippingFee === 'number' ? data.orderSummary.shippingFee.toFixed(2) : '0.00')} | 
+                                        <strong>Total:</strong> ₱${(typeof data.orderSummary?.total === 'number' ? data.orderSummary.total.toFixed(2) : '0.00')}
                                     </small>
                                 </div>
                                 ${data.paymentInfo?.receiptUrl ?
@@ -1128,6 +1128,8 @@ async function loadNotifications() {
             }
         })
         .catch(function (err) {
+            console.error('❌ Error in loadNotifications:', err);
+            console.error('❌ Error stack:', err.stack);
             notificationStatus.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error loading notifications.</td></tr>';
             updateNotificationBadge(0);
         });
