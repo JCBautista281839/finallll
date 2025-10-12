@@ -821,27 +821,39 @@ async function loadNotifications() {
     let queryPromise;
     
     if (userRole === 'kitchen') {
-        // Kitchen users only see inventory-related notifications - OPTIMIZED QUERY
-        console.log('🍳 Kitchen: FAST QUERY - Loading only inventory notifications...');
+        // Kitchen users only see inventory-related notifications - SIMPLE QUERY
+        console.log('🍳 Kitchen: Loading inventory notifications with simple query...');
         queryPromise = db.collection('notifications')
             .where('type', 'in', ['empty', 'restock', 'inventory'])
-            .orderBy('timestamp', 'desc')
             .limit(50)
             .get()
             .then(function(querySnapshot) {
                 console.log('🍳 Kitchen: Loaded', querySnapshot.size, 'inventory notifications');
-                return querySnapshot;
+                // Sort by timestamp in JavaScript to avoid composite index requirement
+                const docs = [];
+                querySnapshot.forEach(function(doc) {
+                    docs.push(doc);
+                });
+                docs.sort(function(a, b) {
+                    const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
+                    const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
+                    return timestampB - timestampA; // Descending order
+                });
+                return { docs: docs };
             })
             .catch(function(error) {
-                console.log('🍳 Kitchen: Index error, falling back to client-side sorting:', error);
-                // Fallback without orderBy if index doesn't exist
+                console.log('🍳 Kitchen: Index error, using simple query:', error);
+                // Final fallback - get all notifications and filter client-side
                 return db.collection('notifications')
-                    .where('type', 'in', ['empty', 'restock', 'inventory'])
+                    .limit(100)
                     .get()
                     .then(function(querySnapshot) {
                         const docs = [];
                         querySnapshot.forEach(function(doc) {
-                            docs.push(doc);
+                            const data = doc.data();
+                            if (['empty', 'restock', 'inventory'].includes(data.type)) {
+                                docs.push(doc);
+                            }
                         });
                         docs.sort(function(a, b) {
                             const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
@@ -852,64 +864,33 @@ async function loadNotifications() {
                     });
             });
     } else {
-        // Admin users see all notifications
-        console.log('👑 Admin: Querying for all notifications...');
+        // Admin users see all notifications - using simple query to avoid index issues
+        console.log('👑 Admin: Querying for all notifications with simple query...');
         
-        // First, get payment verification notifications specifically
         queryPromise = db.collection('notifications')
-            .where('type', '==', 'payment_verification')
             .orderBy('timestamp', 'desc')
-            .limit(10)
+            .limit(50)
             .get()
-            .then(function (paymentQuery) {
-                console.log('👑 Admin: Found', paymentQuery.size, 'payment verification notifications');
-
-                // Then get other notifications
-                return db.collection('notifications')
-                    .where('type', '!=', 'payment_verification')
-                    .orderBy('type')
-                    .orderBy('timestamp', 'desc')
-                    .limit(40)
-                    .get()
-                    .then(function (otherQuery) {
-                        console.log('👑 Admin: Found', otherQuery.size, 'other notifications');
-
-                        // Combine both queries - payment verifications first
-                        var allDocs = [];
-                        paymentQuery.forEach(function (doc) { allDocs.push(doc); });
-                        otherQuery.forEach(function (doc) { allDocs.push(doc); });
-
-                        console.log('👑 Admin: Total notifications to display:', allDocs.length);
-                        return { docs: allDocs, size: allDocs.length };
-                    });
-            })
             .catch(function (error) {
-                console.log('⚠️ Admin: Error with specific query, falling back to simple query:', error);
-                // Fallback to simple query - but still respect kitchen role
-                if (userRole === 'kitchen') {
-                    console.log('🍳 Kitchen: Using optimized fallback query');
-                    return db.collection('notifications')
-                        .where('type', 'in', ['empty', 'restock', 'inventory'])
-                        .limit(50)
-                        .get()
-                        .then(function(querySnapshot) {
-                            console.log('🍳 Kitchen: Fallback loaded', querySnapshot.size, 'inventory notifications');
-                            // Sort by timestamp in JavaScript to avoid composite index requirement
-                            const docs = [];
-                            querySnapshot.forEach(function(doc) {
-                                docs.push(doc);
-                            });
-                            docs.sort(function(a, b) {
-                                const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
-                                const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
-                                return timestampB - timestampA; // Descending order
-                            });
-                            return { docs: docs }; // Return all docs since we already limited
+                console.log('⚠️ Admin: Error with timestamp orderBy query, using basic query:', error);
+                // Final fallback - just get recent notifications without ordering
+                return db.collection('notifications')
+                    .limit(50)
+                    .get()
+                    .then(function(querySnapshot) {
+                        console.log('👑 Admin: Fallback loaded', querySnapshot.size, 'notifications (no ordering)');
+                        // Sort by timestamp in JavaScript
+                        const docs = [];
+                        querySnapshot.forEach(function(doc) {
+                            docs.push(doc);
                         });
-                } else {
-                    console.log('👑 Admin: Using fallback query for all notifications');
-                    return db.collection('notifications').orderBy('timestamp', 'desc').limit(50).get();
-                }
+                        docs.sort(function(a, b) {
+                            const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
+                            const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
+                            return timestampB - timestampA; // Descending order
+                        });
+                        return { docs: docs };
+                    });
             });
     }
 
