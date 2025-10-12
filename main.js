@@ -1,3 +1,5 @@
+// Hamburger Menu functionality is handled in index.html
+
 // Firebase configuration - check if already declared to prevent redeclaration errors
 if (typeof firebaseConfig === 'undefined') {
     window.firebaseConfig = {

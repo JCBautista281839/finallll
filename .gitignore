@@ -93,11 +93,13 @@ env.production.*
 
 # Firebase service account credentials
 firebase-service-account.json
+firebase-service-account.example.json
 firebase-adminsdk-*.json
 victoria-s-bistro-firebase-adminsdk-*.json
 *firebase*service*account*.json
 *firebase*adminsdk*.json
 *firebase-service-account.json
+*firebase-service-account.example.json
 
 # API Keys and sensitive data patterns
 *api*key*
