@@ -1009,6 +1009,24 @@ async function loadNotifications() {
                                     <strong>Payment:</strong> ${data.paymentInfo?.type?.toUpperCase() || 'Unknown'} | 
                                     <strong>Reference:</strong> ${data.paymentInfo?.reference || 'Unknown'}</small>
                                 </div>
+                                <div class="quotation-details" style="margin-top: 5px;">
+                                    <small>
+                                        <strong>Quotation ID:</strong> ${data.quotation?.id || 'N/A'} | 
+                                        <strong>Service:</strong> ${data.quotation?.serviceType || 'N/A'} | 
+                                        <strong>Est. Time:</strong> ${data.quotation?.estimatedTime || 'N/A'}
+                                    </small>
+                                </div>
+                                <div class="order-summary" style="margin-top: 5px; padding: 5px; background: #f8f9fa; border-radius: 4px;">
+                                    <small>
+                                        <strong>Order Summary:</strong><br>
+                                        ${data.orderSummary?.items?.map(item => 
+                                            `${item.name} x${item.quantity} - ₱${item.total.toFixed(2)}`
+                                        ).join('<br>') || 'No items'}<br>
+                                        <strong>Subtotal:</strong> ₱${data.orderSummary?.subtotal?.toFixed(2) || '0.00'} | 
+                                        <strong>Shipping:</strong> ₱${data.orderSummary?.shippingFee?.toFixed(2) || '0.00'} | 
+                                        <strong>Total:</strong> ₱${data.orderSummary?.total?.toFixed(2) || '0.00'}
+                                    </small>
+                                </div>
                                 ${data.paymentInfo?.receiptUrl ?
                             `<div class="receipt-preview">
                                         <small><strong>Receipt:</strong> 
