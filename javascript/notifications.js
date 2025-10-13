@@ -414,7 +414,7 @@ async function getQuotationById(quotationId) {
             throw new Error('Database not available');
         }
 
-        // Step 1: Try to find quotation in notifications collection
+        // Only use notifications collection
         const notifQuery = await db.collection('notifications')
             .where('quotation.id', '==', quotationId)
             .limit(1)
@@ -432,6 +432,7 @@ async function getQuotationById(quotationId) {
             if (expired) {
                 throw new Error('Quotation has expired. Please create a new quotation.');
             }
+            // Return in expected format
             return {
                 firestoreDocId: notifDoc.id,
                 quotationId: quotationObj.id,
@@ -448,62 +449,14 @@ async function getQuotationById(quotationId) {
                         total: quotationObj.price,
                         currency: quotationObj.currency || 'PHP'
                     },
-                    expiresAt: quotationObj.expiresAt
+                    expiresAt: quotationObj.expiresAt,
+                    distance: quotationObj.distance,
+                    status: quotationObj.status
                 }
             };
         }
 
-        // Step 2: Try to find quotation in orders collection (paymentInfo.quotationId)
-        const orderQuery = await db.collection('orders')
-            .where('paymentInfo.quotationId', '==', quotationId)
-            .limit(1)
-            .get();
-
-        if (!orderQuery.empty) {
-            const orderDoc = orderQuery.docs[0];
-            const orderData = orderDoc.data();
-            const paymentInfo = orderData.paymentInfo || {};
-            let expired = false;
-            if (paymentInfo.expiresAt) {
-                const expiresAt = paymentInfo.expiresAt.toDate ? paymentInfo.expiresAt.toDate() : new Date(paymentInfo.expiresAt);
-                if (expiresAt < new Date()) expired = true;
-            }
-            if (expired) {
-                throw new Error('Quotation has expired. Please create a new quotation.');
-            }
-            // Reconstruct quotation object from paymentInfo and orderData
-            const reconstructedQuotation = {
-                id: paymentInfo.quotationId,
-                serviceType: paymentInfo.serviceType || orderData.serviceType,
-                price: orderData.total || paymentInfo.price,
-                currency: paymentInfo.currency || 'PHP',
-                expiresAt: paymentInfo.expiresAt,
-                distance: orderData.orderSummary?.deliveryDetails?.distance || paymentInfo.distance,
-                status: paymentInfo.status || orderData.status,
-                // Add other fields as needed
-            };
-            return {
-                firestoreDocId: orderDoc.id,
-                quotationId: paymentInfo.quotationId,
-                orderId: orderDoc.id,
-                customerInfo: orderData.customerInfo,
-                quotationData: reconstructedQuotation,
-                status: orderData.status || paymentInfo.status || 'unknown',
-                createdAt: orderData.createdAt,
-                updatedAt: orderData.updatedAt,
-                data: {
-                    quotationId: paymentInfo.quotationId,
-                    serviceType: reconstructedQuotation.serviceType,
-                    priceBreakdown: {
-                        total: reconstructedQuotation.price,
-                        currency: reconstructedQuotation.currency
-                    },
-                    expiresAt: reconstructedQuotation.expiresAt
-                }
-            };
-        }
-
-        // Step 3: Not found in either collection
+        // Not found
         throw new Error(`No quotation found with ID: ${quotationId}`);
     } catch (error) {
         console.error('[notifications.js] ❌ Error retrieving quotation by ID:', error);
