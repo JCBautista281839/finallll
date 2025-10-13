@@ -407,7 +407,7 @@ async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) 
 // Function to get quotation data by quotation ID from Firestore
 async function getQuotationById(quotationId) {
     console.log('[notifications.js] 🔍 Getting quotation data for quotation ID:', quotationId);
-    
+
     try {
         const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
         if (!db) {
@@ -426,7 +426,7 @@ async function getQuotationById(quotationId) {
 
         const quotationDoc = quotationQuery.docs[0];
         const quotationData = quotationDoc.data();
-        
+
         console.log('[notifications.js] ✅ Found quotation in Firestore:', {
             firestoreDocId: quotationDoc.id,
             quotationId: quotationData.quotationId,
@@ -443,11 +443,11 @@ async function getQuotationById(quotationId) {
 
         // Check if quotation is expired
         if (quotationData.quotationData?.expiresAt) {
-            const expiresAt = quotationData.quotationData.expiresAt.toDate ? 
-                quotationData.quotationData.expiresAt.toDate() : 
+            const expiresAt = quotationData.quotationData.expiresAt.toDate ?
+                quotationData.quotationData.expiresAt.toDate() :
                 new Date(quotationData.quotationData.expiresAt);
             const now = new Date();
-            
+
             if (expiresAt < now) {
                 console.warn('[notifications.js] ⚠️ Quotation has expired:', {
                     expiresAt: expiresAt.toISOString(),
@@ -1709,14 +1709,14 @@ window.handleLalamoveReady = async function (docId) {
         }
 
         console.log('[notifications.js] 🔍 Getting notification data for docId:', docId);
-        
+
         // Get the notification document to extract quotation ID
         const notificationDoc = await db.collection('notifications').doc(docId).get();
         if (notificationDoc.exists) {
             notificationData = notificationDoc.data();
             quotationId = notificationData.quotation?.id;
             orderId = notificationData.orderId;
-            
+
             console.log('[notifications.js] 📋 Notification data:', {
                 type: notificationData.type,
                 quotationId: quotationId,
@@ -1735,10 +1735,52 @@ window.handleLalamoveReady = async function (docId) {
             clickedButton.innerHTML = '<i class="fas fa-search"></i> Retrieving quotation...';
         }
 
-        // Get quotation data using the quotation ID
+        // 🔧 HYBRID APPROACH: Try sessionStorage first, fallback to Firestore
         console.log('[notifications.js] 🔍 Retrieving quotation with ID:', quotationId);
-        const quotationData = await getQuotationById(quotationId);
+        let quotationData = null;
         
+        try {
+            // Step 1: Try to get quotation from sessionStorage first
+            console.log('[notifications.js] 💾 Attempting sessionStorage retrieval...');
+            const storedQuotationData = sessionStorage.getItem('quotationData');
+            
+            if (storedQuotationData) {
+                const parsedQuotationData = JSON.parse(storedQuotationData);
+                
+                // Verify the quotation ID matches what we're looking for
+                if (parsedQuotationData?.data?.quotationId === quotationId) {
+                    quotationData = parsedQuotationData;
+                    console.log('[notifications.js] ✅ SUCCESS: Found matching quotation in sessionStorage!', {
+                        quotationId: quotationId,
+                        sessionStorageId: parsedQuotationData.data.quotationId,
+                        hasStops: !!parsedQuotationData.data.stops,
+                        stopsCount: parsedQuotationData.data.stops?.length
+                    });
+                } else {
+                    console.log('[notifications.js] ❌ SessionStorage quotation ID mismatch:', {
+                        requested: quotationId,
+                        found: parsedQuotationData?.data?.quotationId
+                    });
+                }
+            } else {
+                console.log('[notifications.js] ❌ No quotationData found in sessionStorage');
+            }
+        } catch (sessionError) {
+            console.warn('[notifications.js] ⚠️ SessionStorage parsing error:', sessionError);
+        }
+        
+        // Step 2: Fallback to Firestore if sessionStorage failed
+        if (!quotationData) {
+            console.log('[notifications.js] 🔄 Falling back to Firestore retrieval...');
+            try {
+                quotationData = await getQuotationById(quotationId);
+                console.log('[notifications.js] ✅ SUCCESS: Retrieved quotation from Firestore fallback');
+            } catch (firestoreError) {
+                console.error('[notifications.js] ❌ Firestore fallback failed:', firestoreError);
+                throw new Error(`Failed to retrieve quotation from both sessionStorage and Firestore: ${firestoreError.message}`);
+            }
+        }
+
         // Get customer info from notification (it should be there)
         const customerInfo = {
             fullName: notificationData.customerInfo?.name || 'Unknown Customer',
