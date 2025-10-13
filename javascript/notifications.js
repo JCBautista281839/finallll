@@ -423,9 +423,7 @@ async function getQuotationById(quotationId) {
         if (!notifQuery.empty) {
             const notifDoc = notifQuery.docs[0];
             const notifData = notifDoc.data();
-            // Defensive: check structure
             const quotationObj = notifData.quotation || {};
-            // Check for expiry if available
             let expired = false;
             if (quotationObj.expiresAt) {
                 const expiresAt = quotationObj.expiresAt.toDate ? quotationObj.expiresAt.toDate() : new Date(quotationObj.expiresAt);
@@ -455,41 +453,52 @@ async function getQuotationById(quotationId) {
             };
         }
 
-        // Step 2: Try to find quotation in orders collection
+        // Step 2: Try to find quotation in orders collection (paymentInfo.quotationId)
         const orderQuery = await db.collection('orders')
-            .where('quotationId', '==', quotationId)
+            .where('paymentInfo.quotationId', '==', quotationId)
             .limit(1)
             .get();
 
         if (!orderQuery.empty) {
             const orderDoc = orderQuery.docs[0];
             const orderData = orderDoc.data();
-            // Defensive: check structure
+            const paymentInfo = orderData.paymentInfo || {};
             let expired = false;
-            if (orderData.expiresAt) {
-                const expiresAt = orderData.expiresAt.toDate ? orderData.expiresAt.toDate() : new Date(orderData.expiresAt);
+            if (paymentInfo.expiresAt) {
+                const expiresAt = paymentInfo.expiresAt.toDate ? paymentInfo.expiresAt.toDate() : new Date(paymentInfo.expiresAt);
                 if (expiresAt < new Date()) expired = true;
             }
             if (expired) {
                 throw new Error('Quotation has expired. Please create a new quotation.');
             }
+            // Reconstruct quotation object from paymentInfo and orderData
+            const reconstructedQuotation = {
+                id: paymentInfo.quotationId,
+                serviceType: paymentInfo.serviceType || orderData.serviceType,
+                price: orderData.total || paymentInfo.price,
+                currency: paymentInfo.currency || 'PHP',
+                expiresAt: paymentInfo.expiresAt,
+                distance: orderData.orderSummary?.deliveryDetails?.distance || paymentInfo.distance,
+                status: paymentInfo.status || orderData.status,
+                // Add other fields as needed
+            };
             return {
                 firestoreDocId: orderDoc.id,
-                quotationId: orderData.quotationId,
+                quotationId: paymentInfo.quotationId,
                 orderId: orderDoc.id,
                 customerInfo: orderData.customerInfo,
-                quotationData: orderData,
-                status: orderData.status || 'unknown',
+                quotationData: reconstructedQuotation,
+                status: orderData.status || paymentInfo.status || 'unknown',
                 createdAt: orderData.createdAt,
                 updatedAt: orderData.updatedAt,
                 data: {
-                    quotationId: orderData.quotationId,
-                    serviceType: orderData.serviceType,
+                    quotationId: paymentInfo.quotationId,
+                    serviceType: reconstructedQuotation.serviceType,
                     priceBreakdown: {
-                        total: orderData.total,
-                        currency: orderData.currency || 'PHP'
+                        total: reconstructedQuotation.price,
+                        currency: reconstructedQuotation.currency
                     },
-                    expiresAt: orderData.expiresAt
+                    expiresAt: reconstructedQuotation.expiresAt
                 }
             };
         }
