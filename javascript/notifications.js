@@ -422,6 +422,17 @@ async function getStopsFromOrder(orderId) {
 
         const orderData = orderDoc.data();
         console.log('[notifications.js] 📋 Order data retrieved for stops extraction');
+        
+        // Log the full order structure to help diagnose the issue
+        console.log('[notifications.js] 🔍 Order data structure:', {
+            topLevelKeys: Object.keys(orderData),
+            hasPaymentInfo: !!orderData.paymentInfo,
+            paymentInfoKeys: orderData.paymentInfo ? Object.keys(orderData.paymentInfo) : [],
+            hasShippingInfo: !!orderData.shippingInfo,
+            shippingInfoKeys: orderData.shippingInfo ? Object.keys(orderData.shippingInfo) : [],
+            hasItems: !!orderData.items,
+            hasQuotationId: !!orderData.quotationId
+        });
 
         // Try multiple possible locations for stops data
         let stops = null;
@@ -431,6 +442,7 @@ async function getStopsFromOrder(orderId) {
         // Check paymentInfo.orderSummary.deliveryDetails (most common location based on image 3)
         if (orderData.paymentInfo?.orderSummary?.deliveryDetails) {
             const deliveryDetails = orderData.paymentInfo.orderSummary.deliveryDetails;
+            console.log('[notifications.js] 🔍 Found deliveryDetails:', Object.keys(deliveryDetails));
             
             // Build stops array from delivery details
             if (deliveryDetails.pickupLocation || deliveryDetails.dropoffLocation) {
@@ -456,7 +468,7 @@ async function getStopsFromOrder(orderId) {
                 
                 serviceType = deliveryDetails.service || deliveryDetails.serviceType;
                 distance = deliveryDetails.distance;
-                console.log('[notifications.js] ✅ Found stops in paymentInfo.orderSummary.deliveryDetails');
+                console.log('[notifications.js] ✅ Found stops in paymentInfo.orderSummary.deliveryDetails (pickup/dropoff)');
             }
             // Check if stops array exists directly
             else if (Array.isArray(deliveryDetails.stops) && deliveryDetails.stops.length >= 2) {
@@ -465,6 +477,12 @@ async function getStopsFromOrder(orderId) {
                 distance = deliveryDetails.distance;
                 console.log('[notifications.js] ✅ Found stops array in paymentInfo.orderSummary.deliveryDetails');
             }
+        }
+        
+        // Check if quotationId exists directly in the order (Image 3 shows this)
+        if (!stops && orderData.quotationId) {
+            console.log('[notifications.js] 🔍 Order has quotationId but no stops in standard locations');
+            console.log('[notifications.js] 🔍 Checking if shippingInfo has address data...');
         }
 
         // Fallback: Check shippingInfo
@@ -489,24 +507,42 @@ async function getStopsFromOrder(orderId) {
         if (!stops) {
             console.log('[notifications.js] ⚠️ No stops found, attempting to build from customer address...');
             
+            // Try multiple locations for customer address
             const customerAddress = orderData.shippingInfo?.address || 
+                                   orderData.shippingInfo?.fullAddress ||
                                    orderData.customerInfo?.address || 
-                                   orderData.address;
+                                   orderData.address ||
+                                   orderData.deliveryAddress;
+            
+            // Try to get customer phone for logging
+            const customerPhone = orderData.shippingInfo?.phone || 
+                                 orderData.customerInfo?.phone || 
+                                 orderData.phone;
+            
+            console.log('[notifications.js] 🔍 Customer address search:', {
+                foundAddress: !!customerAddress,
+                address: customerAddress,
+                phone: customerPhone,
+                shippingInfo: orderData.shippingInfo ? Object.keys(orderData.shippingInfo) : 'none'
+            });
             
             if (customerAddress) {
                 stops = [
                     {
-                        coordinates: { lat: '', lng: '' },
-                        address: 'Viktoria\'s Bistro, Restaurant Address', // Default restaurant address
+                        coordinates: { lat: '14.5995', lng: '120.9842' }, // Default Manila coordinates
+                        address: 'Viktoria\'s Bistro, Restaurant Address', // Update with actual restaurant address
                         stopId: 'SENDER_STOP'
                     },
                     {
-                        coordinates: { lat: '', lng: '' },
+                        coordinates: { lat: '', lng: '' }, // Customer coordinates unknown
                         address: customerAddress,
                         stopId: 'RECIPIENT_STOP'
                     }
                 ];
-                console.log('[notifications.js] ✅ Built stops from customer address');
+                serviceType = 'MOTORCYCLE'; // Default service type
+                console.log('[notifications.js] ✅ Built stops from customer address:', customerAddress);
+            } else {
+                console.log('[notifications.js] ❌ No customer address found in any location');
             }
         }
 
@@ -515,9 +551,19 @@ async function getStopsFromOrder(orderId) {
                 orderId,
                 hasPaymentInfo: !!orderData.paymentInfo,
                 hasShippingInfo: !!orderData.shippingInfo,
-                hasQuotationData: !!orderData.quotationData
+                hasQuotationData: !!orderData.quotationData,
+                stopsFound: stops?.length || 0
             });
-            throw new Error('Could not extract stops data from order document');
+            
+            // Log the full shippingInfo and paymentInfo structures for debugging
+            if (orderData.shippingInfo) {
+                console.error('[notifications.js] 📋 Full shippingInfo:', orderData.shippingInfo);
+            }
+            if (orderData.paymentInfo) {
+                console.error('[notifications.js] 📋 Full paymentInfo:', orderData.paymentInfo);
+            }
+            
+            throw new Error('Could not extract stops data from order document. Check console for order structure details.');
         }
 
         console.log('[notifications.js] ✅ Successfully extracted stops:', {
