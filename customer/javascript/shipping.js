@@ -128,12 +128,17 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         receiptName: paymentInfo.receiptName,
         timestamp: paymentInfo.timestamp
       },
-      // Add quotation ID and delivery details
+      // Add quotation ID and delivery details WITH STOPS for Lalamove Ready button
       quotation: {
         id: quotationData.data?.quotationId || null,
         serviceType: quotationData.data?.serviceType || 'PICKUP',
         distance: quotationData.data?.distance || null,
-        estimatedTime: quotationData.data?.estimatedTime || null
+        estimatedTime: quotationData.data?.estimatedTime || null,
+        // Include stops array for Lalamove order placement
+        stops: quotationData.data?.stops || [],
+        expiresAt: quotationData.data?.expiresAt || null,
+        price: quotationData.data?.priceBreakdown?.total || 0,
+        currency: quotationData.data?.priceBreakdown?.currency || 'PHP'
       },
       // Add order ID
       orderId: paymentInfo.orderId || null,
@@ -1856,7 +1861,15 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         province: formData.province || '',
         postalCode: formData.postalCode || '',
         method: quotationData.serviceType || 'pickup',
-        cost: shippingCost
+        cost: shippingCost,
+        // Add full address with coordinates for delivery
+        fullAddressWithCoordinates: {
+          address: formData.fullAddress || formData.address || 'No address provided',
+          coordinates: {
+            lat: formData.latitude || '',
+            lng: formData.longitude || ''
+          }
+        }
       },
       items: items,
       subtotal: subtotal,
@@ -1871,11 +1884,29 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         receiptName: paymentInfo.receiptName || '',
         timestamp: paymentInfo.timestamp
       },
+      // Add Lalamove delivery data with stops for "Lalamove Ready" button
+      lalamoveData: quotationData.data ? {
+        quotationId: quotationData.data.quotationId || null,
+        stops: quotationData.data.stops || [],
+        serviceType: quotationData.data.serviceType || 'MOTORCYCLE',
+        distance: quotationData.data.distance || null,
+        estimatedTime: quotationData.data.estimatedTime || null,
+        priceBreakdown: quotationData.data.priceBreakdown || { total: 0, currency: 'PHP' },
+        expiresAt: quotationData.data.expiresAt || null
+      } : null,
+      // Also save quotation ID at top level for easy access
+      quotationId: quotationData.data?.quotationId || null,
       status: 'pending_approval', // Order needs admin approval
       notes: formData.notes || '',
       estimatedDeliveryTime: quotationData.estimatedDeliveryTime || null,
       userId: currentUserId
     };
+    
+    console.log('[shipping.js] 📦 Order data includes Lalamove stops:', {
+      hasLalamoveData: !!orderData.lalamoveData,
+      stopsCount: orderData.lalamoveData?.stops?.length || 0,
+      quotationId: orderData.quotationId
+    });
 
     console.log('[shipping.js] Creating order with data:', orderData);
 
