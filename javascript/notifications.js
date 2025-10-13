@@ -1735,51 +1735,9 @@ window.handleLalamoveReady = async function (docId) {
             clickedButton.innerHTML = '<i class="fas fa-search"></i> Retrieving quotation...';
         }
 
-        // 🔧 HYBRID APPROACH: Try sessionStorage first, fallback to Firestore
+        // Get quotation data using the quotation ID
         console.log('[notifications.js] 🔍 Retrieving quotation with ID:', quotationId);
-        let quotationData = null;
-        
-        try {
-            // Step 1: Try to get quotation from sessionStorage first
-            console.log('[notifications.js] 💾 Attempting sessionStorage retrieval...');
-            const storedQuotationData = sessionStorage.getItem('quotationData');
-            
-            if (storedQuotationData) {
-                const parsedQuotationData = JSON.parse(storedQuotationData);
-                
-                // Verify the quotation ID matches what we're looking for
-                if (parsedQuotationData?.data?.quotationId === quotationId) {
-                    quotationData = parsedQuotationData;
-                    console.log('[notifications.js] ✅ SUCCESS: Found matching quotation in sessionStorage!', {
-                        quotationId: quotationId,
-                        sessionStorageId: parsedQuotationData.data.quotationId,
-                        hasStops: !!parsedQuotationData.data.stops,
-                        stopsCount: parsedQuotationData.data.stops?.length
-                    });
-                } else {
-                    console.log('[notifications.js] ❌ SessionStorage quotation ID mismatch:', {
-                        requested: quotationId,
-                        found: parsedQuotationData?.data?.quotationId
-                    });
-                }
-            } else {
-                console.log('[notifications.js] ❌ No quotationData found in sessionStorage');
-            }
-        } catch (sessionError) {
-            console.warn('[notifications.js] ⚠️ SessionStorage parsing error:', sessionError);
-        }
-        
-        // Step 2: Fallback to Firestore if sessionStorage failed
-        if (!quotationData) {
-            console.log('[notifications.js] 🔄 Falling back to Firestore retrieval...');
-            try {
-                quotationData = await getQuotationById(quotationId);
-                console.log('[notifications.js] ✅ SUCCESS: Retrieved quotation from Firestore fallback');
-            } catch (firestoreError) {
-                console.error('[notifications.js] ❌ Firestore fallback failed:', firestoreError);
-                throw new Error(`Failed to retrieve quotation from both sessionStorage and Firestore: ${firestoreError.message}`);
-            }
-        }
+        const quotationData = await getQuotationById(quotationId);
 
         // Get customer info from notification (it should be there)
         const customerInfo = {
