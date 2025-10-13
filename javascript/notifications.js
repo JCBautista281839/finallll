@@ -414,70 +414,88 @@ async function getQuotationById(quotationId) {
             throw new Error('Database not available');
         }
 
-        // Query lalamove_quotations collection by quotationId
-        const quotationQuery = await db.collection('lalamove_quotations')
+        // Step 1: Try to find quotation in notifications collection
+        const notifQuery = await db.collection('notifications')
+            .where('quotation.id', '==', quotationId)
+            .limit(1)
+            .get();
+
+        if (!notifQuery.empty) {
+            const notifDoc = notifQuery.docs[0];
+            const notifData = notifDoc.data();
+            // Defensive: check structure
+            const quotationObj = notifData.quotation || {};
+            // Check for expiry if available
+            let expired = false;
+            if (quotationObj.expiresAt) {
+                const expiresAt = quotationObj.expiresAt.toDate ? quotationObj.expiresAt.toDate() : new Date(quotationObj.expiresAt);
+                if (expiresAt < new Date()) expired = true;
+            }
+            if (expired) {
+                throw new Error('Quotation has expired. Please create a new quotation.');
+            }
+            return {
+                firestoreDocId: notifDoc.id,
+                quotationId: quotationObj.id,
+                orderId: notifData.orderId,
+                customerInfo: notifData.customerInfo,
+                quotationData: quotationObj,
+                status: notifData.status || 'unknown',
+                createdAt: notifData.createdAt,
+                updatedAt: notifData.updatedAt,
+                data: {
+                    quotationId: quotationObj.id,
+                    serviceType: quotationObj.serviceType,
+                    priceBreakdown: {
+                        total: quotationObj.price,
+                        currency: quotationObj.currency || 'PHP'
+                    },
+                    expiresAt: quotationObj.expiresAt
+                }
+            };
+        }
+
+        // Step 2: Try to find quotation in orders collection
+        const orderQuery = await db.collection('orders')
             .where('quotationId', '==', quotationId)
             .limit(1)
             .get();
 
-        if (quotationQuery.empty) {
-            throw new Error(`No quotation found with ID: ${quotationId}`);
-        }
-
-        const quotationDoc = quotationQuery.docs[0];
-        const quotationData = quotationDoc.data();
-
-        console.log('[notifications.js] ✅ Found quotation in Firestore:', {
-            firestoreDocId: quotationDoc.id,
-            quotationId: quotationData.quotationId,
-            orderId: quotationData.orderId,
-            serviceType: quotationData.quotationData?.serviceType,
-            price: quotationData.quotationData?.price,
-            status: quotationData.status
-        });
-
-        // Check if quotation is still active/valid
-        if (quotationData.status !== 'active') {
-            console.warn('[notifications.js] ⚠️ Quotation status is not active:', quotationData.status);
-        }
-
-        // Check if quotation is expired
-        if (quotationData.quotationData?.expiresAt) {
-            const expiresAt = quotationData.quotationData.expiresAt.toDate ?
-                quotationData.quotationData.expiresAt.toDate() :
-                new Date(quotationData.quotationData.expiresAt);
-            const now = new Date();
-
-            if (expiresAt < now) {
-                console.warn('[notifications.js] ⚠️ Quotation has expired:', {
-                    expiresAt: expiresAt.toISOString(),
-                    now: now.toISOString()
-                });
+        if (!orderQuery.empty) {
+            const orderDoc = orderQuery.docs[0];
+            const orderData = orderDoc.data();
+            // Defensive: check structure
+            let expired = false;
+            if (orderData.expiresAt) {
+                const expiresAt = orderData.expiresAt.toDate ? orderData.expiresAt.toDate() : new Date(orderData.expiresAt);
+                if (expiresAt < new Date()) expired = true;
+            }
+            if (expired) {
                 throw new Error('Quotation has expired. Please create a new quotation.');
             }
+            return {
+                firestoreDocId: orderDoc.id,
+                quotationId: orderData.quotationId,
+                orderId: orderDoc.id,
+                customerInfo: orderData.customerInfo,
+                quotationData: orderData,
+                status: orderData.status || 'unknown',
+                createdAt: orderData.createdAt,
+                updatedAt: orderData.updatedAt,
+                data: {
+                    quotationId: orderData.quotationId,
+                    serviceType: orderData.serviceType,
+                    priceBreakdown: {
+                        total: orderData.total,
+                        currency: orderData.currency || 'PHP'
+                    },
+                    expiresAt: orderData.expiresAt
+                }
+            };
         }
 
-        return {
-            firestoreDocId: quotationDoc.id,
-            quotationId: quotationData.quotationId,
-            orderId: quotationData.orderId,
-            customerInfo: quotationData.customerInfo,
-            quotationData: quotationData.quotationData,
-            status: quotationData.status,
-            createdAt: quotationData.createdAt,
-            updatedAt: quotationData.updatedAt,
-            // Format for compatibility with existing functions
-            data: {
-                quotationId: quotationData.quotationId,
-                serviceType: quotationData.quotationData?.serviceType,
-                priceBreakdown: {
-                    total: quotationData.quotationData?.price,
-                    currency: quotationData.quotationData?.currency || 'PHP'
-                },
-                expiresAt: quotationData.quotationData?.expiresAt
-            }
-        };
-
+        // Step 3: Not found in either collection
+        throw new Error(`No quotation found with ID: ${quotationId}`);
     } catch (error) {
         console.error('[notifications.js] ❌ Error retrieving quotation by ID:', error);
         throw error;
@@ -1946,4 +1964,3 @@ function showToast(message, type = "info", duration = 3000) {
         }, 300);
     }, duration);
 }
-
