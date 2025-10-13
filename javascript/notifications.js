@@ -404,6 +404,140 @@ async function placeLalamoveOrderFromNotifications(quotationData, customerInfo) 
     }
 }
 
+// Helper function to get stops array from order document
+async function getStopsFromOrder(orderId) {
+    console.log('[notifications.js] 🔍 Getting stops data from order:', orderId);
+
+    try {
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            throw new Error('Database not available');
+        }
+
+        // Get order document
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) {
+            throw new Error(`Order not found: ${orderId}`);
+        }
+
+        const orderData = orderDoc.data();
+        console.log('[notifications.js] 📋 Order data retrieved for stops extraction');
+
+        // Try multiple possible locations for stops data
+        let stops = null;
+        let serviceType = null;
+        let distance = null;
+
+        // Check paymentInfo.orderSummary.deliveryDetails (most common location based on image 3)
+        if (orderData.paymentInfo?.orderSummary?.deliveryDetails) {
+            const deliveryDetails = orderData.paymentInfo.orderSummary.deliveryDetails;
+            
+            // Build stops array from delivery details
+            if (deliveryDetails.pickupLocation || deliveryDetails.dropoffLocation) {
+                stops = [];
+                
+                // Add pickup stop (sender)
+                if (deliveryDetails.pickupLocation) {
+                    stops.push({
+                        coordinates: deliveryDetails.pickupLocation.coordinates || { lat: '', lng: '' },
+                        address: deliveryDetails.pickupLocation.address || deliveryDetails.pickupLocation,
+                        stopId: 'SENDER_STOP'
+                    });
+                }
+                
+                // Add delivery stop (recipient)
+                if (deliveryDetails.dropoffLocation) {
+                    stops.push({
+                        coordinates: deliveryDetails.dropoffLocation.coordinates || { lat: '', lng: '' },
+                        address: deliveryDetails.dropoffLocation.address || deliveryDetails.dropoffLocation,
+                        stopId: 'RECIPIENT_STOP'
+                    });
+                }
+                
+                serviceType = deliveryDetails.service || deliveryDetails.serviceType;
+                distance = deliveryDetails.distance;
+                console.log('[notifications.js] ✅ Found stops in paymentInfo.orderSummary.deliveryDetails');
+            }
+            // Check if stops array exists directly
+            else if (Array.isArray(deliveryDetails.stops) && deliveryDetails.stops.length >= 2) {
+                stops = deliveryDetails.stops;
+                serviceType = deliveryDetails.service || deliveryDetails.serviceType;
+                distance = deliveryDetails.distance;
+                console.log('[notifications.js] ✅ Found stops array in paymentInfo.orderSummary.deliveryDetails');
+            }
+        }
+
+        // Fallback: Check shippingInfo
+        if (!stops && orderData.shippingInfo) {
+            if (orderData.shippingInfo.quotationData?.data?.stops) {
+                stops = orderData.shippingInfo.quotationData.data.stops;
+                serviceType = orderData.shippingInfo.quotationData.data.serviceType;
+                distance = orderData.shippingInfo.quotationData.data.distance;
+                console.log('[notifications.js] ✅ Found stops in shippingInfo.quotationData');
+            }
+        }
+
+        // Fallback: Check direct quotationData field
+        if (!stops && orderData.quotationData?.data?.stops) {
+            stops = orderData.quotationData.data.stops;
+            serviceType = orderData.quotationData.data.serviceType;
+            distance = orderData.quotationData.data.distance;
+            console.log('[notifications.js] ✅ Found stops in quotationData');
+        }
+
+        // Fallback: Build stops from customer address and restaurant location
+        if (!stops) {
+            console.log('[notifications.js] ⚠️ No stops found, attempting to build from customer address...');
+            
+            const customerAddress = orderData.shippingInfo?.address || 
+                                   orderData.customerInfo?.address || 
+                                   orderData.address;
+            
+            if (customerAddress) {
+                stops = [
+                    {
+                        coordinates: { lat: '', lng: '' },
+                        address: 'Viktoria\'s Bistro, Restaurant Address', // Default restaurant address
+                        stopId: 'SENDER_STOP'
+                    },
+                    {
+                        coordinates: { lat: '', lng: '' },
+                        address: customerAddress,
+                        stopId: 'RECIPIENT_STOP'
+                    }
+                ];
+                console.log('[notifications.js] ✅ Built stops from customer address');
+            }
+        }
+
+        if (!stops || stops.length < 2) {
+            console.error('[notifications.js] ❌ Could not find valid stops data in order:', {
+                orderId,
+                hasPaymentInfo: !!orderData.paymentInfo,
+                hasShippingInfo: !!orderData.shippingInfo,
+                hasQuotationData: !!orderData.quotationData
+            });
+            throw new Error('Could not extract stops data from order document');
+        }
+
+        console.log('[notifications.js] ✅ Successfully extracted stops:', {
+            stopsCount: stops.length,
+            serviceType,
+            distance
+        });
+
+        return {
+            stops,
+            serviceType,
+            distance
+        };
+
+    } catch (error) {
+        console.error('[notifications.js] ❌ Error getting stops from order:', error);
+        throw error;
+    }
+}
+
 // Function to get quotation data by quotation ID from Firestore
 async function getQuotationById(quotationId) {
     console.log('[notifications.js] 🔍 Getting quotation data for quotation ID:', quotationId);
@@ -424,6 +558,8 @@ async function getQuotationById(quotationId) {
             const notifDoc = notifQuery.docs[0];
             const notifData = notifDoc.data();
             const quotationObj = notifData.quotation || {};
+            
+            // Check if quotation has expired
             let expired = false;
             if (quotationObj.expiresAt) {
                 const expiresAt = quotationObj.expiresAt.toDate ? quotationObj.expiresAt.toDate() : new Date(quotationObj.expiresAt);
@@ -432,10 +568,39 @@ async function getQuotationById(quotationId) {
             if (expired) {
                 throw new Error('Quotation has expired. Please create a new quotation.');
             }
-            // Ensure stops is an array with at least 2 elements
+            
+            // Check if stops array is missing or too short
+            let stopsData = null;
             if (!Array.isArray(quotationObj.stops) || quotationObj.stops.length < 2) {
-                throw new Error('Invalid quotation data: stops array missing or too short.');
+                console.warn('[notifications.js] ⚠️ Stops array missing or incomplete in notification quotation');
+                console.log('[notifications.js] 📋 Notification quotation structure:', {
+                    hasStops: !!quotationObj.stops,
+                    stopsLength: quotationObj.stops?.length || 0,
+                    quotationKeys: Object.keys(quotationObj)
+                });
+                
+                // Try to get stops from associated order document
+                if (notifData.orderId) {
+                    console.log('[notifications.js] 🔄 Attempting to fetch stops from order:', notifData.orderId);
+                    try {
+                        stopsData = await getStopsFromOrder(notifData.orderId);
+                        console.log('[notifications.js] ✅ Successfully retrieved stops from order document');
+                    } catch (stopsError) {
+                        console.error('[notifications.js] ❌ Failed to get stops from order:', stopsError);
+                        throw new Error(`Invalid quotation data: stops array missing in notification and could not retrieve from order (${stopsError.message})`);
+                    }
+                } else {
+                    throw new Error('Invalid quotation data: stops array missing or too short and no orderId available for fallback.');
+                }
+            } else {
+                // Stops are present in notification quotation
+                stopsData = {
+                    stops: quotationObj.stops,
+                    serviceType: quotationObj.serviceType,
+                    distance: quotationObj.distance
+                };
             }
+            
             // Return in expected format for Lalamove order placement
             return {
                 firestoreDocId: notifDoc.id,
@@ -448,20 +613,20 @@ async function getQuotationById(quotationId) {
                 updatedAt: notifData.updatedAt,
                 data: {
                     quotationId: quotationObj.id,
-                    stops: quotationObj.stops,
+                    stops: stopsData.stops,
                     expiresAt: quotationObj.expiresAt,
-                    serviceType: quotationObj.serviceType,
+                    serviceType: stopsData.serviceType || quotationObj.serviceType,
                     priceBreakdown: {
                         total: quotationObj.price,
                         currency: quotationObj.currency || 'PHP'
                     },
-                    distance: quotationObj.distance,
+                    distance: stopsData.distance || quotationObj.distance,
                     status: quotationObj.status
                 }
             };
         }
 
-        // Not found
+        // Not found in notifications collection
         throw new Error(`No quotation found with ID: ${quotationId}`);
     } catch (error) {
         console.error('[notifications.js] ❌ Error retrieving quotation by ID:', error);
@@ -1706,14 +1871,25 @@ window.handleLalamoveReady = async function (docId) {
                 type: notificationData.type,
                 quotationId: quotationId,
                 orderId: orderId,
-                hasQuotationData: !!notificationData.quotation
+                hasQuotationData: !!notificationData.quotation,
+                quotationStructure: notificationData.quotation ? Object.keys(notificationData.quotation) : [],
+                hasOrderId: !!orderId
             });
         } else {
-            throw new Error('Notification not found');
+            throw new Error(`Notification document not found with ID: ${docId}`);
         }
 
         if (!quotationId) {
-            throw new Error('No quotation ID found in notification. Cannot place Lalamove order.');
+            console.error('[notifications.js] ❌ Missing quotation ID in notification:', {
+                docId,
+                notificationKeys: Object.keys(notificationData),
+                quotationField: notificationData.quotation
+            });
+            throw new Error('No quotation ID found in notification. Cannot place Lalamove order. Please ensure the payment verification notification contains a valid quotation ID.');
+        }
+
+        if (!orderId) {
+            console.warn('[notifications.js] ⚠️ No orderId found in notification - stops fallback may not work');
         }
 
         if (clickedButton) {
@@ -1843,17 +2019,38 @@ window.handleLalamoveReady = async function (docId) {
 
         // Show detailed error message
         let errorMsg = 'Lalamove order failed: ';
+        let errorHint = '';
+        
         if (error.message.includes('expired')) {
             errorMsg += 'Quotation has expired. Please create a new quotation.';
+            errorHint = 'The quotation is no longer valid. Request a new delivery quote.';
+        } else if (error.message.includes('stops array missing')) {
+            errorMsg += 'Delivery location data is missing.';
+            errorHint = 'Could not find pickup/delivery locations in the notification or order. Please check Firebase data structure.';
+        } else if (error.message.includes('Notification document not found')) {
+            errorMsg += 'Notification not found.';
+            errorHint = 'The notification document may have been deleted or the ID is incorrect.';
+        } else if (error.message.includes('No quotation ID found')) {
+            errorMsg += 'Missing quotation ID in notification.';
+            errorHint = 'The payment verification notification does not contain a valid quotation ID. Please verify the notification structure in Firebase.';
+        } else if (error.message.includes('Order not found')) {
+            errorMsg += 'Associated order not found.';
+            errorHint = `Could not find order document${orderId ? ` with ID: ${orderId}` : ''}. Check if the order exists in Firebase.`;
         } else if (error.message.includes('not found')) {
-            errorMsg += 'Quotation not found in database.';
+            errorMsg += 'Required data not found in database.';
+            errorHint = 'Quotation or order data is missing. Verify Firebase collections.';
         } else if (error.message.includes('Database not available')) {
             errorMsg += 'Database connection error. Please try again.';
+            errorHint = 'Firebase connection failed. Check your internet connection.';
+        } else if (error.message.includes('Invalid quotation data')) {
+            errorMsg += error.message;
+            errorHint = 'The quotation data structure is incomplete or invalid. Check Firebase notification and order documents.';
         } else {
             errorMsg += error.message;
         }
 
-        showToast(errorMsg, 'error');
+        console.error('[notifications.js] 💡 Error hint:', errorHint);
+        showToast(errorMsg + (errorHint ? `<br><small>${errorHint}</small>` : ''), 'error');
 
         // Reset button after delay
         setTimeout(() => {
