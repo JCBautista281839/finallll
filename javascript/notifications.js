@@ -432,7 +432,11 @@ async function getQuotationById(quotationId) {
             if (expired) {
                 throw new Error('Quotation has expired. Please create a new quotation.');
             }
-            // Return in expected format
+            // Ensure stops is an array with at least 2 elements
+            if (!Array.isArray(quotationObj.stops) || quotationObj.stops.length < 2) {
+                throw new Error('Invalid quotation data: stops array missing or too short.');
+            }
+            // Return in expected format for Lalamove order placement
             return {
                 firestoreDocId: notifDoc.id,
                 quotationId: quotationObj.id,
@@ -444,12 +448,13 @@ async function getQuotationById(quotationId) {
                 updatedAt: notifData.updatedAt,
                 data: {
                     quotationId: quotationObj.id,
+                    stops: quotationObj.stops,
+                    expiresAt: quotationObj.expiresAt,
                     serviceType: quotationObj.serviceType,
                     priceBreakdown: {
                         total: quotationObj.price,
                         currency: quotationObj.currency || 'PHP'
                     },
-                    expiresAt: quotationObj.expiresAt,
                     distance: quotationObj.distance,
                     status: quotationObj.status
                 }
