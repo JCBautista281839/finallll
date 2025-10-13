@@ -214,7 +214,6 @@ body {
 .main-nav {
   display: flex;
   justify-content: center;
-  margin-left: -700px !important;
 }
 
 .nav-list {
@@ -222,7 +221,7 @@ body {
   display: flex;
   gap: 40px;
   margin: 0;
-  margin-left: 700px !important;
+  margin-right: -400px !important;
 }
 
 .main-nav .nav-link {
@@ -1029,6 +1028,7 @@ body {
 .popup-content .delete-btn:active {
   transform: scale(0.95);
 }
+
 /* Custom Order Summary Styles */
 .location-icon {
   width: 20px;
@@ -2111,6 +2111,7 @@ body {
 .popup-content .delete-btn:active {
   transform: scale(0.95);
 }
+
 /* Custom Order Summary Styles */
 .location-icon {
   width: 20px;
@@ -2287,8 +2288,8 @@ body {
   font-family: 'PoppinsRegular' !important;
   border-bottom: none;
   margin-top: 20px;
-  margin-right:-90px;
-  margin-bottom:20px;
+  margin-right: -90px;
+  margin-bottom: 20px;
 }
 
 /* Match index.html header structure */
@@ -2330,7 +2331,7 @@ body {
   display: flex;
   justify-content: center;
   width: 100%;
-  
+
 }
 
 .nav-list {
@@ -3197,4 +3198,3 @@ body {
 .popup-content .delete-btn:active {
   transform: scale(0.95);
 }
-

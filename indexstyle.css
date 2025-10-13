@@ -1,32 +1,3 @@
-.star-yellow {
-  background-image: url('src/Icons/star (1).png') !important;
-}
-
-.star-empty {
-  background-image: url('src/Icons/star.png') !important;
-}
-
-.rating-stars-input .star-input {
-  display: inline-block;
-  width: 32px;
-  height: 32px;
-  margin-right: 2px;
-  vertical-align: middle;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  background-image: url('src/Icons/star.png');
-  transition: background-image 0.2s;
-}
-
-.rating-stars-input .star-input.selected,
-.rating-stars-input .star-input.active {
-  background-image: url('src/Icons/star (1).png');
-}
-
 @font-face {
   font-family: 'PoppinsMedium';
   src: url('src/fonts/Poppins-Medium.woff') format('woff');
@@ -103,6 +74,7 @@ body {
 .main-nav {
   display: flex;
   justify-content: flex-start;
+  background-color: transparent;
 }
 
 .nav-list {
@@ -110,7 +82,7 @@ body {
   display: flex;
   gap: 40px;
   margin: 0;
-  margin-right: 30px;
+  margin-left: 650px !important;
 }
 
 .nav-link {
@@ -119,6 +91,7 @@ body {
   font-weight: 500;
   font-size: 18px;
   transition: color 0.3s ease;
+  margin-left: -20px;
 }
 
 .nav-link:hover {
@@ -136,13 +109,6 @@ body {
   height: 20px;
   position: absolute;
   right: 15px;
-}
-
-.desktop-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
 }
 
 .header-actions {
@@ -318,37 +284,6 @@ body {
   justify-content: center;
   align-items: center;
   padding: 60px 20px;
-}
-
-/* Close Menu Button */
-.menu-close {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  width: 40px;
-  height: 40px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  z-index: 1001;
-}
-
-.close-line {
-  display: block;
-  width: 30px;
-  height: 2px;
-  background-color: #fff;
-  margin: 4px 0;
-  transition: all 0.3s ease;
-  border-radius: 1px;
-}
-
-.close-line:nth-child(1) {
-  transform: rotate(45deg) translate(2px, 2px);
-}
-
-.close-line:nth-child(2) {
-  transform: rotate(-45deg) translate(2px, -2px);
 }
 
 /* Fullscreen Navigation */
@@ -572,7 +507,7 @@ body {
 .info-section {
   margin-top: -90px;
   margin-bottom: 80px;
-  margin-left: 30px;
+  margin-left: -10px !important;
 }
 
 .info-title {
@@ -630,9 +565,10 @@ body {
   font-size: 100px;
   color: #8B2E20;
   margin-bottom: -40px;
+  margin-top: -40px !important;
   position: relative;
   z-index: 2;
-  margin-left: 40px;
+  margin-left: -10px !important;
 }
 
 .comfort-food {
@@ -644,7 +580,7 @@ body {
   letter-spacing: -3px;
   z-index: 0;
   margin-top: -25px;
-  margin-left: 20px;
+  margin-left: -10px !important;
   position: relative;
   z-index: 1;
 }
@@ -654,13 +590,13 @@ body {
 }
 
 .description {
-  font-size: 18px;
+  font-size: 17px !important;
   font-family: 'PoppinsLight';
   line-height: 1.4;
   color: #555;
   max-width: 700px;
   margin-top: -20px;
-  margin-left: 30px;
+  margin-left: -10px !important;
 }
 
 /* Signature dishes */
@@ -773,13 +709,17 @@ body {
 .cta-btn {
   background-color: #96392d;
   width: 200px;
+  height: 50px !important;
   border: none;
   color: white;
   padding: 15px 30px;
-  border-radius: 30px;
+  border-radius: 25px;
   font-size: 16px;
   transition: background-color 0.3s ease;
-
+  margin-left: -29px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cta-btn:hover {
@@ -808,6 +748,11 @@ body {
   max-width: 150%;
   width: 105%;
   height: auto;
+  transition: transform 0.1s ease;
+}
+
+.food-image:hover {
+  transform: scale(1.05);
 }
 
 .rating-badge {
@@ -851,9 +796,11 @@ body {
   transform: scale(1.08);
 }
 
+/* Scroll animations */
 .in-view {
   opacity: 1;
   transform: translateX(0);
+  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
 /* When coming from bottom, reset translateY as well */
@@ -862,7 +809,6 @@ body {
 }
 
 /* Exit animations */
-
 .exit-right {
   transform: translateX(100%);
   opacity: 0;
@@ -964,9 +910,9 @@ body {
   text-align: center;
   color: #8B2E20;
   font-family: 'PoppinsRegular', sans-serif;
-  font-size: 45px !important;
+  font-size: 45px;
   margin-bottom: 0.5em;
-  margin-top: 0;
+  margin-top: -35px;
 }
 
 .customer-reviews-subtitle {
@@ -975,12 +921,13 @@ body {
   color: #888;
   font-size: 18px !important;
   margin-bottom: 3em;
-  margin-top: 0;
+  margin-top: -15px;
 }
 
 .customer-reviews-quote-bg {
   position: absolute;
-  margin-left: 10px !important;
+  margin-left: 260px !important;
+  margin-top: -110px !important;
   top: 50px !important;
   transform: translateX(-50%);
   font-size: 320px;
@@ -1013,6 +960,7 @@ body {
   width: 100%;
   margin-left: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background-color: transparent !important;
 }
 
 .customer-reviews-quote-bg {
@@ -1076,6 +1024,16 @@ body {
   margin-top: 20px;
 }
 
+.review-category-tag {
+  font-size: 12px !important;
+  background-color: #6B1E10;
+  color: white !important;
+  border-radius: 15px !important;
+  padding: 5px 10px !important;
+  margin-top: 10px !important;
+  margin-bottom: 10px !important;
+}
+
 
 /* PNG star styling for reviews */
 .review-stars .star-filled,
@@ -1110,25 +1068,6 @@ body {
   text-align: left;
   font-size: 14px;
   line-height: 1.5;
-}
-
-/* Review categories styling */
-.review-categories {
-  margin: 8px 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.review-category-tag {
-  background: #96392d;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-family: 'PoppinsRegular', sans-serif;
-  font-weight: 500;
-  display: inline-block;
 }
 
 .rating-form {
@@ -1257,7 +1196,7 @@ body {
 }
 
 .rating-textarea {
-  
+
   height: 140px;
   border-radius: 8px;
   border: 1px solid #ddd;
@@ -1502,8 +1441,8 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-    justify-content: center;
-  }
+  justify-content: center;
+}
 
 .user-dropdown {
   position: absolute;
@@ -1668,6 +1607,32 @@ body {
   height: 200px;
 }
 
+.star-empty {
+  background-image: url('src/Icons/star.png') !important;
+}
+
+.rating-stars-input .star-input {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  margin-right: 2px;
+  vertical-align: middle;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background-image: url('src/Icons/star.png');
+  transition: background-image 0.2s;
+}
+
+.rating-stars-input .star-input.selected,
+.rating-stars-input .star-input.active {
+  background-image: url('src/Icons/star (1).png');
+}
+
+
 /* ==============================================
    RESPONSIVE DESIGN - MOBILE FIRST APPROACH
    ============================================== */
@@ -1676,243 +1641,322 @@ body {
    MOBILE DEVICES (max-width: 600px)
    ============================================== */
 @media (max-width: 600px) {
-  /* Header adjustments for mobile */
-  .header {
-    padding: 1rem 0;
-  }
-  
+
   .logo-img {
-    height: 4rem;
-    margin-left: 1rem;
+    margin-left: 126px !important;
+    height: 100px !important;
+    width: auto !important;
   }
-  
+
+  .info-section {
+    text-align: center;
+  }
+
+  .info-title {
+    margin-top: 25px !important;
+    font-size: 15px !important;
+    color: #666;
+    margin-bottom: -0.5px;
+    text-align: center;
+  }
+
+  .hours {
+    margin-bottom: -0.5px !important;
+  }
+
+  .loc-img {
+    width: auto;
+    height: 20px;
+    margin-top: fixed;
+    margin-right: -5px;
+    margin-left: 16px;
+    align-items: center;
+  }
+
+  .hours {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+    font-size: 12px;
+    font-weight: lighter;
+    margin-top: 0;
+    margin-left: -5px;
+  }
+
+  .location span {
+    margin-top: 0 !important;
+    margin-right: 0;
+  }
+
+  /* Mobile typography adjustments to match the image */
+  .filipino {
+    font-size: 90px !important;
+    margin-left: 20px !important;
+    margin-bottom: -px !important;
+    text-align: center;
+  }
+
+  .comfort-food {
+    font-size: 45px !important;
+    margin-left: 10px !important;
+    margin-top: 10px !important;
+    text-align: center;
+  }
+
+  .description {
+    font-size: 12px !important;
+    margin-left: 20px !important;
+    line-height: 1.3 !important;
+    text-align: center;
+  }
+
+  .info-section {
+    margin-left: 20px !important;
+    margin-top: -60px !important;
+  }
+
+  .cta-section {
+    margin-left: 20px !important;
+    margin-top: 10px !important;
+  }
+
+  .cta-btn {
+    width: 250px !important;
+    height: 45px !important;
+    font-size: 14px !important;
+    margin-left: 26px !important;
+    margin-top: -15px !important;
+  }
+
+  /* Food image mobile optimization */
+  .food-image {
+    max-width: 1055px !important;
+    width: px !important;
+    height: auto !important;
+  }
+
+  /* Rating badge mobile positioning */
+  .rating-badge {
+    bottom: -15px !important;
+    right: -10px !important;
+    font-size: 12px !important;
+  }
+
+  .signature-title {
+    font-size: 30px !important;
+    text-align: center !important;
+    margin-bottom: -50px !important;
+  }
+
+  .dish-img {
+    width: 150px !important;
+    height: 150px !important;
+    margin-top: -180px !important;
+  }
+
+  .dish-name {
+    font-size: 15px !important;
+    margin-top: -13px !important;
+  }
+
+  .dish-hover-text {
+    font-size: 14px !important;
+  }
+
+  /* Better spacing for mobile content */
+  .content-left {
+    padding: 20px 15px !important;
+  }
+
+  .main-content {
+    padding: 20px 0 !important;
+  }
+
+  /* Mobile feedback form adjustments */
+  .rating-form-title-stars-row {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .rating-form-title-stars-row .rating-stars-input {
+    margin-left: 0 !important;
+    margin-top: 5px !important;
+    justify-content: center !important;
+    display: flex !important;
+  }
+
+  /* Reset positioning for mobile */
+  .customer-reviews-quote-bg {
+    margin-left: 10px !important;
+    margin-top: 0 !important;
+    font-size: 15px !important;
+  }
+
+  .customer-reviews-title {
+    font-size: 15px !important;
+    margin-top: -35px !important;
+  }
+
+  .customer-reviews-subtitle {
+    margin-top: 0 !important;
+    font-size: 12px !important;
+  }
+
+  .review-card {
+    background-color: #ffffff00 !important;
+  }
+
+  .review-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    background: #8B2E20;
+    color: #fff;
+    border-radius: 50%;
+    margin-top: 15px !important;
+    margin-left: 2px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-family: 'PoppinsMedium', 'Poppins', sans-serif;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+
+  .review-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2em;
+  }
+
+
+  .review-name {
+    font-family: 'PoppinsRegular', sans-serif;
+    color: #8B2E20;
+    letter-spacing: 0.5px;
+    font-size: 14px !important;
+    font-weight: 600;
+    margin: 0;
+    margin-top: -20px !important;
+    margin-bottom: -30px !important;
+  }
+
+  .review-stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: auto;
+    margin-left: auto;
+    margin-right: 10px;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .review-category-tag {
+    font-size: 12px !important;
+    background-color: #6B1E10;
+    color: white !important;
+    border-radius: 15px !important;
+    padding: 5px 10px !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .review-stars .star-empty {
+    background-image: url('src/Icons/star.png');
+  }
+
+  /* Ensure consistent star alignment */
+  .review-stars .star-filled:last-child,
+  .review-stars .star-empty:last-child {
+    margin-right: 0;
+  }
+
+  .rating-form-title {
+    font-size: 18px !important;
+    text-align: center !important;
+  }
+
+  .rating-stars-input {
+    align-items: center !important;
+  }
+
+  .rating-category-btn {
+    padding: 3px 5px !important;
+    font-size: 10px !important;
+  }
+
   /* Show hamburger menu on mobile */
   .hamburger-menu {
     display: flex;
     margin-right: 1rem;
   }
-  
-  /* Hide desktop navigation on mobile */
-  .desktop-nav {
-    display: none;
-  }
-  
+
   /* Show fullscreen menu overlay on mobile */
   .fullscreen-menu-overlay {
     display: flex;
   }
-  
+
   /* Hide search bar on mobile */
   .search-bar {
     display: none;
   }
-  
+
   .header-actions {
     gap: 1rem;
     margin-right: 0.5rem;
   }
-  
+
   .user-img,
   .bag-img {
     width: 2.5rem;
     height: 2.5rem;
   }
-  
+
   /* Main content adjustments */
   .main-content {
     padding: 2rem 0;
   }
-  
+
   .content-left {
     padding: 1rem;
   }
-  
+
   .info-section {
     margin-top: -3rem;
     margin-bottom: 2rem;
     margin-left: 1rem;
   }
-  
-  
-  
-  .description {
-    font-size: 1rem;
-    margin-left: 1rem;
-    margin-top: -1rem;
-  }
-  
-  /* Signature dishes */
-  .signature-section {
-    padding: 2rem 0 3rem;
-  }
-  
-  .signature-title {
-    font-size: 1.5rem;
-    margin-top: -2rem;
-  }
-  
-  .dish-plate {
-    width: 12rem;
-    height: 8rem;
-  }
-  
-  .dish-img {
-    width: 10rem;
-    height: 10rem;
-    margin-top: -12rem;
-  }
-  
-  .dish-name {
-    font-size: 1rem;
-  }
-  
-  .cta-btn {
-    width: 10rem;
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-  }
-  
-  /* Dine options */
-  .dine-option {
-    height: 30vh;
-    min-height: 15rem;
-  }
-  
-  .dine-option-title {
-    font-size: 5rem !important;
-  }
-  
-  .dine-option-content {
-    padding: 0 4%;
-  }
-  
-  /* Customer Reviews Section - Mobile */
-  .customer-reviews-section {
-    padding: 40px 0 0 0;
-  }
-  
-  .customer-reviews-title {
-    font-size: 24px !important;
-    margin-bottom: 0.5em;
-  }
-  
-  .customer-reviews-subtitle {
-    font-size: 14px !important;
-    margin-bottom: 2em;
-  }
-  
-  .customer-reviews-flex {
-    flex-direction: column;
-    gap: 20px;
-    padding: 0 20px;
-  }
-  
-  .customer-reviews-list {
-    flex: 1 1 auto;
-    min-width: auto;
-    max-width: 100%;
-  }
-  
-  .customer-reviews-quote-bg {
-    font-size: 200px;
-    margin-left: -40px;
-    margin-top: -50px;
-  }
-  
-  .review-card {
-    padding: 15px 18px;
-    gap: 12px;
-  }
-  
-  .review-avatar {
-    width: 45px;
-    height: 45px;
-    margin-top: 15px;
-    margin-left: 5px;
-    font-size: 1.2rem;
-  }
-  
-  .review-name {
-    font-size: 14px;
-    margin-top: -15px;
-    margin-bottom: -25px !important;
-  }
-  
-  .review-stars {
-    margin-top: 15px;
-    margin-right: 5px;
-  }
-  
-  .review-stars .star-filled,
-  .review-stars .star-empty {
-    width: 14px;
-    height: 14px;
-  }
-  
-  .review-text {
-    font-size: 13px;
-    line-height: 1.4;
-  }
-  
-  .rating-form {
-    flex: 1 1 auto;
-    min-width: auto;
-    max-width: 100%;
-    padding: 18px 18px 15px 18px;
-  }
-  
-  .rating-form-title {
-    font-size: 16px;
-    margin-left: 5px;
-  }
-  
-  .rating-form-title-stars-row .rating-form-title {
-    font-size: 1.2rem;
-  }
-  
-  .rating-categories {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-left: 5px;
-  }
-  
-  .rating-category-btn {
-    padding: 6px 12px;
-    font-size: 10px;
-  }
-  
-  .rating-textarea {
-    height: 100px;
-    margin-left: 5px;
-    margin-bottom: 12px;
-    font-size: 13px;
-  }
-  
-  .share-btn {
-    width: 100px;
-    padding: 8px 16px;
-    font-size: 13px;
-  }
-  
+
   /* Footer adjustments */
   .footer-content {
     padding: 1rem;
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+    margin-top: -50px !important;
   }
-  
+
   .footer-social,
   .footer-copyright,
   .footer-links {
     text-align: center;
   }
-  
+
   .footer-social {
     justify-content: center;
   }
-  
+
   .footer-social span,
   .footer-copyright span,
   .footer-links a {
@@ -1924,28 +1968,38 @@ body {
    TABLET DEVICES (max-width: 992px)
    ============================================== */
 @media (max-width: 992px) {
+
+  /* Adjust positioning for tablet */
+  .customer-reviews-quote-bg {
+    margin-left: 150px !important;
+    margin-top: -60px !important;
+  }
+
+  .customer-reviews-title {
+    margin-top: -20px !important;
+  }
+
+  .customer-reviews-subtitle {
+    margin-top: -10px !important;
+  }
+
   /* Header adjustments for tablet */
   .nav-list {
     margin-left: 2rem;
     gap: 2rem;
   }
-  
+
   .search-input {
     width: 20rem;
   }
- 
-  
+
+
   /* Show hamburger menu on tablet */
   .hamburger-menu {
     display: flex;
     margin-right: 1rem;
   }
-  
-  /* Hide desktop navigation on tablet */
-  .desktop-nav {
-    display: none;
-  }
-  
+
   /* Show fullscreen menu overlay on tablet */
   .fullscreen-menu-overlay {
     display: flex;
@@ -1956,69 +2010,62 @@ body {
    TABLET LANDSCAPE (768px - 1024px)
    ============================================== */
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
-  /* Show desktop navigation on tablet landscape */
-  .desktop-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-  }
-  
+
   /* Hide hamburger menu on tablet landscape */
   .hamburger-menu {
     display: none;
   }
-  
+
   /* Hide fullscreen menu overlay on tablet landscape */
   .fullscreen-menu-overlay {
     display: none;
   }
-  
+
   /* Adjust navigation for tablet landscape - desktop style */
   .main-nav {
     display: flex;
     justify-content: flex-start;
   }
-  
+
   .nav-list {
     margin-right: 30px;
     gap: 40px;
   }
-  
+
   .search-input {
     width: 200px;
   }
-  
+
   /* Adjust header actions */
   .header-actions {
     gap: 25px;
     justify-content: flex-end;
     margin-right: 10px;
   }
-  
+
   /* Adjust main content for tablet landscape */
   .content-left {
     padding: 40px 40px 40px 20px;
   }
-  
+
   .info-section {
     margin-top: -90px;
     margin-bottom: 80px;
     margin-left: 30px;
   }
-  
+
   .info-title {
     font-size: 16px;
     color: #666;
     margin-bottom: -0.5px;
   }
-  
+
   .hours {
     font-size: 18px;
     color: #333;
     margin-bottom: 20px;
   }
-  
+
   .location {
     display: flex;
     align-items: center;
@@ -2029,305 +2076,308 @@ body {
     margin-top: 0;
     margin-left: -5px;
   }
-  
+
   .filipino {
     font-size: 100px;
     margin-left: 40px;
     margin-bottom: -40px;
   }
-  
+
   .comfort-food {
     font-size: 60px;
     margin-left: 20px;
     margin-top: -25px;
     letter-spacing: -3px;
   }
-  
+
   .description {
     font-size: 18px;
     margin-left: 30px;
     margin-top: -20px;
   }
-  
+
   /* Signature dishes - desktop style */
   .signature-section {
     padding: 40px 0 60px;
   }
-  
+
   .signature-title {
     font-size: 45px;
     margin-top: -50px;
   }
-  
+
   .dish-plate {
     width: 260px;
     height: 170px;
   }
-  
+
   .dish-img {
     width: 295px;
     height: 295px;
     margin-top: -300px;
   }
-  
+
   .dish-name {
     font-size: 20px;
   }
-  
+
   .cta-btn {
     width: 200px;
     padding: 15px 30px;
     font-size: 16px;
   }
-  
+
   /* Dine options - desktop style */
   .dine-option {
     height: 50vh;
     min-height: 350px;
   }
-  
+
   .dine-option-title {
     font-size: 150px;
   }
-  
+
   .dine-option-content {
     padding: 0 8%;
   }
 }
-  
-  /* Main content adjustments */
-  .content-left {
-    padding: 2rem;
-  }
-  
-  .description {
-    font-size: 1.125rem;
-    margin-left: 2rem;
-    margin-top: -1rem;
-  }
-  
-  /* Signature dishes */
-  .signature-section {
-    padding: 3rem 0 4rem;
-  }
-  
-  .signature-title {
-    font-size: 2rem;
-    margin-top: -3rem;
-  }
-  
-  .dish-plate {
-    width: 10rem;
-    height: 6rem;
-    margin-top: -20px;
-    
-  }
-  
-  .dish-img {
-    width: 10rem;
-    height: 10rem;
-    margin-top: -12rem;
-  }
-  
-  .dish-name {
-    font-size: 1.125rem;
-  }
-  
-  .cta-btn {
-    width: 12rem;
-    padding: 1rem 2rem;
-    font-size: 1rem;
-  }
-  
-  /* Dine options */
-  .dine-option {
-    height: 40vh;
-    min-height: 20rem;
-  }
-  
-  .dine-option-title {
-    font-size: 4rem;
 
-  }
-  
-  .dine-option-content {
-    padding: 0 6%;
-  }
-  
-  /* Customer Reviews Section - Tablet */
-  .customer-reviews-section {
-    padding: 60px 0 0 0;
-  }
-  
-  .customer-reviews-title {
-    font-size: 32px !important;
-  }
-  
-  .customer-reviews-subtitle {
-    font-size: 16px !important;
-  }
-  
-  .customer-reviews-flex {
-    gap: 30px;
-    padding: 0 30px;
-  }
-  
-  .customer-reviews-quote-bg {
-    font-size: 250px;
-    margin-left: -60px;
-    margin-top: -75px;
-  }
-  
-  .review-card {
-    padding: 18px 20px;
-    gap: 14px;
-  }
-  
-  .review-avatar {
-    width: 50px;
-    height: 50px;
-    margin-top: 20px;
-    margin-left: 8px;
-    font-size: 1.3rem;
-  }
-  
-  .review-name {
-    font-size: 15px;
-    margin-top: -18px;
-    margin-bottom: -28px !important;
-  }
-  
-  .review-stars .star-filled,
-  .review-stars .star-empty {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .review-text {
-    font-size: 14px;
-  }
-  
-  .rating-form {
-    padding: 20px 20px 18px 20px;
-  }
-  
-  .rating-form-title {
-    font-size: 17px;
-  }
-  
-  .rating-categories {
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 9px;
-  }
-  
-  .rating-category-btn {
-    padding: 7px 14px;
-    font-size: 11px;
-  }
-  
-  .rating-textarea {
-    height: 120px;
-    font-size: 14px;
-  }
-  
-  .share-btn {
-    width: 110px;
-    padding: 9px 18px;
-    font-size: 14px;
-  }
-  
-  /* Footer adjustments */
-  .footer-content {
-    padding: 1.5rem 2rem;
-    text-align: center;
-  }
-  
-  .footer-social,
-  .footer-copyright,
-  .footer-links {
-    text-align: center;
-  }
-  
-  .footer-social {
-    justify-content: center;
-  }
+/* Main content adjustments */
+.content-left {
+  padding: 2rem;
+}
+
+.description {
+  font-size: 1.125rem;
+  margin-left: 2rem;
+  margin-top: -1rem;
+}
+
+/* Signature dishes */
+.signature-section {
+  padding: 3rem 0 4rem;
+}
+
+.signature-title {
+  font-size: 2rem;
+  margin-top: -3rem;
+}
+
+.dish-plate {
+  width: 10rem;
+  height: 6rem;
+  margin-top: -20px;
+
+}
+
+.dish-img {
+  width: 10rem;
+  height: 10rem;
+  margin-top: -12rem;
+}
+
+.dish-name {
+  font-size: 1.125rem;
+}
+
+.cta-btn {
+  width: 12rem;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+}
+
+/* Dine options */
+.dine-option {
+  height: 40vh;
+  min-height: 20rem;
+}
+
+.dine-option-title {
+  font-size: 4rem;
+
+}
+
+.dine-option-content {
+  padding: 0 6%;
+}
+
+/* Customer Reviews Section - Tablet */
+.customer-reviews-section {
+  padding: 60px 0 0 0;
+}
+
+.customer-reviews-title {
+  font-size: 32px !important;
+}
+
+.customer-reviews-subtitle {
+  font-size: 16px !important;
+}
+
+.customer-reviews-flex {
+  gap: 30px;
+  padding: 0 30px;
+}
+
+.customer-reviews-quote-bg {
+  font-size: 250px;
+  margin-left: -60px;
+  margin-top: -75px;
+}
+
+.review-card {
+  padding: 18px 20px;
+  gap: 14px;
+}
+
+.review-avatar {
+  width: 50px;
+  height: 50px;
+  margin-top: 20px;
+  margin-left: 8px;
+  font-size: 1.3rem;
+}
+
+.review-name {
+  font-size: 15px;
+  margin-top: -18px;
+  margin-bottom: -28px !important;
+}
+
+.review-stars .star-filled,
+.review-stars .star-empty {
+  width: 16px;
+  height: 16px;
+}
+
+.review-text {
+  font-size: 14px;
+}
+
+.rating-form {
+  padding: 20px 20px 18px 20px;
+}
+
+.rating-form-title {
+  font-size: 17px;
+}
+
+.rating-categories {
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 9px;
+}
+
+.rating-category-btn {
+  padding: 7px 14px;
+  font-size: 11px;
+}
+
+.rating-textarea {
+  height: 120px;
+  font-size: 14px;
+}
+
+.share-btn {
+  width: 110px;
+  padding: 9px 18px;
+  font-size: 14px;
+}
+
+/* Footer adjustments */
+.footer-content {
+  padding: 1.5rem 2rem;
+  text-align: center;
+}
+
+.footer-social,
+.footer-copyright,
+.footer-links {
+  text-align: center;
+}
+
+.footer-social {
+  justify-content: center;
+}
 
 
 /* ==============================================
    DESKTOP DEVICES (max-width: 1200px)
    ============================================== */
 @media (max-width: 1200px) {
+
   /* Header adjustments for desktop */
   .nav-list {
     margin-left: 4rem;
     gap: 2.5rem;
   }
-  
+
   .search-input {
     width: 20rem;
   }
+
   .info-section {
     margin-top: -90px;
     margin-bottom: 80px;
     margin-left: 30px;
   }
+
   /* Main content adjustments */
   .content-left {
     padding: 3rem;
   }
-  
+
   .description {
     font-size: 1.25rem;
     margin-left: 2.5rem;
     margin-top: -1.5rem;
   }
-  
+
   /* Signature dishes */
   .signature-section {
     padding: 4rem 0 5rem;
   }
-  
+
   .signature-title {
     font-size: 2.5rem;
     margin-top: -4rem;
   }
-  
+
   .dish-plate {
     width: 10rem;
     height: 5rem;
   }
-  
+
   .dish-img {
     width: 12rem;
     height: 12rem;
     margin-top: -13rem;
   }
-  
+
   .dish-name {
     font-size: 1.25rem;
   }
-  
+
   .cta-btn {
     width: 14rem;
     padding: 1.25rem 2.5rem;
     font-size: 1.125rem;
   }
-  
+
   /* Dine options */
   .dine-option {
     height: 45vh;
     min-height: 25rem;
   }
-  
+
   .dine-option-title {
     font-size: 7rem;
   }
-  
+
   .dine-option-content {
     padding: 0 7%;
   }
-  
+
   /* Footer adjustments */
   .footer-content {
     padding: 2rem 3rem;
@@ -2338,92 +2388,94 @@ body {
    LARGE DESKTOP DEVICES (above 1200px)
    ============================================== */
 @media (min-width: 1400px) {
+
   /* Header adjustments for large desktop */
   .nav-list {
     margin-left: 8rem;
     gap: 3rem;
   }
-    .info-section {
+
+  .info-section {
     margin-top: -90px;
     margin-bottom: 80px;
     margin-left: 30px;
   }
+
   .search-input {
     width: 20rem;
   }
-  
+
   /* Main content adjustments */
   .content-left {
     padding: 4rem;
   }
-  
+
   .filipino {
     font-size: 9rem;
     margin-left: 4rem;
     margin-bottom: -5rem;
   }
-  
+
   .comfort-food {
     font-size: 5rem;
     margin-left: 2rem;
     margin-top: 1.3rem;
     letter-spacing: -5px;
   }
-  
+
   .description {
     font-size: 1.5rem;
     margin-left: 3rem;
     margin-top: -2rem;
   }
-  
+
   /* Signature dishes */
   .signature-section {
     padding: 5rem 0 6rem;
   }
-  
+
   .signature-title {
     font-size: 3rem;
     margin-top: -5rem;
   }
-  
+
   .dish-plate {
     width: 20rem;
     height: 10rem;
   }
-  
+
   .dish-img {
     width: 20rem;
     height: 20rem;
     margin-top: -20rem;
   }
-  
+
   .dish-name {
     font-size: 1.5rem;
   }
-  
+
   .cta-btn {
     width: 16rem;
     padding: 1.5rem 3rem;
     font-size: 1.25rem;
   }
-  
+
   /* Dine options */
   .dine-option {
     height: 50vh;
     min-height: 30rem;
   }
-  
+
   .dine-option-title {
     font-size: 9rem;
   }
-  
+
   .dine-option-content {
     padding: 0 8%;
   }
-  
+
   /* Footer adjustments */
   .footer-content {
     padding: 2.5rem 4rem;
   }
 }
-

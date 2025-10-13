@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     col.className = 'col-lg-2 col-md-3 col-6';
 
     const imageUrl = item.photoUrl || '/src/Icons/menu.png';
-    
+
     // Safely escape the item data for HTML attribute
     const safeItemData = JSON.stringify(item).replace(/"/g, '&quot;');
 
@@ -274,6 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+
+    // Search functionality
+    setupSearchFunctionality();
 
     // Add to cart functionality - using event delegation for dynamically created buttons
     document.addEventListener('click', async (e) => {
@@ -703,6 +706,257 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 300);
     }, 4000);
   }
+
+  // Search functionality
+  function setupSearchFunctionality() {
+    // Try multiple selectors to find the search input
+    let searchInput = document.querySelector('.search-input');
+    if (!searchInput) {
+      searchInput = document.querySelector('input[placeholder="Search"]');
+    }
+    if (!searchInput) {
+      searchInput = document.querySelector('input[type="text"]');
+    }
+
+    if (!searchInput) {
+      console.log('Search input not found with any selector');
+      console.log('Available inputs:', document.querySelectorAll('input'));
+      return;
+    }
+
+    console.log('Search input found:', searchInput);
+
+    let allMenuItems = []; // Store all menu items for search
+    let currentMenuData = {}; // Store current menu data structure
+
+    // Store the original loadMenuFromFirebase function
+    const originalLoadMenuFromFirebase = loadMenuFromFirebase;
+
+    // Function to store menu data for search
+    function storeMenuDataForSearch(menuByCategory, allItems) {
+      allMenuItems = allItems;
+      currentMenuData = menuByCategory;
+      console.log('Menu data stored for search:', allItems.length, 'items');
+    }
+
+    // Hook into the existing loadMenuFromFirebase function
+    const originalLoadMenuFromFirebase = loadMenuFromFirebase;
+
+    // Override the loadMenuFromFirebase function to capture data
+    loadMenuFromFirebase = function () {
+      console.log('Loading menu from Firebase with search support...');
+      const db = firebase.firestore();
+
+      db.collection('menu').onSnapshot((querySnapshot) => {
+        console.log('Firebase query completed, documents found:', querySnapshot.size);
+
+        if (querySnapshot.empty) {
+          console.log('No menu items found');
+          showEmptyMenu();
+          return;
+        }
+
+        // Filter available items and group by category
+        const menuByCategory = {};
+        const allItems = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.available === true) {
+            allItems.push({
+              id: doc.id,
+              ...data
+            });
+          }
+        });
+
+        // Sort items by creation date (newest first)
+        allItems.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0);
+          const dateB = new Date(b.createdAt || 0);
+          return dateB - dateA;
+        });
+
+        // Group by category
+        allItems.forEach(item => {
+          const category = item.category || 'General';
+          if (!menuByCategory[category]) {
+            menuByCategory[category] = [];
+          }
+          menuByCategory[category].push(item);
+        });
+
+        if (allItems.length === 0) {
+          console.log('No available menu items found');
+          showEmptyMenu();
+          return;
+        }
+
+        // Store data for search functionality
+        storeMenuDataForSearch(menuByCategory, allItems);
+
+        // Update categories and menu items
+        updateCategories(menuByCategory);
+        displayMenuItems(menuByCategory);
+
+      }, (error) => {
+        console.error('Error loading menu:', error);
+        showErrorMenu();
+      });
+    };
+
+    // Alternative approach: Monitor for menu items being displayed
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        if (mutation.type === 'childList') {
+          const menuItems = document.querySelectorAll('.menu-item');
+          if (menuItems.length > 0 && allMenuItems.length === 0) {
+            console.log('Menu items detected, attempting to extract data...');
+            // Try to extract menu data from the DOM
+            extractMenuDataFromDOM();
+          }
+        }
+      });
+    });
+
+    // Start observing
+    const menuGrid = document.querySelector('.menu-items-grid');
+    if (menuGrid) {
+      observer.observe(menuGrid, { childList: true, subtree: true });
+    }
+
+    // Function to extract menu data from DOM as fallback
+    function extractMenuDataFromDOM() {
+      const menuItems = document.querySelectorAll('.menu-item');
+      const extractedItems = [];
+
+      menuItems.forEach(item => {
+        const nameElement = item.querySelector('.menu-item-name');
+        const priceElement = item.querySelector('.menu-item-price');
+        const descriptionElement = item.querySelector('.menu-item-description');
+
+        if (nameElement) {
+          extractedItems.push({
+            name: nameElement.textContent.trim(),
+            price: priceElement ? priceElement.textContent.trim() : '',
+            description: descriptionElement ? descriptionElement.textContent.trim() : '',
+            category: 'General' // Default category
+          });
+        }
+      });
+
+      if (extractedItems.length > 0) {
+        allMenuItems = extractedItems;
+        console.log('Extracted menu data from DOM:', extractedItems.length, 'items');
+      }
+    }
+
+    // Search input event listener
+    searchInput.addEventListener('input', function (e) {
+      const searchTerm = e.target.value.trim().toLowerCase();
+      console.log('Search input detected:', searchTerm);
+      console.log('Available menu items for search:', allMenuItems.length);
+      console.log('Current menu data keys:', Object.keys(currentMenuData));
+
+      // Add visual feedback
+      if (searchTerm.length > 0) {
+        searchInput.style.borderColor = '#8B2E20';
+        searchInput.style.backgroundColor = '#fafafa';
+      } else {
+        searchInput.style.borderColor = '#eeeeee';
+        searchInput.style.backgroundColor = 'white';
+      }
+
+      if (searchTerm === '') {
+        // If search is empty, show all items
+        if (Object.keys(currentMenuData).length > 0) {
+          displayMenuItems(currentMenuData);
+          updateCategories(currentMenuData);
+        }
+        return;
+      }
+
+      // Filter menu items based on search term
+      const filteredItems = allMenuItems.filter(item => {
+        const name = (item.name || '').toLowerCase();
+        const description = (item.description || '').toLowerCase();
+        const category = (item.category || '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+          description.includes(searchTerm) ||
+          category.includes(searchTerm);
+      });
+
+      console.log('Filtered items:', filteredItems.length);
+
+      if (filteredItems.length === 0) {
+        // Show no results message
+        showNoSearchResults(searchTerm);
+      } else {
+        // Group filtered items by category
+        const filteredMenuData = {};
+        filteredItems.forEach(item => {
+          const category = item.category || 'General';
+          if (!filteredMenuData[category]) {
+            filteredMenuData[category] = [];
+          }
+          filteredMenuData[category].push(item);
+        });
+
+        // Display filtered results
+        displayMenuItems(filteredMenuData);
+        updateCategories(filteredMenuData);
+      }
+    });
+
+    // Clear search when clicking on category links
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('category-link')) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+      }
+    });
+  }
+
+  function showNoSearchResults(searchTerm) {
+    const menuGrid = document.querySelector('.menu-items-grid');
+    if (!menuGrid) return;
+
+    menuGrid.innerHTML = `
+      <div class="col-12 text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No results found for "${searchTerm}"</h5>
+        <p class="text-muted">Try searching with different keywords or browse our categories.</p>
+        <button class="btn btn-outline-primary mt-3" onclick="document.querySelector('.search-input').value=''; document.querySelector('.search-input').dispatchEvent(new Event('input'));">Clear Search</button>
+      </div>
+    `;
+  }
+
+  // Debug function to test search functionality
+  function testSearchFunctionality() {
+    console.log('Testing search functionality...');
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput) {
+      console.log('Search input found:', searchInput);
+      searchInput.value = 'test';
+      searchInput.dispatchEvent(new Event('input'));
+    } else {
+      console.log('Search input not found');
+    }
+  }
+
+  // Function to manually trigger search for testing
+  function triggerSearch(searchTerm) {
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput) {
+      searchInput.value = searchTerm;
+      searchInput.dispatchEvent(new Event('input'));
+    }
+  }
+
+  // Make test functions available globally for debugging
+  window.testSearch = testSearchFunctionality;
+  window.triggerSearch = triggerSearch;
 
   // Start the Firebase initialization
   waitForFirebase();

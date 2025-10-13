@@ -212,16 +212,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function setupRoleBasedAccess(userRole) {
         console.log('Setting up role-based access for:', userRole);
 
-        // Get key UI elements
+        // Get all navigation links
+        const allNavLinks = document.querySelectorAll('.nav-link');
+
+        // Get key UI elements for inventory management
         const addButton = document.getElementById('inventoryAddAction');
         const editButtons = document.querySelectorAll('.edit-btn, .btn-edit');
         const deleteButtons = document.querySelectorAll('.delete-btn, .btn-delete');
-        const settingsNavLink = document.querySelector('a[href*="Settings.html"]');
-        const userManagementLink = document.querySelector('a[href*="user.html"]');
-        const reportsNavLink = document.querySelector('a[href*="analytics.html"]');
-        const dashboardNavLink = document.querySelector('a[href*="Dashboard.html"]');
-        const posNavLink = document.querySelector('a[href*="pos.html"]');
-        const menuNavLink = document.querySelector('a[href*="menu.html"]');
         const homeNavLink = document.querySelector('#homeNavLink') || document.querySelector('a[href*="Dashboard.html"]');
 
         if (userRole === 'kitchen') {
@@ -242,59 +239,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Redirect home link to kitchen dashboard for kitchen staff
             if (homeNavLink) {
-                homeNavLink.href = '/html/kitchen.html';
+                homeNavLink.href = '../html/kitchen.html';
                 homeNavLink.title = 'Kitchen Dashboard';
             }
 
-            // Hide ALL navigation items except Home (kitchen.html), Notifications (notifi.html), and Inventory
-            const allNavLinks = document.querySelectorAll('.nav-link');
+            // Show only: Home, Notifications, Inventory, Logout
             allNavLinks.forEach(link => {
-                const href = link.getAttribute('href');
                 const title = link.getAttribute('title');
-                
-                // Keep only Home (kitchen.html), Notifications (notifi.html), and Inventory
-                if (href && !href.includes('kitchen.html') && 
-                    !href.includes('notifi.html') && 
-                    !href.includes('Inventory.html') && 
-                    title !== 'Logout') {
+                const href = link.getAttribute('href');
+
+                // Show only specific navigation items for kitchen
+                if (title === 'Home' ||
+                    title === 'Notifications' ||
+                    title === 'Inventory' ||
+                    title === 'Logout' ||
+                    href && href.includes('kitchen.html')) {
+                    link.style.display = 'block';
+                    link.style.visibility = 'visible';
+                    link.style.opacity = '1';
+                } else {
                     link.style.display = 'none';
                 }
             });
 
-            // Specifically hide these navigation items
-            if (settingsNavLink) {
-                settingsNavLink.style.display = 'none';
-            }
-            if (userManagementLink) {
-                userManagementLink.style.display = 'none';
-            }
-            if (reportsNavLink) {
-                reportsNavLink.style.display = 'none';
-            }
-            if (dashboardNavLink && dashboardNavLink !== homeNavLink) {
-                dashboardNavLink.style.display = 'none';
-            }
-            if (posNavLink) {
-                posNavLink.style.display = 'none';
-            }
-            if (menuNavLink) {
-                menuNavLink.style.display = 'none';
-            }
-            
-            // Hide Orders navigation
-            const ordersNavLink = document.querySelector('a[href*="Order.html"]');
-            if (ordersNavLink) {
-                ordersNavLink.style.display = 'none';
-            }
-
         } else if (userRole === 'admin' || userRole === 'manager') {
             console.log('👑 Admin/Manager role - Full access granted');
-            // Admin and managers have full access - no restrictions
+
+            // Admin and managers have full access - show ALL navigation items
+            allNavLinks.forEach(link => {
+                link.style.display = 'block';
+                link.style.visibility = 'visible';
+                link.style.opacity = '1';
+            });
 
         } else {
             console.log('👤 Regular user role - Standard access');
-            // Regular users have standard access
-            // May want to restrict some advanced features if needed
+
+            // Regular users have standard access - show all navigation by default
+            allNavLinks.forEach(link => {
+                link.style.display = 'block';
+                link.style.visibility = 'visible';
+                link.style.opacity = '1';
+            });
         }
 
         // Store user role globally for other functions to use
