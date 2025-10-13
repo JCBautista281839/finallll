@@ -1003,32 +1003,14 @@ hr {
 
 .instructions-header {
   text-align: center;
-  padding: 30px 30px 20px 30px;
+  padding: 40px 30px;
   background: linear-gradient(135deg, #96392d 0%, #7d2f24 100%);
   border-radius: 15px 15px 0 0;
   color: white;
 }
 
-.success-icon {
-  font-size: 60px;
-  margin-bottom: 15px;
-  animation: bounceIn 0.6s ease-out;
-}
-
-@keyframes bounceIn {
-  0% {
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 .instructions-title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   margin: 0;
   color: white;
@@ -1162,11 +1144,7 @@ hr {
   }
 
   .instructions-header {
-    padding: 25px 20px 15px 20px;
-  }
-
-  .success-icon {
-    font-size: 50px;
+    padding: 30px 20px;
   }
 
   .instructions-title {
