@@ -414,55 +414,69 @@ async function getQuotationById(quotationId) {
             throw new Error('Database not available');
         }
 
-        // Step 1: Search notifications collection for quotationId
-        const notificationsQuery = await db.collection('notifications')
-            .where('quotation.id', '==', quotationId)
-            .limit(1)
-            .get();
-
-        if (!notificationsQuery.empty) {
-            const notificationDoc = notificationsQuery.docs[0];
-            const notificationData = notificationDoc.data();
-            // Return the quotation object from notification
-            if (notificationData.quotation) {
-                console.log('[notifications.js] ✅ Found quotation in notifications collection:', {
-                    firestoreDocId: notificationDoc.id,
-                    quotationId: notificationData.quotation.id,
-                    serviceType: notificationData.quotation.serviceType,
-                    status: notificationData.quotation.status
-                });
-                return notificationData.quotation;
-            }
-        }
-
-        // Step 2: Search orders collection for quotationId
-        const ordersQuery = await db.collection('orders')
+        // Query lalamove_quotations collection by quotationId
+        const quotationQuery = await db.collection('lalamove_quotations')
             .where('quotationId', '==', quotationId)
             .limit(1)
             .get();
 
-        if (!ordersQuery.empty) {
-            const orderDoc = ordersQuery.docs[0];
-            const orderData = orderDoc.data();
-            // Return a quotation-like object from order
-            console.log('[notifications.js] ✅ Found quotation in orders collection:', {
-                firestoreDocId: orderDoc.id,
-                quotationId: orderData.quotationId,
-                serviceType: orderData.serviceType,
-                status: orderData.status
-            });
-            // Compose a quotation object from order fields
-            return {
-                id: orderData.quotationId,
-                serviceType: orderData.serviceType || 'unknown',
-                status: orderData.status || 'unknown',
-                stops: orderData.stops || [],
-                price: orderData.total || orderData.subtotal || 0
-            };
+        if (quotationQuery.empty) {
+            throw new Error(`No quotation found with ID: ${quotationId}`);
         }
 
-        // Not found in either collection
-        throw new Error(`No quotation found with ID: ${quotationId} in notifications or orders collection.`);
+        const quotationDoc = quotationQuery.docs[0];
+        const quotationData = quotationDoc.data();
+
+        console.log('[notifications.js] ✅ Found quotation in Firestore:', {
+            firestoreDocId: quotationDoc.id,
+            quotationId: quotationData.quotationId,
+            orderId: quotationData.orderId,
+            serviceType: quotationData.quotationData?.serviceType,
+            price: quotationData.quotationData?.price,
+            status: quotationData.status
+        });
+
+        // Check if quotation is still active/valid
+        if (quotationData.status !== 'active') {
+            console.warn('[notifications.js] ⚠️ Quotation status is not active:', quotationData.status);
+        }
+
+        // Check if quotation is expired
+        if (quotationData.quotationData?.expiresAt) {
+            const expiresAt = quotationData.quotationData.expiresAt.toDate ?
+                quotationData.quotationData.expiresAt.toDate() :
+                new Date(quotationData.quotationData.expiresAt);
+            const now = new Date();
+
+            if (expiresAt < now) {
+                console.warn('[notifications.js] ⚠️ Quotation has expired:', {
+                    expiresAt: expiresAt.toISOString(),
+                    now: now.toISOString()
+                });
+                throw new Error('Quotation has expired. Please create a new quotation.');
+            }
+        }
+
+        return {
+            firestoreDocId: quotationDoc.id,
+            quotationId: quotationData.quotationId,
+            orderId: quotationData.orderId,
+            customerInfo: quotationData.customerInfo,
+            quotationData: quotationData.quotationData,
+            status: quotationData.status,
+            createdAt: quotationData.createdAt,
+            updatedAt: quotationData.updatedAt,
+            // Format for compatibility with existing functions
+            data: {
+                quotationId: quotationData.quotationId,
+                serviceType: quotationData.quotationData?.serviceType,
+                priceBreakdown: {
+                    total: quotationData.quotationData?.price,
+                    currency: quotationData.quotationData?.currency || 'PHP'
+                },
+                expiresAt: quotationData.quotationData?.expiresAt
+            }
+        };
 
     } catch (error) {
         console.error('[notifications.js] ❌ Error retrieving quotation by ID:', error);
@@ -510,24 +524,25 @@ async function getOrderQuotationData(orderId) {
         else if (orderData.lalamoveQuotation) {
             quotationData = orderData.lalamoveQuotation;
             console.log('[notifications.js] ✅ Found quotation in lalamoveQuotation field');
-                    // Step 1: Search notifications collection for quotationId
-                    const notificationsQuery = await db.collection('notifications')
-                        .where('quotation.id', '==', quotationId)
-                        .limit(1)
-                        .get();
-                    if (!notificationsQuery.empty) {
-                        const notificationDoc = notificationsQuery.docs[0];
-                        const notificationData = notificationDoc.data();
-                        // Return the quotation object from notification
-                        if (notificationData.quotation) {
-                            console.log('[notifications.js] ✅ Found quotation in notifications collection:', {
-                                firestoreDocId: notificationDoc.id,
-                                quotationId: notificationData.quotation.id,
-                                serviceType: notificationData.quotation.serviceType,
-                                status: notificationData.quotation.status
-                            });
-                            return notificationData.quotation;
-                        }
+        }
+        // Check sessionStorage as fallback (might be available if order was just placed)
+        else {
+            console.log('[notifications.js] ⚠️ No quotation found in order, checking sessionStorage...');
+            const rawQuotation = sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse');
+            if (rawQuotation) {
+                quotationData = typeof rawQuotation === 'string' ? JSON.parse(rawQuotation) : rawQuotation;
+                console.log('[notifications.js] ✅ Found quotation in sessionStorage as fallback');
+            }
+        }
+
+        if (!quotationData) {
+            throw new Error('No quotation data found for this order');
+        }
+
+        // Validate quotation structure
+        if (!quotationData.data || !quotationData.data.quotationId) {
+            throw new Error('Invalid quotation data structure');
+        }
 
         console.log('[notifications.js] ✅ Quotation data validated:', {
             quotationId: quotationData.data.quotationId,
@@ -537,6 +552,10 @@ async function getOrderQuotationData(orderId) {
 
         return quotationData;
 
+    } catch (error) {
+        console.error('[notifications.js] ❌ Error getting quotation data:', error);
+        throw error;
+    }
 }
 
 // Function to get customer info from order document
@@ -1718,7 +1737,7 @@ window.handleLalamoveReady = async function (docId) {
 
         // Get quotation data using the quotation ID
         console.log('[notifications.js] 🔍 Retrieving quotation with ID:', quotationId);
-               const quotationData = await getQuotationById(quotationId);
+        const quotationData = await getQuotationById(quotationId);
 
         // Get customer info from notification (it should be there)
         const customerInfo = {
@@ -1863,214 +1882,69 @@ window.handleLalamoveReady = async function (docId) {
     }
 }
 
-// --- Quotation Retrieval Logic ---
-// Uses getQuotationById to search for the quotationId in notifications collection first,
-// then orders collection if not found. Returns the found quotation data or throws error if not found.
-// This ensures robust retrieval even if lalamove_quotations collection does not exist.
-// ---------------------------------
-// Function to handle Lalamove Ready button
-window.handleLalamoveReady = async function (docId) {
-    console.log('[notifications.js] Lalamove Ready button clicked for:', docId);
-
-    // Find the button that was clicked for visual feedback
-    const clickedButton = document.querySelector(`button[onclick*="handleLalamoveReady('${docId}')"]`);
-    let originalButtonText = '';
-
-    if (clickedButton) {
-        originalButtonText = clickedButton.innerHTML;
-        clickedButton.disabled = true;
-        clickedButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+// Function to show toast messages (enhanced for Lalamove integration)
+function showToast(message, type = "info", duration = 3000) {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 500px;
+        `;
+        document.body.appendChild(toastContainer);
     }
 
-    try {
-        // Show initial status
-        showToast('Checking quotation and order data...', 'info');
+    // Create toast element
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : type === 'warning' ? '#ffc107' : '#17a2b8';
+    const textColor = type === 'warning' ? '#000' : '#fff';
 
-        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
-        if (!db) {
-            throw new Error('Database not available');
-        }
+    toast.style.cssText = `
+        background: ${bgColor};
+        color: ${textColor};
+        padding: 15px 20px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        word-wrap: break-word;
+        max-width: 100%;
+    `;
 
-        // Get notification data to extract quotation ID
-        let notificationData = null;
-        let quotationId = null;
-        let orderId = null;
+    // Add icon based on type
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+    toast.innerHTML = `${icon} ${message}`;
 
-        if (clickedButton) {
-            clickedButton.innerHTML = '<i class="fas fa-search"></i> Getting notification data...';
-        }
+    toastContainer.appendChild(toast);
 
-        console.log('[notifications.js] 🔍 Getting notification data for docId:', docId);
+    // Animate in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 100);
 
-        // Get the notification document to extract quotation ID
-        const notificationDoc = await db.collection('notifications').doc(docId).get();
-        if (notificationDoc.exists) {
-            notificationData = notificationDoc.data();
-            quotationId = notificationData.quotation?.id;
-            orderId = notificationData.orderId;
-
-            console.log('[notifications.js] 📋 Notification data:', {
-                type: notificationData.type,
-                quotationId: quotationId,
-                orderId: orderId,
-                hasQuotationData: !!notificationData.quotation
-            });
-        } else {
-            throw new Error('Notification not found');
-        }
-
-        if (!quotationId) {
-            throw new Error('No quotation ID found in notification. Cannot place Lalamove order.');
-        }
-
-        if (clickedButton) {
-            clickedButton.innerHTML = '<i class="fas fa-search"></i> Retrieving quotation...';
-        }
-
-        // Get quotation data using the quotation ID
-        console.log('[notifications.js] 🔍 Retrieving quotation with ID:', quotationId);
-               const quotationData = await getQuotationById(quotationId);
-
-        // Get customer info from notification (it should be there)
-        const customerInfo = {
-            fullName: notificationData.customerInfo?.name || 'Unknown Customer',
-            email: notificationData.customerInfo?.email || 'no-email@example.com',
-            phone: notificationData.customerInfo?.phone || 'Unknown Phone',
-            address: notificationData.customerInfo?.address || 'Unknown Address'
-        };
-
-        if (clickedButton) {
-            clickedButton.innerHTML = '<i class="fas fa-motorcycle"></i> Placing Lalamove order...';
-        }
-
-        // Place the Lalamove order using retrieved quotation
-        console.log('[notifications.js] 🚀 Placing Lalamove order with quotation:', quotationId);
-        const result = await placeLalamoveOrderFromNotifications(quotationData, customerInfo);
-
-        // Success feedback
-        if (clickedButton) {
-            clickedButton.innerHTML = '<i class="fas fa-check"></i> Order Placed!';
-            clickedButton.classList.remove('btn-warning');
-            clickedButton.classList.add('btn-success');
-        }
-
-        // Update notification status to indicate Lalamove order was placed
-        try {
-            await db.collection('notifications').doc(docId).update({
-                lalamoveOrderPlaced: true,
-                lalamoveOrderId: result.data?.id || null,
-                lalamoveOrderStatus: result.data?.status || 'unknown',
-                lalamoveOrderPlacedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lalamoveOrderPlacedBy: 'admin', // or get current user if available
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            console.log('[notifications.js] ✅ Updated notification with Lalamove order info');
-        } catch (updateError) {
-            console.warn('[notifications.js] ⚠️ Failed to update notification with Lalamove info:', updateError);
-        }
-
-        // Create a success notification for admin
-        try {
-            await db.collection('notifications').add({
-                type: 'lalamove_order_success',
-                message: `Lalamove order placed successfully! Order ID: ${result.data?.id || 'Unknown'} | Quotation ID: ${quotationId}`,
-                lalamoveOrderId: result.data?.id || null,
-                quotationId: quotationId,
-                originalNotificationId: docId,
-                orderDetails: {
-                    customerName: customerInfo.fullName,
-                    customerPhone: customerInfo.phone,
-                    status: result.data?.status || 'unknown'
-                },
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                seen: false,
-                priority: 'normal'
-            });
-            console.log('[notifications.js] ✅ Created success notification for Lalamove order');
-        } catch (notificationError) {
-            console.warn('[notifications.js] ⚠️ Failed to create success notification:', notificationError);
-        }
-
-        showToast(`Lalamove order placed successfully! 🎉<br>Quotation ID: ${quotationId}<br>Order ID: ${result.data?.id || 'N/A'}`, 'success');
-        console.log('[notifications.js] ✅ Lalamove order result:', result);
-
-        // Reset button after delay
+    // Auto remove after specified duration
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
         setTimeout(() => {
-            if (clickedButton) {
-                clickedButton.innerHTML = originalButtonText;
-                clickedButton.classList.remove('btn-success');
-                clickedButton.classList.add('btn-warning');
-                clickedButton.disabled = false;
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
             }
-        }, 3000);
-
-    } catch (error) {
-        console.error('[notifications.js] ❌ Lalamove Ready failed:', error);
-
-        // Log error details for debugging
-        const errorDetails = {
-            message: error.message,
-            stack: error.stack,
-            docId: docId,
-            quotationId: quotationId,
-            orderId: orderId,
-            timestamp: new Date().toISOString()
-        };
-        console.error('[notifications.js] 📋 Error details:', errorDetails);
-
-        // Create error notification for tracking
-        try {
-            const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
-            if (db) {
-                await db.collection('notifications').add({
-                    type: 'lalamove_order_error',
-                    message: `Lalamove order failed: ${error.message}`,
-                    error: {
-                        message: error.message,
-                        quotationId: quotationId,
-                        orderId: orderId,
-                        originalNotificationId: docId
-                    },
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    seen: false,
-                    priority: 'high'
-                });
-                console.log('[notifications.js] ✅ Created error notification for Lalamove failure');
-            }
-        } catch (notificationError) {
-            console.warn('[notifications.js] ⚠️ Failed to create error notification:', notificationError);
-        }
-
-        // Error feedback
-        if (clickedButton) {
-            clickedButton.innerHTML = '<i class="fas fa-times"></i> Failed!';
-            clickedButton.classList.remove('btn-warning');
-            clickedButton.classList.add('btn-danger');
-        }
-
-        // Show detailed error message
-        let errorMsg = 'Lalamove order failed: ';
-        if (error.message.includes('expired')) {
-            errorMsg += 'Quotation has expired. Please create a new quotation.';
-        } else if (error.message.includes('not found')) {
-            errorMsg += 'Quotation not found in database.';
-        } else if (error.message.includes('Database not available')) {
-            errorMsg += 'Database connection error. Please try again.';
-        } else {
-            errorMsg += error.message;
-        }
-
-        showToast(errorMsg, 'error');
-
-        // Reset button after delay
-        setTimeout(() => {
-            if (clickedButton) {
-                clickedButton.innerHTML = originalButtonText;
-                clickedButton.classList.remove('btn-danger');
-                clickedButton.classList.add('btn-warning');
-                clickedButton.disabled = false;
-            }
-        }, 3000);
-    }
+        }, 300);
+    }, duration);
+}
 }
 
