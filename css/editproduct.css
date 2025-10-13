@@ -27,7 +27,7 @@
 }
 
 .main-content {
-  background: f5f6fa; 
+  background: f5f6fa;
   min-height: calc(100vh - 40px);
   padding: 32px;
 }
@@ -39,8 +39,8 @@
 
 .edit-product-container {
   display: flex;
-  gap: 48px; 
-  padding: 8px 24px; 
+  gap: 48px;
+  padding: 8px 24px;
   align-items: stretch;
   margin: 0 auto;
   max-width: 1200px;
@@ -121,12 +121,12 @@
   color: #495057;
 
   flex: 1 1 360px;
-  min-width: 0; 
+  min-width: 0;
   max-width: 420px;
 }
 
 .edit-product-form .form-control,
-.edit-product-form .form-select:last-child{
+.edit-product-form .form-select:last-child {
   text-transform: capitalize;
 }
 
@@ -223,7 +223,7 @@
 .delete-btn {
   padding: 0.75rem 2rem;
   font-size: 1.1rem;
- font-family: 'PoppinsRegular';
+  font-family: 'PoppinsRegular';
   border-radius: 15px;
   background: #dc3545;
   border: none;
@@ -254,7 +254,7 @@
 .ingredients-panel-title {
   font-size: 1.5rem;
   color: #000000;
-  margin: 0; 
+  margin: 0;
 }
 
 .ingredients-header {
@@ -266,7 +266,7 @@
 }
 
 .ingredients-search {
-  flex: 0 0 340px; 
+  flex: 0 0 340px;
   max-width: 420px;
 }
 
@@ -297,8 +297,8 @@
   font-family: 'PoppinsLight';
 }
 
-.ingredients-search .btn i { 
-  font-size: 1.1rem; 
+.ingredients-search .btn i {
+  font-size: 1.1rem;
 }
 
 .ingredients-tags {
@@ -346,6 +346,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   position: relative;
   margin-top: 1rem;
+}
+
+/* When the detail card is inserted inside the tags grid, make it span full width */
+#ingredientsTags>.ingredient-detail-card {
+  grid-column: 1 / -1;
+  width: auto;
+  margin-top: 8px;
 }
 
 .ingredient-detail-header {
@@ -511,7 +518,7 @@
   .edit-product-container {
     margin: 0 1rem;
   }
-  
+
   .edit-product-panel,
   .ingredients-panel {
     padding: 1.5rem;
@@ -522,12 +529,12 @@
   .main-content {
     padding: 1rem;
   }
-  
+
   .edit-product-container {
     margin: 0;
     border-radius: 12px;
   }
-  
+
   .d-flex {
     flex-direction: column;
   }
@@ -537,24 +544,72 @@
     align-items: stretch;
     gap: 0.75rem;
   }
-  
+
   .edit-product-panel,
   .ingredients-panel {
     border-radius: 12px;
     border-right: none;
     border-bottom: 1px solid #e9ecef;
   }
-  
+
   .edit-product-form .form-control,
   .edit-product-form .form-select {
     width: 100%;
   }
-  
+
   .price-input-group .form-control {
     width: 100%;
   }
-  
+
   .ingredients-search .input-group {
     max-width: 100%;
   }
+}
+
+/* Photo Upload Styles - Exact Match to Add Product */
+.product-photo-upload {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.photo-preview {
+  width: 192px;
+  height: 192px;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  margin: 0 auto;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.photo-preview:hover {
+  border-color: #28a745;
+  background: #e8f5e9;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+}
+
+.upload-placeholder i {
+  font-size: 2rem;
+}
+
+.upload-placeholder span {
+  font-size: 0.9rem;
 }
