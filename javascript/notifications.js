@@ -439,8 +439,16 @@ async function getStopsFromOrder(orderId) {
         let serviceType = null;
         let distance = null;
 
-        // Check paymentInfo.orderSummary.deliveryDetails (most common location based on image 3)
-        if (orderData.paymentInfo?.orderSummary?.deliveryDetails) {
+        // PRIORITY 1: Check lalamoveData.stops (NEW LOCATION - from updated order creation)
+        if (orderData.lalamoveData?.stops && Array.isArray(orderData.lalamoveData.stops) && orderData.lalamoveData.stops.length >= 2) {
+            stops = orderData.lalamoveData.stops;
+            serviceType = orderData.lalamoveData.serviceType;
+            distance = orderData.lalamoveData.distance;
+            console.log('[notifications.js] ✅ Found stops in lalamoveData (NEW LOCATION)');
+        }
+
+        // PRIORITY 2: Check paymentInfo.orderSummary.deliveryDetails (most common location based on image 3)
+        if (!stops && orderData.paymentInfo?.orderSummary?.deliveryDetails) {
             const deliveryDetails = orderData.paymentInfo.orderSummary.deliveryDetails;
             console.log('[notifications.js] 🔍 Found deliveryDetails:', Object.keys(deliveryDetails));
             
@@ -485,14 +493,33 @@ async function getStopsFromOrder(orderId) {
             console.log('[notifications.js] 🔍 Checking if shippingInfo has address data...');
         }
 
-        // Fallback: Check shippingInfo
-        if (!stops && orderData.shippingInfo) {
-            if (orderData.shippingInfo.quotationData?.data?.stops) {
-                stops = orderData.shippingInfo.quotationData.data.stops;
-                serviceType = orderData.shippingInfo.quotationData.data.serviceType;
-                distance = orderData.shippingInfo.quotationData.data.distance;
-                console.log('[notifications.js] ✅ Found stops in shippingInfo.quotationData');
+        // PRIORITY 3: Check shippingInfo.fullAddressWithCoordinates (NEW LOCATION)
+        if (!stops && orderData.shippingInfo?.fullAddressWithCoordinates) {
+            const custAddr = orderData.shippingInfo.fullAddressWithCoordinates;
+            if (custAddr.address || custAddr.coordinates) {
+                stops = [
+                    {
+                        coordinates: { lat: '14.4456718', lng: '120.992947' }, // Restaurant default coordinates
+                        address: 'Viktoria\'s Bistro, Rizito St, Imus, Cavite, Philippines',
+                        stopId: 'SENDER_STOP'
+                    },
+                    {
+                        coordinates: custAddr.coordinates || { lat: '', lng: '' },
+                        address: custAddr.address,
+                        stopId: 'RECIPIENT_STOP'
+                    }
+                ];
+                serviceType = 'MOTORCYCLE';
+                console.log('[notifications.js] ✅ Found stops from shippingInfo.fullAddressWithCoordinates (NEW LOCATION)');
             }
+        }
+
+        // PRIORITY 4: Check shippingInfo.quotationData (OLD LOCATION)
+        if (!stops && orderData.shippingInfo?.quotationData?.data?.stops) {
+            stops = orderData.shippingInfo.quotationData.data.stops;
+            serviceType = orderData.shippingInfo.quotationData.data.serviceType;
+            distance = orderData.shippingInfo.quotationData.data.distance;
+            console.log('[notifications.js] ✅ Found stops in shippingInfo.quotationData');
         }
 
         // Fallback: Check direct quotationData field
