@@ -739,9 +739,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Menu data stored for search:', allItems.length, 'items');
     }
 
-    // Hook into the existing loadMenuFromFirebase function
-    const originalLoadMenuFromFirebase = loadMenuFromFirebase;
-
     // Override the loadMenuFromFirebase function to capture data
     loadMenuFromFirebase = function () {
       console.log('Loading menu from Firebase with search support...');
