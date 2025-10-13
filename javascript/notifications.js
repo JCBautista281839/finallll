@@ -537,10 +537,6 @@ async function getOrderQuotationData(orderId) {
 
         return quotationData;
 
-    } catch (error) {
-        console.error('[notifications.js] ❌ Error getting quotation data:', error);
-        throw error;
-    }
 }
 
 // Function to get customer info from order document
