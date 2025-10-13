@@ -393,7 +393,7 @@ hr {
   display: block;
   width: 100%;
   padding: 12px;
-  background: #00c853;
+  background: #7d2f24;
   color: white;
   font-weight: 600;
   border: none;
@@ -403,7 +403,7 @@ hr {
 }
 
 .continue-btn:hover {
-  background: #009e3e;
+  background: #5f2318;
 }
 
 /* Payment Information Section */
@@ -884,9 +884,9 @@ hr {
 }
 
 .btn-primary {
-  background: #8b1d1d;
-  color: white;
-  border: 2px solid #8b1d1d;
+  background: #96392d !important;
+  color: white !important;
+  border: 2px solid #96392d;
   padding: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
@@ -895,8 +895,8 @@ hr {
 }
 
 .btn-primary:hover {
-  background: #a02233;
-  border-color: #a02233;
+  background: #7d2f24 !important;
+  border-color: #7d2f24;
 }
 
 .btn-primary:disabled {
@@ -975,5 +975,238 @@ hr {
   .btn-primary {
     width: 100%;
     margin-bottom: 10px;
+  }
+}
+
+/* Order Instructions Modal Styles */
+.instructions-modal {
+  max-width: 600px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white !important;
+  padding: 0;
+  border-radius: 15px;
+  animation: slideInDown 0.4s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.instructions-header {
+  text-align: center;
+  padding: 30px 30px 20px 30px;
+  background: linear-gradient(135deg, #96392d 0%, #7d2f24 100%);
+  border-radius: 15px 15px 0 0;
+  color: white;
+}
+
+.success-icon {
+  font-size: 60px;
+  margin-bottom: 15px;
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.instructions-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.instructions-body {
+  padding: 30px;
+  background: white;
+}
+
+.instructions-subtitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 25px 0;
+  text-align: center;
+}
+
+.instruction-steps {
+  margin-bottom: 25px;
+}
+
+.instruction-step {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 25px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #96392d;
+  transition: all 0.3s ease;
+}
+
+.instruction-step:hover {
+  background: #fff8f8;
+  box-shadow: 0 4px 12px rgba(150, 57, 45, 0.1);
+  transform: translateX(5px);
+}
+
+.instruction-step:last-child {
+  margin-bottom: 0;
+}
+
+.step-icon {
+  font-size: 36px;
+  margin-right: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #96392d;
+  margin: 0 0 8px 0;
+}
+
+.step-content p {
+  font-size: 15px;
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.step-content p strong {
+  color: #7d2f24;
+  font-weight: 600;
+}
+
+.instructions-footer-note {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.instructions-footer-note p {
+  margin: 0;
+  color: #856404;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.instructions-footer-note strong {
+  color: #7d2f24;
+}
+
+.instructions-footer {
+  padding: 20px 30px 30px 30px;
+  background: white;
+  border-radius: 0 0 15px 15px;
+  text-align: center;
+}
+
+.btn-got-it {
+  background: #7d2f24;
+  color: white;
+  border: none;
+  padding: 15px 50px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(125, 47, 36, 0.3);
+}
+
+.btn-got-it:hover {
+  background: #96392d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(125, 47, 36, 0.4);
+}
+
+.btn-got-it:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(125, 47, 36, 0.3);
+}
+
+/* Responsive Instructions Modal */
+@media (max-width: 768px) {
+  .instructions-modal {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .instructions-header {
+    padding: 25px 20px 15px 20px;
+  }
+
+  .success-icon {
+    font-size: 50px;
+  }
+
+  .instructions-title {
+    font-size: 22px;
+  }
+
+  .instructions-body {
+    padding: 20px;
+  }
+
+  .instructions-subtitle {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .instruction-step {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .step-icon {
+    font-size: 28px;
+    margin-right: 15px;
+  }
+
+  .step-content h4 {
+    font-size: 16px;
+  }
+
+  .step-content p {
+    font-size: 14px;
+  }
+
+  .instructions-footer {
+    padding: 15px 20px 25px 20px;
+  }
+
+  .btn-got-it {
+    width: 100%;
+    padding: 12px 30px;
+    font-size: 16px;
   }
 }

@@ -343,7 +343,7 @@ hr {
   display: block;
   width: 100%;
   padding: 12px;
-  background: #00c853;
+  background: #7d2f24;
   color: white;
   font-weight: 600;
   border: none;
@@ -353,7 +353,7 @@ hr {
 }
 
 .continue-btn:hover {
-  background: #009e3e;
+  background: #7d2f24;
 }
 
 /* Location Section */

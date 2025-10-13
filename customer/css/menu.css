@@ -106,7 +106,7 @@
   margin: 20px auto 0 auto;
   display: block;
   padding: 12px 0;
-  background: #00c853;
+  background: #7d2f24;
   color: #fff;
   border: none;
   border-radius: 15px;
@@ -117,7 +117,7 @@
 }
 
 .custom-order-summary .proceed-btn:hover {
-  background: #009e3c;
+  background: #5f2318;
 }
 
 @font-face {
@@ -627,7 +627,7 @@ body {
 .checkout-btn {
   width: 100%;
   padding: 15px;
-  background-color: #00c853;
+  background-color: #7d2f24;
   color: white;
   border: none;
   border-radius: 15px;
@@ -814,7 +814,7 @@ body {
 
 .popup-content .proceed-btn {
   width: 100%;
-  background: #4CAF50;
+  background: #7d2f24;
   color: white;
   border: none;
   padding: 12px;
@@ -826,7 +826,7 @@ body {
 }
 
 .popup-content .proceed-btn:hover {
-  background: #45a049;
+  background: #5f2318;
 }
 
 .popup-content .proceed-btn:active {
@@ -1137,7 +1137,7 @@ body {
   margin: 20px auto 0 auto;
   display: block;
   padding: 12px 0;
-  background: #00c853;
+  background: #7d2f24;
   color: #fff;
   border: none;
   border-radius: 15px;
@@ -1148,7 +1148,7 @@ body {
 }
 
 .custom-order-summary .proceed-btn:hover {
-  background: #009e3c;
+  background: #5f2318;
 }
 
 @font-face {
@@ -1674,7 +1674,7 @@ body {
 .checkout-btn {
   width: 100%;
   padding: 15px;
-  background-color: #00c853;
+  background-color: #7d2f24;
   color: white;
   border: none;
   border-radius: 15px;
@@ -1890,7 +1890,7 @@ body {
 
 .popup-content .proceed-btn {
   width: 100%;
-  background: #4CAF50;
+  background: #7d2f24;
   color: white;
   border: none;
   padding: 12px;
@@ -1902,7 +1902,7 @@ body {
 }
 
 .popup-content .proceed-btn:hover {
-  background: #45a049;
+  background: #5f2318;
 }
 
 .popup-content .proceed-btn:active {
@@ -2220,7 +2220,7 @@ body {
   margin: 20px auto 0 auto;
   display: block;
   padding: 12px 0;
-  background: #00c853;
+  background: #7d2f24;
   color: #fff;
   border: none;
   border-radius: 15px;
@@ -2231,7 +2231,7 @@ body {
 }
 
 .custom-order-summary .proceed-btn:hover {
-  background: #009e3c;
+  background: #5f2318;
 }
 
 @font-face {
@@ -2761,7 +2761,7 @@ body {
 .checkout-btn {
   width: 100%;
   padding: 15px;
-  background-color: #00c853;
+  background-color: #7d2f24;
   color: white;
   border: none;
   border-radius: 15px;
@@ -2977,7 +2977,7 @@ body {
 
 .popup-content .proceed-btn {
   width: 100%;
-  background: #4CAF50;
+  background: #7d2f24;
   color: white;
   border: none;
   padding: 12px;
@@ -2989,7 +2989,7 @@ body {
 }
 
 .popup-content .proceed-btn:hover {
-  background: #45a049;
+  background: #5f2318;
 }
 
 .popup-content .proceed-btn:active {

@@ -241,6 +241,63 @@
       </div>
     </div>
   </div>
+
+  <!-- Order Instructions Modal -->
+  <div id="order-instructions-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content instructions-modal">
+      <div class="instructions-header">
+        <div class="success-icon">✅</div>
+        <h2 class="instructions-title">Order Submitted Successfully!</h2>
+      </div>
+
+      <div class="instructions-body">
+        <h3 class="instructions-subtitle">📋 What Happens Next:</h3>
+        
+        <div class="instruction-steps">
+          <div class="instruction-step">
+            <div class="step-icon">📩</div>
+            <div class="step-content">
+              <h4>Admin Review</h4>
+              <p>Your payment has been received and will be reviewed by our admin team.</p>
+            </div>
+          </div>
+
+          <div class="instruction-step">
+            <div class="step-icon">✓</div>
+            <div class="step-content">
+              <h4>Payment Verification</h4>
+              <p>Once verified, we'll start preparing your order right away.</p>
+            </div>
+          </div>
+
+          <div class="instruction-step">
+            <div class="step-icon">👨‍🍳</div>
+            <div class="step-content">
+              <h4>Order Preparation</h4>
+              <p>Your delicious meal will be prepared in approximately <strong>15-25 minutes</strong>.</p>
+            </div>
+          </div>
+
+          <div class="instruction-step">
+            <div class="step-icon">🚚</div>
+            <div class="step-content">
+              <h4>Lalamove Delivery</h4>
+              <p>Your order will be delivered to you via Lalamove delivery service.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="instructions-footer-note">
+          <p>📱 <strong>We'll keep you updated!</strong> You'll receive notifications via email/SMS about your order status.</p>
+        </div>
+      </div>
+
+      <div class="instructions-footer">
+        <button class="btn-got-it" id="instructions-got-it-btn">Got It!</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const backBtn = document.getElementById('back-btn');

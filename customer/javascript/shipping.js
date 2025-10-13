@@ -1175,74 +1175,6 @@ document.addEventListener('DOMContentLoaded', function () {
         paymentBtn.addEventListener('click', handlePayment);
 
         console.log('[shipping.js] Payment button enabled and handler attached');
-
-        // --- Add a small Lalamove test button under the Place Order button ---
-        try {
-          const lalamoveTestBtn = document.createElement('button');
-          lalamoveTestBtn.id = 'place-lalamove-btn';
-          lalamoveTestBtn.className = 'continue-btn place-lalamove-btn';
-          lalamoveTestBtn.type = 'button';
-          lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
-          lalamoveTestBtn.style.marginTop = '8px';
-          lalamoveTestBtn.style.display = 'block';
-          lalamoveTestBtn.style.width = paymentBtn.offsetWidth ? paymentBtn.offsetWidth + 'px' : 'auto';
-
-          // Insert right after the existing payment button
-          if (paymentBtn.parentNode) paymentBtn.parentNode.insertBefore(lalamoveTestBtn, paymentBtn.nextSibling);
-
-          lalamoveTestBtn.addEventListener('click', async function (e) {
-            e.preventDefault();
-            
-            // Prevent multiple clicks
-            lalamoveTestBtn.disabled = true;
-            lalamoveTestBtn.textContent = 'Checking quotation validity...';
-            
-            try {
-              // Show initial status
-              showStatus('Checking quotation and placing Lalamove order...', false);
-              
-              // Update button to show progress
-              lalamoveTestBtn.textContent = 'Validating quotation...';
-              
-              await placeLalamoveOrder();
-              
-              // Success - update button and show success message
-              lalamoveTestBtn.textContent = 'Order Placed Successfully!';
-              showStatus('Lalamove order placed successfully! 🎉', false);
-              
-              // Reset button after delay
-              setTimeout(() => {
-                lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
-              }, 3000);
-              
-            } catch (err) {
-              console.error('Lalamove test order failed:', err);
-              
-              // Show detailed error message
-              let errorMsg = 'Lalamove test failed: ';
-              if (err.message.includes('expired')) {
-                errorMsg += 'Quotation expired and could not be refreshed';
-              } else if (err.message.includes('422')) {
-                errorMsg += 'Invalid order data (422 error)';
-              } else {
-                errorMsg += (err.message || err);
-              }
-              
-              showStatus(errorMsg, true);
-              lalamoveTestBtn.textContent = 'Order Failed - Try Again';
-              
-              // Reset button after delay
-              setTimeout(() => {
-                lalamoveTestBtn.textContent = 'Place Lalamove Order (test)';
-              }, 3000);
-              
-            } finally {
-              lalamoveTestBtn.disabled = false;
-            }
-          });
-        } catch (btnErr) {
-          console.warn('Could not create Lalamove test button:', btnErr);
-        }
       } else {
         console.error('[shipping.js] Payment button not found');
         showStatus('Error: Payment button not found', true);
@@ -1328,10 +1260,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
           showStatus('Order placed successfully! Admin will be notified for approval.', false);
 
-          // Navigate to confirmation page
-          setTimeout(() => {
-            window.location.href = 'payment.html';
-          }, 1500);
+          // Show order instructions modal
+          showOrderInstructionsModal();
         } else {
           throw new Error('Failed to create order');
         }
@@ -2140,4 +2070,43 @@ async function sendNotificationViaServer(orderId, formData, cartData, quotationD
     console.error('Server notification error:', error);
     return false;
   }
+}
+
+// Function to show order instructions modal
+function showOrderInstructionsModal() {
+  const instructionsModal = document.getElementById('order-instructions-modal');
+  const gotItBtn = document.getElementById('instructions-got-it-btn');
+
+  if (!instructionsModal) {
+    console.error('Order instructions modal not found');
+    // Fallback to direct redirect
+    setTimeout(() => {
+      window.location.href = 'payment.html';
+    }, 1500);
+    return;
+  }
+
+  // Show the modal
+  instructionsModal.style.display = 'flex';
+
+  // Handle Got It button click
+  if (gotItBtn) {
+    gotItBtn.onclick = function () {
+      instructionsModal.style.display = 'none';
+      // Navigate to confirmation page after modal is closed
+      setTimeout(() => {
+        window.location.href = 'payment.html';
+      }, 300);
+    };
+  }
+
+  // Optional: Close modal when clicking outside (uncomment if desired)
+  // instructionsModal.onclick = function(e) {
+  //   if (e.target === instructionsModal) {
+  //     instructionsModal.style.display = 'none';
+  //     setTimeout(() => {
+  //       window.location.href = 'payment.html';
+  //     }, 300);
+  //   }
+  // };
 }
