@@ -534,35 +534,64 @@ async function getStopsFromOrder(orderId) {
         if (!stops) {
             console.log('[notifications.js] ⚠️ No stops found, attempting to build from customer address...');
             
-            // Try multiple locations for customer address
-            const customerAddress = orderData.shippingInfo?.address || 
-                                   orderData.shippingInfo?.fullAddress ||
-                                   orderData.customerInfo?.address || 
-                                   orderData.address ||
-                                   orderData.deliveryAddress;
+            // Try multiple locations for customer address - be more aggressive
+            let customerAddress = null;
             
-            // Try to get customer phone for logging
+            // Try shippingInfo first
+            if (orderData.shippingInfo) {
+                // Build address from components
+                const parts = [];
+                if (orderData.shippingInfo.address) parts.push(orderData.shippingInfo.address);
+                if (orderData.shippingInfo.barangay) parts.push(orderData.shippingInfo.barangay);
+                if (orderData.shippingInfo.city) parts.push(orderData.shippingInfo.city);
+                if (orderData.shippingInfo.province) parts.push(orderData.shippingInfo.province);
+                if (orderData.shippingInfo.postalCode) parts.push(orderData.shippingInfo.postalCode);
+                
+                if (parts.length > 0) {
+                    customerAddress = parts.join(', ');
+                } else if (orderData.shippingInfo.fullAddress) {
+                    customerAddress = orderData.shippingInfo.fullAddress;
+                }
+            }
+            
+            // Fallback to customerInfo
+            if (!customerAddress && orderData.customerInfo?.address) {
+                customerAddress = orderData.customerInfo.address;
+            }
+            
+            // Fallback to top-level fields
+            if (!customerAddress) {
+                customerAddress = orderData.address || orderData.deliveryAddress;
+            }
+            
+            // Try to get customer name and phone for logging
+            const customerName = orderData.customerInfo?.fullName || 
+                                orderData.customerInfo?.firstName + ' ' + orderData.customerInfo?.lastName ||
+                                'Unknown Customer';
             const customerPhone = orderData.shippingInfo?.phone || 
                                  orderData.customerInfo?.phone || 
-                                 orderData.phone;
+                                 orderData.phone ||
+                                 'No phone';
             
             console.log('[notifications.js] 🔍 Customer address search:', {
                 foundAddress: !!customerAddress,
                 address: customerAddress,
+                customerName: customerName,
                 phone: customerPhone,
-                shippingInfo: orderData.shippingInfo ? Object.keys(orderData.shippingInfo) : 'none'
+                shippingInfoKeys: orderData.shippingInfo ? Object.keys(orderData.shippingInfo) : 'none',
+                customerInfoKeys: orderData.customerInfo ? Object.keys(orderData.customerInfo) : 'none'
             });
             
-            if (customerAddress) {
+            if (customerAddress && customerAddress.trim().length > 0) {
                 stops = [
                     {
-                        coordinates: { lat: '14.5995', lng: '120.9842' }, // Default Manila coordinates
-                        address: 'Viktoria\'s Bistro, Restaurant Address', // Update with actual restaurant address
+                        coordinates: { lat: '14.4456718', lng: '120.992947' }, // Restaurant coordinates (Rizito St, Imus)
+                        address: 'Viktoria\'s Bistro, Rizito St, Imus, 4103 Cavite, Philippines',
                         stopId: 'SENDER_STOP'
                     },
                     {
-                        coordinates: { lat: '', lng: '' }, // Customer coordinates unknown
-                        address: customerAddress,
+                        coordinates: { lat: '', lng: '' }, // Customer coordinates unknown - Lalamove will geocode
+                        address: customerAddress.trim(),
                         stopId: 'RECIPIENT_STOP'
                     }
                 ];
@@ -570,6 +599,11 @@ async function getStopsFromOrder(orderId) {
                 console.log('[notifications.js] ✅ Built stops from customer address:', customerAddress);
             } else {
                 console.log('[notifications.js] ❌ No customer address found in any location');
+                console.log('[notifications.js] 📋 Available order data:', {
+                    hasShippingInfo: !!orderData.shippingInfo,
+                    hasCustomerInfo: !!orderData.customerInfo,
+                    topLevelKeys: Object.keys(orderData)
+                });
             }
         }
 
