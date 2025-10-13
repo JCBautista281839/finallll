@@ -672,8 +672,51 @@ async function getQuotationById(quotationId) {
                 const expiresAt = quotationObj.expiresAt.toDate ? quotationObj.expiresAt.toDate() : new Date(quotationObj.expiresAt);
                 if (expiresAt < new Date()) expired = true;
             }
+            
+            // If expired, try to refresh it automatically
             if (expired) {
-                throw new Error('Quotation has expired. Please create a new quotation.');
+                console.warn('[notifications.js] ⚠️ Quotation has expired, attempting to refresh automatically...');
+                
+                // Check if we have stops to use for refresh
+                if (Array.isArray(quotationObj.stops) && quotationObj.stops.length >= 2) {
+                    try {
+                        console.log('[notifications.js] 🔄 Refreshing quotation using existing stops...');
+                        
+                        // Build quotation object for refresh
+                        const quotationToRefresh = {
+                            data: {
+                                quotationId: quotationObj.id,
+                                stops: quotationObj.stops,
+                                serviceType: quotationObj.serviceType || 'MOTORCYCLE',
+                                expiresAt: quotationObj.expiresAt
+                            }
+                        };
+                        
+                        // Call the refresh function
+                        const freshQuotation = await refreshExpiredQuotation(quotationToRefresh);
+                        
+                        console.log('[notifications.js] ✅ Quotation refreshed successfully!', {
+                            oldQuotationId: quotationObj.id,
+                            newQuotationId: freshQuotation.data.quotationId,
+                            newExpiresAt: freshQuotation.data.expiresAt
+                        });
+                        
+                        // Update the quotation object with fresh data
+                        quotationObj.id = freshQuotation.data.quotationId;
+                        quotationObj.expiresAt = freshQuotation.data.expiresAt;
+                        quotationObj.price = freshQuotation.data.priceBreakdown?.total || quotationObj.price;
+                        quotationObj.stops = freshQuotation.data.stops;
+                        expired = false; // Mark as no longer expired
+                        
+                    } catch (refreshError) {
+                        console.error('[notifications.js] ❌ Failed to refresh expired quotation:', refreshError);
+                        throw new Error(`Quotation has expired and refresh failed: ${refreshError.message}. Please try again or create a new order.`);
+                    }
+                } else {
+                    // No stops available to refresh with
+                    console.error('[notifications.js] ❌ Cannot refresh quotation - no stops data available');
+                    throw new Error('Quotation has expired and cannot be refreshed automatically. Please create a new order with delivery details.');
+                }
             }
             
             // Check if stops array is missing or too short
