@@ -51,8 +51,14 @@
         <!-- Search and Icons -->
         <div class="header-actions">
           <div class="search-bar">
-            <input type="text" placeholder="Search" class="search-input">
+            <input type="text" placeholder="Search" class="search-input" id="searchInput">
             <img class="search-img" src="src/Icons/search.png" alt="Search Icon">
+            <!-- Search Dropdown -->
+            <div class="search-dropdown" id="searchDropdown" style="display: none;">
+              <div class="search-results" id="searchResults">
+                <!-- Search results will be populated here -->
+              </div>
+            </div>
           </div>
           <div class="header-icons">
             <div class="user-profile-container" id="userProfileContainer">
@@ -158,18 +164,15 @@
               <h3 class="info-title">WE ARE OPEN FROM</h3>
               <p class="hours"><strong>Mon - Sun:</strong> 2:00 PM - 12:00 AM</p>
               <div class="location-container">
-                <a href="https://www.google.com/maps/place/Viktoria's+Bistro/@14.4456718,120.923477,17z/data=!3m1!4b1!4m6!3m5!1s0x3397d398175a1ecb:0x9fb03a88551cd78!8m2!3d14.4456718!4d120.923477!16s%2Fg%2F11k9s5txj5?entry=ttu&g_ep=EgoyMDI1MTAwOC4wIKXMDSoASAFQAw%3D%3D" target="_blank" class="location">
+                <a href="https://www.google.com/maps/place/Viktoria's+Bistro/@14.4456718,120.923477,17z/data=!3m1!4b1!4m6!3m5!1s0x3397d398175a1ecb:0x9fb03a88551cd78!8m2!3d14.4456718!4d120.923477!16s%2Fg%2F11k9s5txj5?entry=ttu&g_ep=EgoyMDI1MTAwOC4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank" class="location">
                   <img class="loc-img" src="src/Icons/stroke.png" alt="Location Icon">
                   <span>Bisita St., Medicion 2C, Imus, Philippines, 4103</span>
                 </a>
                 <div class="map-overlay">
-                  <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.1234567890!2d120.923477!3d14.4456718!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397d398175a1ecb%3A0x9fb03a88551cd78!2sViktoria's%20Bistro!5e0!3m2!1sen!2sph!4v1234567890123!5m2!1sen!2sph" 
-                    width="300" 
-                    height="200" 
-                    style="border:0;" 
-                    allowfullscreen="" 
-                    loading="lazy" 
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.1234567890!2d120.923477!3d14.4456718!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397d398175a1ecb%3A0x9fb03a88551cd78!2sViktoria's%20Bistro!5e0!3m2!1sen!2sph!4v1234567890123!5m2!1sen!2sph"
+                    width="300" height="200" style="border:0;" allowfullscreen="" loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade">
                   </iframe>
                 </div>
@@ -799,16 +802,16 @@
 
   <script>
     // Mobile map overlay toggle functionality
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const locationContainer = document.querySelector('.location-container');
       const locationLink = document.querySelector('.location');
-      
+
       if (locationContainer && locationLink) {
         // Prevent default link behavior on mobile
-        locationLink.addEventListener('click', function(e) {
+        locationLink.addEventListener('click', function (e) {
           if (window.innerWidth <= 768) {
             e.preventDefault();
-            
+
             // Toggle the active class
             if (locationContainer.classList.contains('active')) {
               locationContainer.classList.remove('active');
@@ -821,9 +824,9 @@
             }
           }
         });
-        
+
         // Close overlay when clicking outside
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
           if (window.innerWidth <= 768 && !locationContainer.contains(e.target)) {
             locationContainer.classList.remove('active');
           }
