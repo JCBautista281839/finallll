@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
         placeOrderBtn.textContent = 'Place Order';
         placeOrderBtn.style.opacity = '1';
         placeOrderBtn.style.cursor = 'pointer';
-        placeOrderBtn.style.backgroundColor = '#28a745'; // Green color to indicate ready
+        placeOrderBtn.style.backgroundColor = '#7d2f24'; // Green color to indicate ready
       }
     }
 
