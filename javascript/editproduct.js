@@ -49,6 +49,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (photoPreview && previewImage && uploadPlaceholder) {
             console.log('Photo upload setup complete - handled by cloud.js');
+
+            // Listen for Cloudinary upload events
+            window.addEventListener('cloudinaryReady', function () {
+                console.log('🔄 Cloudinary ready for edit product');
+                setupImageReplacement();
+            });
+        }
+    }
+
+    function setupImageReplacement() {
+        // Override the Cloudinary success callback to handle image replacement
+        if (window.cloudinaryWidget) {
+            console.log('🔄 Setting up image replacement for edit product');
+
+            // Store original success callback
+            const originalSuccessCallback = window.cloudinaryWidget._options.callback;
+
+            // Override with our custom callback
+            window.cloudinaryWidget._options.callback = function (error, result) {
+                if (error) {
+                    console.error('Cloudinary upload error:', error);
+                    return;
+                }
+
+                if (result && result.info) {
+                    console.log('🔄 New image uploaded, replacing existing image');
+
+                    // Update the preview image
+                    const previewImage = document.getElementById('previewImage');
+                    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+
+                    if (previewImage && uploadPlaceholder) {
+                        previewImage.src = result.info.secure_url;
+                        previewImage.style.display = 'block';
+                        uploadPlaceholder.style.display = 'none';
+
+                        // Store the new image URL for saving with cache busting
+                        const cacheBustedUrl = `${result.info.secure_url}?v=${new Date().getTime()}`;
+                        previewImage.setAttribute('data-new-image-url', cacheBustedUrl);
+                        previewImage.setAttribute('data-public-id', result.info.public_id);
+
+                        // Add visual indicator that image has been changed
+                        previewImage.style.border = '3px solid #28a745';
+                        previewImage.style.borderRadius = '8px';
+
+                        // Show success message
+                        showMessage('Image updated successfully!', 'success');
+
+                        console.log('✅ Image replaced successfully');
+                    }
+                }
+
+                // Call original callback if it exists
+                if (originalSuccessCallback) {
+                    originalSuccessCallback(error, result);
+                }
+            };
         }
     }
 
@@ -80,14 +137,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('editProductName').value = data.name || '';
                     document.getElementById('editProductCategory').value = data.category || '';
                     document.getElementById('editProductPrice').value = data.price || '';
+                    document.getElementById('editProductDescription').value = data.description || '';
 
-                    // Load existing product image
+                    // Load existing product image with cache busting
                     if (data.photoUrl) {
                         const previewImage = document.getElementById('previewImage');
                         const uploadPlaceholder = document.getElementById('uploadPlaceholder');
 
                         if (previewImage && uploadPlaceholder) {
-                            previewImage.src = data.photoUrl;
+                            // Add cache busting parameter to force image refresh
+                            const cacheBuster = new Date().getTime();
+                            const separator = data.photoUrl.includes('?') ? '&' : '?';
+                            previewImage.src = `${data.photoUrl}${separator}v=${cacheBuster}`;
                             previewImage.style.display = 'block';
                             uploadPlaceholder.style.display = 'none';
                         }
@@ -313,6 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const name = document.getElementById('editProductName').value.trim();
         const category = document.getElementById('editProductCategory').value;
         const price = parseFloat(document.getElementById('editProductPrice').value);
+        const description = document.getElementById('editProductDescription').value.trim();
 
 
         if (!name) {
@@ -339,14 +401,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Get photo URL from Cloudinary or existing image
         const previewImage = document.getElementById('previewImage');
-        const photoUrl = window.cloudinaryUtils && window.cloudinaryUtils.getPhotoUrl ?
-            window.cloudinaryUtils.getPhotoUrl() :
-            (previewImage && previewImage.style.display !== 'none' ? previewImage.src : null);
+        let photoUrl = null;
+
+        // Check if a new image was uploaded (stored in data attribute)
+        if (previewImage && previewImage.getAttribute('data-new-image-url')) {
+            photoUrl = previewImage.getAttribute('data-new-image-url');
+            console.log('🔄 Using new uploaded image:', photoUrl);
+        }
+        // Check if a new image was uploaded via Cloudinary utils
+        else if (window.cloudinaryUtils && window.cloudinaryUtils.getPhotoUrl) {
+            const newPhotoUrl = window.cloudinaryUtils.getPhotoUrl();
+            if (newPhotoUrl) {
+                photoUrl = newPhotoUrl;
+                console.log('🔄 Using new Cloudinary image:', photoUrl);
+            }
+        }
+        // If no new image, check if existing image is still valid
+        else if (previewImage && previewImage.style.display !== 'none') {
+            // Check if the image has a Cloudinary URL (new upload) or is the original
+            const currentSrc = previewImage.src;
+            if (currentSrc && !currentSrc.includes('default') && !currentSrc.includes('menu.png')) {
+                // Remove cache busting parameter to get clean URL
+                photoUrl = currentSrc.split('?')[0];
+                console.log('🔄 Using existing image:', photoUrl);
+            }
+        }
 
         const updateData = {
             name: name,
             category: category,
             price: price,
+            description: description,
             ingredients: selectedIngredients,
             photoUrl: photoUrl,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()

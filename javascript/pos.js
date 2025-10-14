@@ -886,6 +886,22 @@ async function startPOSSystem() {
                 alert('Please enter both Table Number and Pax before proceeding.');
                 return;
             }
+
+            // Validate that Table Number and Pax are not 0
+            if (orderType === 'Dine in') {
+                const tableNumber = parseInt(tableNumberValue);
+                const paxNumber = parseInt(paxValue);
+
+                if (tableNumber <= 0) {
+                    alert('Table Number must be greater than 0.');
+                    return;
+                }
+
+                if (paxNumber <= 0) {
+                    alert('Pax must be greater than 0.');
+                    return;
+                }
+            }
             const items = orderItems.map(item => {
                 const quantity = parseInt(item.querySelector('.quantity').textContent);
                 const unitPrice = parseFloat(item.getAttribute('data-unit-price'));
@@ -921,7 +937,7 @@ async function startPOSSystem() {
 
             const total = parseFloat(document.querySelector('.summary-total').textContent.replace('₱', ''));
             const orderNumberFormatted = String(currentOrderNumber);
-            const status = 'Pending Payment';
+            // POS creates orders without status - Payment Page will control status
             const createdAt = new Date().toISOString();
             // Get discount details from posOrder for persistence
             let discountDetails = {};
@@ -950,7 +966,7 @@ async function startPOSSystem() {
                 tax,
                 discount,
                 total,
-                status,
+                // No status field - Payment Page will control status
                 createdAt,
                 timestamp: (window.firebase && window.firebase.firestore) ? window.firebase.firestore.FieldValue.serverTimestamp() : null,
                 // Include discount details for restoration
@@ -1483,6 +1499,9 @@ async function reduceInventoryForOrder(orderItems) {
 document.addEventListener('DOMContentLoaded', function () {
     console.debug('POS page loaded, waiting for Firebase...');
 
+    // Setup input validation for Table Number and Pax
+    setupInputValidation();
+
     // Check if this is an approved order from notifications
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
@@ -1660,6 +1679,9 @@ async function loadPendingOrderFromOrders() {
                 paxInput.value = orderData.paxNumber || orderData.pax;
             }
         }
+
+        // Add real-time validation for Table Number and Pax inputs
+        setupInputValidation();
 
         // Add items to POS
         console.log('🛒 Items data:', orderData.items);
@@ -2347,5 +2369,51 @@ function decreaseQuantity(button) {
         updateOrderSummary();
     } catch (error) {
         console.error('Error decreasing quantity:', error);
+    }
+}
+
+// Function to setup real-time validation for Table Number and Pax inputs
+function setupInputValidation() {
+    const tableNumberInput = document.querySelector('.table-number input');
+    const paxNumberInput = document.querySelector('.pax-number input');
+
+    if (tableNumberInput) {
+        tableNumberInput.addEventListener('input', function () {
+            const value = parseInt(this.value);
+            if (value <= 0 && this.value !== '') {
+                this.setCustomValidity('Table Number must be greater than 0');
+                this.reportValidity();
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        tableNumberInput.addEventListener('blur', function () {
+            const value = parseInt(this.value);
+            if (value <= 0 && this.value !== '') {
+                this.value = '';
+                alert('Table Number must be greater than 0.');
+            }
+        });
+    }
+
+    if (paxNumberInput) {
+        paxNumberInput.addEventListener('input', function () {
+            const value = parseInt(this.value);
+            if (value <= 0 && this.value !== '') {
+                this.setCustomValidity('Pax must be greater than 0');
+                this.reportValidity();
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        paxNumberInput.addEventListener('blur', function () {
+            const value = parseInt(this.value);
+            if (value <= 0 && this.value !== '') {
+                this.value = '';
+                alert('Pax must be greater than 0.');
+            }
+        });
     }
 }

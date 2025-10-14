@@ -18,7 +18,7 @@ function createCartItemHTML(item) {
   return `
     <div class="cart-item" data-cart-item-id="${item.id}">
       <div class="cart-item-image">
-        <img src="${item.photoUrl || '../../src/IMG/default-food.jpg'}" 
+        <img src="${item.photoUrl ? (item.photoUrl + (item.photoUrl.includes('?') ? '&' : '?') + 'v=' + new Date().getTime()) : '../../src/IMG/default-food.jpg'}" 
              alt="${item.productName}" 
              onerror="this.src='../../src/IMG/default-food.jpg'">
       </div>
@@ -115,13 +115,13 @@ function updateCartDisplay(cartItems) {
  */
 function updateCartSummary(cartItems) {
   const totals = window.firestoreCart.calculateCartTotal(cartItems);
-  
+
   // Update individual elements if they exist
   updateElementText('cart-subtotal', `₱${totals.subtotal.toFixed(2)}`);
   updateElementText('cart-tax', `₱${totals.tax.toFixed(2)}`);
   updateElementText('cart-total', `₱${totals.total.toFixed(2)}`);
   updateElementText('cart-item-count', `${totals.itemCount} items`);
-  
+
   // Update summary container if it exists
   const summaryContainer = document.getElementById('cart-summary');
   if (summaryContainer) {
@@ -135,14 +135,14 @@ function updateCartSummary(cartItems) {
  */
 function updateCartBadge(cartItems) {
   const totalItems = cartItems.reduce((count, item) => count + item.quantity, 0);
-  
+
   // Update cart badge
   const badgeElement = document.getElementById('cart-badge');
   if (badgeElement) {
     badgeElement.textContent = totalItems;
     badgeElement.style.display = totalItems > 0 ? 'block' : 'none';
   }
-  
+
   // Update cart icon text
   const cartIconText = document.getElementById('cart-icon-text');
   if (cartIconText) {
@@ -185,7 +185,7 @@ function updateMenuItemCartStatus(productId, isInCart, quantity = 0) {
 async function addMenuItemToCart(menuItem) {
   try {
     const customerId = getCurrentCustomerId();
-    
+
     const cartItem = {
       productId: menuItem.id || menuItem.productId,
       productName: menuItem.name || menuItem.productName,
@@ -196,13 +196,13 @@ async function addMenuItemToCart(menuItem) {
     };
 
     await window.firestoreCart.addToCart(customerId, cartItem);
-    
+
     // Show success feedback
     showAddToCartSuccess(cartItem.productName);
-    
+
     // Update menu item status
     updateMenuItemCartStatus(cartItem.productId, true, 1);
-    
+
   } catch (error) {
     console.error('Failed to add item to cart:', error);
     showNotification('Failed to add item to cart', 'error');
@@ -218,10 +218,10 @@ async function increaseCartQuantity(cartItemId) {
     const customerId = getCurrentCustomerId();
     const cartItems = await window.firestoreCart.getCartItems(customerId);
     const currentItem = cartItems.find(item => item.id === cartItemId);
-    
+
     if (currentItem) {
       await window.firestoreCart.updateCartItemQuantity(customerId, cartItemId, currentItem.quantity + 1);
-      
+
       // Update menu item status if applicable
       updateMenuItemCartStatus(currentItem.productId, true, currentItem.quantity + 1);
     }
@@ -240,10 +240,10 @@ async function decreaseCartQuantity(cartItemId) {
     const customerId = getCurrentCustomerId();
     const cartItems = await window.firestoreCart.getCartItems(customerId);
     const currentItem = cartItems.find(item => item.id === cartItemId);
-    
+
     if (currentItem) {
       const newQuantity = currentItem.quantity - 1;
-      
+
       if (newQuantity <= 0) {
         // Remove item if quantity becomes 0
         await window.firestoreCart.removeFromCart(customerId, cartItemId);
@@ -269,15 +269,15 @@ async function removeCartItem(cartItemId) {
     const customerId = getCurrentCustomerId();
     const cartItems = await window.firestoreCart.getCartItems(customerId);
     const itemToRemove = cartItems.find(item => item.id === cartItemId);
-    
+
     if (confirm(`Are you sure you want to remove "${itemToRemove?.productName}" from your cart?`)) {
       await window.firestoreCart.removeFromCart(customerId, cartItemId);
-      
+
       // Update menu item status
       if (itemToRemove) {
         updateMenuItemCartStatus(itemToRemove.productId, false, 0);
       }
-      
+
       showNotification('Item removed from cart', 'success');
     }
   } catch (error) {
@@ -293,20 +293,20 @@ async function clearCart() {
   try {
     const customerId = getCurrentCustomerId();
     const cartItems = await window.firestoreCart.getCartItems(customerId);
-    
+
     if (cartItems.length === 0) {
       showNotification('Your cart is already empty', 'info');
       return;
     }
-    
+
     if (confirm(`Are you sure you want to clear your entire cart? This will remove ${cartItems.length} item(s).`)) {
       await window.firestoreCart.clearCart(customerId);
-      
+
       // Update all menu item statuses
       cartItems.forEach(item => {
         updateMenuItemCartStatus(item.productId, false, 0);
       });
-      
+
       showNotification('Cart cleared successfully', 'success');
     }
   } catch (error) {
@@ -330,7 +330,7 @@ function setupRealtimeCartUpdates(customerId) {
     updateCartDisplay(cartItems);
     updateCartSummary(cartItems);
     updateCartBadge(cartItems);
-    
+
     // Update menu item statuses
     updateAllMenuCartStatuses(customerId, cartItems);
   });
@@ -350,14 +350,14 @@ async function updateAllMenuCartStatuses(customerId, cartItems) {
     cartItems.forEach(item => {
       cartMap.set(item.productId, item.quantity);
     });
-    
+
     // Update all menu items
     const menuItems = document.querySelectorAll('[data-product-id]');
     menuItems.forEach(menuItem => {
       const productId = menuItem.dataset.productId;
       const quantity = cartMap.get(productId) || 0;
       const isInCart = quantity > 0;
-      
+
       updateMenuItemCartStatus(productId, isInCart, quantity);
     });
   } catch (error) {
@@ -376,22 +376,22 @@ async function initializeCartUI() {
   try {
     // Wait for Firebase to be ready
     await window.firestoreCart.waitForFirebase();
-    
+
     const customerId = getCurrentCustomerId();
-    
+
     // Set up real-time updates
     const unsubscribe = setupRealtimeCartUpdates(customerId);
-    
+
     // Load initial cart data
     const cartItems = await window.firestoreCart.getCartItems(customerId);
     updateCartDisplay(cartItems);
     updateCartSummary(cartItems);
     updateCartBadge(cartItems);
     updateAllMenuCartStatuses(customerId, cartItems);
-    
+
     // Store unsubscribe function for cleanup
     window.cartUIUnsubscribe = unsubscribe;
-    
+
     console.log('[CartUI] ✅ Initialized successfully');
   } catch (error) {
     console.error('[CartUI] ❌ Initialization failed:', error);
@@ -439,21 +439,21 @@ function getCurrentCustomerId() {
   if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
     return firebase.auth().currentUser.uid;
   }
-  
+
   // Try session storage
   const customerData = sessionStorage.getItem('currentCustomer');
   if (customerData) {
     const customer = JSON.parse(customerData);
     return customer.id || customer.uid;
   }
-  
+
   // Generate guest ID
   let guestId = sessionStorage.getItem('guestCustomerId');
   if (!guestId) {
     guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     sessionStorage.setItem('guestCustomerId', guestId);
   }
-  
+
   return guestId;
 }
 
@@ -469,9 +469,9 @@ function showNotification(message, type = 'info') {
     <span class="notification-message">${message}</span>
     <button class="notification-close" onclick="this.parentElement.remove()">×</button>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Auto remove after 3 seconds
   setTimeout(() => {
     if (notification.parentElement) {
@@ -491,9 +491,9 @@ function showAddToCartSuccess(itemName) {
     <div class="success-icon">✓</div>
     <span>Added "${itemName}" to cart!</span>
   `;
-  
+
   document.body.appendChild(successMsg);
-  
+
   setTimeout(() => {
     if (successMsg.parentElement) {
       successMsg.remove();

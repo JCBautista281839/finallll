@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 loadMenuFromFirebase();
                 setupEventListeners();
                 setupLogout();
+                setupPageRefresh();
             } else {
                 console.log('No user authenticated, redirecting to login...');
                 window.location.href = '/index.html';
@@ -104,6 +105,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function setupPageRefresh() {
+        // Refresh menu when page becomes visible (returning from edit product)
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                console.log('🔄 Page became visible, refreshing menu...');
+                setTimeout(() => {
+                    loadMenuFromFirebase();
+                }, 100);
+            }
+        });
+
+        // Also refresh on focus (when returning from another tab)
+        window.addEventListener('focus', function () {
+            console.log('🔄 Window focused, refreshing menu...');
+            setTimeout(() => {
+                loadMenuFromFirebase();
+            }, 100);
+        });
+    }
+
     function loadMenuFromFirebase() {
         console.log('Loading menu from Firebase...');
         const tbody = document.getElementById('menuTableBody');
@@ -112,6 +133,9 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Menu table body not found');
             return;
         }
+
+        // Clear existing content to force refresh
+        tbody.innerHTML = '';
 
 
         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Loading menu from Firebase...</td></tr>';
@@ -169,10 +193,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let imageHtml = '';
         if (data.photoUrl) {
+            // Add multiple cache busting parameters to force image refresh
+            const cacheBuster = new Date().getTime();
+            const randomId = Math.random().toString(36).substring(7);
+            const separator = data.photoUrl.includes('?') ? '&' : '?';
+            const imageUrl = `${data.photoUrl}${separator}v=${cacheBuster}&r=${randomId}&t=${Date.now()}`;
+
             imageHtml = `
                 <div class="product-image-container">
-                    <img src="${data.photoUrl}" alt="${data.name || 'Product'}" class="product-image" 
-                         onerror="this.src='../src/Icons/menu.png'; this.classList.add('fallback-image');">
+                    <img src="${imageUrl}" alt="${data.name || 'Product'}" class="product-image" 
+                         onerror="this.src='../src/Icons/menu.png'; this.classList.add('fallback-image');"
+                         onload="console.log('Image loaded:', this.src)">
                 </div>
             `;
         } else {
