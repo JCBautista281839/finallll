@@ -545,6 +545,8 @@ main.slide-out-right,
 
 .content-left {
   padding: 40px 40px 40px 20px;
+ margin-top: 50px !important;
+  
 }
 
 
@@ -906,13 +908,18 @@ main.slide-out-right,
 
 .rating-badge {
   position: absolute;
-  bottom: 20px;
+
   right: 20px;
   margin-bottom: -20px;
-  display: flex;
+  display: flex !important;
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }
 
 /* Star Rating Styles */
@@ -1884,15 +1891,41 @@ main.slide-out-right,
     margin-top: -15px !important;
   }
 
-  /* Food slideshow mobile optimization */
+  /* Food slideshow mobile optimization - FIXED RIGHT SIDE */
   .food-slideshow-container {
     margin-top: 20px;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
   }
 
   .food-image {
-    max-width: 1055px !important;
+    max-width: 100% !important;
     width: 100% !important;
     height: auto !important;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  
+  .content-right {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .food-image-container {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 0;
   }
 
 
@@ -1905,11 +1938,45 @@ main.slide-out-right,
     height: 10px;
   }
 
-  /* Rating badge mobile positioning */
+  /* Rating badge mobile positioning - FIXED */
   .rating-badge {
-    bottom: -15px !important;
-    right: -10px !important;
-    font-size: 12px !important;
+    position: absolute !important;
+    bottom: 15px !important;
+    right: 15px !important;
+    font-size: 10px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    padding: 6px 12px !important;
+    border-radius: 15px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    z-index: 10 !important;
+    min-width: 85px !important;
+    max-width: 110px !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+  
+  .rating-badge .rating-star {
+    color: #ffb700 !important;
+    font-size: 10px !important;
+  }
+  
+  .rating-badge .rating-text {
+    font-size: 9px !important;
+    color: #333 !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  
+  /* Ensure rating badge is always visible on mobile */
+  .food-image-container .rating-badge {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .signature-title {
@@ -1933,15 +2000,99 @@ main.slide-out-right,
     font-size: 14px !important;
   }
 
-  /* Better spacing for mobile content */
+  /* Better spacing for mobile content - OVERRIDE TABLET CHANGES */
   .content-left {
     padding: 20px 15px !important;
+    margin-top: 0 !important;
+  }
+  
+  .info-section {
+    margin-top: -60px !important;
   }
 
   .main-content {
     padding: 20px 0 !important;
   }
-
+  
+  /* Mobile container adjustments - FIXED RIGHT SIDE */
+  .container-fluid {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  .row {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .col-md-6 {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Ensure right side content is properly contained on mobile */
+  .scroll-right {
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .scroll-right .content-right {
+    max-width: 100%;
+    overflow: hidden;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Mobile-specific image container - FIXED */
+  .food-image-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    display: block;
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* Additional mobile right side fixes */
+  .col-md-6:last-child {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    overflow: hidden;
+  }
+  
+  /* Ensure no horizontal scroll on mobile */
+  body {
+    overflow-x: hidden !important;
+  }
+  
+  /* Fix any potential overflow from Bootstrap grid */
+  .container-fluid .row .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  
+  @media (max-width: 600px) {
+    .container-fluid .row .col-md-6 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+  }
+  .content-left {
+    padding: 3rem;
+    margin-top:150px !important;
+  }
   /* Mobile feedback form adjustments */
   .rating-form-title-stars-row {
     flex-direction: column !important;
@@ -2167,6 +2318,17 @@ main.slide-out-right,
   .fullscreen-menu-overlay {
     display: flex;
   }
+  
+  /* Adjust left content positioning for tablet - NOT MOBILE */
+  @media (min-width: 769px) and (max-width: 992px) {
+    .content-left {
+      margin-top: -20px !important;
+    }
+    
+    .info-section {
+      margin-top: -110px !important;
+    }
+  }
 }
 
 /* ==============================================
@@ -2222,13 +2384,14 @@ main.slide-out-right,
     margin-left: 0;
   }
 
-  /* Adjust main content for tablet landscape */
+  /* Adjust main content for tablet landscape - NOT MOBILE */
   .content-left {
     padding: 40px 40px 40px 20px;
+    margin-top: -30px !important;
   }
 
   .info-section {
-    margin-top: -90px;
+    margin-top: -120px !important;
     margin-bottom: 80px;
     margin-left: 30px;
   }
@@ -2506,6 +2669,7 @@ main.slide-out-right,
   /* Main content adjustments */
   .content-left {
     padding: 3rem;
+    margin-top:150px;
   }
 
   .description {
