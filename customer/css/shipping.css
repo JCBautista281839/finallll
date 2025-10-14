@@ -868,10 +868,14 @@ hr {
   width: 95%;
   max-height: 90vh;
   overflow-y: auto;
-  background: white !important;
   padding: 0;
-  border-radius: 15px;
+  border-radius: 25px !important;
   animation: slideInDown 0.4s ease-out;
+}
+
+.instructions-modal::-webkit-scrollbar{
+  display: none;
+  margin-right: -15px !important;
 }
 
 @keyframes slideInDown {
@@ -896,9 +900,9 @@ hr {
 
 .instructions-title {
   font-size: 28px;
-  font-weight: 700;
   margin: 0;
   color: white;
+  background: none !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -992,13 +996,13 @@ hr {
 
 .instructions-footer {
   padding: 20px 30px 30px 30px;
-  background: white;
+  background: white ;
   border-radius: 0 0 15px 15px;
   text-align: center;
 }
 
 .btn-got-it {
-  background: #7d2f24;
+  background: #7d2f24 !important;
   color: white;
   border: none;
   padding: 15px 50px;
