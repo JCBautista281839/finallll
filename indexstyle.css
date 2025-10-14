@@ -52,6 +52,45 @@ body {
   overflow-x: hidden;
   font-size: 1rem;
   line-height: 1.6;
+  transition: none;
+}
+
+/* Simple Slide Transition Styles */
+/* Keep header fixed during transitions */
+.header {
+  position: fixed !important;
+  z-index: 1001;
+  transition: none !important;
+}
+
+/* Ensure page content is visible during slide transitions */
+body.slide-out-left,
+body.slide-out-right,
+main.slide-out-left,
+main.slide-out-right,
+.main-content.slide-out-left,
+.main-content.slide-out-right {
+  background-color: transparent !important;
+}
+
+/* Main content container for sliding */
+.main-content,
+.menu-page {
+  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  margin-top: 80px;
+  /* Account for fixed header */
+  background-color: transparent;
+  overflow: hidden;
+}
+
+.slide-out-left {
+  transform: translateX(100%);
+  background-color: transparent !important;
+}
+
+.slide-out-right {
+  transform: translateX(-100%);
+  background-color: transparent !important;
 }
 
 /* Header Styles */
@@ -64,7 +103,6 @@ body {
   padding: 20px 0;
   background-color: #ffffff;
   border-bottom: none;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-brand {
@@ -513,7 +551,7 @@ body {
 
 
 .info-section {
-  margin-top: -90px;
+  margin-top: -200px !important;
   margin-bottom: 80px;
   margin-left: -10px !important;
 }
@@ -572,7 +610,6 @@ body {
   background: white;
   border: 2px solid #8B2E20;
   border-radius: 12px;
-  box-shadow: 0 0 20px rgba(139, 46, 32, 0.4), 0 8px 25px rgba(139, 46, 32, 0.3);
   padding: 15px;
   opacity: 0;
   visibility: hidden;
@@ -586,7 +623,7 @@ body {
   opacity: 1;
   visibility: visible;
   transform: translateX(0) scale(1);
-  box-shadow: 0 0 30px rgba(139, 46, 32, 0.6), 0 8px 25px rgba(139, 46, 32, 0.4);
+  box-shadow: 0 0 30px rgba(139, 46, 32, 0.185), 0 8px 25px rgba(139, 46, 32, 0.4);
 }
 
 /* Mobile: Show map overlay on click instead of hover */
@@ -596,7 +633,7 @@ body {
     visibility: hidden;
     transform: translateX(-10px) scale(0.95);
   }
-  
+
   .location-container.active .map-overlay {
     opacity: 1;
     visibility: visible;
@@ -800,6 +837,7 @@ body {
   align-items: center;
   height: 100%;
   background: transparent;
+  margin-top: -60px;
 }
 
 .food-slideshow-container {
@@ -1861,7 +1899,7 @@ body {
     width: 100%;
     max-width: 100%;
   }
-  
+
   .food-image {
     max-width: 100% !important;
     width: 100% !important;
@@ -1889,12 +1927,12 @@ body {
     padding: 0;
     margin: 0;
   }
-  
-  
+
+
   .slide-indicators {
     bottom: 10px;
   }
-  
+
   .indicator {
     width: 10px;
     height: 10px;
@@ -2309,7 +2347,7 @@ body {
   }
 
   /* Adjust navigation for tablet landscape - desktop style */
-  
+
 
   .nav-list {
     margin-left: 30px;
@@ -2333,7 +2371,7 @@ body {
   /* Ensure proper header layout */
   .header {
     padding: 15px 15px;
-   
+
   }
 
   .navbar-brand {
@@ -2403,7 +2441,7 @@ body {
   /* Signature dishes - desktop style */
   .signature-section {
     padding: 40px 0 60px;
-   ;
+    ;
   }
 
   .signature-title {
@@ -2461,7 +2499,7 @@ body {
 /* Signature dishes */
 .signature-section {
   padding: 3rem 0 4rem;
-  margin-top:-60px !important;
+  margin-top: -60px !important;
 }
 
 .signature-title {
@@ -2643,8 +2681,8 @@ body {
   /* Signature dishes */
   .signature-section {
     padding: 4rem 0 5rem;
- 
- 
+
+
   }
 
   .signature-title {

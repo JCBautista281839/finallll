@@ -22,19 +22,19 @@ async function initializeFirebase() {
             console.log('Firebase already initialized');
             return firebase.app();
         }
-        
+
         // Initialize Firebase
         console.log('Initializing Firebase...');
-        
+
         // Check if firebaseConfig is available
         if (typeof window.firebaseConfig === 'undefined') {
             console.error('Firebase configuration not found');
             return null;
         }
-        
+
         const app = firebase.initializeApp(window.firebaseConfig);
         console.log('Firebase initialized successfully');
-        
+
         // Configure authentication persistence to SESSION
         try {
             await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
@@ -42,9 +42,9 @@ async function initializeFirebase() {
         } catch (persistenceError) {
             console.warn('Could not set auth persistence:', persistenceError);
         }
-        
+
         return app;
-        
+
     } catch (error) {
         console.error('Error initializing Firebase:', error);
         return null;
@@ -58,10 +58,10 @@ function testFirebaseConnection() {
             console.log('Firebase not initialized yet');
             return;
         }
-        
+
         console.log('Testing Firebase connection...');
         const db = firebase.firestore();
-        
+
         // Simple test query
         db.collection('test').doc('connection').get()
             .then(() => {
@@ -70,26 +70,26 @@ function testFirebaseConnection() {
             .catch((error) => {
                 console.error('❌ Firebase connection failed:', error.message);
             });
-            
+
     } catch (error) {
         console.error('Firebase connection test error:', error);
     }
 }
 
 // Global Firebase ready check function
-window.isFirebaseReady = function() {
-    return typeof firebase !== 'undefined' && 
-           firebase.apps && 
-           firebase.apps.length > 0 && 
-           firebase.auth &&
-           firebase.firestore;
+window.isFirebaseReady = function () {
+    return typeof firebase !== 'undefined' &&
+        firebase.apps &&
+        firebase.apps.length > 0 &&
+        firebase.auth &&
+        firebase.firestore;
 };
 
 // Auto-initialize Firebase when the page loads
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('Page loaded, initializing Firebase...');
     await initializeFirebase();
-    
+
     // Test connection after a short delay
     setTimeout(() => {
         testFirebaseConnection();
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Handle user profile icon click (fallback for pages without custom implementation)
 function handleUserProfileClick(event) {
     event.preventDefault();
-    
+
     try {
         // Check if Firebase is initialized
         if (typeof firebase === 'undefined') {
@@ -107,10 +107,10 @@ function handleUserProfileClick(event) {
             window.location.href = 'html/login.html';
             return;
         }
-        
+
         // Check if user is authenticated
         const user = firebase.auth().currentUser;
-        
+
         if (user) {
             // User is logged in - redirect to account page
             console.log('User is logged in:', user.email);
@@ -121,7 +121,7 @@ function handleUserProfileClick(event) {
             console.log('User is not logged in, redirecting to login');
             window.location.href = 'html/login.html';
         }
-        
+
     } catch (error) {
         console.error('Error checking user authentication:', error);
         // Fallback to login page
@@ -132,7 +132,7 @@ function handleUserProfileClick(event) {
 // Scroll animations for hero elements
 function initializeScrollAnimations() {
     // Animate elements on scroll (in and out)
-    (function() {
+    (function () {
         if (window.innerWidth <= 768) return; // Don't run on mobile
 
         const targets = document.querySelectorAll('.scroll-left, .scroll-right');
@@ -153,7 +153,7 @@ function initializeScrollAnimations() {
     })();
 
     // Exit animation on scroll
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', function () {
         if (window.innerWidth <= 768) return; // Don't run on mobile
 
         const scrollLeft = document.querySelector('.scroll-left');
@@ -161,7 +161,7 @@ function initializeScrollAnimations() {
         if (!scrollLeft || !scrollRight) return;
 
         let scrollPosition = window.scrollY;
-        
+
         // Start exit animation after scrolling a bit
         if (scrollPosition > 100) {
             scrollLeft.classList.add('exit-left');
@@ -170,10 +170,49 @@ function initializeScrollAnimations() {
             scrollLeft.classList.remove('exit-left');
             scrollRight.classList.remove('exit-right');
         }
-    });    
+    });
+}
+
+// Simple slide transition function
+function slideNavigate(url, direction = 'right') {
+    // Find the main content area (everything except header)
+    const mainContent = document.querySelector('main') || document.querySelector('.main-content') || document.body;
+
+    // Add slide out class based on direction
+    if (direction === 'right') {
+        mainContent.classList.add('slide-out-right');
+    } else {
+        mainContent.classList.add('slide-out-left');
+    }
+
+    // Navigate after transition
+    setTimeout(() => {
+        window.location.href = url;
+    }, 400);
+}
+
+// Setup slide navigation
+function setupSlideNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link[href]');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetUrl = this.getAttribute('href');
+
+            if (targetUrl && !targetUrl.startsWith('http') && !targetUrl.startsWith('#')) {
+                // Determine slide direction based on target page
+                const direction = targetUrl.includes('menu') ? 'right' : 'left';
+                slideNavigate(targetUrl, direction);
+            } else {
+                window.location.href = targetUrl;
+            }
+        });
+    });
 }
 
 // Initialize scroll animations when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeScrollAnimations();
+    setupSlideNavigation();
 });

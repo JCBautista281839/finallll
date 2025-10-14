@@ -503,11 +503,9 @@ function createOrderRow(orderData) {
         });
     }
 
-    // Always use the actual transaction timestamp, never overwrite with current date
+    // Always use the original order timestamp, not completion timestamp
     let orderDate;
-    if (orderData.completedAt) {
-        orderDate = new Date(orderData.completedAt);
-    } else if (orderData.timestamp && typeof orderData.timestamp.toDate === 'function') {
+    if (orderData.timestamp && typeof orderData.timestamp.toDate === 'function') {
         orderDate = orderData.timestamp.toDate();
     } else if (orderData.timestamp && orderData.timestamp.seconds) {
         orderDate = new Date(orderData.timestamp.seconds * 1000);
@@ -515,6 +513,17 @@ function createOrderRow(orderData) {
         orderDate = new Date(orderData.dateCreated);
     } else if (orderData.createdAt) {
         orderDate = new Date(orderData.createdAt);
+    } else if (orderData.completedAt) {
+        // Only use completedAt as fallback if no original timestamp exists
+        if (typeof orderData.completedAt.toDate === 'function') {
+            orderDate = orderData.completedAt.toDate();
+        } else if (orderData.completedAt.seconds) {
+            orderDate = new Date(orderData.completedAt.seconds * 1000);
+        } else if (typeof orderData.completedAt === 'string') {
+            orderDate = new Date(orderData.completedAt);
+        } else {
+            orderDate = new Date(orderData.completedAt);
+        }
     } else {
         orderDate = null;
     }

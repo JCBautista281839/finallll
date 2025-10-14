@@ -132,6 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update active state
         document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
+
+        // Animate sliding underline
+        animateSlidingUnderline(link);
       });
 
       categoryLinksContainer.appendChild(link);
@@ -150,7 +153,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (allLink) {
       allLink.classList.add('active');
       showAllItems(menuByCategory);
+      // Initialize the sliding underline for the default active category
+      animateSlidingUnderline(allLink);
     }
+  }
+
+  function animateSlidingUnderline(activeLink) {
+    const container = document.querySelector('.category-links-container');
+    if (!container) return;
+
+    // Get the position and width of the active link
+    const linkRect = activeLink.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    // Calculate the position relative to the container
+    const left = linkRect.left - containerRect.left;
+    const width = linkRect.width;
+
+    // Update the sliding underline position
+    container.style.setProperty('--underline-left', `${left}px`);
+    container.style.setProperty('--underline-width', `${width}px`);
+
+    // Trigger the animation
+    container.classList.add('underline-animating');
+    setTimeout(() => {
+      container.classList.remove('underline-animating');
+    }, 500);
   }
 
   function showAllItems(menuByCategory) {
@@ -212,7 +240,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 6 items per row on large screens (col-lg-2), 4 per row on md (col-md-3), 2 per row on xs (col-6)
     col.className = 'col-lg-2 col-md-3 col-6';
 
-    const imageUrl = item.photoUrl || '/src/Icons/menu.png';
+    // Add cache busting to force image refresh
+    let imageUrl = item.photoUrl || '/src/Icons/menu.png';
+    if (item.photoUrl) {
+      const cacheBuster = new Date().getTime();
+      const separator = item.photoUrl.includes('?') ? '&' : '?';
+      imageUrl = `${item.photoUrl}${separator}v=${cacheBuster}`;
+    }
 
     // Safely escape the item data for HTML attribute
     const safeItemData = JSON.stringify(item).replace(/"/g, '&quot;');

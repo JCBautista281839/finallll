@@ -422,7 +422,7 @@ async function getStopsFromOrder(orderId) {
 
         const orderData = orderDoc.data();
         console.log('[notifications.js] 📋 Order data retrieved for stops extraction');
-        
+
         // Log the full order structure to help diagnose the issue
         console.log('[notifications.js] 🔍 Order data structure:', {
             topLevelKeys: Object.keys(orderData),
@@ -451,11 +451,11 @@ async function getStopsFromOrder(orderId) {
         if (!stops && orderData.paymentInfo?.orderSummary?.deliveryDetails) {
             const deliveryDetails = orderData.paymentInfo.orderSummary.deliveryDetails;
             console.log('[notifications.js] 🔍 Found deliveryDetails:', Object.keys(deliveryDetails));
-            
+
             // Build stops array from delivery details
             if (deliveryDetails.pickupLocation || deliveryDetails.dropoffLocation) {
                 stops = [];
-                
+
                 // Add pickup stop (sender)
                 if (deliveryDetails.pickupLocation) {
                     stops.push({
@@ -464,7 +464,7 @@ async function getStopsFromOrder(orderId) {
                         stopId: 'SENDER_STOP'
                     });
                 }
-                
+
                 // Add delivery stop (recipient)
                 if (deliveryDetails.dropoffLocation) {
                     stops.push({
@@ -473,7 +473,7 @@ async function getStopsFromOrder(orderId) {
                         stopId: 'RECIPIENT_STOP'
                     });
                 }
-                
+
                 serviceType = deliveryDetails.service || deliveryDetails.serviceType;
                 distance = deliveryDetails.distance;
                 console.log('[notifications.js] ✅ Found stops in paymentInfo.orderSummary.deliveryDetails (pickup/dropoff)');
@@ -486,7 +486,7 @@ async function getStopsFromOrder(orderId) {
                 console.log('[notifications.js] ✅ Found stops array in paymentInfo.orderSummary.deliveryDetails');
             }
         }
-        
+
         // Check if quotationId exists directly in the order (Image 3 shows this)
         if (!stops && orderData.quotationId) {
             console.log('[notifications.js] 🔍 Order has quotationId but no stops in standard locations');
@@ -533,10 +533,10 @@ async function getStopsFromOrder(orderId) {
         // Fallback: Build stops from customer address and restaurant location
         if (!stops) {
             console.log('[notifications.js] ⚠️ No stops found, attempting to build from customer address...');
-            
+
             // Try multiple locations for customer address - be more aggressive
             let customerAddress = null;
-            
+
             // Try shippingInfo first
             if (orderData.shippingInfo) {
                 // Build address from components
@@ -546,33 +546,33 @@ async function getStopsFromOrder(orderId) {
                 if (orderData.shippingInfo.city) parts.push(orderData.shippingInfo.city);
                 if (orderData.shippingInfo.province) parts.push(orderData.shippingInfo.province);
                 if (orderData.shippingInfo.postalCode) parts.push(orderData.shippingInfo.postalCode);
-                
+
                 if (parts.length > 0) {
                     customerAddress = parts.join(', ');
                 } else if (orderData.shippingInfo.fullAddress) {
                     customerAddress = orderData.shippingInfo.fullAddress;
                 }
             }
-            
+
             // Fallback to customerInfo
             if (!customerAddress && orderData.customerInfo?.address) {
                 customerAddress = orderData.customerInfo.address;
             }
-            
+
             // Fallback to top-level fields
             if (!customerAddress) {
                 customerAddress = orderData.address || orderData.deliveryAddress;
             }
-            
+
             // Try to get customer name and phone for logging
-            const customerName = orderData.customerInfo?.fullName || 
-                                orderData.customerInfo?.firstName + ' ' + orderData.customerInfo?.lastName ||
-                                'Unknown Customer';
-            const customerPhone = orderData.shippingInfo?.phone || 
-                                 orderData.customerInfo?.phone || 
-                                 orderData.phone ||
-                                 'No phone';
-            
+            const customerName = orderData.customerInfo?.fullName ||
+                orderData.customerInfo?.firstName + ' ' + orderData.customerInfo?.lastName ||
+                'Unknown Customer';
+            const customerPhone = orderData.shippingInfo?.phone ||
+                orderData.customerInfo?.phone ||
+                orderData.phone ||
+                'No phone';
+
             console.log('[notifications.js] 🔍 Customer address search:', {
                 foundAddress: !!customerAddress,
                 address: customerAddress,
@@ -581,7 +581,7 @@ async function getStopsFromOrder(orderId) {
                 shippingInfoKeys: orderData.shippingInfo ? Object.keys(orderData.shippingInfo) : 'none',
                 customerInfoKeys: orderData.customerInfo ? Object.keys(orderData.customerInfo) : 'none'
             });
-            
+
             if (customerAddress && customerAddress.trim().length > 0) {
                 stops = [
                     {
@@ -615,7 +615,7 @@ async function getStopsFromOrder(orderId) {
                 hasQuotationData: !!orderData.quotationData,
                 stopsFound: stops?.length || 0
             });
-            
+
             // Log the full shippingInfo and paymentInfo structures for debugging
             if (orderData.shippingInfo) {
                 console.error('[notifications.js] 📋 Full shippingInfo:', orderData.shippingInfo);
@@ -623,7 +623,7 @@ async function getStopsFromOrder(orderId) {
             if (orderData.paymentInfo) {
                 console.error('[notifications.js] 📋 Full paymentInfo:', orderData.paymentInfo);
             }
-            
+
             throw new Error('Could not extract stops data from order document. Check console for order structure details.');
         }
 
@@ -665,23 +665,23 @@ async function getQuotationById(quotationId) {
             const notifDoc = notifQuery.docs[0];
             const notifData = notifDoc.data();
             const quotationObj = notifData.quotation || {};
-            
+
             // Check if quotation has expired
             let expired = false;
             if (quotationObj.expiresAt) {
                 const expiresAt = quotationObj.expiresAt.toDate ? quotationObj.expiresAt.toDate() : new Date(quotationObj.expiresAt);
                 if (expiresAt < new Date()) expired = true;
             }
-            
+
             // If expired, try to refresh it automatically
             if (expired) {
                 console.warn('[notifications.js] ⚠️ Quotation has expired, attempting to refresh automatically...');
-                
+
                 // Check if we have stops to use for refresh
                 if (Array.isArray(quotationObj.stops) && quotationObj.stops.length >= 2) {
                     try {
                         console.log('[notifications.js] 🔄 Refreshing quotation using existing stops...');
-                        
+
                         // Build quotation object for refresh
                         const quotationToRefresh = {
                             data: {
@@ -691,23 +691,23 @@ async function getQuotationById(quotationId) {
                                 expiresAt: quotationObj.expiresAt
                             }
                         };
-                        
+
                         // Call the refresh function
                         const freshQuotation = await refreshExpiredQuotation(quotationToRefresh);
-                        
+
                         console.log('[notifications.js] ✅ Quotation refreshed successfully!', {
                             oldQuotationId: quotationObj.id,
                             newQuotationId: freshQuotation.data.quotationId,
                             newExpiresAt: freshQuotation.data.expiresAt
                         });
-                        
+
                         // Update the quotation object with fresh data
                         quotationObj.id = freshQuotation.data.quotationId;
                         quotationObj.expiresAt = freshQuotation.data.expiresAt;
                         quotationObj.price = freshQuotation.data.priceBreakdown?.total || quotationObj.price;
                         quotationObj.stops = freshQuotation.data.stops;
                         expired = false; // Mark as no longer expired
-                        
+
                     } catch (refreshError) {
                         console.error('[notifications.js] ❌ Failed to refresh expired quotation:', refreshError);
                         throw new Error(`Quotation has expired and refresh failed: ${refreshError.message}. Please try again or create a new order.`);
@@ -718,7 +718,7 @@ async function getQuotationById(quotationId) {
                     throw new Error('Quotation has expired and cannot be refreshed automatically. Please create a new order with delivery details.');
                 }
             }
-            
+
             // Check if stops array is missing or too short
             let stopsData = null;
             if (!Array.isArray(quotationObj.stops) || quotationObj.stops.length < 2) {
@@ -728,7 +728,7 @@ async function getQuotationById(quotationId) {
                     stopsLength: quotationObj.stops?.length || 0,
                     quotationKeys: Object.keys(quotationObj)
                 });
-                
+
                 // Try to get stops from associated order document
                 if (notifData.orderId) {
                     console.log('[notifications.js] 🔄 Attempting to fetch stops from order:', notifData.orderId);
@@ -750,7 +750,7 @@ async function getQuotationById(quotationId) {
                     distance: quotationObj.distance
                 };
             }
-            
+
             // Return in expected format for Lalamove order placement
             return {
                 firestoreDocId: notifDoc.id,
@@ -2170,7 +2170,7 @@ window.handleLalamoveReady = async function (docId) {
         // Show detailed error message
         let errorMsg = 'Lalamove order failed: ';
         let errorHint = '';
-        
+
         if (error.message.includes('expired')) {
             errorMsg += 'Quotation has expired. Please create a new quotation.';
             errorHint = 'The quotation is no longer valid. Request a new delivery quote.';
