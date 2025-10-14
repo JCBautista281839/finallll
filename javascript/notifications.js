@@ -1335,6 +1335,8 @@ async function loadNotifications() {
                         typeText = 'Payment Verification';
                     } else if (data.type === 'order_approval') {
                         typeText = 'Order Approval';
+                    } else if (data.type === 'lalamove_order_success') {
+                        typeText = 'Delivery Update';
                     } else {
                         typeText = data.type || 'Other';
                     }
@@ -1372,7 +1374,7 @@ async function loadNotifications() {
                     // Handle payment verification notifications with action buttons (only for admin users)
                     if (data.type === 'payment_verification' && data.status === 'pending' && userRole !== 'kitchen') {
                         rows += `<tr class="payment-verification-row" data-doc-id="${doc.id}">
-                        <td><span style='font-weight:600; color: #ff9800;'>${typeText}</span></td>
+                        <td><span style='font-weight:600; color: #933F32;'>${typeText}</span></td>
                         <td>
                             <div class="payment-notification-content">
                                 <p><strong>${data.message || ''}</strong></p>
@@ -1420,7 +1422,13 @@ async function loadNotifications() {
                                             style="background: ${data.lalamoveOrderPlaced ? '#6c757d' : '#ffc107'}; border: none; padding: 5px 15px; border-radius: 4px; color: ${data.lalamoveOrderPlaced ? 'white' : 'black'}; cursor: ${data.lalamoveOrderPlaced ? 'not-allowed' : 'pointer'};">
                                         <i class="fas fa-${data.lalamoveOrderPlaced ? 'check' : 'motorcycle'}"></i> ${data.lalamoveOrderPlaced ? 'Order Placed' : 'Lalamove Ready!'}
                                     </button>
-                                    ` : ''}
+                                    ` : `
+                                    <button class="btn btn-success btn-sm me-2" onclick="handleOrderPickedUp('${doc.id}')" 
+                                            ${data.orderPickedUp ? 'disabled' : ''}
+                                            style="background: ${data.orderPickedUp ? '#6c757d' : '#28a745'}; border: none; padding: 5px 15px; border-radius: 4px; color: white; cursor: ${data.orderPickedUp ? 'not-allowed' : 'pointer'};">
+                                        <i class="fas fa-${data.orderPickedUp ? 'check' : 'shopping-bag'}"></i> ${data.orderPickedUp ? 'Picked Up' : 'Mark as Picked Up'}
+                                    </button>
+                                    `}
                                     <button class="btn btn-danger btn-sm" onclick="handlePaymentVerification('${doc.id}', 'declined')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
                                         ✗ Decline
@@ -1467,7 +1475,13 @@ async function loadNotifications() {
                                             style="background: ${data.lalamoveOrderPlaced ? '#6c757d' : '#ffc107'}; border: none; padding: 5px 15px; border-radius: 4px; color: ${data.lalamoveOrderPlaced ? 'white' : 'black'}; font-size: 0.8rem; cursor: ${data.lalamoveOrderPlaced ? 'not-allowed' : 'pointer'};">
                                         <i class="fas fa-${data.lalamoveOrderPlaced ? 'check' : 'motorcycle'}"></i> ${data.lalamoveOrderPlaced ? 'Order Placed' : 'Lalamove Ready!'}
                                     </button>
-                                    ` : ''}
+                                    ` : `
+                                    <button class="btn btn-success btn-sm me-2" onclick="handleOrderPickedUp('${doc.id}')" 
+                                            ${data.orderPickedUp ? 'disabled' : ''}
+                                            style="background: ${data.orderPickedUp ? '#6c757d' : '#28a745'}; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem; cursor: ${data.orderPickedUp ? 'not-allowed' : 'pointer'};">
+                                        <i class="fas fa-${data.orderPickedUp ? 'check' : 'shopping-bag'}"></i> ${data.orderPickedUp ? 'Picked Up' : 'Mark as Picked Up'}
+                                    </button>
+                                    `}
                                     <button class="btn btn-danger btn-sm" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
                                         <i class="fas fa-times"></i> Decline Order
@@ -1488,6 +1502,8 @@ async function loadNotifications() {
                         if (data.type === 'payment_verification') {
                             if (data.status === 'approved') statusColor = 'color: #28a745;';
                             else if (data.status === 'declined') statusColor = 'color: #dc3545;';
+                        } else if (data.type === 'lalamove_order_success') {
+                            statusColor = 'color: #933F32;';
                         }
                         rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
                     }
@@ -2271,4 +2287,107 @@ function showToast(message, type = "info", duration = 3000) {
             }
         }, 300);
     }, duration);
+}
+
+// Function to handle order picked up
+window.handleOrderPickedUp = async function (docId) {
+    console.log('[notifications.js] Order Picked Up button clicked for:', docId);
+
+    // Find the button that was clicked for visual feedback
+    const clickedButton = document.querySelector(`button[onclick*="handleOrderPickedUp('${docId}')"]`);
+    let originalButtonText = '';
+
+    if (clickedButton) {
+        originalButtonText = clickedButton.innerHTML;
+        clickedButton.disabled = true;
+        clickedButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    }
+
+    try {
+        showToast('Processing pickup confirmation...', 'info');
+
+        const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+        if (!db) {
+            throw new Error('Database not available');
+        }
+
+        // Get notification data
+        console.log('[notifications.js] 🔍 Getting notification data for docId:', docId);
+        const notificationDoc = await db.collection('notifications').doc(docId).get();
+        
+        if (!notificationDoc.exists) {
+            throw new Error(`Notification document not found with ID: ${docId}`);
+        }
+
+        const notificationData = notificationDoc.data();
+        const orderId = notificationData.orderId;
+        const customerName = notificationData.customerInfo?.name || 'Unknown Customer';
+        const referenceNumber = notificationData.paymentInfo?.reference || notificationData.paymentDetails?.reference || 'No reference';
+
+        console.log('[notifications.js] 📋 Notification data:', {
+            orderId: orderId,
+            customerName: customerName,
+            referenceNumber: referenceNumber
+        });
+
+        if (clickedButton) {
+            clickedButton.innerHTML = '<i class="fas fa-check"></i> Updating...';
+        }
+
+        // Update notification status to indicate order was picked up
+        await db.collection('notifications').doc(docId).update({
+            orderPickedUp: true,
+            pickedUpAt: firebase.firestore.FieldValue.serverTimestamp(),
+            pickedUpBy: 'admin', // or get current user if available
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('[notifications.js] ✅ Updated notification with pickup info');
+
+        // Create a pickup confirmation notification
+        await db.collection('notifications').add({
+            type: 'order_pickup',
+            message: `The order has been picked up (Reference Number: ${referenceNumber})`,
+            customerInfo: {
+                name: customerName,
+                phone: notificationData.customerInfo?.phone || 'Unknown',
+                email: notificationData.customerInfo?.email || 'Unknown'
+            },
+            orderInfo: {
+                orderId: orderId || 'Unknown',
+                referenceNumber: referenceNumber
+            },
+            originalNotificationId: docId,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            seen: false
+        });
+
+        console.log('[notifications.js] ✅ Created pickup confirmation notification');
+
+        // Success feedback
+        if (clickedButton) {
+            clickedButton.innerHTML = '<i class="fas fa-check"></i> Picked Up';
+            clickedButton.classList.remove('btn-success');
+            clickedButton.style.background = '#6c757d';
+            clickedButton.style.cursor = 'not-allowed';
+        }
+
+        showToast(`Order marked as picked up! Reference: ${referenceNumber}`, 'success');
+
+        // Refresh notifications after a short delay
+        setTimeout(() => {
+            loadNotifications();
+        }, 1500);
+
+    } catch (error) {
+        console.error('[notifications.js] ❌ Error marking order as picked up:', error);
+        
+        // Restore button on error
+        if (clickedButton) {
+            clickedButton.disabled = false;
+            clickedButton.innerHTML = originalButtonText;
+        }
+
+        showToast(`Error: ${error.message}`, 'error');
+    }
 }
