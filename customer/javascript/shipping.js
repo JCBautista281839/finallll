@@ -109,7 +109,27 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
     const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
     const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
-    const shippingCost = quotationData.data?.priceBreakdown?.total || 0;
+    
+    // Get selected shipping method to calculate correct shipping cost
+    const pickupRadio = document.getElementById('pickup-radio');
+    const lalamoveRadio = document.getElementById('lalamove-radio');
+    let selectedShippingMethod = 'pickup'; // default
+    
+    if (pickupRadio && pickupRadio.checked) {
+      selectedShippingMethod = 'pickup';
+    } else if (lalamoveRadio && lalamoveRadio.checked) {
+      selectedShippingMethod = 'lalamove';
+    }
+    
+    // Calculate shipping cost based on selected method
+    let shippingCost = 0;
+    if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
+      shippingCost = quotationData.data?.priceBreakdown?.total || 0;
+      console.log('[sendPaymentVerificationNotification] Delivery selected, shipping cost:', shippingCost);
+    } else {
+      shippingCost = 0;
+      console.log('[sendPaymentVerificationNotification] Pickup selected, shipping cost: 0');
+    }
 
     // Create notification data with proper validation
     const notificationData = {
@@ -1327,7 +1347,20 @@ document.addEventListener('DOMContentLoaded', function () {
       const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
       const subtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
       const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
-      const shippingCost = quotationData.data?.priceBreakdown?.total || 0;
+      
+      // Get currently selected shipping method
+      const selectedShippingMethod = getSelectedShippingMethod();
+      console.log('[prepareOrderSummary] Selected shipping method:', selectedShippingMethod);
+      
+      // Calculate shipping cost based on selected method
+      let shippingCost = 0;
+      if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
+        shippingCost = quotationData.data?.priceBreakdown?.total || 0;
+        console.log('[prepareOrderSummary] Delivery selected, shipping cost:', shippingCost);
+      } else {
+        shippingCost = 0;
+        console.log('[prepareOrderSummary] Pickup selected, shipping cost: 0');
+      }
       
       const orderSummary = {
         items: Object.values(cartData).map(item => ({
