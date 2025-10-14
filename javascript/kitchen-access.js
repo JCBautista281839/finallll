@@ -1,6 +1,10 @@
 // kitchen-access.js
 // Restrict access to kitchen.html based on user role and load kitchen orders
 
+// Track existing order IDs to detect new orders
+let existingOrderIds = new Set();
+let isInitialLoad = true;
+
 document.addEventListener('DOMContentLoaded', function () {
     firebase.auth().onAuthStateChanged(async function (user) {
         if (!user) {
@@ -16,8 +20,39 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // Request notification permission for background notifications
+        requestNotificationPermission();
+
         // Load kitchen orders
         loadKitchenOrders();
+
+        // Add automatic refresh mechanisms
+        // 1. Page visibility refresh
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                console.log('🍳 Page became visible, auto-refreshing...');
+                setTimeout(() => {
+                    loadKitchenOrders();
+                }, 100);
+            }
+        });
+
+        // 2. Window focus refresh
+        window.addEventListener('focus', function () {
+            console.log('🍳 Window focused, auto-refreshing...');
+            setTimeout(() => {
+                loadKitchenOrders();
+            }, 100);
+        });
+
+        // 3. Periodic refresh as fallback (every 5 seconds)
+        setInterval(() => {
+            const noOrdersCard = document.querySelector('.order-card .order-number');
+            if (noOrdersCard && noOrdersCard.textContent.includes('No Orders')) {
+                console.log('🍳 "No Orders" detected, auto-refreshing...');
+                loadKitchenOrders();
+            }
+        }, 5000);
     });
 });
 
@@ -49,6 +84,70 @@ function playNotificationSound() {
         console.log('🔊 Notification sound played');
     } catch (error) {
         console.warn('🔊 Could not play notification sound:', error);
+    }
+}
+
+// Function to request notification permission and show browser notification
+async function requestNotificationPermission() {
+    if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+            return true;
+        } else if (Notification.permission !== 'denied') {
+            const permission = await Notification.requestPermission();
+            return permission === 'granted';
+        }
+    }
+    return false;
+}
+
+// Function to show browser notification for new orders
+function showBrowserNotification(orderCount) {
+    if (Notification.permission === 'granted') {
+        const notification = new Notification('New Kitchen Order!', {
+            body: `${orderCount} new order${orderCount > 1 ? 's' : ''} arrived in the kitchen`,
+            icon: '/src/Icons/logo.png', // You can add a kitchen icon here
+            badge: '/src/Icons/logo.png',
+            tag: 'kitchen-order',
+            requireInteraction: true
+        });
+
+        // Auto-close after 5 seconds
+        setTimeout(() => {
+            notification.close();
+        }, 5000);
+
+        // Focus the window when notification is clicked
+        notification.onclick = function () {
+            window.focus();
+            notification.close();
+        };
+    }
+}
+
+// Function to ensure only the first order card has priority highlighting
+function ensureOnlyFirstOrderHasPriority() {
+    const ordersContainer = document.getElementById('ordersContainer');
+    if (!ordersContainer) return;
+
+    const allCards = ordersContainer.querySelectorAll('.order-card');
+
+    // Remove priority from all cards first
+    allCards.forEach(card => {
+        card.classList.remove('priority-order');
+    });
+
+    // Find the first REAL order card (not placeholder)
+    const realOrderCards = Array.from(allCards).filter(card => {
+        const orderNumber = card.querySelector('.order-number');
+        return orderNumber && !orderNumber.textContent.includes('No Orders');
+    });
+
+    // Add priority only to the first real order card
+    if (realOrderCards.length > 0) {
+        realOrderCards[0].classList.add('priority-order');
+        console.log('🎯 Priority highlighting applied to first real order only');
+    } else {
+        console.log('🎯 No real orders found for priority highlighting');
     }
 }
 
@@ -207,13 +306,14 @@ function loadKitchenOrders() {
     // Clear any initial loading state
     ordersContainer.innerHTML = '';
 
-    // Listen for orders that have been sent to kitchen via "Later" or "Proceed" buttons from Payment page
+    // Listen for orders that are in kitchen workflow (both Pending Payment and In the Kitchen)
     db.collection('orders')
         .where('status', 'in', ['Pending Payment', 'In the Kitchen'])
         .onSnapshot((snapshot) => {
             console.log('🍳 Received kitchen orders update (snapshot size):', snapshot.size);
 
             if (snapshot.empty) {
+                console.log('🍳 No orders found, showing "No Orders" placeholder');
                 ordersContainer.innerHTML = `
                     <div class="order-card">
                         <div class="order-header">
@@ -243,6 +343,11 @@ function loadKitchenOrders() {
                 `;
                 return;
             }
+
+            console.log('🍳 Orders found, clearing container and processing orders...');
+
+            // Immediately clear the container to remove "No Orders" placeholder
+            ordersContainer.innerHTML = '';
 
             // Process orders - update existing cards or create new ones
             const existingCards = new Map();
@@ -348,7 +453,7 @@ function loadKitchenOrders() {
 
             // Process orders in FIFO order
             ordersToProcess.forEach(({ docId, data, orderId }, index) => {
-                const isPriority = index === 0; // First order is priority
+                const isPriority = index === 0; // Only first order is priority
                 const orderNumber = data.orderNumber || data.orderNumberFormatted;
 
                 // First, try to find existing card by order number (most reliable)
@@ -395,6 +500,7 @@ function loadKitchenOrders() {
                     const orderCard = createOrderCard(docId, data, isPriority);
                     ordersContainer.appendChild(orderCard);
                 }
+
             });
 
             // Remove cards for orders that no longer exist in Firestore
@@ -423,15 +529,46 @@ function loadKitchenOrders() {
                 }
             });
 
-            // Check if new orders arrived and play notification sound
-            const currentOrderCount = ordersContainer.querySelectorAll('.order-card').length;
-            if (currentOrderCount > previousOrderCount) {
-                console.log('🔊 New order detected! Playing notification sound');
+            // Check for new orders by comparing order IDs
+            const currentOrderIds = new Set();
+            const newOrderIds = [];
+
+            // Collect current order IDs
+            snapshot.forEach((doc) => {
+                const orderId = doc.id;
+                currentOrderIds.add(orderId);
+
+                // Check if this is a new order
+                if (!existingOrderIds.has(orderId) && !isInitialLoad) {
+                    newOrderIds.push(orderId);
+                }
+            });
+
+            // Update existing order IDs
+            existingOrderIds = currentOrderIds;
+
+            // Play sound and show notification for new orders (not on initial load)
+            if (newOrderIds.length > 0 && !isInitialLoad) {
+                console.log('🔊 New order detected! Playing notification sound for', newOrderIds.length, 'new order(s)');
+                console.log('🔊 New order IDs:', newOrderIds);
+
+                // Play notification sound
                 playNotificationSound();
 
                 // Add visual notification
-                showNewOrderNotification(currentOrderCount - previousOrderCount);
+                showNewOrderNotification(newOrderIds.length);
+
+                // Show browser notification (works even when tab is not active)
+                showBrowserNotification(newOrderIds.length);
+            } else {
+                console.log('🔊 No new orders detected. Current orders:', currentOrderIds.size, 'Previous orders:', existingOrderIds.size);
             }
+
+            // Ensure only the first order card has priority highlighting
+            ensureOnlyFirstOrderHasPriority();
+
+            // Mark that initial load is complete
+            isInitialLoad = false;
         }, (error) => {
             console.error('🍳 Error loading kitchen orders:', error);
             ordersContainer.innerHTML = `
@@ -630,12 +767,8 @@ function updateOrderCard(card, data, isPriority = false) {
     try {
         console.log('🔄 Updating order card with new data:', data, 'isPriority:', isPriority);
 
-        // Update priority highlighting
-        if (isPriority) {
-            card.classList.add('priority-order');
-        } else {
-            card.classList.remove('priority-order');
-        }
+        // Priority highlighting will be managed by ensureOnlyFirstOrderHasPriority()
+        // Don't override it here to maintain consistency
 
         // Update order header
         const orderNumber = data.orderNumber || data.orderNumberFormatted || 'N/A';
@@ -712,30 +845,337 @@ function updateOrderCard(card, data, isPriority = false) {
     }
 }
 
-// Function to mark order as completed
+// Function to mark order as ready
 function markOrderReady(orderId) {
-    console.log('🍳 Marking order as completed:', orderId);
+    console.log('🍳 Marking order as ready:', orderId);
+
+    // Remove the order card immediately from UI
+    const orderCard = document.querySelector(`[data-order-id="${orderId}"]`);
+    if (orderCard) {
+        orderCard.style.transition = 'all 0.3s ease';
+        orderCard.style.transform = 'translateX(-100%)';
+        orderCard.style.opacity = '0';
+        setTimeout(() => {
+            orderCard.remove();
+        }, 300);
+    }
 
     const db = firebase.firestore();
 
-    db.collection('orders').doc(orderId).update({
-        status: 'Completed',
-        completedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        completedBy: 'kitchen',
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: new Date().toISOString()
-    }).then(() => {
-        console.log('✅ Order marked as completed:', orderId);
-        alert('Order marked as completed!');
+    // First, get the current order status to determine the correct action
+    db.collection('orders').doc(orderId).get().then((doc) => {
+        if (doc.exists) {
+            const currentStatus = doc.data().status;
+            console.log('🍳 Current order status:', currentStatus);
+            console.log('🍳 Order data:', doc.data());
+
+            if (currentStatus === 'Pending Payment') {
+                // For Pending Payment orders, keep as Pending Payment (no status change)
+                return db.collection('orders').doc(orderId).update({
+                    orderReadyAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    orderReadyBy: 'kitchen'
+                });
+            } else if (currentStatus === 'In the Kitchen') {
+                // For In the Kitchen orders, mark as Completed
+                return db.collection('orders').doc(orderId).update({
+                    status: 'Completed',
+                    completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    completedBy: 'kitchen'
+                });
+            } else {
+                // For other statuses, just mark as Ready
+                return db.collection('orders').doc(orderId).update({
+                    status: 'Ready',
+                    readyAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    readyBy: 'kitchen'
+                });
+            }
+        } else {
+            throw new Error('Order not found');
+        }
+    }).then(async () => {
+        console.log('✅ Order processed:', orderId);
+
+        // Deduct inventory for the order items
+        try {
+            const orderDoc = await db.collection('orders').doc(orderId).get();
+            if (orderDoc.exists) {
+                const orderData = orderDoc.data();
+                console.log('🔄 Order data for inventory deduction:', orderData);
+                if (orderData.items && Array.isArray(orderData.items)) {
+                    console.log('🔄 Deducting inventory for order items...', orderData.items);
+                    await deductInventoryForOrder(orderData.items);
+                    console.log('✅ Inventory deducted successfully');
+                } else {
+                    console.warn('⚠️ No items found in order data for inventory deduction');
+                }
+            } else {
+                console.warn('⚠️ Order document not found for inventory deduction');
+            }
+        } catch (inventoryError) {
+            console.warn('⚠️ Inventory deduction failed:', inventoryError);
+            // Don't fail the order processing if inventory deduction fails
+        }
+
+        // Show success message without alert
+        showSuccessMessage('Order processed successfully!');
     }).catch((error) => {
-        console.error('❌ Error marking order as completed:', error);
-        alert('Error marking order as completed. Please try again.');
+        console.error('❌ Error processing order:', error);
+        alert('Error processing order. Please try again.');
     });
+}
+
+// Function to deduct inventory for order items
+async function deductInventoryForOrder(orderItems) {
+    try {
+        if (typeof firebase === 'undefined' || !firebase.firestore) {
+            console.warn('Firebase not available for inventory deduction');
+            return;
+        }
+
+        const db = firebase.firestore();
+        console.log('🔄 Starting inventory deduction for', orderItems.length, 'items');
+
+        // Track deductions for this order
+        let deductionCount = 0;
+        const totalItems = orderItems.length;
+
+        for (const item of orderItems) {
+            console.log(`🔄 Processing item: ${item.name} (qty: ${item.quantity})`);
+
+            // Get menu data for this item to find ingredients (using same approach as POS)
+            const menuData = await getMenuItemData(db, item.name);
+
+            if (menuData && menuData.ingredients && Array.isArray(menuData.ingredients)) {
+                console.log(`🔄 Deducting inventory for ${item.name} (qty: ${item.quantity})`);
+                console.log(`🔄 Ingredients found:`, menuData.ingredients);
+
+                for (const ingredient of menuData.ingredients) {
+                    const ingredientName = ingredient.name;
+                    const qtyToDeduct = (ingredient.quantity || 0) * item.quantity;
+
+                    console.log(`🔄 Processing ingredient: ${ingredientName} (ingredient qty: ${ingredient.quantity}, item qty: ${item.quantity}, total to deduct: ${qtyToDeduct})`);
+
+                    if (qtyToDeduct > 0) {
+                        await deductInventoryItem(db, ingredientName, qtyToDeduct);
+                        deductionCount++;
+                    }
+                }
+            } else {
+                console.warn(`No ingredients found for menu item: ${item.name}`);
+                console.warn(`Menu data structure:`, menuData);
+            }
+        }
+
+        console.log('✅ Inventory deduction completed for all items');
+
+        // Show smooth summary notification
+        showInventoryDeductionNotification(`Inventory deducted: ${deductionCount} ingredients from ${totalItems} items`, 'summary');
+
+    } catch (error) {
+        console.error('Error deducting inventory:', error);
+        // Don't throw - let the order proceed even if inventory fails
+    }
+}
+
+// Function to deduct a single inventory item
+async function deductInventoryItem(db, ingredientName, quantity) {
+    try {
+        console.log(`🔄 Looking for inventory item: ${ingredientName} to deduct ${quantity} units`);
+
+        // Find inventory item by name
+        const inventoryQuery = await db.collection('inventory')
+            .where('name', '==', ingredientName)
+            .limit(1)
+            .get();
+
+        if (inventoryQuery.empty) {
+            console.warn('Inventory item not found:', ingredientName);
+            return;
+        }
+
+        const inventoryDoc = inventoryQuery.docs[0];
+        const inventoryData = inventoryDoc.data();
+        const currentQty = inventoryData.quantity || 0;
+        const newQty = Math.max(currentQty - quantity, 0);
+
+        console.log(`🔄 Updating inventory for ${ingredientName}: ${currentQty} -> ${newQty}`);
+
+        await db.collection('inventory').doc(inventoryDoc.id).update({
+            quantity: newQty,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log(`✅ Successfully deducted ${quantity} units of ${ingredientName} (${currentQty} -> ${newQty})`);
+
+        // Show smooth notification for each deduction
+        showInventoryDeductionNotification(`${ingredientName}: ${quantity} units`, 'ingredient');
+
+    } catch (error) {
+        console.error('Error deducting inventory item:', error);
+    }
+}
+
+// Function to get menu item data from Firebase (copied from POS system)
+async function getMenuItemData(db, itemName) {
+    try {
+        // Search in menu collection for the item
+        const menuQuery = await db.collection('menu')
+            .where('name', '==', itemName)
+            .limit(1)
+            .get();
+
+        if (!menuQuery.empty) {
+            return menuQuery.docs[0].data();
+        }
+
+        // If not found in menu, try searching in a different collection or with different field
+        console.warn(`Menu item not found: ${itemName}`);
+        return null;
+    } catch (error) {
+        console.error('Error getting menu item data:', error);
+        return null;
+    }
+}
+
+// Test function for inventory deduction
+async function testInventoryDeduction() {
+    console.log('🧪 Testing inventory deduction...');
+
+    // Test with sample order items
+    const testItems = [
+        { name: 'Burger', quantity: 2 },
+        { name: 'Fries', quantity: 1 }
+    ];
+
+    try {
+        await deductInventoryForOrder(testItems);
+        console.log('✅ Test completed - check console logs for details');
+    } catch (error) {
+        console.error('❌ Test failed:', error);
+    }
+}
+
+// Function to show inventory deduction notification
+function showInventoryDeductionNotification(message, type = 'summary') {
+    // Remove any existing notifications to prevent overlap
+    const existingNotifications = document.querySelectorAll('.inventory-notification');
+    existingNotifications.forEach(notif => {
+        if (notif.parentNode) {
+            notif.parentNode.removeChild(notif);
+        }
+    });
+
+    const notification = document.createElement('div');
+    notification.className = 'inventory-notification';
+
+    // Different styles for different types
+    let bgColor, icon, duration;
+    if (type === 'ingredient') {
+        bgColor = '#28a745'; // Green for individual ingredients
+        icon = '📦';
+        duration = 2000; // Shorter duration for individual items
+    } else {
+        bgColor = '#17a2b8'; // Blue for summary
+        icon = '✅';
+        duration = 4000; // Longer duration for summary
+    }
+
+    notification.style.cssText = `
+        position: fixed;
+        top: 60px;
+        right: 20px;
+        background: ${bgColor};
+        color: white;
+        padding: 12px 18px;
+        border-radius: 8px;
+        z-index: 1001;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        font-size: 14px;
+        max-width: 300px;
+        word-wrap: break-word;
+        border-left: 4px solid rgba(255,255,255,0.3);
+        transform: translateX(100%);
+        opacity: 0;
+    `;
+
+    notification.textContent = `${icon} ${message}`;
+    document.body.appendChild(notification);
+
+    // Smooth slide-in animation
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+        notification.style.opacity = '1';
+    }, 10);
+
+    // Remove after specified duration
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%) scale(0.95)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 400);
+    }, duration);
+}
+
+// Function to show success message
+function showSuccessMessage(message) {
+    // Remove any existing success messages to prevent overlap
+    const existingSuccess = document.querySelectorAll('.success-message');
+    existingSuccess.forEach(msg => {
+        if (msg.parentNode) {
+            msg.parentNode.removeChild(msg);
+        }
+    });
+
+    // Create a temporary success message
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 5px;
+        z-index: 1000;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        transform: translateX(100%);
+        opacity: 0;
+    `;
+    successDiv.textContent = message;
+    document.body.appendChild(successDiv);
+
+    // Smooth slide-in animation
+    setTimeout(() => {
+        successDiv.style.transform = 'translateX(0)';
+        successDiv.style.opacity = '1';
+    }, 10);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        successDiv.style.opacity = '0';
+        successDiv.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.parentNode.removeChild(successDiv);
+            }
+        }, 300);
+    }, 3000);
 }
 
 // Make functions globally available
 window.loadKitchenOrders = loadKitchenOrders;
 window.markOrderReady = markOrderReady;
+window.testSound = playNotificationSound; // For testing sound
+window.testInventoryDeduction = testInventoryDeduction; // For testing inventory deduction
 
 // Overlay button in kitchen.html calls this
 window.markOrderReadyFromOverlay = function () {

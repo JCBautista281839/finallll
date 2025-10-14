@@ -608,10 +608,17 @@ function initializeProceedButton() {
       }
       // Check if order was already sent to kitchen via "Later"
       const laterOrder = sessionStorage.getItem('laterOrder');
-      // Always set status to 'In the Kitchen' (trimmed, correct case) when Proceed is clicked
-      orderData.status = 'In the Kitchen'.trim();
-      orderData.sentToKitchen = firebase.firestore.FieldValue.serverTimestamp();
-      // Do NOT set to Completed here
+
+      // If this is a "Pending Payment" order (from Later button), change to In the Kitchen
+      if (laterOrder === 'true') {
+        orderData.status = 'In the Kitchen';
+        orderData.sentToKitchen = firebase.firestore.FieldValue.serverTimestamp();
+        orderData.sentToKitchenBy = 'payment';
+      } else {
+        // For new orders, set status to 'In the Kitchen'
+        orderData.status = 'In the Kitchen'.trim();
+        orderData.sentToKitchen = firebase.firestore.FieldValue.serverTimestamp();
+      }
       // Always recalculate subtotal, tax, discount, and total before saving
       let subtotal = 0;
       if (Array.isArray(orderData.items)) {
@@ -676,27 +683,23 @@ function initializeProceedButton() {
           // Document exists, update it
           await orderRef.update({
             ...orderData,
-            status: 'In the Kitchen',
-            sentToKitchen: firebase.firestore.FieldValue.serverTimestamp(),
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: new Date().toISOString()
           });
-          console.log('Proceed button - Updated existing order document:', orderData.orderNumberFormatted);
+          console.log('Proceed button - Updated existing order document:', orderData.orderNumberFormatted, 'Status:', orderData.status);
         } else {
           // Document doesn't exist, create it
           await orderRef.set({
             ...orderData,
-            status: 'In the Kitchen',
-            sentToKitchen: firebase.firestore.FieldValue.serverTimestamp(),
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             createdAt: new Date().toISOString()
           });
-          console.log('Proceed button - Created new order document:', orderData.orderNumberFormatted);
+          console.log('Proceed button - Created new order document:', orderData.orderNumberFormatted, 'Status:', orderData.status);
         }
 
         console.log('[Payment][Proceed] Order updated in Firestore successfully:', {
           orderId: orderData.orderNumberFormatted,
-          status: 'In the Kitchen',
+          status: orderData.status,
           total: orderData.total
         });
 
