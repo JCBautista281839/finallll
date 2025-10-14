@@ -56,9 +56,15 @@ body {
 
 /* Header Styles */
 .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   padding: 20px 0;
   background-color: #ffffff;
   border-bottom: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-brand {
@@ -494,7 +500,7 @@ body {
 
 /* Main Content Styles */
 .main-content {
-  padding: 60px 0;
+  padding: 180px 0 60px 0;
   min-height: calc(100vh - 200px);
   overflow-x: hidden;
 }
@@ -533,6 +539,11 @@ body {
   margin-bottom: 20px;
 }
 
+.location-container {
+  position: relative;
+  display: inline-block;
+}
+
 .location {
   display: flex;
   align-items: center;
@@ -542,6 +553,58 @@ body {
   font-weight: lighter;
   margin-top: 0;
   margin-left: -5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.location:hover {
+  color: #8B2E20;
+  text-shadow: 0 0 10px rgba(139, 46, 32, 0.5);
+}
+
+.map-overlay {
+  position: absolute;
+  top: -60px;
+  left: 100%;
+  background: white;
+  border: 2px solid #8B2E20;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(139, 46, 32, 0.4), 0 8px 25px rgba(139, 46, 32, 0.3);
+  padding: 15px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-10px) scale(0.95);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  margin-left: 15px;
+}
+
+.location-container:hover .map-overlay {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) scale(1);
+  box-shadow: 0 0 30px rgba(139, 46, 32, 0.6), 0 8px 25px rgba(139, 46, 32, 0.4);
+}
+
+/* Mobile: Show map overlay on click instead of hover */
+@media (max-width: 768px) {
+  .location-container:hover .map-overlay {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-10px) scale(0.95);
+  }
+  
+  .location-container.active .map-overlay {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0) scale(1);
+    box-shadow: 0 0 30px rgba(139, 46, 32, 0.6), 0 8px 25px rgba(139, 46, 32, 0.4);
+  }
+}
+
+.map-overlay iframe {
+  border-radius: 4px;
 }
 
 .location span {
@@ -562,7 +625,7 @@ body {
 .filipino {
   display: block;
   font-family: 'pinyon-script';
-  font-size: 100px;
+  font-size: 90px;
   color: #8B2E20;
   margin-bottom: -40px;
   margin-top: -40px !important;
@@ -574,7 +637,7 @@ body {
 .comfort-food {
   font-family: 'PoppinsRegular';
   display: block;
-  font-size: 60px;
+  font-size: 40px;
   color: #000;
   text-transform: uppercase;
   letter-spacing: -3px;
@@ -602,6 +665,7 @@ body {
 /* Signature dishes */
 .signature-section {
   padding: 40px 0 60px;
+  margin-top: -90px !important;
 }
 
 .signature-title {
@@ -736,30 +800,77 @@ body {
   background: transparent;
 }
 
-.food-image-container {
+.food-slideshow-container {
   position: relative;
   max-width: 100%;
   text-align: center;
   background: transparent;
+  overflow: hidden;
+}
 
+.slideshow-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.slide {
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slide.active {
+  display: block;
 }
 
 .food-image {
   max-width: 150%;
   width: 105%;
   height: auto;
-  transition: transform 0.1s ease;
+  transition: transform 0.3s ease;
+  object-fit: cover;
+  object-position: center;
 }
 
-.food-image:hover {
-  transform: scale(1.05);
+
+
+
+
+/* Slide Indicators */
+.slide-indicators {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background: #8B4513;
+}
+
+.indicator:hover {
+  background: rgba(139, 69, 19, 0.7);
 }
 
 .rating-badge {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  padding: 10px 15px;
+  margin-bottom: -20px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1735,11 +1846,25 @@ body {
     margin-top: -15px !important;
   }
 
-  /* Food image mobile optimization */
+  /* Food slideshow mobile optimization */
+  .food-slideshow-container {
+    margin-top: 20px;
+  }
+  
   .food-image {
     max-width: 1055px !important;
-    width: px !important;
+    width: 100% !important;
     height: auto !important;
+  }
+  
+  
+  .slide-indicators {
+    bottom: 10px;
+  }
+  
+  .indicator {
+    width: 10px;
+    height: 10px;
   }
 
   /* Rating badge mobile positioning */
@@ -1752,7 +1877,7 @@ body {
   .signature-title {
     font-size: 30px !important;
     text-align: center !important;
-    margin-bottom: -50px !important;
+    margin-top: 100px !important;
   }
 
   .dish-img {
@@ -2022,25 +2147,41 @@ body {
   }
 
   /* Adjust navigation for tablet landscape - desktop style */
-  .main-nav {
-    display: flex;
-    justify-content: flex-start;
-  }
+  
 
   .nav-list {
-    margin-right: 30px;
-    gap: 40px;
+    margin-left: 30px;
+    margin-right: auto;
+    gap: 25px;
+    flex-shrink: 0;
   }
 
   .search-input {
-    width: 200px;
+    width: 180px;
   }
 
   /* Adjust header actions */
   .header-actions {
-    gap: 25px;
+    gap: 15px;
     justify-content: flex-end;
-    margin-right: 10px;
+    margin-right: 15px;
+    flex-shrink: 0;
+  }
+
+  /* Ensure proper header layout */
+  .header {
+    padding: 15px 15px;
+   
+  }
+
+  .navbar-brand {
+    flex-shrink: 0;
+  }
+
+  .logo-img {
+    height: 80px;
+    width: auto;
+    margin-left: 0;
   }
 
   /* Adjust main content for tablet landscape */
@@ -2078,13 +2219,13 @@ body {
   }
 
   .filipino {
-    font-size: 100px;
+    font-size: 90px;
     margin-left: 40px;
     margin-bottom: -40px;
   }
 
   .comfort-food {
-    font-size: 60px;
+    font-size: 50px;
     margin-left: 20px;
     margin-top: -25px;
     letter-spacing: -3px;
@@ -2099,6 +2240,7 @@ body {
   /* Signature dishes - desktop style */
   .signature-section {
     padding: 40px 0 60px;
+   ;
   }
 
   .signature-title {
@@ -2156,10 +2298,11 @@ body {
 /* Signature dishes */
 .signature-section {
   padding: 3rem 0 4rem;
+  margin-top:-60px !important;
 }
 
 .signature-title {
-  font-size: 2rem;
+  font-size: 3rem;
   margin-top: -3rem;
 }
 
@@ -2325,6 +2468,7 @@ body {
   /* Main content adjustments */
   .content-left {
     padding: 3rem;
+    margin-top:150px !important;
   }
 
   .description {
@@ -2336,6 +2480,8 @@ body {
   /* Signature dishes */
   .signature-section {
     padding: 4rem 0 5rem;
+ 
+ 
   }
 
   .signature-title {
@@ -2345,11 +2491,12 @@ body {
 
   .dish-plate {
     width: 10rem;
-    height: 5rem;
+    height: 6rem;
+    margin-top: 100px !important;
   }
 
   .dish-img {
-    width: 12rem;
+    width: 11rem;
     height: 12rem;
     margin-top: -13rem;
   }
@@ -2432,6 +2579,7 @@ body {
   /* Signature dishes */
   .signature-section {
     padding: 5rem 0 6rem;
+    margin-top: -50px !important;
   }
 
   .signature-title {
