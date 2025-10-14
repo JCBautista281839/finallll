@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Menu</title>
 
-  <link rel="icon" type="image/png" href="../../src/IMG/Logo.png">
+  <link rel="icon" type="image/png" href="../../src/IMG/browser.png">
 
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="../css/menu.css">
   <link rel="stylesheet" href="../css/menu-responsive.css">
 
- 
+
 
 </head>
 
@@ -155,28 +155,28 @@
       <div class="row">
         <!-- Left: Menu Items -->
         <div class="col-12">
-        <div class="menu-categories">
-          <!-- Categories will be loaded dynamically from Firebase -->
-          <div class="category-links-container">
-            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-              <span class="visually-hidden">Loading...</span>
+          <div class="menu-categories">
+            <!-- Categories will be loaded dynamically from Firebase -->
+            <div class="category-links-container">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span class="text-muted">Loading categories...</span>
             </div>
-            <span class="text-muted">Loading categories...</span>
+          </div>
+          <br><br><br><br><br><br><br><br>
+          <div class="row menu-items-grid g-4">
+            <!-- Menu items will be loaded dynamically from Firebase -->
+            <div class="col-12 text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-3 text-muted">Loading menu items...</p>
+            </div>
           </div>
         </div>
-<br><br><br><br><br><br><br><br>
-        <div class="row menu-items-grid g-4">
-          <!-- Menu items will be loaded dynamically from Firebase -->
-          <div class="col-12 text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3 text-muted">Loading menu items...</p>
-          </div>
-        </div>
-      </div>
 
-    </div>
+      </div>
   </main>
 
   <!-- Shopping Bag Popup -->
@@ -222,12 +222,49 @@
   <!-- Menu JavaScript -->
   <script src="../javascript/menu.js"></script>
   <script>
+    // Simple slide transition function
+    function slideNavigate(url, direction = 'right') {
+      // Find the main content area (everything except header)
+      const mainContent = document.querySelector('main') || document.querySelector('.main-content') || document.body;
+
+      if (direction === 'right') {
+        mainContent.classList.add('slide-out-right');
+      } else {
+        mainContent.classList.add('slide-out-left');
+      }
+
+      setTimeout(() => {
+        window.location.href = url;
+      }, 500);
+    }
+
+    // Setup slide navigation
+    function setupSlideNavigation() {
+      const navLinks = document.querySelectorAll('.nav-link[href], .fullscreen-nav-link[href]');
+
+      navLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          const targetUrl = this.getAttribute('href');
+
+          if (targetUrl && !targetUrl.startsWith('http') && !targetUrl.startsWith('#')) {
+            const direction = targetUrl.includes('menu') ? 'right' : 'left';
+            slideNavigate(targetUrl, direction);
+          } else {
+            window.location.href = targetUrl;
+          }
+        });
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+      setupSlideNavigation();
+
       const backBtn = document.getElementById('back-btn');
       if (backBtn) {
         backBtn.addEventListener('click', function (e) {
           e.preventDefault();
-          window.location.href = '/index.html';
+          slideNavigate('/index.html', 'left');
         });
       }
     });
@@ -266,7 +303,7 @@
           e.preventDefault();
           e.stopPropagation();
           console.log('Hamburger menu clicked!');
-          
+
           if (fullscreenMenu.classList.contains('active')) {
             console.log('Closing menu...');
             closeMenu();
@@ -1172,4 +1209,6 @@
   </script>
 </body>
 
-</html></html>
+</html>
+
+</html>
