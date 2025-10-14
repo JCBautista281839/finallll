@@ -149,9 +149,9 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         timestamp: paymentInfo.timestamp
       },
       // Add quotation ID and delivery details WITH STOPS for Lalamove Ready button
-      quotation: {
+      quotation: selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery' ? {
         id: quotationData.data?.quotationId || null,
-        serviceType: quotationData.data?.serviceType || 'PICKUP',
+        serviceType: quotationData.data?.serviceType || 'MOTORCYCLE',
         distance: quotationData.data?.distance || null,
         estimatedTime: quotationData.data?.estimatedTime || null,
         // Include stops array for Lalamove order placement
@@ -159,6 +159,16 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
         expiresAt: quotationData.data?.expiresAt || null,
         price: quotationData.data?.priceBreakdown?.total || 0,
         currency: quotationData.data?.priceBreakdown?.currency || 'PHP'
+      } : {
+        // For pickup orders, only include minimal info
+        id: null,
+        serviceType: 'PICKUP',
+        distance: null,
+        estimatedTime: null,
+        stops: [],
+        expiresAt: null,
+        price: 0,
+        currency: 'PHP'
       },
       // Add order ID
       orderId: paymentInfo.orderId || null,
