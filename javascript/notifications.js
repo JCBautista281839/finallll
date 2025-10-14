@@ -1414,17 +1414,16 @@ async function loadNotifications() {
                                 )
                             }
                                 <div class="action-buttons" style="margin-top: 10px;">
-                                    <button class="btn btn-success btn-sm me-2" onclick="handlePaymentVerification('${doc.id}', 'approved')" 
-                                            style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
-                                        ✓ Accept
+                                    ${data.quotation?.serviceType && data.quotation.serviceType !== 'PICKUP' ? `
+                                    <button class="btn btn-warning btn-sm me-2" onclick="handleLalamoveReady('${doc.id}')" 
+                                            ${data.lalamoveOrderPlaced ? 'disabled' : ''}
+                                            style="background: ${data.lalamoveOrderPlaced ? '#6c757d' : '#ffc107'}; border: none; padding: 5px 15px; border-radius: 4px; color: ${data.lalamoveOrderPlaced ? 'white' : 'black'}; cursor: ${data.lalamoveOrderPlaced ? 'not-allowed' : 'pointer'};">
+                                        <i class="fas fa-${data.lalamoveOrderPlaced ? 'check' : 'motorcycle'}"></i> ${data.lalamoveOrderPlaced ? 'Order Placed' : 'Lalamove Ready!'}
                                     </button>
-                                    <button class="btn btn-danger btn-sm me-2" onclick="handlePaymentVerification('${doc.id}', 'declined')" 
+                                    ` : ''}
+                                    <button class="btn btn-danger btn-sm" onclick="handlePaymentVerification('${doc.id}', 'declined')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
                                         ✗ Decline
-                                    </button>
-                                    <button class="btn btn-warning btn-sm" onclick="handleLalamoveReady('${doc.id}')" 
-                                            style="background: #ffc107; border: none; padding: 5px 15px; border-radius: 4px; color: black;">
-                                        <i class="fas fa-motorcycle"></i> Lalamove Ready!
                                     </button>
                                 </div>
                             </div>
@@ -1462,17 +1461,16 @@ async function loadNotifications() {
                                 )
                             }
                                 <div class="action-buttons" style="margin-top: 10px;">
-                                    <button class="btn btn-success btn-sm me-2" onclick="approveOrder('${data.orderId}', '${doc.id}')" 
-                                            style="background: #28a745; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
-                                        <i class="fas fa-check"></i> Accept Order
+                                    ${data.shippingDetails?.method && data.shippingDetails.method !== 'pickup' ? `
+                                    <button class="btn btn-warning btn-sm me-2" onclick="handleLalamoveReady('${doc.id}')" 
+                                            ${data.lalamoveOrderPlaced ? 'disabled' : ''}
+                                            style="background: ${data.lalamoveOrderPlaced ? '#6c757d' : '#ffc107'}; border: none; padding: 5px 15px; border-radius: 4px; color: ${data.lalamoveOrderPlaced ? 'white' : 'black'}; font-size: 0.8rem; cursor: ${data.lalamoveOrderPlaced ? 'not-allowed' : 'pointer'};">
+                                        <i class="fas fa-${data.lalamoveOrderPlaced ? 'check' : 'motorcycle'}"></i> ${data.lalamoveOrderPlaced ? 'Order Placed' : 'Lalamove Ready!'}
                                     </button>
-                                    <button class="btn btn-danger btn-sm me-2" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
+                                    ` : ''}
+                                    <button class="btn btn-danger btn-sm" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
                                             style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
                                         <i class="fas fa-times"></i> Decline Order
-                                    </button>
-                                    <button class="btn btn-warning btn-sm" onclick="handleLalamoveReady('${data.orderId}')" 
-                                            style="background: #ffc107; border: none; padding: 5px 15px; border-radius: 4px; color: black; font-size: 0.8rem;">
-                                        <i class="fas fa-motorcycle"></i> Lalamove Ready!
                                     </button>
                                 </div>
                             </div>

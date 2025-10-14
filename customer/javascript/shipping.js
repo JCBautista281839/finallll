@@ -2100,6 +2100,18 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
         cost: shippingCost
       },
 
+      // Add quotation data for Lalamove Ready button (only for delivery orders)
+      quotation: selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery' ? {
+        id: quotationData.data?.quotationId || null,
+        serviceType: quotationData.data?.serviceType || 'MOTORCYCLE',
+        distance: quotationData.data?.distance || null,
+        estimatedTime: quotationData.data?.estimatedTime || null,
+        stops: quotationData.data?.stops || [],
+        expiresAt: quotationData.data?.expiresAt || null,
+        price: quotationData.data?.priceBreakdown?.total || 0,
+        currency: quotationData.data?.priceBreakdown?.currency || 'PHP'
+      } : null,
+
       // Notification metadata
       timestamp: new Date().toISOString(), // Use regular timestamp instead of server timestamp
       seen: false,
