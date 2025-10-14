@@ -61,7 +61,7 @@
   font-weight: 500;
 }
 .cart-subtotal-label {
-  color: #a94a3a;
+  color: #8b2f22;
 }
 .cart-subtotal-value {
   color: #888;
@@ -71,7 +71,7 @@
   background: #933F32;
   color: #fff;
   border: none;
-  border-radius: 18px;
+  border-radius: 30px;
   width: 100%;
   font-size: 1.15rem;
   font-weight: 500;
