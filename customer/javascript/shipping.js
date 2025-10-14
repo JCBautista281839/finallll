@@ -2105,7 +2105,7 @@ function showOrderInstructionsModal() {
     console.error('Order instructions modal not found');
     // Fallback to direct redirect
     setTimeout(() => {
-      window.location.href = 'payment.html';
+      window.location.href = '/index.html';
     }, 1500);
     return;
   }
@@ -2117,9 +2117,9 @@ function showOrderInstructionsModal() {
   if (gotItBtn) {
     gotItBtn.onclick = function () {
       instructionsModal.style.display = 'none';
-      // Navigate to confirmation page after modal is closed
+      // Navigate to home page after modal is closed
       setTimeout(() => {
-        window.location.href = 'payment.html';
+        window.location.href = '/index.html';
       }, 300);
     };
   }
