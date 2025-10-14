@@ -1337,6 +1337,8 @@ async function loadNotifications() {
                         typeText = 'Order Approval';
                     } else if (data.type === 'lalamove_order_success') {
                         typeText = 'Delivery Update';
+                    } else if (data.type === 'order_pickup') {
+                        typeText = 'Pick Up Update';
                     } else {
                         typeText = data.type || 'Other';
                     }
@@ -1503,6 +1505,8 @@ async function loadNotifications() {
                             if (data.status === 'approved') statusColor = 'color: #28a745;';
                             else if (data.status === 'declined') statusColor = 'color: #dc3545;';
                         } else if (data.type === 'lalamove_order_success') {
+                            statusColor = 'color: #933F32;';
+                        } else if (data.type === 'order_pickup') {
                             statusColor = 'color: #933F32;';
                         }
                         rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
