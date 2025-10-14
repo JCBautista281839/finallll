@@ -1,144 +1,144 @@
 @font-face {
-  font-family: 'PoppinsMedium';
-  src: url('../src/fonts/Poppins-Medium.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsMedium';
+    src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsSemiBold';
-  src: url('../src/fonts/Poppins-SemiBold.woff') format('woff');
-  font-weight: 600;
-  font-style: normal;
+    font-family: 'PoppinsSemiBold';
+    src: url('../src/fonts/Poppins-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsRegular';
-  src: url('../src/fonts/Poppins-Regular.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsRegular';
+    src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'PoppinsExtraLight';
-  src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
-  font-weight: 200;
-  font-style: normal;
+    font-family: 'PoppinsExtraLight';
+    src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
 }
 
 /* Password Input Container with Toggle */
 .password-input-container {
-  position: relative;
-  margin-bottom: 20px;
+    position: relative;
+    margin-bottom: 20px;
 }
 
 .password-toggle {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #666;
-  font-size: 16px;
-  transition: color 0.3s ease;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #666;
+    font-size: 16px;
+    transition: color 0.3s ease;
 }
 
 .password-toggle:hover {
-  color: #8B2E20;
+    color: #8B2E20;
 }
 
 /* Password Strength Indicator */
 .password-strength {
-  margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 .strength-bar {
-  width: 100%;
-  height: 4px;
-  background-color: #e0e0e0;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 8px;
+    width: 100%;
+    height: 4px;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
 }
 
 .strength-fill {
-  height: 100%;
-  width: 0%;
-  transition: width 0.3s ease, background-color 0.3s ease;
-  border-radius: 2px;
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    border-radius: 2px;
 }
 
 .strength-text {
-  font-size: 12px;
-  font-family: 'PoppinsRegular', sans-serif;
-  text-align: center;
+    font-size: 12px;
+    font-family: 'PoppinsRegular', sans-serif;
+    text-align: center;
 }
 
 /* OTP Input Container */
 .otp-input-container {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
 }
 
 .otp-input {
-  width: 45px;
-  height: 45px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fff;
-  transition: all 0.3s ease;
-  font-family: 'PoppinsMedium', sans-serif;
+    width: 45px;
+    height: 45px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+    font-family: 'PoppinsMedium', sans-serif;
 }
 
 .otp-input:focus {
-  outline: none;
-  border-color: #8B2E20;
-  box-shadow: 0 0 0 3px rgba(139, 46, 32, 0.1);
+    outline: none;
+    border-color: #8B2E20;
+    box-shadow: 0 0 0 3px rgba(139, 46, 32, 0.1);
 }
 
 .otp-input:not(:placeholder-shown) {
-  border-color: #8B2E20;
-  background-color: #f8f8f8;
+    border-color: #8B2E20;
+    background-color: #f8f8f8;
 }
 
 /* Back Button Styles */
 .back-button-container {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 1000;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
 }
 
 .back-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 45px;
-  height: 45px;
-  background-color: #ffffff;
-  border: 2px solid #8b1d1d;
-  border-radius: 50%;
-  color: #8b1d1d;
-  text-decoration: none;
-  font-size: 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    background-color: #ffffff;
+    border: 2px solid #8b1d1d;
+    border-radius: 50%;
+    color: #8b1d1d;
+    text-decoration: none;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
 }
 
 .back-button:hover {
-  background-color: #8b1d1d;
-  color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 29, 29, 0.3);
+    background-color: #8b1d1d;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 29, 29, 0.3);
 }
 
 .back-button i {
-  font-size: 16px;
+    font-size: 16px;
 }
 
 body {
@@ -155,7 +155,7 @@ body {
     overflow-x: hidden;
 }
 
-.role-choice{
+.role-choice {
     display: flex;
     justify-content: center;
     gap: 0;
@@ -168,7 +168,8 @@ body {
     margin: -30px auto 15px auto;
 }
 
-.btn-outline-primary, .btn-primary{
+.btn-outline-primary,
+.btn-primary {
     color: white;
     border: none;
     padding: 10px 20px;
@@ -180,7 +181,8 @@ body {
     text-align: center;
 }
 
-.btn-outline-secondary, .btn-secondary{
+.btn-outline-secondary,
+.btn-secondary {
     color: white;
     border: none;
     padding: 10px 20px;
@@ -193,33 +195,37 @@ body {
 }
 
 /* Active states - Light red when selected */
-.btn-primary{
+.btn-primary {
     background-color: #96392d;
     border-radius: 25px 0 0 25px;
 }
 
-.btn-secondary{
+.btn-secondary {
     background-color: #96392d;
     border-radius: 0 25px 25px 0;
 }
 
 /* First button (Admin) rounded left */
-.btn-outline-primary, .btn-primary{
+.btn-outline-primary,
+.btn-primary {
     border-radius: 25px 0 0 25px;
 }
 
 /* Second button (Customer) rounded right */
-.btn-outline-secondary, .btn-secondary{
+.btn-outline-secondary,
+.btn-secondary {
     border-radius: 0 25px 25px 0;
 }
 
-.btn-outline-primary:hover, .btn-primary:hover{
+.btn-outline-primary:hover,
+.btn-primary:hover {
     background-color: #96392d;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(139, 46, 32, 0.3);
 }
 
-.btn-outline-secondary:hover, .btn-secondary:hover{
+.btn-outline-secondary:hover,
+.btn-secondary:hover {
     background-color: #96392d;
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(139, 46, 32, 0.3);
@@ -247,8 +253,8 @@ body {
 .welcome-title {
     color: #8B2E20;
     font-size: 2rem;
-        margin-bottom: 15px;
-        font-family: 'PoppinsSemiBold', sans-serif;
+    margin-bottom: 15px;
+    font-family: 'PoppinsSemiBold', sans-serif;
 }
 
 .welcome-subtitle {
@@ -382,9 +388,11 @@ body {
         min-width: 350px;
         padding: 30px;
     }
+
     .photo-section {
         width: 50%;
     }
+
     .welcome-title {
         font-size: 1.8rem;
     }
@@ -394,26 +402,32 @@ body {
     .mobile-container {
         flex-direction: column;
     }
+
     .login-section {
         width: 100%;
         min-width: auto;
         min-height: 100vh;
         padding: 20px;
     }
+
     .photo-section {
         display: none;
     }
+
     .welcome-title {
         font-size: 2rem;
         text-align: center;
     }
+
     .welcome-subtitle {
         text-align: center;
     }
+
     .login-btn {
         width: 80%;
         margin: 20px auto 0 auto;
     }
+
     .no-account {
         margin-top: 30px;
     }
@@ -457,7 +471,7 @@ body {
         height: 40px;
         font-size: 1.2rem;
     }
-    
+
     .otp-input-container {
         gap: 8px;
     }
@@ -481,7 +495,8 @@ body {
 }
 
 /* Success and Error Message Styles */
-#successMessage, #errorMessage {
+#successMessage,
+#errorMessage {
     padding: 10px 15px;
     border-radius: 8px;
     margin-top: 15px;
@@ -505,25 +520,30 @@ body {
     .login-section {
         padding: 15px;
     }
+
     .welcome-title {
         font-size: 1.2rem;
-     
+
         justify-content: center;
         text-align: center;
     }
+
     .welcome-subtitle {
         font-size: 1rem;
     }
+
     .form-input {
         padding: 12px 16px;
         font-size: 0.95rem;
     }
+
     .login-btn {
         width: 90%;
         font-size: 1rem;
         padding: 12px 0;
     }
-    .photo-item{
+
+    .photo-item {
         width: 100%;
         height: 100vh;
     }
@@ -669,16 +689,22 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideIn {
-    from { 
+    from {
         opacity: 0;
         transform: translateY(-50px);
     }
-    to { 
+
+    to {
         opacity: 1;
         transform: translateY(0);
     }

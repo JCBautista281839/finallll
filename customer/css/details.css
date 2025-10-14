@@ -24,7 +24,6 @@ body {
 .menu-header .left-section {
   display: flex;
   align-items: center;
-  gap: 50px;
   margin-left: 0;
 }
 
@@ -34,129 +33,19 @@ body {
   gap: 10px;
   text-decoration: none;
   color: #000;
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 600;
-  margin-left: 0;
+  margin-left: -50px;
+  margin-bottom: -25px;
 }
 
 .back-to-menu i {
   font-size: 20px;
 }
 
-.menu-header .right-section {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-}
+/* Removed navigation styles - keeping only back button */
 
-.main-nav {
-  display: flex;
-  align-items: center;
-}
-
-.nav-list {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 40px;
-  margin: 0;
-  margin-left: 400px;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: #000;
-  font-weight: 500;
-  font-size: 18px;
-  transition: color 0.3s ease;
-}
-
-.nav-link.active,
-.nav-link:hover {
-  color: #96392d;
-}
-
-/* Search and Icons Styles */
-.search-bar {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-input {
-  padding: 10px 40px 10px 15px;
-  border: 1px solid #eeeeee;
-  border-radius: 25px;
-  width: 300px;
-  font-size: 15px;
-  font-family: 'Poppins';
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #8B2E20;
-  transition: .3s;
-}
-
-.search-img {
-  position: absolute;
-  right: 15px;
-  width: 20px;
-  height: 20px;
-}
-
-.header-icons {
-  display: flex;
-  gap: 20px;
-}
-
-.user-img {
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: transparent;
-  padding: 10px;
-  border: 1px solid #ddd;
-  box-sizing: border-box;
-}
-
-.user-img img,
-.user-img svg {
-  width: 20px;
-  height: 20px;
-  display: block;
-  margin: auto;
-}
-
-.bag-img {
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: transparent;
-  padding: 5px;
-  border: 1px solid #ddd;
-  box-sizing: border-box;
-}
-
-.bag-img img,
-.bag-img svg {
-  width: 28px;
-  height: 28px;
-  display: block;
-  margin: auto;
-}
-
-.user-img:hover,
-.bag-img:hover {
-  filter: invert(27%) sepia(80%) saturate(475%) hue-rotate(335deg) brightness(85%) contrast(95%);
-  transition: .3s;
-}
+/* Removed search and icons styles - keeping only back button */
 
 /* Shopping Bag Counter Styles */
 .bag-container {
@@ -218,7 +107,7 @@ body {
 
 h3 {
   color: #333;
-  font-size: 16px;
+  font-size: 18px !important;
   font-weight: 600;
   margin-bottom: 10px;
   margin-top: 40px;
@@ -254,16 +143,15 @@ input {
 /* Order Summary */
 .order-summary {
   flex: 1;
-  background: #f9f9f9;
-  padding: 20px;
-  border-radius: 20px;
+  background: #f1f1f1;
+  padding: 30px;
+  border-radius: 30px;
   display: flex;
   flex-direction: column;
 }
 
 .order-summary h2 {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 30px !important;
   margin-bottom: 20px;
 }
 
