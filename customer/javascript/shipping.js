@@ -1204,6 +1204,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // Show loading status
         showStatus('Creating your order...', false);
 
+        // Get selected shipping method
+        const selectedShippingMethod = getSelectedShippingMethod();
+        console.log('[shipping.js] Selected shipping method:', selectedShippingMethod);
+
         // Get all required data for order creation
         const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
         
@@ -1229,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
         const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
-        const quotationData = JSON.parse(sessionStorage.getItem('quotationResponse') || '{}');
+        const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse') || '{}');
 
 
         if (Object.keys(cartData).length === 0) {
@@ -1248,8 +1252,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         try {
-          // Create order with the pre-generated ID
-          await createFirebaseOrder(formData, cartData, quotationData, payment, selectedPaymentMethod, orderId);
+          // Create order with the pre-generated ID and selected shipping method
+          await createFirebaseOrder(formData, cartData, quotationData, payment, selectedPaymentMethod, orderId, selectedShippingMethod);
           console.log('✅ Order created successfully with ID:', orderId);
         } catch (error) {
           console.error('Firebase order creation failed:', error);
@@ -1263,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (orderId) {
           // Try to send admin notification (non-blocking)
           try {
-            await sendOrderApprovalNotification(orderId, formData, cartData, quotationData, payment, selectedPaymentMethod);
+            await sendOrderApprovalNotification(orderId, formData, cartData, quotationData, payment, selectedPaymentMethod, selectedShippingMethod);
             console.log('Admin notification sent successfully');
           } catch (notificationError) {
             console.warn('Admin notification failed, but order was created:', notificationError);
@@ -1302,6 +1306,20 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       return 'gcash'; // default
+    }
+
+    // Get selected shipping method
+    function getSelectedShippingMethod() {
+      const pickupRadio = document.getElementById('pickup-radio');
+      const lalamoveRadio = document.getElementById('lalamove-radio');
+      
+      if (pickupRadio && pickupRadio.checked) {
+        return 'pickup';
+      } else if (lalamoveRadio && lalamoveRadio.checked) {
+        return 'lalamove';
+      }
+      
+      return 'pickup'; // default to pickup
     }
 
     // Function to prepare order summary for notification
@@ -1645,10 +1663,12 @@ async function sendOrderNotificationToAdmin(orderId, orderData) {
 }
 
 // Function to create Firebase order
-async function createFirebaseOrder(formData, cartData, quotationData, paymentInfo, paymentMethod, preGeneratedOrderId) {
+async function createFirebaseOrder(formData, cartData, quotationData, paymentInfo, paymentMethod, preGeneratedOrderId, selectedShippingMethod = 'pickup') {
   try {
     // Initialize Lalamove Quotation Manager
     const quotationManager = new LalamoveQuotationManager();
+    
+    console.log('[createFirebaseOrder] Creating order with shipping method:', selectedShippingMethod);
     
     // Check if Firebase is available
     if (typeof firebase === 'undefined') {
@@ -1773,9 +1793,23 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         price: item.price,
         quantity: item.quantity,
         totalPrice: (typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''))) * item.quantity
-      }));    // Calculate totals
+      }));
+    
+    // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-    const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
+    
+    // Calculate shipping cost based on selected method
+    let shippingCost = 0;
+    if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
+      // Use quotation data for delivery
+      shippingCost = quotationData.data?.priceBreakdown?.total || quotationData.totalAmount || 0;
+      console.log('[createFirebaseOrder] Delivery selected, shipping cost:', shippingCost);
+    } else {
+      // Pickup is free
+      shippingCost = 0;
+      console.log('[createFirebaseOrder] Pickup selected, shipping cost: 0');
+    }
+    
     const total = subtotal + shippingCost;
 
     // Get current user ID if available
@@ -1814,7 +1848,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         city: formData.city || '',
         province: formData.province || '',
         postalCode: formData.postalCode || '',
-        method: quotationData.serviceType || 'pickup',
+        method: selectedShippingMethod === 'lalamove' ? (quotationData.data?.serviceType || 'MOTORCYCLE') : 'pickup',
         cost: shippingCost,
         // Add full address with coordinates for delivery
         fullAddressWithCoordinates: {
@@ -1838,8 +1872,8 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         receiptName: paymentInfo.receiptName || '',
         timestamp: paymentInfo.timestamp
       },
-      // Add Lalamove delivery data with stops for "Lalamove Ready" button
-      lalamoveData: quotationData.data ? {
+      // Add Lalamove delivery data with stops for "Lalamove Ready" button - only for delivery orders
+      lalamoveData: (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') && quotationData.data ? {
         quotationId: quotationData.data.quotationId || null,
         stops: quotationData.data.stops || [],
         serviceType: quotationData.data.serviceType || 'MOTORCYCLE',
@@ -1848,8 +1882,8 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         priceBreakdown: quotationData.data.priceBreakdown || { total: 0, currency: 'PHP' },
         expiresAt: quotationData.data.expiresAt || null
       } : null,
-      // Also save quotation ID at top level for easy access
-      quotationId: quotationData.data?.quotationId || null,
+      // Also save quotation ID at top level for easy access (only for delivery orders)
+      quotationId: (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') ? (quotationData.data?.quotationId || null) : null,
       status: 'pending_approval', // Order needs admin approval
       notes: formData.notes || '',
       estimatedDeliveryTime: quotationData.estimatedDeliveryTime || null,
@@ -1924,12 +1958,14 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
 }
 
 // Function to send order approval notification to admin
-async function sendOrderApprovalNotification(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod) {
+async function sendOrderApprovalNotification(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod, selectedShippingMethod = 'pickup') {
   try {
+    console.log('[sendOrderApprovalNotification] Sending notification with shipping method:', selectedShippingMethod);
+    
     // Check if Firebase is available
     if (typeof firebase === 'undefined') {
       console.warn('Firebase not available for admin notification');
-      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod, selectedShippingMethod);
     }
 
     // Wait for Firebase to be ready
@@ -1953,7 +1989,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
 
     if (!firebaseReady) {
       console.warn('Firebase not ready for notification, trying server fallback');
-      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod, selectedShippingMethod);
     }
 
     const db = firebase.firestore();
@@ -1967,7 +2003,15 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
       const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.]/g, '')) : parseFloat(item.price);
       return sum + (price * item.quantity);
     }, 0);
-    const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
+    
+    // Calculate shipping cost based on selected method
+    let shippingCost = 0;
+    if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
+      shippingCost = quotationData.data?.priceBreakdown?.total || quotationData.totalAmount || 0;
+    } else {
+      shippingCost = 0; // Pickup is free
+    }
+    
     const total = subtotal + shippingCost;
 
     // Create comprehensive notification for admin
@@ -2009,7 +2053,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
       // Shipping details
       shippingDetails: {
         address: formData.address || '',
-        method: quotationData.serviceType || 'pickup',
+        method: selectedShippingMethod === 'lalamove' ? (quotationData.data?.serviceType || 'MOTORCYCLE') : 'pickup',
         cost: shippingCost
       },
 
@@ -2041,25 +2085,33 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
       return true;
     } catch (firestoreError) {
       console.warn('Firestore notification failed, trying server fallback:', firestoreError.message);
-      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+      return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod, selectedShippingMethod);
     }
 
   } catch (error) {
     console.error('[shipping.js] Error sending order approval notification:', error);
     console.warn('Trying server fallback for notification');
-    return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod);
+    return await sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod, selectedShippingMethod);
   }
 }
 
 // Fallback function to send notification via server API
-async function sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod) {
+async function sendNotificationViaServer(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod, selectedShippingMethod = 'pickup') {
   try {
     const items = Object.values(cartData);
     const subtotal = items.reduce((sum, item) => {
       const price = typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''));
       return sum + (price * item.quantity);
     }, 0);
-    const shippingCost = quotationData.totalAmount ? parseFloat(quotationData.totalAmount) : 0;
+    
+    // Calculate shipping cost based on selected method
+    let shippingCost = 0;
+    if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
+      shippingCost = quotationData.data?.priceBreakdown?.total || quotationData.totalAmount || 0;
+    } else {
+      shippingCost = 0; // Pickup is free
+    }
+    
     const total = subtotal + shippingCost;
 
     const notificationPayload = {
