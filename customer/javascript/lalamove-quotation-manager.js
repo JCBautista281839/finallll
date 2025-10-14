@@ -22,6 +22,9 @@ class LalamoveQuotationManager {
         customerData = {};
       }
 
+      // Get current authenticated user information
+      const currentUser = firebase.auth().currentUser;
+
       const quotationRef = this.db.collection('lalamove_quotations').doc();
       
       const dataToStore = {
@@ -31,8 +34,9 @@ class LalamoveQuotationManager {
           firstName: customerData.firstName || '',
           lastName: customerData.lastName || '',
           fullName: customerData.firstName && customerData.lastName ? 
-            `${customerData.firstName} ${customerData.lastName}` : 'Unknown Customer',
-          email: customerData.email || 'No email provided',
+            `${customerData.firstName} ${customerData.lastName}` : 
+            (currentUser && currentUser.displayName ? currentUser.displayName : 'Unknown Customer'),
+          email: customerData.email || (currentUser && currentUser.email ? currentUser.email : 'No email provided'),
           phone: customerData.phone || 'Unknown Phone',
           address: customerData.fullAddress || customerData.address || 'No address provided'
         },

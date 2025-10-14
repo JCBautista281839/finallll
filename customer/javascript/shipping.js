@@ -1206,10 +1206,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Get all required data for order creation
         const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
-        // Provide fallback values if customer info is missing so order creation
-        // doesn't fail downstream.
-        if (!formData.name) formData.name = formData.firstName ? (formData.firstName + (formData.lastName ? ' ' + formData.lastName : '')) : 'Guest';
-        if (!formData.email) formData.email = 'guest@example.com';
+        
+        // Get current authenticated user information
+        const currentUser = firebase.auth().currentUser;
+        
+        // Provide fallback values if customer info is missing, but use authenticated user data if available
+        if (!formData.name) {
+          if (currentUser && currentUser.displayName) {
+            formData.name = currentUser.displayName;
+          } else if (formData.firstName) {
+            formData.name = formData.firstName + (formData.lastName ? ' ' + formData.lastName : '');
+          } else {
+            formData.name = 'Guest';
+          }
+        }
+        
+        if (!formData.email) {
+          if (currentUser && currentUser.email) {
+            formData.email = currentUser.email;
+          } else {
+            formData.email = 'guest@example.com';
+          }
+        }
         const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
         const quotationData = JSON.parse(sessionStorage.getItem('quotationResponse') || '{}');
 
@@ -1495,7 +1513,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Get customer info
         const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
-        const customerName = formData.name || (formData.firstName ? (formData.firstName + (formData.lastName ? ' ' + formData.lastName : '')) : 'Guest');
+        const currentUser = firebase.auth().currentUser;
+        const customerName = formData.name || (formData.firstName ? (formData.firstName + (formData.lastName ? ' ' + formData.lastName : '')) : 
+          (currentUser && currentUser.displayName ? currentUser.displayName : 'Guest'));
         const customerPhone = formData.phone || formData.contact || '';
 
         // Build payload to match Lalamove /v3/orders expected body (wrapped with data)
@@ -1772,6 +1792,9 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
       console.log('Authentication error, proceeding without userId:', error.message);
     }
 
+    // Get current authenticated user information for order data
+    const currentUser = firebase.auth().currentUser;
+    
     // Prepare order data
     const orderData = {
       orderId: preGeneratedOrderId || ('ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
@@ -1779,8 +1802,9 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         firstName: formData.firstName || '',
         lastName: formData.lastName || '',
         fullName: formData.firstName && formData.lastName ? 
-          `${formData.firstName} ${formData.lastName}` : 'Unknown Customer',
-        email: formData.email || 'No email provided',
+          `${formData.firstName} ${formData.lastName}` : 
+          (currentUser && currentUser.displayName ? currentUser.displayName : 'Unknown Customer'),
+        email: formData.email || (currentUser && currentUser.email ? currentUser.email : 'No email provided'),
         phone: formData.phone || 'Unknown Phone',
         address: formData.fullAddress || formData.address || 'No address provided'
       },
