@@ -1384,10 +1384,7 @@ async function loadNotifications() {
                                 </div>
                                 <div class="order-details" style="margin-top: 5px;">
                                     <small>
-                                        <strong>Order ID:</strong> ${data.orderId || 'N/A'} | 
-                                        <strong>Quotation ID:</strong> ${data.quotation?.id || 'N/A'} | 
-                                        <strong>Service:</strong> ${data.quotation?.serviceType || 'N/A'} | 
-                                        <strong>Est. Time:</strong> ${data.quotation?.estimatedTime || 'N/A'}
+                                        <strong>Service:</strong> ${data.quotation?.serviceType || 'PICKUP'}
                                     </small>
                                 </div>
                                 <div class="order-summary" style="margin-top: 5px; padding: 5px; background: #f8f9fa; border-radius: 4px;">
@@ -1397,7 +1394,6 @@ async function loadNotifications() {
                             `${item.name} x${item.quantity} - ₱${(typeof item.total === 'number' ? item.total.toFixed(2) : '0.00')}`
                         ).join('<br>') || 'No items'}<br>
                                         <strong>Subtotal:</strong> ₱${(typeof data.orderSummary?.subtotal === 'number' ? data.orderSummary.subtotal.toFixed(2) : '0.00')} | 
-                                        <strong>Shipping:</strong> ₱${(typeof data.orderSummary?.shippingFee === 'number' ? data.orderSummary.shippingFee.toFixed(2) : '0.00')} | 
                                         <strong>Total:</strong> ₱${(typeof data.orderSummary?.total === 'number' ? data.orderSummary.total.toFixed(2) : '0.00')}
                                     </small>
                                 </div>
