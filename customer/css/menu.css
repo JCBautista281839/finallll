@@ -1350,11 +1350,18 @@ body {
   display: inline-block;
 }
 
+/* Ensure cart icon link has relative positioning for badge */
+#shopping-bag-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .item-counter {
   position: absolute;
   top: -6px;
-  left: 30px;
-  background: #ff3b30;
+  right: -6px;
+  background: #933F32;
   color: white;
   border-radius: 50%;
   min-width: 18px;
@@ -1370,6 +1377,7 @@ body {
   line-height: 1;
   text-align: center;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 10;
 }
 
 .item-counter.hidden {
