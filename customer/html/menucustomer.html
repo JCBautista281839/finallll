@@ -15,128 +15,140 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <!-- Your Custom Styles -->
+  <link rel="stylesheet" href="../../indexstyle.css">
   <link rel="stylesheet" href="../css/menu.css">
   <link rel="stylesheet" href="../css/menu-responsive.css">
+
  
 
 </head>
 
 <body>
   <!-- Header -->
-  <header class="menu-header">
+  <header class="header navbar navbar-expand-lg">
     <div class="container-fluid">
-      <div class="row align-items-center">
-        <div class="col-lg-3 col-md-4 col-6">
-          <a href="/index.html" class="back-to-menu" id="back-btn">
-            <i class="fas fa-arrow-left"></i>
-            <span>MENU</span>
-          </a>
-        </div>
-        
-   
-        
-        <div class="col-lg-9 col-md-8 d-none d-lg-block">
-          <div class="header-right-content">
-            <nav class="main-nav d-none d-lg-flex">
-              <ul class="nav-list">
-                <li><a href="/index.html" class="nav-link">Home</a></li>
-                <li><a href="#" class="nav-link active">Menu</a></li>
-              </ul>
-            </nav>
-            <div class="header-actions">
-              <div class="search-bar">
-                <input type="text" placeholder="Search" class="search-input">
-                <img class="search-img" src="../../src/Icons/search.png" alt="Search Icon">
-              </div>
-              <div class="header-icons">
-                <a href="html/login.html" class="icon-link">
-                  <img class="user-img" src="../../src/Icons/user (1).png" alt="User Icon">
+      <!-- Logo -->
+      <a class="navbar-brand" href="#">
+        <img src="../../src/IMG/Logo.png" alt="Viktoria's Bistro Logo" class="logo-img">
+      </a>
+
+      <!-- Hamburger Menu Button -->
+      <button class="navbar-toggler hamburger-menu" type="button" data-bs-toggle="collapse"
+        data-bs-target="#headerCollapse" aria-controls="headerCollapse" aria-expanded="false"
+        aria-label="Toggle navigation" id="hamburgerMenu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+      <!-- Collapsible Content -->
+      <div class="collapse navbar-collapse" id="headerCollapse">
+        <!-- Navigation -->
+        <nav class="main-nav mx-auto">
+          <ul class="nav-list navbar-nav">
+            <li class="nav-item"><a href="../../index.html" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="/customer/html/menucustomer.html" class="nav-link">Menu</a></li>
+          </ul>
+        </nav>
+
+        <!-- Search and Icons -->
+        <div class="header-actions">
+          <div class="search-bar">
+            <input type="text" placeholder="Search" class="search-input">
+            <img class="search-img" src="../../src/Icons/search.png" alt="Search Icon">
+          </div>
+          <div class="header-icons">
+            <div class="user-profile-container" id="userProfileContainer">
+              <a href="#" class="icon-link" id="userProfileLink" onclick="handleUserProfileClick(event)">
+                <img class="user-img" src="../../src/Icons/user (1).png" alt="User Icon">
+              </a>
+              <!-- User dropdown menu (hidden by default) -->
+              <div class="user-dropdown" id="userDropdown" style="display: none;">
+                <div class="user-info" id="userInfo">
+                  <div class="user-name" id="userName">Loading...</div>
+                  <div class="user-email" id="userEmail">Loading...</div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="../../customer/html/account.html" class="dropdown-item">
+                  <i class="fas fa-user"></i> My Account
                 </a>
-                <a href="#" class="icon-link" id="shopping-bag-btn">
-                  <div class="bag-container">
-                    <img class="bag-img" src="../../src/Icons/bag (1).png" alt="Shopping Bag Icon">
-                    <span class="item-counter" id="item-counter">0</span>
-                  </div>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item logout-item" onclick="handleLogout(event)">
+                  <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
               </div>
             </div>
+            <a href="#" class="icon-link" id="shopping-bag-btn">
+              <img class="bag-img" src="../../src/Icons/bag (1).png" alt="Shopping Bag Icon">
+              <span id="item-counter" class="item-counter hidden">0</span>
+            </a>
           </div>
         </div>
-
-        <!-- Mobile and Tablet Burger Menu Button -->
-        <div class="col-6 d-flex d-lg-none justify-content-start">
-          <button class="navbar-toggler hamburger-menu" type="button" 
-            aria-label="Toggle navigation" id="hamburgerMenu">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-          </button>
-        </div>
+      </div>
+    </div>
   </header>
+
   <!-- Fullscreen Menu Overlay -->
   <div class="fullscreen-menu-overlay" id="fullscreenMenu">
-   <div class="fullscreen-menu-content">
-     <!-- Close Button -->
-     <button class="fullscreen-close-btn" id="fullscreenCloseBtn">
-       <span class="close-icon">×</span>
-     </button>
+    <div class="fullscreen-menu-content">
+      <!-- Close Button -->
 
-     <!-- Navigation Menu -->
-    <nav class="fullscreen-nav">
-      <ul class="fullscreen-nav-list">
-         <li class="fullscreen-nav-item">
-           <a href="/index.html" class="fullscreen-nav-link">
-             <span class="nav-text">Home</span>
-             <span class="nav-highlight"></span>
-           </a>
-         </li>
-        <li class="fullscreen-nav-item">
-          <a href="/customer/html/menucustomer.html" class="fullscreen-nav-link">
-            <span class="nav-text">Menu</span>
-            <span class="nav-highlight"></span>
+
+      <!-- Navigation Menu -->
+      <nav class="fullscreen-nav">
+        <ul class="fullscreen-nav-list">
+          <li class="fullscreen-nav-item">
+            <a href="../../index.html" class="fullscreen-nav-link">
+              <span class="nav-text">Home</span>
+              <span class="nav-highlight"></span>
+            </a>
+          </li>
+          <li class="fullscreen-nav-item">
+            <a href="../../customer/html/menucustomer.html" class="fullscreen-nav-link">
+              <span class="nav-text">Menu</span>
+              <span class="nav-highlight"></span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Action Icons -->
+      <div class="fullscreen-actions">
+        <div class="action-item">
+          <a href="#" class="action-link" id="fullscreenUserProfile" onclick="handleUserProfileClick(event)">
+            <div class="action-icon">
+              <img src="../../src/Icons/user (1).png" alt="User Icon">
+            </div>
+            <span class="action-text">Account</span>
           </a>
-        </li>
-      </ul>
-    </nav>
-
-    <!-- Action Icons -->
-    <div class="fullscreen-actions">
-      <div class="action-item">
-         <a href="#" class="action-link" id="fullscreenUserProfile" onclick="handleUserProfileClick(event)">
-           <div class="action-icon">
-             <img src="../../src/Icons/user (1).png" alt="User Icon">
-           </div>
-           <span class="action-text">Account</span>
-         </a>
-        <!-- User dropdown for fullscreen menu -->
-        <div class="fullscreen-user-dropdown" id="fullscreenUserDropdown" style="display: none;">
-          <div class="fullscreen-user-info" id="fullscreenUserInfo">
-            <div class="fullscreen-user-name" id="fullscreenUserName">Loading...</div>
-            <div class="fullscreen-user-email" id="fullscreenUserEmail">Loading...</div>
+          <!-- User dropdown for fullscreen menu -->
+          <div class="fullscreen-user-dropdown" id="fullscreenUserDropdown" style="display: none;">
+            <div class="fullscreen-user-info" id="fullscreenUserInfo">
+              <div class="fullscreen-user-name" id="fullscreenUserName">Loading...</div>
+              <div class="fullscreen-user-email" id="fullscreenUserEmail">Loading...</div>
+            </div>
+            <div class="fullscreen-dropdown-divider"></div>
+            <a href=".. customer/html/account.html" class="fullscreen-dropdown-item">
+              <i class="fas fa-user"></i> My Account
+            </a>
+            <div class="fullscreen-dropdown-divider"></div>
+            <a href="#" class="fullscreen-dropdown-item logout-item" onclick="handleLogout(event)">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
           </div>
-          <div class="fullscreen-dropdown-divider"></div>
-          <a href="customer/html/account.html" class="fullscreen-dropdown-item">
-            <i class="fas fa-user"></i> My Account
-          </a>
-          <div class="fullscreen-dropdown-divider"></div>
-          <a href="#" class="fullscreen-dropdown-item logout-item" onclick="handleLogout(event)">
-            <i class="fas fa-sign-out-alt"></i> Logout
+        </div>
+
+        <div class="action-item">
+          <a href="#" class="action-link">
+            <div class="action-icon">
+              <img src="../../src/Icons/bag (1).png" alt="Shopping Bag Icon">
+            </div>
+            <span class="action-text">Bag</span>
           </a>
         </div>
       </div>
-
-       <div class="action-item">
-         <a href="#" class="action-link" id="fullscreenShoppingBag">
-           <div class="action-icon">
-             <img src="../../src/Icons/bag (1).png" alt="Shopping Bag Icon">
-           </div>
-           <span class="action-text">Bag</span>
-         </a>
-       </div>
     </div>
   </div>
-</div>
-
   <!-- Main Content -->
   <main class="menu-page">
     <div class="container-fluid">
@@ -152,7 +164,7 @@
             <span class="text-muted">Loading categories...</span>
           </div>
         </div>
-
+<br><br><br><br><br><br><br><br>
         <div class="row menu-items-grid g-4">
           <!-- Menu items will be loaded dynamically from Firebase -->
           <div class="col-12 text-center py-5">
@@ -1160,5 +1172,4 @@
   </script>
 </body>
 
-</html>
-</html>
+</html></html>
