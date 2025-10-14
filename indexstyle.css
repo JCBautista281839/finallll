@@ -2468,6 +2468,7 @@ body {
   /* Main content adjustments */
   .content-left {
     padding: 3rem;
+    margin-top:150px !important;
   }
 
   .description {
