@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ">Cancel</button>
         <button id="order-continue-btn" style="
           padding: 12px 25px;
-          background: #00c853;
+          background: #933F32;
           color: white;
           border: none;
           border-radius: 8px;
@@ -135,13 +135,13 @@ document.addEventListener('DOMContentLoaded', function () {
         max-width: 300px;
         word-wrap: break-word;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid ${isError ? '#e74c3c' : '#00c853'};
+        border-left: 4px solid ${isError ? '#e74c3c' : '#933F32'};
       `;
       document.body.appendChild(statusEl);
     }
 
     statusEl.textContent = message;
-    statusEl.style.borderLeftColor = isError ? '#e74c3c' : '#00c853';
+    statusEl.style.borderLeftColor = isError ? '#e74c3c' : '#933F32';
     statusEl.style.display = 'block';
 
     // Auto-hide after 5 seconds
