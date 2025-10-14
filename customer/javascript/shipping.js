@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       statusEl.textContent = message;
-      statusEl.style.backgroundColor = isError ? '#e74c3c' : '#2ecc71';
+      statusEl.style.backgroundColor = isError ? '#e74c3c' : '#933F32';
       statusEl.style.display = 'block';
 
       // Auto-hide after 5 seconds
@@ -719,8 +719,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // QR Code images - replace these paths with your actual QR code images
       const qrCodes = {
-        gcash: '../src/IMG/gcash-qr.png', // Replace with your GCash QR code
-        bank_transfer: '../src/IMG/bank-transfer-qr.png'    // Replace with your Bank Transfer QR code
+        gcash: '../../src/IMG/gcash-qr.jpg', // Replace with your GCash QR code
+        bank_transfer: '../../src/IMG/gcash-qr.jpg'    // Replace with your Bank Transfer QR code
       };
 
       // Fallback QR code text for when images are not available

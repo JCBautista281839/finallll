@@ -2254,7 +2254,7 @@ function showToast(message, type = "info", duration = 3000) {
 
     // Create toast element
     const toast = document.createElement('div');
-    const bgColor = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : type === 'warning' ? '#ffc107' : '#17a2b8';
+    const bgColor = type === 'success' ? '#933F32' : type === 'error' ? '#dc3545' : type === 'warning' ? '#ffc107' : '#17a2b8';
     const textColor = type === 'warning' ? '#000' : '#fff';
 
     toast.style.cssText = `
