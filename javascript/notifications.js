@@ -2104,12 +2104,18 @@ window.handleLalamoveReady = async function (docId) {
 
         // Create a success notification for admin
         try {
+            // Get reference number from notification data
+            const referenceNumber = notificationData.paymentInfo?.reference || 
+                                   notificationData.paymentDetails?.reference || 
+                                   'No reference';
+            
             await db.collection('notifications').add({
                 type: 'lalamove_order_success',
-                message: `Lalamove order placed successfully! Order ID: ${result.data?.id || 'Unknown'} | Quotation ID: ${quotationId}`,
+                message: `Lalamove order placed successfully! (Reference Number: ${referenceNumber})`,
                 lalamoveOrderId: result.data?.id || null,
                 quotationId: quotationId,
                 originalNotificationId: docId,
+                referenceNumber: referenceNumber,
                 orderDetails: {
                     customerName: customerInfo.fullName,
                     customerPhone: customerInfo.phone,
