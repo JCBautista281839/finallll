@@ -1310,6 +1310,10 @@ document.addEventListener('DOMContentLoaded', function () {
           // Clear the pre-generated order ID since it's been used
           sessionStorage.removeItem('preGeneratedOrderId');
 
+          // ✅ Clear cart after successful order placement
+          sessionStorage.removeItem('cartData');
+          console.log('[shipping.js] 🗑️ Cart cleared after successful order');
+
           showStatus('Order placed successfully! Admin will be notified for approval.', false);
 
           // Show order instructions modal
