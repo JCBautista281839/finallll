@@ -46,8 +46,8 @@ function showToast(message, type = 'info') {
     setTimeout(removeToast, 5000);
 }
 
-// Global variable to track selected user type
-let selectedUserType = 'customer'; // Default to customer
+// Global variable to track detected user type
+let detectedUserType = null; // Will be determined automatically from Firebase
 
 async function handleLogin(email, password) {
     try {
@@ -170,13 +170,13 @@ async function handleLogin(email, password) {
             if (!userFound) {
                 console.log('❌ User not found in any collection - this might be a permissions issue or missing Firestore data');
 
-                // As a temporary workaround, allow login with default role based on selected type
+                // As a temporary workaround, allow login with default customer role
                 // This handles cases where users exist in Firebase Auth but not in Firestore
-                console.log('🔧 Applying temporary workaround: allowing login with default role');
-                userRole = selectedUserType === 'admin' ? 'admin' : 'customer';
+                console.log('🔧 Applying temporary workaround: allowing login with default customer role');
+                userRole = 'customer';
                 userData = {
                     email: user.email,
-                    name: user.displayName || (selectedUserType === 'admin' ? 'Admin User' : 'Customer User'),
+                    name: user.displayName || 'Customer User',
                     role: userRole,
                     userType: userRole,
                     isActive: true,
@@ -196,20 +196,8 @@ async function handleLogin(email, password) {
             throw new Error('User role not found. Please contact administrator.');
         }
 
-        // Check if the selected type matches the user's actual role
-        if (selectedUserType === 'admin') {
-            // Admin login - only allow admin, manager, kitchen roles
-            if (!['admin', 'manager', 'kitchen'].includes(userRole)) {
-                await firebase.auth().signOut(); // Sign out the user
-                throw new Error(`Access denied. This account has '${userRole}' role and is not authorized for admin access. Please use customer login or contact administrator.`);
-            }
-        } else {
-            // Customer login - only allow customer role
-            if (!['customer', 'user'].includes(userRole)) {
-                await firebase.auth().signOut(); // Sign out the user
-                throw new Error(`Access denied. This is a staff account with '${userRole}' role. Please use admin login.`);
-            }
-        }
+        // Set the detected user type for redirect logic
+        detectedUserType = userRole;
 
         // Update last login timestamp
         try {
@@ -241,24 +229,23 @@ async function handleLogin(email, password) {
             clearTimeout(window.redirectTimeout);
         }
 
-        // Redirect based on role and selected type
-        if (selectedUserType === 'admin') {
-            // Admin login redirects
-            switch (userRole) {
-                case 'kitchen':
-                    window.location.replace('../html/kitchen.html');
-                    break;
-                case 'server':
-                case 'manager':
-                case 'admin':
-                    window.location.replace('../html/Dashboard.html');
-                    break;
-                default:
-                    window.location.replace('../html/Dashboard.html');
-            }
-        } else {
-            // Customer login redirect to index.html
-            window.location.replace('../index.html');
+        // Redirect based on detected role
+        switch (userRole) {
+            case 'kitchen':
+                window.location.replace('../html/kitchen.html');
+                break;
+            case 'server':
+            case 'manager':
+            case 'admin':
+                window.location.replace('../html/Dashboard.html');
+                break;
+            case 'customer':
+            case 'user':
+                window.location.replace('../index.html');
+                break;
+            default:
+                // Default to customer redirect for unknown roles
+                window.location.replace('../index.html');
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -354,91 +341,7 @@ firebase.auth().onAuthStateChanged((user) => {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-    const adminBtn = document.getElementById('adminBtn');
-    const customerBtn = document.getElementById('customerBtn');
-    const noAccountDiv = document.querySelector('.no-account');
-
-    // Handle Admin button click
-    if (adminBtn) {
-        adminBtn.addEventListener('click', function () {
-            selectedUserType = 'admin';
-
-            // Update button styles
-            adminBtn.classList.remove('btn-outline-primary');
-            adminBtn.classList.add('btn-primary');
-            customerBtn.classList.remove('btn-secondary');
-            customerBtn.classList.add('btn-outline-secondary');
-
-            // Hide signup option for admin
-            if (noAccountDiv) {
-                noAccountDiv.style.display = 'none';
-            }
-
-            // Update placeholder text
-            const usernameInput = document.getElementById('username');
-            if (usernameInput) {
-                usernameInput.placeholder = 'Admin Email Address';
-                usernameInput.type = 'email';
-            }
-
-            // Show role info
-            const roleInfo = document.getElementById('roleInfo');
-            const roleInfoText = document.getElementById('roleInfoText');
-            if (roleInfo && roleInfoText) {
-                roleInfoText.textContent = 'For restaurant staff, managers, and administrators only.';
-                roleInfo.style.display = 'block';
-                console.log('Admin role info updated');
-            }
-        });
-    }
-
-    // Handle Customer button click
-    if (customerBtn) {
-        customerBtn.addEventListener('click', function () {
-            selectedUserType = 'customer';
-
-            // Update button styles
-            customerBtn.classList.remove('btn-outline-secondary');
-            customerBtn.classList.add('btn-secondary');
-            adminBtn.classList.remove('btn-primary');
-            adminBtn.classList.add('btn-outline-primary');
-
-            // Show signup option for customers
-            if (noAccountDiv) {
-                noAccountDiv.style.display = 'block';
-            }
-
-            // Update placeholder text
-            const usernameInput = document.getElementById('username');
-            if (usernameInput) {
-                usernameInput.placeholder = 'Email Address';
-                usernameInput.type = 'email';
-            }
-
-            // Show role info
-            const roleInfo = document.getElementById('roleInfo');
-            const roleInfoText = document.getElementById('roleInfoText');
-            if (roleInfo && roleInfoText) {
-                roleInfoText.textContent = 'For customers to place orders and manage their account.';
-                roleInfo.style.display = 'block';
-                console.log('Customer role info updated');
-            }
-        });
-    }
-
-    // Set default selection to Customer
-    if (customerBtn) {
-        customerBtn.click();
-    }
-
-    // Ensure role info is properly set on page load
-    const roleInfo = document.getElementById('roleInfo');
-    const roleInfoText = document.getElementById('roleInfoText');
-    if (roleInfo && roleInfoText) {
-        // Set initial role info based on default selection
-        roleInfoText.textContent = 'For customers to place orders and manage their account.';
-        roleInfo.style.display = 'block';
-    }
+    // Single login form - no role selection needed
 
     // Handle form submission
     const loginForm = document.getElementById('loginForm');
