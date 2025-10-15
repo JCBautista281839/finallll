@@ -28,7 +28,7 @@
           <img src="../src/Icons/home.png" alt="Home" class="nav-icon">
           <div class="nav-text">Home</div>
         </a>
-        <a href="../html/notifi.html" class="nav-link text-white" title="Notifications" style="position:relative;">
+        <a href="#" class="nav-link text-white" title="Notifications" style="position:relative;" id="kitchenNotificationLink">
           <img src="../src/Icons/bell.png" alt="Orders" class="nav-icon">
           <span class="notification-badge"
             style="display:none;position:absolute;top:8px;right:18px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
@@ -61,9 +61,8 @@
           <!-- Notifications will be loaded here dynamically -->
           <div class="text-center text-muted py-3">No notifications</div>
         </div>
-        <div class="dropdown-footer p-2 text-center border-top">
-          <a href="../html/notifi.html" class="see-all-link"
-            style="color:#4361EE;font-weight:600;text-decoration:none;">See all incoming activity</a>
+        <div class="dropdown-footer p-2 text-center border-top" style="display:none;">
+          <!-- Kitchen users don't need "See all" link -->
         </div>
       </div>
     </aside>

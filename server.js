@@ -2386,7 +2386,20 @@ app.get('/kitchen', (req, res) => res.sendFile(path.join(__dirname, 'html', 'kit
 app.get('/analytics', (req, res) => res.sendFile(path.join(__dirname, 'html', 'analytics.html')));
 app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Settings.html')));
 app.get('/user', (req, res) => res.sendFile(path.join(__dirname, 'html', 'user.html')));
-app.get('/notifications', (req, res) => res.sendFile(path.join(__dirname, 'html', 'notifi.html')));
+app.get('/notifications', (req, res) => {
+    // Check if user is kitchen user and block access
+    // This is a basic check - in production you'd want proper authentication
+    const userAgent = req.get('User-Agent') || '';
+    const referer = req.get('Referer') || '';
+    
+    // If coming from kitchen page, redirect back
+    if (referer.includes('kitchen')) {
+        console.log('🚫 Blocked kitchen user from accessing notifications page');
+        return res.redirect('/kitchen');
+    }
+    
+    res.sendFile(path.join(__dirname, 'html', 'notifi.html'));
+});
 app.get('/receipt', (req, res) => res.sendFile(path.join(__dirname, 'html', 'receipt.html')));
 app.get('/addproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'addproduct.html')));
 app.get('/editproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'editproduct.html')));
