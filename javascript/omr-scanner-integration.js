@@ -528,9 +528,11 @@ function displayScanResults(scanData) {
             if (match && match[3] === 'Shaded') {
                 const itemName = match[2];
 
-                // Filter out N/A items
-                if (itemName === 'N/A' || itemName.trim() === '') {
-                    return; // Skip N/A items
+                // Filter out N/A items and form identifiers
+                if (itemName === 'N/A' || itemName.trim() === '' ||
+                    itemName === 'FORM_ID_1' || itemName === 'FORM_ID_2' ||
+                    itemName.startsWith('FORM_ID_')) {
+                    return; // Skip N/A items and form identifiers
                 }
 
                 // Create item display
@@ -613,9 +615,11 @@ async function addScannedItemsToOrder() {
                 if (match && match[3] === 'Shaded') {
                     const itemCode = match[2]; // This is the code from OMR sheet
 
-                    // Filter out N/A items
-                    if (itemCode === 'N/A' || itemCode.trim() === '') {
-                        continue; // Skip N/A items
+                    // Filter out N/A items and form identifiers
+                    if (itemCode === 'N/A' || itemCode.trim() === '' ||
+                        itemCode === 'FORM_ID_1' || itemCode === 'FORM_ID_2' ||
+                        itemCode.startsWith('FORM_ID_')) {
+                        continue; // Skip N/A items and form identifiers
                     }
 
                     try {
