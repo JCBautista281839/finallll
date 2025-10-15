@@ -2090,7 +2090,7 @@ app.use((req, res, next) => {
 
 /* ====== Static file serving (must be after API routes) ====== */
 
-// Redirect HTML files to clean URLs (hide .html from URL)
+// Redirect ALL HTML files to clean URLs (hide .html from URL)
 app.get('/index.html', (req, res) => {
     console.log('Redirecting /index.html to /');
     res.redirect(301, '/');
@@ -2109,6 +2109,98 @@ app.get('/signup.html', (req, res) => {
 app.get('/otp.html', (req, res) => {
     console.log('Redirecting /otp.html to /otp');
     res.redirect(301, '/otp');
+});
+
+app.get('/pos.html', (req, res) => {
+    console.log('Redirecting /pos.html to /pos');
+    res.redirect(301, '/pos');
+});
+
+app.get('/payment.html', (req, res) => {
+    console.log('Redirecting /payment.html to /payment');
+    res.redirect(301, '/payment');
+});
+
+app.get('/Dashboard.html', (req, res) => {
+    console.log('Redirecting /Dashboard.html to /dashboard');
+    res.redirect(301, '/dashboard');
+});
+
+app.get('/menu.html', (req, res) => {
+    console.log('Redirecting /menu.html to /menu');
+    res.redirect(301, '/menu');
+});
+
+app.get('/Inventory.html', (req, res) => {
+    console.log('Redirecting /Inventory.html to /inventory');
+    res.redirect(301, '/inventory');
+});
+
+app.get('/Order.html', (req, res) => {
+    console.log('Redirecting /Order.html to /order');
+    res.redirect(301, '/order');
+});
+
+app.get('/kitchen.html', (req, res) => {
+    console.log('Redirecting /kitchen.html to /kitchen');
+    res.redirect(301, '/kitchen');
+});
+
+app.get('/analytics.html', (req, res) => {
+    console.log('Redirecting /analytics.html to /analytics');
+    res.redirect(301, '/analytics');
+});
+
+app.get('/Settings.html', (req, res) => {
+    console.log('Redirecting /Settings.html to /settings');
+    res.redirect(301, '/settings');
+});
+
+app.get('/user.html', (req, res) => {
+    console.log('Redirecting /user.html to /user');
+    res.redirect(301, '/user');
+});
+
+app.get('/notifi.html', (req, res) => {
+    console.log('Redirecting /notifi.html to /notifications');
+    res.redirect(301, '/notifications');
+});
+
+app.get('/receipt.html', (req, res) => {
+    console.log('Redirecting /receipt.html to /receipt');
+    res.redirect(301, '/receipt');
+});
+
+app.get('/addproduct.html', (req, res) => {
+    console.log('Redirecting /addproduct.html to /addproduct');
+    res.redirect(301, '/addproduct');
+});
+
+app.get('/editproduct.html', (req, res) => {
+    console.log('Redirecting /editproduct.html to /editproduct');
+    res.redirect(301, '/editproduct');
+});
+
+app.get('/forgot-password.html', (req, res) => {
+    console.log('Redirecting /forgot-password.html to /forgot-password');
+    res.redirect(301, '/forgot-password');
+});
+
+app.get('/reset-password.html', (req, res) => {
+    console.log('Redirecting /reset-password.html to /reset-password');
+    res.redirect(301, '/reset-password');
+});
+
+app.get('/verify-password-reset-otp.html', (req, res) => {
+    console.log('Redirecting /verify-password-reset-otp.html to /verify-password-reset-otp');
+    res.redirect(301, '/verify-password-reset-otp');
+});
+
+// Catch-all redirect for any remaining .html files
+app.get('/*.html', (req, res) => {
+    const cleanPath = req.path.replace('.html', '');
+    console.log(`Redirecting ${req.path} to ${cleanPath}`);
+    res.redirect(301, cleanPath);
 });
 
 // Block access to all HTML files in html directory
@@ -2200,6 +2292,24 @@ app.get('/editproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 
 app.get('/forgot-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'forgot-password.html')));
 app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'reset-password.html')));
 app.get('/verify-password-reset-otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'verify-password-reset-otp.html')));
+
+// Catch-all route for any clean URL (fallback)
+app.get('/*', (req, res, next) => {
+    // Check if it's an API route or static file
+    if (req.path.startsWith('/api/') || req.path.includes('.')) {
+        return next();
+    }
+    
+    // Try to serve HTML file for clean URLs
+    const htmlPath = path.join(__dirname, 'html', req.path + '.html');
+    if (fs.existsSync(htmlPath)) {
+        console.log(`Serving clean URL: ${req.path} -> ${req.path}.html`);
+        return res.sendFile(htmlPath);
+    }
+    
+    // If no HTML file found, continue to next middleware
+    next();
+});
 
 // Test pages (remove these in production)
 app.get('/test-otp', (req, res) => res.sendFile(path.join(__dirname, 'test-otp.html')));
