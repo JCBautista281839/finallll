@@ -1,9 +1,14 @@
 const notifIcon = document.querySelector('.nav-link[title="Notifications"] .nav-icon');
+const notifLink = document.querySelector('.nav-link[title="Notifications"]');
 const dropdown = document.getElementById('notificationDropdown');
 const closeDropdown = document.getElementById('closeDropdown');
-if (notifIcon) {
-    notifIcon.addEventListener('click', function (e) {
+
+// Handle notification click for kitchen users
+if (notifIcon && notifLink) {
+    notifLink.addEventListener('click', function (e) {
         e.preventDefault();
+        e.stopPropagation();
+        
         if (dropdown) {
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
             if (dropdown.style.display === 'block' && typeof loadDropdownNotifications === 'function') {
@@ -179,6 +184,9 @@ function timeAgo(date) {
     return 'Just now';
 }
 document.addEventListener('DOMContentLoaded', function () {
+    // Check if user is kitchen user and block access to notifi.html
+    checkUserRoleAndBlockNotifications();
+    
     var notifLink = document.querySelector('.nav-link[title="Notifications"]');
     if (notifLink) {
         notifLink.addEventListener('click', function () {
@@ -188,3 +196,52 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// Function to check user role and block kitchen users from accessing notifi.html
+async function checkUserRoleAndBlockNotifications() {
+    try {
+        // Check if we're on the kitchen page
+        const isKitchenPage = window.location.pathname.includes('kitchen.html');
+        if (!isKitchenPage) return;
+        
+        // Wait for Firebase to be ready
+        if (typeof initializeFirebase === 'function') {
+            await initializeFirebase();
+        }
+        
+        const user = firebase.auth().currentUser;
+        if (user) {
+            const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const userRole = userData.role || 'admin';
+                
+                if (userRole === 'kitchen') {
+                    console.log('🍳 Kitchen user detected - blocking access to notifi.html');
+                    
+                    // Block any attempts to navigate to notifi.html
+                    window.addEventListener('beforeunload', function(e) {
+                        if (window.location.href.includes('notifi.html')) {
+                            e.preventDefault();
+                            e.returnValue = '';
+                            return '';
+                        }
+                    });
+                    
+                    // Override any links that might redirect to notifi.html
+                    document.addEventListener('click', function(e) {
+                        const target = e.target.closest('a');
+                        if (target && target.href && target.href.includes('notifi.html')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('🍳 Blocked navigation to notifi.html for kitchen user');
+                            return false;
+                        }
+                    });
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking user role for notification blocking:', error);
+    }
+}
