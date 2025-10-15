@@ -2021,10 +2021,39 @@ app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
 /* ====== Simple OTP System (No Email Sending) ====== */
 
 /* ====== Static file serving (must be after API routes) ====== */
+
+// Redirect HTML files to clean URLs (hide .html from URL)
+app.get('/index.html', (req, res) => {
+    console.log('Redirecting /index.html to /');
+    res.redirect(301, '/');
+});
+
+app.get('/login.html', (req, res) => {
+    console.log('Redirecting /login.html to /login');
+    res.redirect(301, '/login');
+});
+
+app.get('/signup.html', (req, res) => {
+    console.log('Redirecting /signup.html to /signup');
+    res.redirect(301, '/signup');
+});
+
+app.get('/otp.html', (req, res) => {
+    console.log('Redirecting /otp.html to /otp');
+    res.redirect(301, '/otp');
+});
+
 app.use(express.static(path.join(__dirname)));
 
 /* ====== Local app routes (static pages) ====== */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+
+// Clean URL routes (without .html)
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'html', 'login.html')));
+app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'html', 'signup.html')));
+app.get('/otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'otp.html')));
+
+// Existing routes
 app.get('/pos', (req, res) => res.sendFile(path.join(__dirname, 'html', 'pos.html')));
 app.get('/payment', (req, res) => res.sendFile(path.join(__dirname, 'html', 'payment.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Dashboard.html')));
