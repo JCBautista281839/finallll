@@ -77,15 +77,8 @@ function initializeCharts() {
 
 // Load charts data from Firebase
 async function loadChartsData() {
-  // Prevent duplicate execution
-  if (window.chartsLoaded) {
-    console.log('Charts already loaded, skipping...');
-    return;
-  }
-  
   try {
     console.log('Loading charts data...');
-    window.chartsLoaded = true;
     
     // Set a timeout to show fallback data if Firebase is slow
     const timeoutId = setTimeout(() => {
@@ -364,6 +357,8 @@ function setCurrentMonth() {
     monthSelect.value = currentMonth.toString();
     updateCurrentMonthDisplay();
     updateChartLabels();
+    // Load charts data for the current month
+    loadChartsData();
   }
 }
 
