@@ -13,8 +13,6 @@ class OMRTestingSystem {
         this.debugMessages = [];
         this.apiBaseUrl = 'http://localhost:5003/api';
 
-        this.webcamStream = null;
-
         this.initializeElements();
         this.setupEventListeners();
         this.checkServerStatus();
@@ -34,14 +32,6 @@ class OMRTestingSystem {
         this.scanBtn = document.getElementById('scanBtn');
         this.clearBtn = document.getElementById('clearBtn');
 
-        // Webcam elements
-        this.webcamBtn = document.getElementById('webcamBtn');
-        this.webcamPreview = document.getElementById('webcamPreview');
-        this.webcamVideo = document.getElementById('webcamVideo');
-        this.webcamCanvas = document.getElementById('webcamCanvas');
-        this.captureBtn = document.getElementById('captureBtn');
-        this.closeWebcamBtn = document.getElementById('closeWebcamBtn');
-
         // Full Scan Upload elements
         this.fullScanUploadArea = document.getElementById('fullScanUploadArea');
         this.fullScanPreview = document.getElementById('fullScanPreview');
@@ -50,7 +40,6 @@ class OMRTestingSystem {
         this.fullScanBrowseBtn = document.getElementById('fullScanBrowseBtn');
         this.fullScanProcessBtn = document.getElementById('fullScanProcessBtn');
         this.fullScanClearBtn = document.getElementById('fullScanClearBtn');
-
 
         // Debug: Check if elements exist
         console.log('Full Scan Upload Area:', this.fullScanUploadArea);
@@ -105,20 +94,6 @@ class OMRTestingSystem {
         // File upload events
         this.browseBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-
-        this.browseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.fileInput.click();
-        });
-        this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-
-        // Webcam events
-        this.webcamBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.startWebcam();
-        });
-        this.captureBtn.addEventListener('click', () => this.captureWebcamImage());
-        this.closeWebcamBtn.addEventListener('click', () => this.stopWebcam());
 
         // Drag and drop events
         this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -176,7 +151,6 @@ class OMRTestingSystem {
     handleDrop(event) {
         event.preventDefault();
         this.uploadArea.classList.remove('dragover');
-
 
         const files = event.dataTransfer.files;
         if (files.length > 0) {
@@ -257,122 +231,9 @@ class OMRTestingSystem {
         this.fileInput.value = '';
         this.uploadArea.style.display = 'block';
         this.uploadPreview.style.display = 'none';
-        this.webcamPreview.style.display = 'none';
-        this.stopWebcam();
         this.resultsContent.innerHTML = this.getEmptyResultsHTML();
         this.addDebugMessage('Upload cleared', 'info');
         this.updateStatus('ready', 'Ready');
-    }
-
-    /**
-     * Start webcam
-     */
-    async startWebcam() {
-        try {
-            this.addDebugMessage('Starting webcam...', 'info');
-
-            // Request webcam access
-            this.webcamStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            });
-
-            this.webcamVideo.srcObject = this.webcamStream;
-            this.uploadArea.style.display = 'none';
-            this.uploadPreview.style.display = 'none';
-            this.webcamPreview.style.display = 'block';
-
-            this.addDebugMessage('Webcam started successfully', 'success');
-            this.updateStatus('ready', 'Webcam Active');
-
-        } catch (error) {
-            this.addDebugMessage(`Webcam error: ${error.message}`, 'error');
-            this.showAlert(`Failed to access webcam: ${error.message}`, 'error');
-        }
-    }
-
-    /**
-     * Stop webcam
-     */
-    stopWebcam() {
-        if (this.webcamStream) {
-            this.webcamStream.getTracks().forEach(track => track.stop());
-            this.webcamStream = null;
-            this.webcamVideo.srcObject = null;
-            this.addDebugMessage('Webcam stopped', 'info');
-        }
-
-        this.webcamPreview.style.display = 'none';
-        this.uploadArea.style.display = 'block';
-        this.updateStatus('ready', 'Ready');
-    }
-
-    /**
-     * Capture image from webcam
-     */
-    async captureWebcamImage() {
-        if (!this.webcamStream) {
-            this.showAlert('Webcam is not active', 'warning');
-            return;
-        }
-
-        try {
-            this.addDebugMessage('Capturing image from webcam...', 'info');
-
-            // Set canvas dimensions to match video
-            this.webcamCanvas.width = this.webcamVideo.videoWidth;
-            this.webcamCanvas.height = this.webcamVideo.videoHeight;
-
-            // Draw video frame to canvas
-            const context = this.webcamCanvas.getContext('2d');
-            context.drawImage(this.webcamVideo, 0, 0);
-
-            // Convert canvas to blob
-            const imageDataURL = this.webcamCanvas.toDataURL('image/png');
-
-            // Upload to backend
-            this.updateStatus('processing', 'Uploading...');
-            this.addDebugMessage('Uploading webcam image to backend...', 'info');
-
-            const response = await fetch(`${this.apiBaseUrl}/upload-webcam`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    image: imageDataURL
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Upload failed: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.currentFilePath = result.data.filepath;
-                this.addDebugMessage(`Webcam image uploaded successfully: ${result.data.filename}`, 'success');
-
-                // Show preview
-                this.previewImage.src = imageDataURL;
-                this.stopWebcam();
-                this.webcamPreview.style.display = 'none';
-                this.uploadPreview.style.display = 'block';
-
-                this.updateStatus('ready', 'Image Captured');
-                this.showAlert('Image captured successfully!', 'success');
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
-
-        } catch (error) {
-            this.addDebugMessage(`Webcam capture error: ${error.message}`, 'error');
-            this.showAlert(`Failed to capture image: ${error.message}`, 'error');
-            this.updateStatus('error', 'Capture Failed');
-        }
     }
 
     /**
@@ -479,7 +340,6 @@ class OMRTestingSystem {
         this.addDebugMessage('Starting basic image scan...', 'info');
         this.updateStatus('processing', 'Scanning...');
 
-
         // Simulate scan process
         setTimeout(() => {
             this.showScanResults({
@@ -524,7 +384,6 @@ class OMRTestingSystem {
             }
 
             const result = await response.json();
-
 
             if (result.success) {
                 this.hideLoading();
@@ -580,7 +439,6 @@ class OMRTestingSystem {
 
             const result = await response.json();
 
-
             if (result.success) {
                 this.hideLoading();
                 this.showScanResults({
@@ -614,7 +472,6 @@ class OMRTestingSystem {
         // Use Full Scan specific file if available, otherwise fall back to main upload
         const filePath = this.fullScanFilePath || this.currentFilePath;
 
-
         if (!filePath) {
             this.showAlert('Please upload an image first (use either the main upload area or the Full Scan upload area)', 'warning');
             return;
@@ -641,7 +498,6 @@ class OMRTestingSystem {
 
             const result = await response.json();
 
-
             if (result.success) {
                 this.hideLoading();
                 this.showScanResults({
@@ -649,7 +505,10 @@ class OMRTestingSystem {
                     message: result.message,
                     details: {
                         scanType: result.data.scan_type,
+                        detectedForm: result.data.detected_form,
+                        formLabel: result.data.form_label,
                         totalCircles: result.data.total_circles,
+                        menuCircles: result.data.menu_circles,
                         selectedItems: result.data.selected_items,
                         totalPrice: result.data.total_price,
                         confidenceScore: result.data.confidence_score,
@@ -696,22 +555,7 @@ class OMRTestingSystem {
         // Add details based on result type
         Object.entries(result.details).forEach(([key, value]) => {
             const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-
-
-            if (key === 'selectedItemsDisplay') {
-                html += `<p class="mb-1"><strong>${formattedKey}:</strong></p><ul>`;
-                value.forEach(item => {
-                    html += `<li>${item}</li>`;
-                });
-                html += `</ul>`;
-            } else if (key === 'debugImage') {
-                html += `<p class="mb-1"><strong>${formattedKey}:</strong> <a href="/api/results/${value}" target="_blank">${value}</a></p>`;
-            } else if (key === 'menuItemsAvailable') {
-            } else if (key === 'menuItemsAvailable') {
-                html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value.join(', ')}</p>`;
-            } else {
-                html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value}</p>`;
-            }
+            html += `<p class="mb-1"><strong>${formattedKey}:</strong> ${value}</p>`;
         });
 
         html += `
@@ -774,10 +618,6 @@ class OMRTestingSystem {
         this.consoleContent.appendChild(messageElement);
         this.consoleContent.scrollTop = this.consoleContent.scrollHeight;
 
-
-        this.consoleContent.appendChild(messageElement);
-        this.consoleContent.scrollTop = this.consoleContent.scrollHeight;
-
         this.debugMessages.push({ timestamp, message, type });
     }
 
@@ -807,9 +647,6 @@ class OMRTestingSystem {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-
-        document.body.appendChild(alertDiv);
-
 
         document.body.appendChild(alertDiv);
 

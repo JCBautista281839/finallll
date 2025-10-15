@@ -528,6 +528,10 @@ function displayScanResults(scanData) {
             if (match && match[3] === 'Shaded') {
                 const itemName = match[2];
 
+                // Filter out N/A items
+                if (itemName === 'N/A' || itemName.trim() === '') {
+                    return; // Skip N/A items
+                }
 
                 // Create item display
                 const itemDiv = document.createElement('div');
@@ -551,6 +555,28 @@ function displayScanResults(scanData) {
     // Update summary
     document.getElementById('omrTotalItems').textContent = scanData.selected_items || 0;
     document.getElementById('omrEstimatedTotal').textContent = `₱${(scanData.total_price || 0).toFixed(2)}`;
+}
+
+/**
+ * Clear OMR scan data
+ */
+function clearOMRScanData() {
+    if (window.currentOMRScanData) {
+        window.currentOMRScanData = null;
+        console.log('OMR Scanner: Cleared detected items data');
+
+        // Also clear any displayed results if the modal is open
+        const resultsContainer = document.getElementById('omrResults');
+        if (resultsContainer && resultsContainer.style.display !== 'none') {
+            // Reset to upload area
+            document.getElementById('omrUploadArea').style.display = 'block';
+            document.getElementById('omrResults').style.display = 'none';
+            document.getElementById('omrProcessing').style.display = 'none';
+        }
+
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -586,6 +612,11 @@ async function addScannedItemsToOrder() {
                 const match = itemStr.match(/ID (\d+): (.+) \((Shaded|Not Shaded)\)/);
                 if (match && match[3] === 'Shaded') {
                     const itemCode = match[2]; // This is the code from OMR sheet
+
+                    // Filter out N/A items
+                    if (itemCode === 'N/A' || itemCode.trim() === '') {
+                        continue; // Skip N/A items
+                    }
 
                     try {
                         // Look up item in Firebase by code first, then by name
