@@ -12,17 +12,10 @@ from pathlib import Path
 def check_python_version():
     """Check if Python version is compatible"""
     if sys.version_info < (3, 7):
-<<<<<<< HEAD
         print("❌ Python 3.7 or higher is required")
         print(f"Current version: {sys.version}")
         return False
     print(f"✅ Python version: {sys.version}")
-=======
-        print("Python 3.7 or higher is required")
-        print(f"Current version: {sys.version}")
-        return False
-    print(f"Python version: {sys.version}")
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     return True
 
 def check_dependencies():
@@ -50,11 +43,7 @@ def check_dependencies():
             print(f"❌ {package} is not installed")
     
     if missing_packages:
-<<<<<<< HEAD
         print(f"\n📦 Missing packages: {', '.join(missing_packages)}")
-=======
-        print(f"\nMissing packages: {', '.join(missing_packages)}")
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         print("Run: pip install -r requirements.txt")
         return False
     
@@ -66,17 +55,10 @@ def install_dependencies():
     try:
         requirements_file = Path(__file__).parent / "requirements.txt"
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(requirements_file)])
-<<<<<<< HEAD
         print("✅ Dependencies installed successfully")
         return True
     except subprocess.CalledProcessError as e:
         print(f"❌ Failed to install dependencies: {e}")
-=======
-        print("Dependencies installed successfully")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to install dependencies: {e}")
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
         return False
 
 def start_server():
@@ -106,11 +88,7 @@ def start_server():
 def main():
     """Main function"""
     print("=" * 50)
-<<<<<<< HEAD
     print("🔧 OMR Testing System - Server Setup")
-=======
-    print("OMR Testing System - Server Setup")
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     print("=" * 50)
     
     # Check Python version
@@ -119,7 +97,6 @@ def main():
     
     # Check dependencies
     if not check_dependencies():
-<<<<<<< HEAD
         print("\n🔧 Attempting to install missing dependencies...")
         if not install_dependencies():
             print("❌ Failed to install dependencies. Please install manually:")
@@ -129,27 +106,12 @@ def main():
     print("\n✅ All checks passed!")
     print("\n🌐 Server will be available at: http://localhost:5003")
     print("📡 API endpoints:")
-=======
-        print("\nAttempting to install missing dependencies...")
-        if not install_dependencies():
-            print("Failed to install dependencies. Please install manually:")
-            print("   pip install -r requirements.txt")
-            return
-    
-    print("\nAll checks passed!")
-    print("\nServer will be available at: http://localhost:5003")
-    print("API endpoints:")
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     print("   - POST /api/upload")
     print("   - POST /api/detect-circles")
     print("   - POST /api/analyze-shaded")
     print("   - POST /api/full-scan")
     print("   - GET /api/health")
-<<<<<<< HEAD
     print("\n🛑 Press Ctrl+C to stop the server")
-=======
-    print("\nPress Ctrl+C to stop the server")
->>>>>>> 128a25f9c0026af4a7416bec064ce91252bea9b8
     print("=" * 50)
     
     # Start the server

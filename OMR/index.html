@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OMR Testing System - Viktoria's Bistro</title>
-
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
     <!-- Header -->
     <header class="header-section">
@@ -56,29 +54,11 @@
                                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                 <h4>Drop your OMR form here</h4>
                                 <p>or click to browse files</p>
-                                <button class="btn btn-primary btn-lg me-2" id="browseBtn">
+                                <button class="btn btn-primary btn-lg" id="browseBtn">
                                     <i class="fas fa-folder-open me-2"></i>
                                     Browse Files
                                 </button>
-                                <button class="btn btn-info btn-lg" id="webcamBtn">
-                                    <i class="fas fa-camera me-2"></i>
-                                    Use Webcam
-                                </button>
                                 <input type="file" id="fileInput" accept="image/*" style="display: none;">
-                            </div>
-                        </div>
-                        <div class="webcam-preview" id="webcamPreview" style="display: none;">
-                            <video id="webcamVideo" class="img-fluid rounded" autoplay playsinline></video>
-                            <canvas id="webcamCanvas" style="display: none;"></canvas>
-                            <div class="preview-actions mt-3">
-                                <button class="btn btn-success me-2" id="captureBtn">
-                                    <i class="fas fa-camera me-2"></i>
-                                    Capture Image
-                                </button>
-                                <button class="btn btn-secondary" id="closeWebcamBtn">
-                                    <i class="fas fa-times me-2"></i>
-                                    Close Webcam
-                                </button>
                             </div>
                         </div>
                         <div class="upload-preview" id="uploadPreview" style="display: none;">
@@ -147,7 +127,7 @@
                                     </div>
                                     <h5>Full OMR Scan</h5>
                                     <p>Complete OMR form processing</p>
-
+                                    
                                     <!-- Full Scan Upload Area -->
                                     <div class="full-scan-upload-area" id="fullScanUploadArea">
                                         <div class="upload-content">
@@ -157,15 +137,13 @@
                                                 <i class="fas fa-folder-open me-1"></i>
                                                 Browse
                                             </button>
-                                            <input type="file" id="fullScanFileInput" accept="image/*"
-                                                style="display: none;">
+                                            <input type="file" id="fullScanFileInput" accept="image/*" style="display: none;">
                                         </div>
                                     </div>
-
+                                    
                                     <!-- Full Scan Preview -->
                                     <div class="full-scan-preview" id="fullScanPreview" style="display: none;">
-                                        <img id="fullScanPreviewImage" class="img-fluid rounded preview-image-small"
-                                            alt="Preview">
+                                        <img id="fullScanPreviewImage" class="img-fluid rounded preview-image-small" alt="Preview">
                                         <div class="preview-actions-small mt-2">
                                             <button class="btn btn-sm btn-success me-1" id="fullScanProcessBtn">
                                                 <i class="fas fa-search me-1"></i>
@@ -177,7 +155,7 @@
                                             </button>
                                         </div>
                                     </div>
-
+                                    
                                     <button class="btn btn-outline-warning" id="fullScanBtn" style="margin-top: 1rem;">
                                         <i class="fas fa-play me-2"></i>
                                         Full Scan
@@ -272,9 +250,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-
+    
     <!-- Custom JavaScript -->
-    <script src="js/omr-testing.js"></script>
+    <script src="js/omr-testing.js?v=5.0"></script>
 </body>
-
 </html>

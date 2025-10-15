@@ -1036,6 +1036,14 @@ async function startPOSSystem() {
                     document.querySelector('.order-items').innerHTML = '';
                     updateOrderSummary();
 
+                    // Clear OMR detected items data
+                    if (typeof clearOMRScanData === 'function') {
+                        clearOMRScanData();
+                    } else if (window.currentOMRScanData) {
+                        window.currentOMRScanData = null;
+                        console.log('OMR Scanner: Cleared detected items data');
+                    }
+
                     // Reset Table No and Pax fields to null
                     const tableInput = document.querySelector('.table-number input');
                     const paxInput = document.querySelector('.pax-number input');
