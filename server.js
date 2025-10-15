@@ -2043,6 +2043,11 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
     const path = req.path.toLowerCase();
     
+    // Check if we're in production (deployed environment)
+    const isProduction = process.env.NODE_ENV === 'production' || 
+                        req.hostname.includes('viktoriasbistro.restaurant') ||
+                        req.hostname.includes('www.viktoriasbistro.restaurant');
+    
     // Block access to sensitive files and directories
     const blockedPatterns = [
         '/javascript/',
@@ -2059,27 +2064,101 @@ app.use((req, res, next) => {
         '/.git',
         '/.gitignore',
         '/README.md',
-        '/ecosystem.config.json'
+        '/ecosystem.config.json',
+        '/customer/',
+        '/lalamove/',
+        '/omr/',
+        '/python-app/',
+        '/functions-package-json.json',
+        '/cloud.js',
+        '/main.js',
+        '/script.js',
+        '/reviews.js',
+        '/feedback-stars.js',
+        '/indexstyle.css',
+        '/style.css'
     ];
+    
+    // Block any path that contains file extensions (except allowed ones)
+    const hasFileExtension = /\.[a-zA-Z0-9]+$/.test(path);
+    const allowedExtensions = ['.html', '.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf'];
+    const isAllowedExtension = allowedExtensions.some(ext => path.endsWith(ext));
+    
+    // Block paths with multiple slashes or suspicious patterns
+    const hasMultipleSlashes = path.includes('//');
+    const hasSuspiciousPatterns = /\.\.|\%2e\%2e|\%2f|\%5c/i.test(path);
     
     // Check if path contains blocked patterns
     const isBlocked = blockedPatterns.some(pattern => path.includes(pattern));
     
-    if (isBlocked) {
-        console.log(`🚫 Blocked access to: ${req.path}`);
+    // In production, be more strict with blocking
+    const shouldBlock = isProduction ? 
+        (isBlocked || (hasFileExtension && !isAllowedExtension) || hasMultipleSlashes || hasSuspiciousPatterns) :
+        (isBlocked || hasMultipleSlashes || hasSuspiciousPatterns);
+    
+    if (shouldBlock) {
+        console.log(`🚫 Blocked manual access to: ${req.path} (Production: ${isProduction})`);
         return res.status(404).send(`
             <!DOCTYPE html>
             <html>
             <head>
                 <title>404 - Page Not Found</title>
                 <style>
-                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                    h1 { color: #e74c3c; }
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 50px; 
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        min-height: 100vh;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                    .container {
+                        background: rgba(255,255,255,0.1);
+                        padding: 40px;
+                        border-radius: 15px;
+                        backdrop-filter: blur(10px);
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                    }
+                    h1 { 
+                        color: #ff6b6b; 
+                        font-size: 3em;
+                        margin-bottom: 20px;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                    }
+                    p { 
+                        font-size: 1.2em; 
+                        margin-bottom: 30px;
+                        opacity: 0.9;
+                    }
+                    .home-btn {
+                        background: #4CAF50;
+                        color: white;
+                        padding: 15px 30px;
+                        text-decoration: none;
+                        border-radius: 25px;
+                        font-weight: bold;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    }
+                    .home-btn:hover {
+                        background: #45a049;
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                    }
                 </style>
             </head>
             <body>
-                <h1>404 - Page Not Found</h1>
-                <p>The requested resource was not found.</p>
+                <div class="container">
+                    <h1>🚫 404</h1>
+                    <p>The requested resource was not found.</p>
+                    <p>Please use the navigation menu to access pages.</p>
+                    <a href="/" class="home-btn">🏠 Go Home</a>
+                </div>
             </body>
             </html>
         `);
@@ -2203,67 +2282,89 @@ app.get('/*.html', (req, res) => {
     res.redirect(301, cleanPath);
 });
 
-// Block access to all HTML files in html directory
-app.get('/html/*', (req, res) => {
-    console.log(`🚫 Blocked direct access to: ${req.path}`);
-    res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>404 - Page Not Found</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                h1 { color: #e74c3c; }
-            </style>
-        </head>
-        <body>
-            <h1>404 - Page Not Found</h1>
-            <p>The requested resource was not found.</p>
-        </body>
-        </html>
-    `);
-});
+// Block access to ALL sensitive directories and files
+const blockedDirectories = [
+    '/html/*',
+    '/javascript/*', 
+    '/css/*',
+    '/src/*',
+    '/uploads/*',
+    '/node_modules/*',
+    '/customer/*',
+    '/lalamove/*',
+    '/omr/*',
+    '/python-app/*'
+];
 
-// Block access to all JavaScript files
-app.get('/javascript/*', (req, res) => {
-    console.log(`🚫 Blocked direct access to: ${req.path}`);
-    res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>404 - Page Not Found</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                h1 { color: #e74c3c; }
-            </style>
-        </head>
-        <body>
-            <h1>404 - Page Not Found</h1>
-            <p>The requested resource was not found.</p>
-        </body>
-        </html>
-    `);
-});
-
-// Block access to all CSS files
-app.get('/css/*', (req, res) => {
-    console.log(`🚫 Blocked direct access to: ${req.path}`);
-    res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>404 - Page Not Found</title>
-            <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                h1 { color: #e74c3c; }
-            </style>
-        </head>
-        <body>
-            <h1>404 - Page Not Found</h1>
-            <p>The requested resource was not found.</p>
-        </body>
-        </html>
-    `);
+// Create blocking routes for all directories
+blockedDirectories.forEach(pattern => {
+    app.get(pattern, (req, res) => {
+        console.log(`🚫 Blocked manual access to: ${req.path}`);
+        res.status(404).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>404 - Access Denied</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 50px; 
+                        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+                        color: white;
+                        min-height: 100vh;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                    .container {
+                        background: rgba(255,255,255,0.1);
+                        padding: 40px;
+                        border-radius: 15px;
+                        backdrop-filter: blur(10px);
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                    }
+                    h1 { 
+                        color: #fff; 
+                        font-size: 3em;
+                        margin-bottom: 20px;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                    }
+                    p { 
+                        font-size: 1.2em; 
+                        margin-bottom: 30px;
+                        opacity: 0.9;
+                    }
+                    .home-btn {
+                        background: #4CAF50;
+                        color: white;
+                        padding: 15px 30px;
+                        text-decoration: none;
+                        border-radius: 25px;
+                        font-weight: bold;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    }
+                    .home-btn:hover {
+                        background: #45a049;
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🚫 Access Denied</h1>
+                    <p>Direct access to this path is not allowed.</p>
+                    <p>Please use the navigation menu to access pages.</p>
+                    <a href="/" class="home-btn">🏠 Go Home</a>
+                </div>
+            </body>
+            </html>
+        `);
+    });
 });
 
 app.use(express.static(path.join(__dirname)));
