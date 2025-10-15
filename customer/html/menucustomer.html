@@ -375,10 +375,11 @@
       // Initialize Firebase and cart
       initializeCart();
 
-      // Clear any existing cart data on page load
-      clearCartData();
+      // ⚠️ DO NOT CLEAR CART ON PAGE LOAD - Cart should persist across navigation!
+      // clearCartData(); ← REMOVED to allow cart persistence
+      // Only clear cart after successful order completion (handled in shipping.js)
 
-      // Function to clear cart data
+      // Function to clear cart data (reserved for order completion only)
       function clearCartData() {
         try {
           // Clear cart items array
