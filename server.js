@@ -71,7 +71,7 @@ const app = express();
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps or curl requests, file://, etc.)
     if (!origin) return callback(null, true);
 
     // List of allowed origins
@@ -82,13 +82,18 @@ const corsOptions = {
       'http://127.0.0.1:5001',
       'http://127.0.0.1:5500',
       'http://localhost:5500',
+      'file://',
+      'null',
       'https://viktoriasbistro.restaurant',
       'https://www.viktoriasbistro.restaurant',
       'http://viktoriasbistro.restaurant',
       'http://www.viktoriasbistro.restaurant'
     ];
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Allow all localhost/127.0.0.1 origins for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1') || origin === 'null') {
+      callback(null, true);
+    } else if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       console.log(`CORS blocked origin: ${origin}`);
@@ -2292,6 +2297,74 @@ async function sendAdminSecurityAlert(email, eventType) {
     console.error(`[Admin Alert] Error sending security alert:`, error.message);
   }
 }
+
+// Check if email exists endpoint
+app.post('/api/check-email-exists', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address'
+      });
+    }
+
+    console.log(`[Check Email Exists] Checking email: ${email}`);
+
+    if (admin.apps && admin.apps.length > 0) {
+      try {
+        // Use Firebase Admin SDK to check if user exists
+        const userRecord = await admin.auth().getUserByEmail(email);
+        console.log(`[Check Email Exists] ✅ Email exists: ${email}`);
+        
+        return res.json({
+          success: true,
+          exists: true,
+          message: 'Email already registered'
+        });
+      } catch (firebaseError) {
+        if (firebaseError.code === 'auth/user-not-found') {
+          console.log(`[Check Email Exists] ✅ Email available: ${email}`);
+          
+          return res.json({
+            success: true,
+            exists: false,
+            message: 'Email is available for registration'
+          });
+        } else {
+          console.error(`[Check Email Exists] Firebase error: ${firebaseError.message}`);
+          return res.status(500).json({
+            success: false,
+            message: 'Error checking email availability'
+          });
+        }
+      }
+    } else {
+      console.log('⚠️ Firebase Admin SDK not available');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error'
+      });
+    }
+
+  } catch (error) {
+    console.error('[Check Email Exists] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while checking email'
+    });
+  }
+});
 
 // Send Password Reset OTP endpoint
 app.post('/api/send-password-reset-otp', rateLimitMiddleware, async (req, res) => {

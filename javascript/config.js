@@ -27,7 +27,8 @@ const API_CONFIG = {
         if (isProduction) {
             console.log('🚀 Production environment detected, using production server');
             return 'https://viktoriasbistro.restaurant';
-        } else if (isLocal && isDevPort) {
+        } else if (isLocal) {
+            // For any localhost access (including file://, Live Server, etc.), use local server
             console.log('🔧 Development environment detected, using local server');
             return 'http://localhost:5001';
         } else {
