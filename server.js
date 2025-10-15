@@ -2020,6 +2020,74 @@ app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
 
 /* ====== Simple OTP System (No Email Sending) ====== */
 
+/* ====== Security Middleware - Block Direct File Access ====== */
+
+// Add security headers
+app.use((req, res, next) => {
+    // Hide server information
+    res.setHeader('X-Powered-By', 'Victoria\'s Bistro');
+    
+    // Prevent clickjacking
+    res.setHeader('X-Frame-Options', 'DENY');
+    
+    // Prevent MIME type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    // Enable XSS protection
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    
+    next();
+});
+
+// Block access to sensitive directories and files
+app.use((req, res, next) => {
+    const path = req.path.toLowerCase();
+    
+    // Block access to sensitive files and directories
+    const blockedPatterns = [
+        '/javascript/',
+        '/css/',
+        '/html/',
+        '/src/',
+        '/uploads/',
+        '/node_modules/',
+        '/.env',
+        '/package.json',
+        '/package-lock.json',
+        '/server.js',
+        '/firebase-service-account.json',
+        '/.git',
+        '/.gitignore',
+        '/README.md',
+        '/ecosystem.config.json'
+    ];
+    
+    // Check if path contains blocked patterns
+    const isBlocked = blockedPatterns.some(pattern => path.includes(pattern));
+    
+    if (isBlocked) {
+        console.log(`🚫 Blocked access to: ${req.path}`);
+        return res.status(404).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>404 - Page Not Found</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                    h1 { color: #e74c3c; }
+                </style>
+            </head>
+            <body>
+                <h1>404 - Page Not Found</h1>
+                <p>The requested resource was not found.</p>
+            </body>
+            </html>
+        `);
+    }
+    
+    next();
+});
+
 /* ====== Static file serving (must be after API routes) ====== */
 
 // Redirect HTML files to clean URLs (hide .html from URL)
@@ -2043,23 +2111,97 @@ app.get('/otp.html', (req, res) => {
     res.redirect(301, '/otp');
 });
 
+// Block access to all HTML files in html directory
+app.get('/html/*', (req, res) => {
+    console.log(`🚫 Blocked direct access to: ${req.path}`);
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>404 - Page Not Found</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h1 { color: #e74c3c; }
+            </style>
+        </head>
+        <body>
+            <h1>404 - Page Not Found</h1>
+            <p>The requested resource was not found.</p>
+        </body>
+        </html>
+    `);
+});
+
+// Block access to all JavaScript files
+app.get('/javascript/*', (req, res) => {
+    console.log(`🚫 Blocked direct access to: ${req.path}`);
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>404 - Page Not Found</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h1 { color: #e74c3c; }
+            </style>
+        </head>
+        <body>
+            <h1>404 - Page Not Found</h1>
+            <p>The requested resource was not found.</p>
+        </body>
+        </html>
+    `);
+});
+
+// Block access to all CSS files
+app.get('/css/*', (req, res) => {
+    console.log(`🚫 Blocked direct access to: ${req.path}`);
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>404 - Page Not Found</title>
+            <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h1 { color: #e74c3c; }
+            </style>
+        </head>
+        <body>
+            <h1>404 - Page Not Found</h1>
+            <p>The requested resource was not found.</p>
+        </body>
+        </html>
+    `);
+});
+
 app.use(express.static(path.join(__dirname)));
 
 /* ====== Local app routes (static pages) ====== */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-// Clean URL routes (without .html)
+// Clean URL routes (without .html) - All pages accessible via clean URLs
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'html', 'login.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'html', 'signup.html')));
 app.get('/otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'otp.html')));
-
-// Existing routes
 app.get('/pos', (req, res) => res.sendFile(path.join(__dirname, 'html', 'pos.html')));
 app.get('/payment', (req, res) => res.sendFile(path.join(__dirname, 'html', 'payment.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Dashboard.html')));
 app.get('/menu', (req, res) => res.sendFile(path.join(__dirname, 'html', 'menu.html')));
 app.get('/inventory', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Inventory.html')));
 app.get('/order', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Order.html')));
+app.get('/kitchen', (req, res) => res.sendFile(path.join(__dirname, 'html', 'kitchen.html')));
+app.get('/analytics', (req, res) => res.sendFile(path.join(__dirname, 'html', 'analytics.html')));
+app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Settings.html')));
+app.get('/user', (req, res) => res.sendFile(path.join(__dirname, 'html', 'user.html')));
+app.get('/notifications', (req, res) => res.sendFile(path.join(__dirname, 'html', 'notifi.html')));
+app.get('/receipt', (req, res) => res.sendFile(path.join(__dirname, 'html', 'receipt.html')));
+app.get('/addproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'addproduct.html')));
+app.get('/editproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'editproduct.html')));
+app.get('/forgot-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'forgot-password.html')));
+app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'reset-password.html')));
+app.get('/verify-password-reset-otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'verify-password-reset-otp.html')));
+
+// Test pages (remove these in production)
 app.get('/test-otp', (req, res) => res.sendFile(path.join(__dirname, 'test-otp.html')));
 app.get('/simple-test', (req, res) => res.sendFile(path.join(__dirname, 'simple-test.html')));
 app.get('/test-firebase-otp', (req, res) => res.sendFile(path.join(__dirname, 'test-firebase-otp.html')));
