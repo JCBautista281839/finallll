@@ -111,6 +111,16 @@ body {
     padding-right: 50px;
 }
 
+/* Hide browser default password reveal buttons */
+.password-container .form-input::-ms-reveal,
+.password-container .form-input::-ms-clear {
+    display: none;
+}
+
+.password-container .form-input::-webkit-credentials-auto-fill-button {
+    display: none !important;
+}
+
 .form-input:focus {
     outline: none;
     border-color: #8B2E20;

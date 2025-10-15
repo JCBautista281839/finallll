@@ -155,14 +155,83 @@ function closeMessageModal() {
     document.getElementById('messageModal').style.display = 'none';
 }
 
+// Check if email already exists in Firebase Auth
+async function checkEmailExists(email) {
+    try {
+        console.log('🔍 Checking if email exists:', email);
+        
+        // Method 1: Try fetchSignInMethodsForEmail first
+        try {
+            const signInMethods = await firebase.auth().fetchSignInMethodsForEmail(email);
+            
+            if (signInMethods && signInMethods.length > 0) {
+                console.log('❌ Email already exists in system (method 1)');
+                return true;
+            }
+        } catch (fetchError) {
+            console.log('⚠️ fetchSignInMethodsForEmail failed, trying alternative...');
+        }
+        
+        // Method 2: Try to create a user with a temporary password
+        try {
+            const tempPassword = 'TempCheck123!@#' + Math.random().toString(36).substring(7);
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, tempPassword);
+            
+            // If we reach here, the email was available and user was created
+            console.log('✅ Email is available for registration (method 2)');
+            
+            // Delete the temporary user immediately
+            await userCredential.user.delete();
+            console.log('🗑️ Temporary user deleted');
+            
+            return false;
+        } catch (createError) {
+            if (createError.code === 'auth/email-already-in-use') {
+                console.log('❌ Email already exists in system (method 2)');
+                return true;
+            } else {
+                console.error('❌ Create user method failed:', createError);
+                // If all methods fail, allow signup to proceed
+                return false;
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ Error checking email existence:', error);
+        
+        // If there's an error checking, we'll allow the signup to proceed
+        // This prevents blocking legitimate users due to network issues
+        console.log('⚠️ Email check failed, allowing signup to proceed');
+        return false;
+    }
+}
+
 // Generate OTP and store signup data (without creating Firebase user yet)
 async function initiateSignupProcess(name, email, phone, password) {
     try {
         // Show loading state
         const continueBtn = document.querySelector('.login-btn');
         const originalText = continueBtn.textContent;
-        continueBtn.textContent = 'Sending Verification Code...';
+        continueBtn.textContent = 'Checking Email...';
         continueBtn.disabled = true;
+
+        // Check if email already exists
+        const emailExists = await checkEmailExists(email);
+        
+        if (emailExists) {
+            // Reset button state
+            continueBtn.textContent = originalText;
+            continueBtn.disabled = false;
+            
+            // Show error message
+            showError('This email address is already registered. Please use a different email or try logging in.');
+            return;
+        }
+
+        console.log('✅ Email is available, proceeding with signup for email:', email);
+
+        // Update loading state
+        continueBtn.textContent = 'Sending Verification Code...';
 
         // Store user info in localStorage for OTP verification
         localStorage.setItem('signupEmail', email);
@@ -282,7 +351,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners for real-time validation
     nameInput.addEventListener('input', updateButtonState);
-    emailInput.addEventListener('input', updateButtonState);
+    emailInput.addEventListener('input', function() {
+        updateButtonState();
+        // Add real-time email validation with debouncing
+        clearTimeout(emailInput.validationTimeout);
+        emailInput.validationTimeout = setTimeout(() => {
+            validateEmailRealTime(emailInput.value.trim());
+        }, 1000); // Wait 1 second after user stops typing
+    });
     phoneInput.addEventListener('input', updateButtonState);
     passwordInput.addEventListener('input', function() {
         updatePasswordRequirements();
@@ -352,13 +428,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Validate all requirements
         const nameValid = name.length > 0;
-        const emailValid = isValidEmail(email);
+        const emailValid = email.length > 0 && isValidEmail(email); // Check if email is not empty and has valid format
         const phoneValid = isValidPhone(phone);
         const passwordValid = validatePassword(password);
         const confirmPasswordValid = password === confirmPassword && confirmPassword.length > 0;
         const termsValid = termsChecked;
+        
+        // Check if there's an email error (indicating email is already taken)
+        const emailError = emailInput.parentNode.querySelector('.email-error');
+        const emailAvailable = !emailError || !emailError.textContent.includes('already registered');
 
-        const allValid = nameValid && emailValid && phoneValid && passwordValid && confirmPasswordValid && termsValid;
+        const allValid = nameValid && emailValid && phoneValid && passwordValid && confirmPasswordValid && termsValid && emailAvailable;
 
         if (allValid) {
             continueBtn.disabled = false;
@@ -390,6 +470,111 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasNumber = /\d/.test(password);
         const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
         return hasMinLength && hasNumber && hasSymbol;
+    }
+
+    // Real-time email validation function
+    async function validateEmailRealTime(email) {
+        if (!email || email.length === 0) {
+            clearEmailError();
+            return;
+        }
+
+        // Basic email format validation first
+        if (!isValidEmail(email)) {
+            showEmailError('Please enter a valid email address.');
+            return;
+        }
+
+        // Show checking state
+        showEmailChecking();
+
+        try {
+            const emailExists = await checkEmailExists(email);
+            
+            if (emailExists) {
+                showEmailError('This email address is already registered. Please use a different email.');
+            } else {
+                showEmailSuccess('Email is available for registration.');
+            }
+        } catch (error) {
+            console.error('Error during real-time email validation:', error);
+            clearEmailError(); // Clear any error state on network issues
+        }
+    }
+
+    // Helper functions for email error display
+    function showEmailError(message) {
+        // Remove existing error message
+        const existingError = emailInput.parentNode.querySelector('.email-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add error styling
+        emailInput.style.borderColor = '#dc3545';
+        
+        // Create error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'email-error';
+        errorDiv.style.color = '#dc3545';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = message;
+        
+        emailInput.parentNode.appendChild(errorDiv);
+    }
+    
+    function showEmailChecking() {
+        // Remove existing messages
+        const existingError = emailInput.parentNode.querySelector('.email-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add checking styling
+        emailInput.style.borderColor = '#ffc107';
+        
+        // Create checking message
+        const checkingDiv = document.createElement('div');
+        checkingDiv.className = 'email-error';
+        checkingDiv.style.color = '#ffc107';
+        checkingDiv.style.fontSize = '12px';
+        checkingDiv.style.marginTop = '5px';
+        checkingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking email availability...';
+        
+        emailInput.parentNode.appendChild(checkingDiv);
+    }
+    
+    function showEmailSuccess(message) {
+        // Remove existing error message
+        const existingError = emailInput.parentNode.querySelector('.email-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add success styling
+        emailInput.style.borderColor = '#28a745';
+        
+        // Create success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'email-error';
+        successDiv.style.color = '#28a745';
+        successDiv.style.fontSize = '12px';
+        successDiv.style.marginTop = '5px';
+        successDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
+        
+        emailInput.parentNode.appendChild(successDiv);
+    }
+    
+    function clearEmailError() {
+        // Remove existing error message
+        const existingError = emailInput.parentNode.querySelector('.email-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Reset border color
+        emailInput.style.borderColor = '';
     }
 
     // Form submission

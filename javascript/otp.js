@@ -491,6 +491,13 @@ class OTPVerificationManager {
             localStorage.removeItem('signupPassword');
 
             console.log('✅ Firebase user account created successfully');
+            
+            // Sign out the user so they need to log in manually
+            await firebase.auth().signOut();
+            
+            // Redirect to login page immediately (no pop-up message)
+            window.location.href = '../html/login.html';
+            
             return user;
 
         } catch (error) {
