@@ -15,25 +15,40 @@ from typing import Dict, List, Tuple, Optional
 class OMRScanner:
     def __init__(self):
         """Initialize OMR Scanner with default parameters"""
-        self.menu_items = [
+        # Form 1 menu items - ordered exactly as they appear on physical Form 1
+        # Reading by column (left to right), then top to bottom within each column
+        self.form1_items = [
+            # Column 1 (circles 3-16)
             'WhtRc', 'Bangsi', 'TnaPng', 'PnkBagn', 'Bulalo',  
             'MacChs', 'OvrBngs', 'Carbo', 'OrgChk', 'PltWhtRc',  
-            'RB-Bina', 'Viktoria’s Classic', 'SngTun', 'Alfrdo', 'Tapsi',  
-            'SzTofu', 'Porksi', 'PrkSsg', 'SprRc', 'Lechsi',  
+            'RB-Bina', 'Viktoria\'s Classic', 'SngTun', 'Alfrdo',
+            # Column 2 (circles 17-32)
+            'Tapsi', 'SzTofu', 'Porksi', 'PrkSsg', 'SprRc', 'Lechsi',  
             'Fst3', 'Parmesan Wings', 'Crispy Diniguan w/ Rice', 'ChkSsg', 'PrkRc',  
-            'VktChk', 'BcnEggChs', 'BgrRc', 'PltGrlcRc', 'BfKald',  
+            'VktChk', 'BcnEggChs', 'BgrRc', 'PltGrlcRc', 'BfKald',
+            # Column 3 (circles 33-43)
             'ChickBul', 'Chk&Moj', 'RB-KK', 'Fst2', 'SisiSi',  
-            'Cal&Frs', 'GrnSld', 'OrgChkR', 'ChkFil', 'Chksi',  
-            'TstBrd', 'SngBab', 'Fst1', 'RB-BulDng', 'ClbHse',  
-            'Liemsi', 'RB-Tofu', 'AmpCar', 'Bagn', 'Htdog',  
-            'Mojos', 'TndRc', 'RB-Kald', 'Chopsy', 'FshFil',  
-            'Hotsi', 'Longsi', 'BtrShrp', 'CrisKK', 'HnyWngs',  
-            'Tocsi', 'Spag', 'CrsPata', 'TbnRc', 'Egg',  
-            'CdnBlu', 'Nachos', 'SngHip', 'GrlcRc', 'Fst4',  
-            'Viktoria’s Cheesy Bacon', 'Fish&Moj', 'FrFrs', 'ChkTapa', 'BufWngs',  
-            'Viktoria’s Double Cheesy Bacon', 'HamEggChs', 'BfBroc', 'CrisDng'
-
+            'Cal&Frs', 'GrnSld', 'OrgChkR', 'ChkFil', 'Chksi', 'TstBrd'
         ]
+        
+        # Form 2 menu items - ordered exactly as they appear on physical Form 2
+        # Reading by column (left to right), then top to bottom within each column
+        self.form2_items = [
+            # Column 1 (circles 3-16)
+            'SngBab', 'Fst1', 'RB-BulDng', 'ClbHse', 'Liemsi', 'RB-Tofu',
+            'AmpCar', 'Bagn', 'Htdog', 'Mojos', 'TndRc', 'RB-Kald',
+            'Chopsy', 'FshFil',
+            # Column 2 (circles 17-32)
+            'Hotsi', 'Longsi', 'BtrShrp', 'CrisKK', 'HnyWngs', 'Tocsi',
+            'Spag', 'CrsPata', 'TbnRc', 'Egg', 'CdnBlu', 'Nachos',
+            'SngHip', 'GrlcRc', 'Fst4', 'Viktoria\'s Cheesy Bacon',
+            # Column 3 (circles 33-40)
+            'Fish&Moj', 'FrFrs', 'ChkTapa', 'BufWngs', 
+            'Viktoria\'s Double Cheesy Bacon', 'HamEggChs', 'BfBroc', 'CrisDng'
+        ]
+        
+        # Combined menu items for backward compatibility
+        self.menu_items = ['Form 1', 'Form 2'] + self.form1_items + self.form2_items
         
         # Circle detection parameters
         self.circle_params = {
@@ -187,8 +202,28 @@ class OMRScanner:
             if circles is not None:
                 circles = np.round(circles[0, :]).astype("int")
                 
-    
-                circles = sorted(circles, key=lambda c: (c[0], c[1]))
+                # Group circles into columns based on X position
+                # First, sort by X to identify columns
+                sorted_by_x = sorted(circles, key=lambda c: c[0])
+                
+                # Group circles into columns (with tolerance for X position variations)
+                columns = []
+                current_column = [sorted_by_x[0]]
+                column_tolerance = 100  # pixels - circles within this X distance are in the same column
+                
+                for circle in sorted_by_x[1:]:
+                    if abs(circle[0] - current_column[0][0]) < column_tolerance:
+                        current_column.append(circle)
+                    else:
+                        # Sort current column by Y position (top to bottom)
+                        columns.append(sorted(current_column, key=lambda c: c[1]))
+                        current_column = [circle]
+                
+                # Don't forget the last column
+                columns.append(sorted(current_column, key=lambda c: c[1]))
+                
+                # Flatten columns back into a single list
+                circles = [circle for column in columns for circle in column]
                 
                 for i, (x, y, r) in enumerate(circles):
                     circle_data.append({
@@ -255,6 +290,64 @@ class OMRScanner:
         )
         
         return is_shaded, fill_percentage
+
+    def detect_form_identifier(self, gray_image: np.ndarray, circles: List[Dict]) -> Tuple[int, str]:
+        """
+        Detect which form is being used by checking the first 2 circles (form identifier circles)
+        The form should have circles marked as:
+        - Circle 1 shaded = Form 1 (41 menu items)
+        - Circle 2 shaded = Form 2 (38 menu items)
+        
+        Returns: (form_number, form_label)
+        """
+        if len(circles) < 2:
+            # Not enough circles to detect form identifier
+            return 0, "Unknown Form - Using full list"
+        
+        # Group circles into columns, then sort by Y within each column
+        sorted_by_x = sorted(circles, key=lambda c: c['center'][0])
+        columns = []
+        current_column = [sorted_by_x[0]]
+        column_tolerance = 100
+        
+        for circle in sorted_by_x[1:]:
+            if abs(circle['center'][0] - current_column[0]['center'][0]) < column_tolerance:
+                current_column.append(circle)
+            else:
+                columns.append(sorted(current_column, key=lambda c: c['center'][1]))
+                current_column = [circle]
+        columns.append(sorted(current_column, key=lambda c: c['center'][1]))
+        
+        # Flatten and get first two circles
+        sorted_circles = [circle for column in columns for circle in column]
+        
+        # Check the first two circles (should be form identifier circles)
+        form1_circle = sorted_circles[0]
+        form2_circle = sorted_circles[1]
+        
+        # Get fill percentages for both circles
+        _, form1_fill = self.analyze_circle_fill(gray_image, form1_circle)
+        _, form2_fill = self.analyze_circle_fill(gray_image, form2_circle)
+        
+        print(f"Form Identifier Detection:")
+        print(f"  Circle 1 (Form 1): Fill={form1_fill:.1f}%")
+        print(f"  Circle 2 (Form 2): Fill={form2_fill:.1f}%")
+        
+        # Use relative comparison - whichever has higher fill is considered marked
+        # As long as the difference is significant (>5%)
+        fill_diff = abs(form1_fill - form2_fill)
+        
+        if fill_diff > 5:  # Significant difference
+            if form1_fill > form2_fill:
+                print(f"  → Form 1 selected (fill difference: {fill_diff:.1f}%)")
+                return 1, "Form 1 (41 menu items)"
+            else:
+                print(f"  → Form 2 selected (fill difference: {fill_diff:.1f}%)")
+                return 2, "Form 2 (38 menu items)"
+        else:
+            # Not clear which one is marked
+            print(f"  → No clear form identifier (difference only {fill_diff:.1f}%)")
+            return 0, "Warning: No clear form identifier - Using full list"
 
     def analyze_shaded_circles(self, filepath: str, circles_data: Optional[List[Dict]] = None) -> Dict:
         """Analyze shaded/filled circles in the image"""
@@ -351,19 +444,54 @@ class OMRScanner:
             
             circles = circles_result['circles']
             
+            # Detect which form is being used (Form 1 or Form 2)
+            detected_form, form_label = self.detect_form_identifier(gray, circles)
+            print(f"Detected Form: {form_label}")
+            
+            # Select appropriate menu items list and skip form identifier circles
+            if detected_form == 1:
+                active_menu_items = self.form1_items
+                menu_circles = circles[2:]  # Skip first 2 circles (form identifiers)
+                print("Using Form 1 menu items (41 items)")
+            elif detected_form == 2:
+                active_menu_items = self.form2_items
+                menu_circles = circles[2:]  # Skip first 2 circles (form identifiers)
+                print("Using Form 2 menu items (38 items)")
+            else:
+                active_menu_items = self.menu_items
+                menu_circles = circles  # Use all circles if form not identified
+                print("Using full menu items list")
+            
             # Analyze shaded circles, passing the detected circles
             shaded_result = self.analyze_shaded_circles(filepath, circles_data=circles)
             if 'error' in shaded_result:
                 return shaded_result
             
-            # Map shaded circles to menu items
+            # Map shaded circles to menu items (skipping form identifier circles if detected)
             selected_items = [] # Re-introduce for calculations
             selected_items_display = []
-            for i, circle in enumerate(circles): # Iterate through all circles, not just shaded ones
-                item_name = self.menu_items[i] if i < len(self.menu_items) else "N/A"
+            
+            # Determine starting index based on detected form
+            start_index = 2 if detected_form in [1, 2] else 0  # Skip first 2 if form detected
+            
+            for i, circle in enumerate(circles): # Iterate through all circles
+                # For form identifier circles (first 2 when form is detected)
+                if detected_form in [1, 2] and i < 2:
+                    is_shaded = any(c['id'] == circle['id'] for c in shaded_result['shaded_circle_data'])
+                    if i == 0:
+                        item_name = "FORM_ID_1"
+                    else:
+                        item_name = "FORM_ID_2"
+                    status = "Shaded" if is_shaded else "Not Shaded"
+                    selected_items_display.append(f"ID {circle['id']}: {item_name} ({status})")
+                    continue
+                
+                # For menu item circles
+                menu_index = i - start_index
+                item_name = active_menu_items[menu_index] if menu_index < len(active_menu_items) else "N/A"
                 is_shaded = any(c['id'] == circle['id'] for c in shaded_result['shaded_circle_data'])
                 
-                if is_shaded and i < len(self.menu_items): # Only add shaded items for price/confidence calculation
+                if is_shaded and menu_index >= 0 and menu_index < len(active_menu_items): # Only add shaded menu items
                     selected_items.append({
                         'item': item_name,
                         'quantity': 1,
@@ -391,16 +519,14 @@ class OMRScanner:
                 color = (0, 255, 0) if is_shaded else (0, 0, 255) # Green for shaded, Red for empty
                 cv2.circle(debug_image, (x, y), r, color, 3)
                 
-                # Find the corresponding item name for the circle ID
-                item_name = "N/A"
-                for item_data in selected_items:
-                    # This logic assumes a direct mapping from circle index to menu_items index.
-                    # We need to refine this to map based on circle ID if possible, but for now, 
-                    # we'll stick to the existing index-based mapping for item names.
-                    # However, the is_shaded logic is now correctly based on detected shaded circles.
-                    if i < len(self.menu_items):
-                        item_name = self.menu_items[i]
-                        break
+                # Get the correct item name based on form detection
+                if detected_form in [1, 2] and i < 2:
+                    # Form identifier circles
+                    item_name = "FORM_ID_1" if i == 0 else "FORM_ID_2"
+                else:
+                    # Menu item circles - use active_menu_items based on detected form
+                    menu_index = i - start_index
+                    item_name = active_menu_items[menu_index] if menu_index >= 0 and menu_index < len(active_menu_items) else "N/A"
                 
                 if is_shaded:
                     cv2.putText(debug_image, f" {item_name}", (x-30, y-r-15), 
@@ -411,11 +537,13 @@ class OMRScanner:
                 cv2.putText(debug_image, str(current_circle_id), (x-10, y+5), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1) # Add circle ID
             
-            # Add summary text
+            # Add summary text including form information
+            cv2.putText(debug_image, form_label, 
+                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 255), 2)
             cv2.putText(debug_image, f"Total Items: {len(selected_items)}", 
-                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
-            cv2.putText(debug_image, f"Total Price: ${total_price:.2f}", 
                        (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+            cv2.putText(debug_image, f"Total Price: ${total_price:.2f}", 
+                       (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
             
             # Save debug image
             debug_filename = f"full_omr_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
@@ -424,15 +552,18 @@ class OMRScanner:
             
             return {
                 'scan_type': 'FULL_OMR_SCAN',
+                'detected_form': detected_form,
+                'form_label': form_label,
                 'total_circles': len(circles),
+                'menu_circles': len(menu_circles) if detected_form in [1, 2] else len(circles),
                 'selected_items': len(selected_items),
-                'selected_item_data': selected_items_display, # Use the new display-ready list
+                'selected_item_data': selected_items_display,
                 'total_price': round(total_price, 2),
-                'menu_items_available': self.menu_items,
+                'menu_items_available': active_menu_items,
                 'debug_image': debug_filename,
                 'processing_time': datetime.now().isoformat(),
                 'confidence_score': round(np.mean([item['confidence'] for item in selected_items]) if selected_items else 0, 1),
-                'selected_items_display': selected_items_display # Ensure this is also available
+                'selected_items_display': selected_items_display
             }
             
         except Exception as e:

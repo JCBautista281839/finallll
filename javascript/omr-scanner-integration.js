@@ -370,6 +370,12 @@ async function captureOMRWebcamImage() {
         }
 
         console.log('OMR Scanner: Scan successful:', scanResult.data);
+        console.log('OMR Scanner: Full scan data structure:', JSON.stringify(scanResult.data, null, 2));
+
+        // Check if scanResult.data is valid
+        if (!scanResult.data || typeof scanResult.data !== 'object') {
+            throw new Error('Invalid scan data received from server');
+        }
 
         // Display results
         displayScanResults(scanResult.data);
@@ -449,6 +455,12 @@ async function handleFileUpload(file) {
         }
 
         console.log('OMR Scanner: Scan successful:', scanResult.data);
+        console.log('OMR Scanner: Full scan data structure:', JSON.stringify(scanResult.data, null, 2));
+
+        // Check if scanResult.data is valid
+        if (!scanResult.data || typeof scanResult.data !== 'object') {
+            throw new Error('Invalid scan data received from server');
+        }
 
         // Step 3: Display results
         // Save scan data globally for later use
@@ -516,10 +528,24 @@ async function performFullScan(filepath) {
  * Display scan results
  */
 function displayScanResults(scanData) {
+    console.log('OMR Scanner: Displaying scan results:', scanData);
+    console.log('OMR Scanner: selected_item_data:', scanData.selected_item_data);
+    console.log('OMR Scanner: selected_items:', scanData.selected_items);
+
+    // Check if scanData is valid
+    if (!scanData || typeof scanData !== 'object') {
+        console.error('OMR Scanner: Invalid scan data provided to displayScanResults');
+        showError('Invalid scan data received');
+        return;
+    }
+
     document.getElementById('omrProcessing').style.display = 'none';
     document.getElementById('omrResults').style.display = 'block';
 
     const itemsList = document.getElementById('omrItemsList');
+    // Clear previous results
+    itemsList.innerHTML = '';
+
     // Parse and display items
     if (scanData.selected_item_data && Array.isArray(scanData.selected_item_data)) {
         scanData.selected_item_data.forEach((itemStr, index) => {
@@ -555,8 +581,13 @@ function displayScanResults(scanData) {
 
 
     // Update summary
-    document.getElementById('omrTotalItems').textContent = scanData.selected_items || 0;
-    document.getElementById('omrEstimatedTotal').textContent = `₱${(scanData.total_price || 0).toFixed(2)}`;
+    const totalItems = scanData.selected_items || 0;
+    const totalPrice = scanData.total_price || 0;
+
+    console.log('OMR Scanner: Summary - Total Items:', totalItems, 'Total Price:', totalPrice);
+
+    document.getElementById('omrTotalItems').textContent = totalItems;
+    document.getElementById('omrEstimatedTotal').textContent = `₱${totalPrice.toFixed(2)}`;
 }
 
 /**
