@@ -1,3 +1,30 @@
+@font-face {
+    font-family: 'PoppinsMedium';
+    src: url('../src/fonts/Poppins-Medium.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'PoppinsBlack';
+    src: url('../src/fonts/Poppins-Black.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'PoppinsRegular';
+    src: url('../src/fonts/Poppins-Regular.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+  }
+  
+  @font-face {
+    font-family: 'PoppinsExtraLight';
+    src: url('../src/fonts/Poppins-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+  }
 
 #topProductsScroll {
     max-height: 140px;
@@ -11,13 +38,17 @@
 }
 body { 
     background: #f3f3f3; 
+    font-family: 'PoppinsRegular';
 }
+
 .analytics-card { 
     background: #fff; 
-    border-radius: 32px; 
+    border-radius: 40px; 
     padding: 2rem; 
     box-shadow: 0 2px 16px rgba(0,0,0,0.04); 
+    margin-top: -25px;
 }
+
 .analytics-title { 
     font-size: 1.5rem; 
     font-weight: 600;
@@ -44,6 +75,7 @@ body {
     align-items: center;
     margin-bottom: 2rem; 
 }
+
 .analytics-charts { 
     display: flex; 
     flex-direction: column;

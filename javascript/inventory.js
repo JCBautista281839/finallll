@@ -1063,17 +1063,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function filterInventoryTable(searchTerm) {
         const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
+        const visibleRows = [];
 
+        // First, filter and collect visible rows
         rows.forEach(row => {
             const nameCell = row.querySelector('td:first-child');
             const name = nameCell ? nameCell.textContent.toLowerCase() : '';
 
             if (name.includes(searchTerm)) {
                 row.style.display = '';
+                visibleRows.push({ row, name });
             } else {
                 row.style.display = 'none';
             }
         });
+
+        // Sort visible rows to prioritize items that start with the search term
+        if (searchTerm && visibleRows.length > 0) {
+            visibleRows.sort((a, b) => {
+                const aStartsWith = a.name.startsWith(searchTerm);
+                const bStartsWith = b.name.startsWith(searchTerm);
+
+                if (aStartsWith && !bStartsWith) return -1;
+                if (!aStartsWith && bStartsWith) return 1;
+                return 0;
+            });
+
+            // Reorder the DOM elements based on the sorted array
+            const tableBody = document.getElementById('inventoryStatus');
+            visibleRows.forEach(({ row }) => {
+                tableBody.appendChild(row);
+            });
+        }
     }
 
     function showMessage(message, type = 'info') {

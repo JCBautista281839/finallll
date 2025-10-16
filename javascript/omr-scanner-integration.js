@@ -660,7 +660,7 @@ async function addScannedItemsToOrder() {
                         if (menuItem) {
                             // Add item to order
                             if (typeof window.addItemToOrder === 'function') {
-                                window.addItemToOrder(
+                                await window.addItemToOrder(
                                     menuItem.name,
                                     `₱${menuItem.price.toFixed(2)}`,
                                     menuItem.photoUrl || ''
