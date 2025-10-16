@@ -681,6 +681,7 @@ body {
 
 #welcomeMessage {
   font-family: 'PoppinsRegular';
+  text-transform: capitalize; /* Capitalize first letter of each word */
 }
 
 #timeNow {

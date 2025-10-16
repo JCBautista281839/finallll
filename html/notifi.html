@@ -53,7 +53,24 @@
                     <img src="../src/Icons/bars.png" alt="reports" class="nav-icon">
                     <div class="nav-text">Reports</div>
                 </a>
-                <!-- Users nav removed -->
+                 <a href="../html/user.html" class="nav-link text-white" title="Users">
+                    <img src="../src/Icons/user.png" alt="user" class="nav-icon">
+                    <div class="nav-text">Users</div>
+                </a>
+                <a href="../html/reports.html" class="nav-link text-white" title="Support Tickets">
+                    <img src="../src/Icons/support.png" alt="Support" class="nav-icon">
+                    <div class="nav-text">Support</div>
+                </a>
+                <!-- Users link added here -->
+                <a href="../html/user.html" class="nav-link text-white" title="Users">
+                    <img src="../src/Icons/user.png" alt="Users" class="nav-icon">
+                    <div class="nav-text">Users</div>
+                </a>
+                <a href="../html/reports.html" class="nav-link text-white" title="Support Tickets" style="position:relative;">
+                    <img src="../src/Icons/support.png" alt="Support" class="nav-icon">
+                    <span class="support-badge" style="display:none;position:absolute;top:8px;right:18px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+                    <div class="nav-text">Support</div>
+                </a>
 
                 <div style="flex-grow: 1;"></div>
 
@@ -95,6 +112,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="../javascript/notifications.js"></script>
+    <script src="../javascript/support-badge.js"></script>
     <script src="../main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script>
