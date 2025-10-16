@@ -395,6 +395,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="javascript/unified-popup.js"></script>
   <script src="main.js"></script>
   <script src="reviews.js"></script>
   <script src="customer/javascript/auth-manager.js"></script>
@@ -508,9 +509,13 @@
       const fullscreenUserName = document.getElementById('fullscreenUserName');
       const fullscreenUserEmail = document.getElementById('fullscreenUserEmail');
 
-      if (userName) userName.textContent = user.displayName || 'User';
+      // Capitalize display name properly
+      const displayName = user.displayName ?
+        user.displayName.charAt(0).toUpperCase() + user.displayName.slice(1).toLowerCase() : 'User';
+
+      if (userName) userName.textContent = displayName;
       if (userEmail) userEmail.textContent = user.email;
-      if (fullscreenUserName) fullscreenUserName.textContent = user.displayName || 'User';
+      if (fullscreenUserName) fullscreenUserName.textContent = displayName;
       if (fullscreenUserEmail) fullscreenUserEmail.textContent = user.email;
 
       // Add welcome message or user info if needed

@@ -136,6 +136,21 @@ function initializeOrderControls() {
       // Set status to 'Pending Payment' for Later
       orderData.status = 'Pending Payment';
 
+      // Add customer information if discount requires it
+      if (orderData.discountType === 'PWD' || orderData.discountType === 'Senior Citizen') {
+        const customerName = document.getElementById('discount-name-input').value.trim();
+        const customerId = document.getElementById('discount-id-input').value.trim();
+
+        if (customerName) {
+          orderData.customerName = customerName;
+          orderData.discountName = customerName; // Also save to discountName for consistency
+        }
+        if (customerId) {
+          orderData.customerId = customerId;
+          orderData.discountID = customerId; // Also save to discountID for consistency
+        }
+      }
+
       // Save to Firestore and redirect
       try {
         const db = firebase.firestore();
@@ -567,6 +582,21 @@ function initializeProceedButton() {
 
       // Use the existing order ID from POS - do NOT generate new ones
       orderData.orderId = pendingOrderId;
+
+      // Add customer information if discount requires it
+      if (orderData.discountType === 'PWD' || orderData.discountType === 'Senior Citizen') {
+        const customerName = document.getElementById('discount-name-input').value.trim();
+        const customerId = document.getElementById('discount-id-input').value.trim();
+
+        if (customerName) {
+          orderData.customerName = customerName;
+          orderData.discountName = customerName; // Also save to discountName for consistency
+        }
+        if (customerId) {
+          orderData.customerId = customerId;
+          orderData.discountID = customerId; // Also save to discountID for consistency
+        }
+      }
       orderData.orderNumber = pendingOrderId;
       orderData.orderNumberFormatted = String(pendingOrderId);
       // Always update orderType, tableNumber, pax from DOM if available
@@ -807,6 +837,7 @@ function updateOrderSummary() {
     const idRow = document.querySelector('.order-summary .discount-id-row');
     const nameInput = document.getElementById('discount-name-input');
     const idInput = document.getElementById('discount-id-input');
+
     if (orderData.discountType === 'PWD' || orderData.discountType === 'Senior Citizen') {
       if (nameRow) nameRow.style.display = '';
       if (idRow) idRow.style.display = '';
@@ -968,6 +999,14 @@ function hideLoading() {
 }
 
 function showError(message) {
+  // Sanitize message to remove any URLs or technical details
+  if (typeof message === 'string') {
+    message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+    message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+    message = message.replace(/localhost:\d+/g, '[LOCAL]');
+    message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+    message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+  }
   hideLoading();
 
   // Create error element if it doesn't exist
