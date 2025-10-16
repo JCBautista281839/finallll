@@ -37,7 +37,7 @@ function toggleMenu(menuId) {
 function togglePasswordVisibility(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
-    
+
     if (input.type === 'password') {
         input.type = 'text';
         icon.classList.remove('bi-eye');
@@ -53,31 +53,31 @@ function togglePasswordVisibility(inputId, iconId) {
 function checkPasswordStrength(password) {
     let strength = 0;
     let feedback = [];
-    
+
     if (password.length >= 8) {
         strength += 25;
     } else {
         feedback.push('At least 8 characters');
     }
-    
+
     if (/[a-z]/.test(password)) {
         strength += 25;
     } else {
         feedback.push('Lowercase letter');
     }
-    
+
     if (/[A-Z]/.test(password)) {
         strength += 25;
     } else {
         feedback.push('Uppercase letter');
     }
-    
+
     if (/[0-9]/.test(password)) {
         strength += 25;
     } else {
         feedback.push('Number');
     }
-    
+
     return { strength, feedback };
 }
 
@@ -86,13 +86,13 @@ function updatePasswordStrength(password) {
     const strengthDiv = document.getElementById('passwordStrength');
     const strengthFill = document.getElementById('strengthFill');
     const strengthText = document.getElementById('strengthText');
-    
+
     if (password.length > 0) {
         const result = checkPasswordStrength(password);
         strengthDiv.style.display = 'block';
-        
+
         strengthFill.style.width = result.strength + '%';
-        
+
         if (result.strength < 50) {
             strengthFill.style.backgroundColor = '#dc3545';
             strengthText.textContent = 'Weak password';
@@ -161,7 +161,7 @@ function handlePasswordSaveClick() {
 
     // Update password in Firebase (current password already verified)
     saveButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Updating...';
-    
+
     updateUserPassword(currentPassword, newPassword)
         .then(() => {
             console.log('✅ Password updated successfully');
@@ -184,9 +184,9 @@ function handlePasswordSaveClick() {
         })
         .catch((error) => {
             console.error('❌ Error updating password:', error);
-            
+
             let errorMessage = 'Failed to update password.';
-            
+
             if (error.code === 'auth/wrong-password') {
                 errorMessage = 'Current password is incorrect. Please try again.';
                 // Highlight current password field as invalid
@@ -199,7 +199,7 @@ function handlePasswordSaveClick() {
             } else {
                 errorMessage = `Failed to update password: ${error.message}`;
             }
-            
+
             if (window.showMessage) {
                 window.showMessage(`❌ ${errorMessage}`, 'error');
             }
@@ -226,10 +226,10 @@ async function verifyCurrentPassword(currentPassword) {
 
     // Create credential with current password
     const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
-    
+
     // Re-authenticate to verify current password
     await user.reauthenticateWithCredential(credential);
-    
+
     return true; // If no error thrown, password is correct
 }
 
@@ -237,12 +237,12 @@ async function verifyCurrentPassword(currentPassword) {
 async function verifyCurrentPasswordAutomatically(currentPassword) {
     const currentPasswordInput = document.getElementById('currentPassword');
     const statusDiv = document.getElementById('currentPasswordStatus');
-    
+
     try {
         await verifyCurrentPassword(currentPassword);
-        
+
         console.log('✅ Current password verified automatically');
-        
+
         // Enable new password fields
         document.getElementById('newPassword').disabled = false;
         document.getElementById('confirmPassword').disabled = false;
@@ -253,18 +253,18 @@ async function verifyCurrentPasswordAutomatically(currentPassword) {
         // Add visual feedback to current password field
         currentPasswordInput.classList.add('is-valid');
         currentPasswordInput.classList.remove('is-invalid');
-        
+
         // Show success status
         statusDiv.style.display = 'block';
         statusDiv.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i><span class="text-success">Current password verified</span>';
 
     } catch (error) {
         console.error('❌ Error verifying current password automatically:', error);
-        
+
         // Add visual feedback for errors
         currentPasswordInput.classList.add('is-invalid');
         currentPasswordInput.classList.remove('is-valid');
-        
+
         // Show error status
         statusDiv.style.display = 'block';
         statusDiv.innerHTML = '<i class="bi bi-x-circle text-danger me-1"></i><span class="text-danger">Current password is incorrect</span>';
@@ -299,7 +299,7 @@ function toggleEditMode() {
     if (!isEditMode) {
         // Enter edit mode
         isEditMode = true;
-        
+
         // Store original data
         originalData = {
             firstName: document.getElementById('firstName').value,
@@ -346,7 +346,7 @@ function cancelEdit() {
     if (originalData.address) document.getElementById('address').value = originalData.address;
     if (originalData.phone) document.getElementById('phone').value = originalData.phone;
     if (originalData.dob) document.getElementById('dob').value = originalData.dob;
-    
+
     // Restore gender selection
     if (originalData.gender) {
         const genderRadio = document.querySelector(`input[name="gender"][value="${originalData.gender}"]`);
@@ -475,7 +475,7 @@ function handleSaveClick() {
             // Restore button state and exit edit mode
             saveButton.innerHTML = '<i class="bi bi-pencil me-2"></i>Edit';
             saveButton.disabled = false;
-            
+
             // Exit edit mode after successful save
             if (isEditMode) {
                 cancelEdit();
@@ -539,8 +539,11 @@ async function saveUserData(userData) {
 function updateProfileDisplay(firstName, lastName) {
     const profileNameElement = document.querySelector('.profile-name');
     if (profileNameElement && firstName && lastName) {
-        profileNameElement.textContent = `${firstName} ${lastName}`;
-        console.log('✅ Profile name updated:', `${firstName} ${lastName}`);
+        // Capitalize first letter of each name
+        const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+        const capitalizedLastName = lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
+        profileNameElement.textContent = `${capitalizedFirstName} ${capitalizedLastName}`;
+        console.log('✅ Profile name updated:', `${capitalizedFirstName} ${capitalizedLastName}`);
     }
 }
 
@@ -778,11 +781,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Setup menu click handlers
     const personalInfoMenu = document.getElementById('personalInfoMenu');
     const loginPasswordMenu = document.getElementById('loginPasswordMenu');
-    
+
     if (personalInfoMenu) {
         personalInfoMenu.addEventListener('click', () => toggleMenu('personalInfoMenu'));
     }
-    
+
     if (loginPasswordMenu) {
         loginPasswordMenu.addEventListener('click', () => toggleMenu('loginPasswordMenu'));
     }
@@ -791,26 +794,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const toggleCurrentPassword = document.getElementById('toggleCurrentPassword');
     const toggleNewPassword = document.getElementById('toggleNewPassword');
     const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
-    
+
     if (toggleCurrentPassword) {
-        toggleCurrentPassword.addEventListener('click', () => 
+        toggleCurrentPassword.addEventListener('click', () =>
             togglePasswordVisibility('currentPassword', 'currentPasswordIcon'));
     }
-    
+
     if (toggleNewPassword) {
-        toggleNewPassword.addEventListener('click', () => 
+        toggleNewPassword.addEventListener('click', () =>
             togglePasswordVisibility('newPassword', 'newPasswordIcon'));
     }
-    
+
     if (toggleConfirmPassword) {
-        toggleConfirmPassword.addEventListener('click', () => 
+        toggleConfirmPassword.addEventListener('click', () =>
             togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon'));
     }
 
     // Setup password strength checker
     const newPasswordInput = document.getElementById('newPassword');
     if (newPasswordInput) {
-        newPasswordInput.addEventListener('input', function() {
+        newPasswordInput.addEventListener('input', function () {
             updatePasswordStrength(this.value);
         });
     }
@@ -818,10 +821,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Setup password confirmation checker
     const confirmPasswordInput = document.getElementById('confirmPassword');
     if (confirmPasswordInput) {
-        confirmPasswordInput.addEventListener('input', function() {
+        confirmPasswordInput.addEventListener('input', function () {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = this.value;
-            
+
             if (confirmPassword.length > 0) {
                 if (newPassword === confirmPassword) {
                     this.classList.remove('is-invalid');
@@ -839,27 +842,27 @@ document.addEventListener('DOMContentLoaded', function () {
     // Setup automatic current password verification
     const currentPasswordInput = document.getElementById('currentPassword');
     let verificationTimeout;
-    
+
     if (currentPasswordInput) {
-        currentPasswordInput.addEventListener('input', function() {
+        currentPasswordInput.addEventListener('input', function () {
             const currentPassword = this.value;
-            
+
             // Clear previous timeout
             if (verificationTimeout) {
                 clearTimeout(verificationTimeout);
             }
-            
+
             // Reset status
             this.classList.remove('is-valid', 'is-invalid');
             document.getElementById('currentPasswordStatus').style.display = 'none';
-            
+
             // Disable new password fields while verifying
             document.getElementById('newPassword').disabled = true;
             document.getElementById('confirmPassword').disabled = true;
             document.getElementById('toggleNewPassword').disabled = true;
             document.getElementById('toggleConfirmPassword').disabled = true;
             document.getElementById('savePasswordData').disabled = true;
-            
+
             // Only verify if password is at least 6 characters
             if (currentPassword.length >= 6) {
                 // Debounce verification - wait 1 second after user stops typing
