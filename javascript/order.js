@@ -889,6 +889,16 @@ function filterOrders(searchTerm) {
         return cleanNum === cleanSearchTerm || // Exact match without leading zeros
             orderNum.includes(cleanSearchTerm) || // Partial match with original number
             order.orderNumberFormatted?.toLowerCase().includes(searchTerm.toLowerCase()); // Match with formatting
+    }).sort((a, b) => {
+        // Sort to prioritize orders that start with the search term
+        const aNum = a.orderNumber?.toString() || '';
+        const bNum = b.orderNumber?.toString() || '';
+        const aStartsWith = aNum.startsWith(cleanSearchTerm);
+        const bStartsWith = bNum.startsWith(cleanSearchTerm);
+
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        return 0;
     });
 
     if (filteredOrders.length === 0) {
@@ -1197,7 +1207,8 @@ function viewOrderDetails(orderNumber) {
                 (orderData.status || 'Processing') +
                 '</span>' +
                 '</p>' +
-                (orderData.customerName ? '<p><strong>Customer:</strong> ' + orderData.customerName + '</p>' : '') +
+                (orderData.customerName ? '<p><strong>Customer Name:</strong> ' + orderData.customerName + '</p>' : '') +
+                (orderData.customerId ? '<p><strong>Customer ID:</strong> ' + orderData.customerId + '</p>' : '') +
                 '</div>' +
                 '<div class="col-md-6">' +
                 '<p><strong>Table:</strong> ' + (orderData.tableNumber || 'N/A') + '</p>' +
@@ -1239,7 +1250,20 @@ function viewOrderDetails(orderNumber) {
                             : (orderData.discountType ? orderData.discountType : ('₱' + computedDiscount.toFixed(2)))
                     ) +
                     '</td>' +
-                    '</tr>'
+                    '</tr>' +
+                    // Add customer information rows if available
+                    (orderData.customerName ? (
+                        '<tr>' +
+                        '<td colspan="2" class="text-end"><strong>Name:</strong></td>' +
+                        '<td class="text-end">' + orderData.customerName + '</td>' +
+                        '</tr>'
+                    ) : '') +
+                    (orderData.customerId ? (
+                        '<tr>' +
+                        '<td colspan="2" class="text-end"><strong>ID Number:</strong></td>' +
+                        '<td class="text-end">' + orderData.customerId + '</td>' +
+                        '</tr>'
+                    ) : '')
                 ) : '') +
                 '<tr>' +
                 '<td colspan="2" class="text-end"><strong>Total:</strong></td>' +

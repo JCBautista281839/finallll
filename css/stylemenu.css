@@ -108,6 +108,15 @@
   box-shadow: none;
 }
 
+.btn-primary:hover {
+  color: #7a2e24 !important;
+  background-color: transparent !important;
+}
+
+.btn-primary:focus{
+  color: #7a2e24 !important;
+}
+
 .menu-table-container {
   margin-top: .5rem;
 }
