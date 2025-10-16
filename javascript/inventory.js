@@ -60,6 +60,13 @@ function createInventoryRow(docId, data) {
     const row = document.createElement('tr');
     row.setAttribute('data-doc-id', docId);
     row.setAttribute('data-restock-threshold', data.minQuantity || 10);
+
+    // Add restock tracking data attributes
+    row.setAttribute('data-last-restock-qty', data.lastRestockQuantity || data.quantity || 0);
+    row.setAttribute('data-last-restock-date', data.lastRestockDate ?
+        new Date(data.lastRestockDate.toDate()).toLocaleDateString() : 'N/A');
+    row.setAttribute('data-base-unit', data.unitOfMeasure || 'pcs');
+
     // Always display in user-friendly units
     let display = { value: data.quantity || 0, unit: data.unitOfMeasure || '' };
     if (data.quantity != null && data.unitOfMeasure) {
@@ -339,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch((error) => {
                 console.error('Error loading inventory:', error);
-                alert('Error loading inventory: ' + error.message);
+                alert('Error loading inventory. Please try again.');
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading inventory. Please try again.</td></tr>';
             });
     }
@@ -512,6 +519,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const restockReportBtn = document.getElementById('generateRestockReport');
         if (restockReportBtn) {
             restockReportBtn.addEventListener('click', generateRestockReport);
+        }
+
+        const usageReportBtn = document.getElementById('generateUsageReport');
+        if (usageReportBtn) {
+            usageReportBtn.addEventListener('click', generateIngredientUsageReport);
         }
 
         // Upload restock functionality
@@ -990,6 +1002,85 @@ document.addEventListener('DOMContentLoaded', function () {
         downloadExcelReport(data, 'Restock_Needed_Report.xlsx', 'Restock Report');
     }
 
+    // Function to initialize restock data for existing items (deprecated - now using Firestore directly)
+    function initializeRestockDataForExistingItems() {
+        // This function is no longer needed as we get data directly from Firestore
+        console.log('initializeRestockDataForExistingItems is deprecated - using Firestore data directly');
+    }
+
+    // New function to generate ingredient usage report
+    async function generateIngredientUsageReport() {
+        try {
+            const db = firebase.firestore();
+            const inventorySnapshot = await db.collection('inventory').get();
+
+            if (inventorySnapshot.empty) {
+                showMessage('No inventory data available for report generation.', 'warning');
+                return;
+            }
+
+            // Prepare data for Excel with new columns
+            const data = [];
+
+            // Add title and date
+            data.push(['Ingredient Usage Report']);
+            data.push([`Generated on: ${new Date().toLocaleDateString()}`]);
+            data.push([]); // Empty row
+
+            // Add headers
+            data.push(['Ingredient Name', 'Last Restock Quantity', 'Used Quantity', 'Current Stock']);
+
+            // Process each ingredient from Firestore
+            inventorySnapshot.forEach(doc => {
+                const itemData = doc.data();
+                const name = itemData.name || 'N/A';
+                const currentStock = itemData.quantity || 0;
+                const baseUnit = itemData.unitOfMeasure || 'pcs';
+
+                // Get restock data from Firestore
+                const lastRestockQty = itemData.lastRestockQuantity || currentStock;
+                const lastRestockDate = itemData.lastRestockDate ?
+                    new Date(itemData.lastRestockDate.toDate()).toLocaleDateString() : 'No restock data';
+
+                // Convert quantities to display units
+                const currentStockDisplay = getDisplayStock(currentStock, baseUnit);
+                const lastRestockDisplay = getDisplayStock(lastRestockQty, baseUnit);
+
+                // Calculate used quantity in display units (should be negative)
+                const usedQuantity = currentStockDisplay.value - lastRestockDisplay.value;
+
+                // Format quantities with units (2 decimal places)
+                const lastRestockFormatted = `${lastRestockDisplay.value.toFixed(2)} ${lastRestockDisplay.unit}`;
+                const usedQuantityFormatted = `${usedQuantity.toFixed(2)} ${currentStockDisplay.unit}`;
+                const currentStockFormatted = `${currentStockDisplay.value.toFixed(2)} ${currentStockDisplay.unit}`;
+
+                data.push([
+                    name,
+                    lastRestockFormatted,
+                    usedQuantityFormatted,
+                    currentStockFormatted
+                ]);
+            });
+
+            // Add summary
+            data.push([]); // Empty row
+            data.push(['Summary']);
+            data.push(['Total Ingredients:', inventorySnapshot.size]);
+
+            downloadExcelReport(data, 'Ingredient_Usage_Report.xlsx', 'Usage Report');
+
+        } catch (error) {
+            console.error('Error generating ingredient usage report:', error);
+            showMessage('Error generating report. Please try again.', 'error');
+        }
+    }
+
+    // Function to set up initial restock tracking for existing items (deprecated - now using Firestore directly)
+    function setupInitialRestockTracking() {
+        // This function is no longer needed as we get data directly from Firestore
+        console.log('setupInitialRestockTracking is deprecated - using Firestore data directly');
+    }
+
     function downloadExcelReport(data, filename, sheetName) {
         try {
             const wb = XLSX.utils.book_new();
@@ -999,10 +1090,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const colWidths = [
                 { wch: 25 }, // Item Name
-                { wch: 15 }, // Stock/Data
-                { wch: 15 }, // Unit/Info
-                { wch: 20 }, // Status/Action
-                { wch: 15 }  // Priority (if exists)
+                { wch: 20 }, // Last Restock Quantity
+                { wch: 15 }, // Used Quantity
+                { wch: 15 }, // Current Stock
+                { wch: 15 }  // Additional column if needed
             ];
             ws['!cols'] = colWidths;
 
@@ -1037,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', function () {
             XLSX.writeFile(wb, filename);
 
             // Show success message
-            alert(`${filename} has been downloaded successfully!`);
+            showMessage('Report downloaded successfully!', 'success');
 
         } catch (error) {
             console.error('Error generating Excel report:', error);
@@ -1098,6 +1189,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showMessage(message, type = 'info') {
+        // Sanitize message to remove any URLs or technical details
+        if (typeof message === 'string') {
+            message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+            message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+            message = message.replace(/localhost:\d+/g, '[LOCAL]');
+            message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+            message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+        }
 
         const existingMessage = document.querySelector('.inventory-message');
         if (existingMessage) {
@@ -1218,12 +1317,12 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => {
                 closeUploadModal();
                 loadInventoryFromFirebase(); // Refresh the inventory display
-                alert('Inventory has been successfully updated with restock data!');
+                showMessage('Inventory has been successfully updated with restock data!', 'success');
             }, 1000);
 
         } catch (error) {
             console.error('Error processing upload:', error);
-            alert('Error processing file: ' + error.message);
+            alert('Error processing file. Please try again.');
             progressDiv.style.display = 'none';
         }
     }
@@ -1426,12 +1525,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 querySnapshot.forEach((doc) => {
                     const currentData = doc.data();
-                    const newQuantity = (currentData.quantity || 0) + baseQty;
-                    batch.update(doc.ref, {
+                    const currentQuantity = currentData.quantity || 0;
+                    const newQuantity = currentQuantity + baseQty;
+
+                    // Save restock tracking data
+                    const restockData = {
                         quantity: newQuantity,
                         unitOfMeasure: baseUnit,
-                        lastUpdated: firebase.firestore.Timestamp.now()
-                    });
+                        lastUpdated: firebase.firestore.Timestamp.now(),
+                        // Add restock tracking fields - save in user-friendly units
+                        lastRestockQuantity: newQuantity, // This is the total after restock
+                        lastRestockDate: firebase.firestore.Timestamp.now(),
+                        restockHistory: firebase.firestore.FieldValue.arrayUnion({
+                            quantity: baseQty,
+                            date: firebase.firestore.Timestamp.now(),
+                            previousQuantity: currentQuantity
+                        })
+                    };
+
+                    batch.update(doc.ref, restockData);
                     updatedCount++;
                 });
 
@@ -1453,7 +1565,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (updatedCount > 0 || addedCount > 0 || notFound.length > 0) {
-            alert(message);
+            // Use the sanitized showMessage function instead of alert
+            showMessage('Inventory updated successfully!', 'success');
         }
     }
 
@@ -1628,7 +1741,7 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Ingredients deducted:\n' + deductionSummary.join('\n'));
         }
         if (errors.length > 0) {
-            alert('Inventory deduction errors:\n' + errors.join('\n'));
+            alert('Inventory deduction errors. Please check the items and try again.');
         }
     };
 

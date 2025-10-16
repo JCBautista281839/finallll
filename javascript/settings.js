@@ -6,17 +6,17 @@ let currentAdminUser = null;
 function waitForFirebase() {
     return new Promise((resolve) => {
         const checkFirebase = () => {
-            if (typeof firebase !== 'undefined' && 
-                firebase.auth && 
-                firebase.firestore && 
-                firebase.apps && 
+            if (typeof firebase !== 'undefined' &&
+                firebase.auth &&
+                firebase.firestore &&
+                firebase.apps &&
                 firebase.apps.length > 0) {
                 console.log('Firebase is ready');
                 resolve();
-            } else if (typeof firebase !== 'undefined' && 
-                       firebase.auth && 
-                       firebase.firestore && 
-                       window.firebaseConfig) {
+            } else if (typeof firebase !== 'undefined' &&
+                firebase.auth &&
+                firebase.firestore &&
+                window.firebaseConfig) {
                 // Firebase SDK is loaded but not initialized, initialize it
                 console.log('Firebase SDK loaded but not initialized, initializing...');
                 try {
@@ -39,7 +39,7 @@ function waitForFirebase() {
 // Check authentication - SIMPLIFIED
 async function initializeAuthListener() {
     await waitForFirebase();
-    
+
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
             console.log("User is signed in:", user.uid);
@@ -161,7 +161,7 @@ async function addTeamMemberSimple(e) {
     try {
         // Wait for Firebase to be ready
         await waitForFirebase();
-        
+
         // Get current user's auth before creating new user
         const currentUser = firebase.auth().currentUser;
 
@@ -297,7 +297,7 @@ async function loadTeamMembers() {
 
     } catch (error) {
         console.error('❌ Error loading team members:', error);
-        
+
         const teamList = document.getElementById('teamList');
         if (teamList) {
             teamList.innerHTML = `
@@ -311,7 +311,7 @@ async function loadTeamMembers() {
                 </div>
             `;
         }
-        
+
         showToast('Error loading team members: ' + error.message, 'error');
     }
 }
@@ -375,7 +375,7 @@ async function editUserRole(userId, currentRole) {
 
         // Wait for Firebase to be ready
         await waitForFirebase();
-        
+
         firebase.firestore().collection('users').doc(userId).update({
             role: newRole.toLowerCase(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -395,7 +395,7 @@ async function removeUser(userId) {
         try {
             // Wait for Firebase to be ready
             await waitForFirebase();
-            
+
             await firebase.firestore().collection('users').doc(userId).delete();
             showToast('User removed successfully', 'success');
             loadTeamMembers();
@@ -419,6 +419,14 @@ function handleLogout() {
 
 // Show toast notification
 function showToast(message, type = 'info') {
+    // Sanitize message to remove any URLs or technical details
+    if (typeof message === 'string') {
+        message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+        message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+        message = message.replace(/localhost:\d+/g, '[LOCAL]');
+        message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+        message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+    }
     const toast = document.createElement('div');
     toast.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} position-fixed`;
     toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
