@@ -172,7 +172,7 @@ const BASE_URL = process.env.BASE_URL || 'https://viktoriasbistro.restaurant';
 
 
 // OTP Configuration
-const OTP_EXPIRY_MINUTES = 10;
+const OTP_EXPIRY_MINUTES = 3;
 const MAX_OTP_ATTEMPTS = 5;
 
 // SendGrid Email Configuration
