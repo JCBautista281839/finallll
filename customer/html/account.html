@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="../css/user.css">
   <link rel="stylesheet" href="../../css/account.css">
+  <link rel="stylesheet" href="../css/submit-report.css">
   <link rel="icon" type="image/png" href="/src/IMG/US.png">
 </head>
 
@@ -69,6 +70,39 @@
     </div>
     <div class="profile-divider"></div>
     <div class="profile-right">
+      <!-- Support Tickets Section -->
+      <div class="support-section">
+        <div class="support-header">
+          <h2><i class="fas fa-headset"></i> Support</h2>
+        </div>
+        <div class="support-buttons">
+          <button class="btn-submit-report" onclick="goToSubmitReport()">
+            <i class="fas fa-plus-circle"></i> Submit Ticket
+          </button>
+          <button class="btn-view-tickets" onclick="toggleAllTickets()" id="viewTicketsBtn">
+            <i class="fas fa-history"></i> View Past Tickets
+          </button>
+        </div>
+        
+        <!-- My Tickets Container -->
+        <div id="tickets-container" class="tickets-container">
+          <div id="tickets-loading" class="loading-message" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Loading your tickets...
+          </div>
+
+          <div id="no-tickets" class="no-tickets-message" style="display: none;">
+            <i class="fas fa-ticket-alt"></i>
+            <p>No support tickets</p>
+            <small>Submit a ticket if you need assistance with an order</small>
+          </div>
+
+          <div id="tickets-list" class="tickets-list">
+            <!-- Tickets will be populated here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Order History Section -->
       <div class="order-history-title">Order History</div>
 
       <!-- Order History Container -->
@@ -90,10 +124,167 @@
     </div>
   </div>
 
+  <!-- Submit Report Modal -->
+  <div id="submitReportModal" class="report-modal" style="display: none;">
+    <div class="report-modal-overlay" onclick="closeReportModal()"></div>
+    <div class="report-modal-content">
+      <!-- Modal Header -->
+      <div class="report-modal-header">
+        <h2><i class="fas fa-headset"></i> Submit Support Ticket</h2>
+        <button class="report-modal-close" onclick="closeReportModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="report-modal-body">
+        <p class="modal-intro">Please provide details about your issue and we'll get back to you as soon as possible.</p>
+
+        <form id="reportForm" class="report-form">
+          <!-- Issue Category -->
+          <div class="form-group">
+            <label for="category">
+              <i class="fas fa-tag"></i> Issue Category *
+            </label>
+            <select id="category" name="category" required>
+              <option value="">Select a category</option>
+              <option value="delivery-issue">Delivery Issue (Not Delivered/Late)</option>
+              <option value="food-quality">Food Quality Problem</option>
+              <option value="wrong-order">Wrong Order Received</option>
+              <option value="missing-items">Missing Items</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <!-- Reference Number -->
+          <div class="form-group">
+            <label for="subject">
+              <i class="fas fa-hashtag"></i> Reference Number *
+            </label>
+            <input 
+              type="text" 
+              id="subject" 
+              name="subject" 
+              placeholder="Enter your payment reference number"
+              pattern="[0-9]*"
+              inputmode="numeric"
+              maxlength="50"
+              required
+              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+            >
+            <small class="form-help">Enter numbers only</small>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="description">
+              <i class="fas fa-align-left"></i> Description *
+            </label>
+            <textarea 
+              id="description" 
+              name="description" 
+              rows="5"
+              placeholder="Please provide detailed information about your issue..."
+              minlength="20"
+              maxlength="1000"
+              required
+            ></textarea>
+            <small class="form-help"><span id="descCount">0</span>/1000 characters (minimum 20)</small>
+          </div>
+
+          <!-- Photo Upload (Optional) -->
+          <div class="form-group">
+            <label for="photoUpload">
+              <i class="fas fa-camera"></i> Attach Photo (Optional)
+            </label>
+            <div class="file-upload-wrapper">
+              <input 
+                type="file" 
+                id="photoUpload" 
+                name="photo" 
+                accept="image/*"
+                class="file-input"
+              >
+              <label for="photoUpload" class="file-label">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span id="fileName">Choose a photo</span>
+              </label>
+            </div>
+            <div id="imagePreview" class="image-preview" style="display: none;">
+              <img id="previewImg" src="" alt="Preview">
+              <button type="button" class="remove-image" onclick="removeImage()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Customer Info Preview -->
+          <div class="customer-info-preview">
+            <h3><i class="fas fa-user"></i> Your Contact Information</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Name:</span>
+                <span id="customerName">Loading...</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Email:</span>
+                <span id="customerEmail">Loading...</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Phone:</span>
+                <span id="customerPhone">Loading...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Submitting your ticket...</span>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" onclick="closeReportModal()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn-submit" id="submitBtn">
+              <i class="fas fa-paper-plane"></i> Submit Ticket
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div id="successModal" class="success-modal" style="display: none;">
+    <div class="success-modal-overlay" onclick="closeSuccessModal()"></div>
+    <div class="success-modal-content">
+      <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h2>Ticket Submitted Successfully!</h2>
+      <p>Your ticket has been received and our team will review it shortly.</p>
+      <div class="ticket-info">
+        <strong>Ticket ID:</strong> <span id="ticketIdDisplay"></span>
+      </div>
+      <div class="success-actions">
+        <button class="btn-primary" onclick="closeSuccessModal()">
+          <i class="fas fa-check"></i> Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="../firebase-config.js"></script>
 
   <!-- Authentication Manager for Auto Logout -->
   <script src="../javascript/auth-manager.js"></script>
@@ -104,6 +295,11 @@
   <!-- Cloudinary Upload Script -->
   <script src="../../cloud.js"></script>
 
+  <!-- Report History Script -->
+  <script src="../javascript/report-history.js"></script>
+
+  <!-- Report Submission Script -->
+  <script src="../javascript/submit-report.js"></script>
 
   <script src="../javascript/profilesettings.js"></script>
 </body>
