@@ -20,15 +20,15 @@ function updateTime() {
 
 // Kitchen role access control
 function setupKitchenAccess() {
-  firebase.auth().onAuthStateChanged(async function(user) {
+  firebase.auth().onAuthStateChanged(async function (user) {
     if (!user) return;
-    
+
     try {
       const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
       if (userDoc.exists) {
         const userData = userDoc.data();
         const userRole = userData.role || 'user';
-        
+
         if (userRole === 'kitchen') {
           console.log('🍳 Kitchen role detected - Redirecting to kitchen dashboard');
           window.location.href = '/html/kitchen.html';
@@ -42,7 +42,7 @@ function setupKitchenAccess() {
 }
 
 // Google Charts initialization
-google.charts.load('current', {'packages':['corechart']});
+google.charts.load('current', { 'packages': ['corechart'] });
 
 let ordersChartData = null;
 let profitChartData = null;
@@ -51,7 +51,7 @@ let profitChart = null;
 let isGoogleChartsLoaded = false;
 
 // Initialize charts when Google Charts is loaded
-google.charts.setOnLoadCallback(function() {
+google.charts.setOnLoadCallback(function () {
   console.log('Google Charts loaded');
   isGoogleChartsLoaded = true;
   // Wait a bit for Firebase to be ready then load charts
@@ -64,13 +64,13 @@ function initializeCharts() {
     setTimeout(initializeCharts, 500);
     return;
   }
-  
+
   if (typeof firebase === 'undefined' || !firebase.firestore) {
     console.log('Firebase not ready yet, waiting...');
     setTimeout(initializeCharts, 500);
     return;
   }
-  
+
   console.log('Initializing Orders and Profit Charts with real data...');
   loadChartsData();
 }
@@ -79,34 +79,34 @@ function initializeCharts() {
 async function loadChartsData() {
   try {
     console.log('Loading charts data...');
-    
+
     // Set a timeout to show fallback data if Firebase is slow
     const timeoutId = setTimeout(() => {
       console.log('Firebase timeout, showing fallback charts data');
       showFallbackChartsData();
     }, 5000);
-    
+
     const db = firebase.firestore();
     const currentYear = new Date().getFullYear();
     const yearSelect = document.getElementById('yearSelect');
     const monthSelect = document.getElementById('monthSelect');
     const selectedYear = yearSelect ? parseInt(yearSelect.value) : currentYear;
     const selectedMonth = monthSelect ? monthSelect.value : 'all';
-    
+
     // Initialize monthly data arrays
     const monthlyOrders = new Array(12).fill(0);
     const monthlyProfit = new Array(12).fill(0);
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
     // Get orders for the selected year
     const ordersSnapshot = await db.collection('orders').get();
-    
+
     clearTimeout(timeoutId);
-    
+
     ordersSnapshot.forEach(doc => {
       const order = doc.data();
       let orderDate = null;
-      
+
       // Handle different timestamp formats
       if (order.timestamp && order.timestamp.toDate) {
         orderDate = order.timestamp.toDate();
@@ -115,7 +115,7 @@ async function loadChartsData() {
       } else if (order.dateCreated) {
         orderDate = new Date(order.dateCreated);
       }
-      
+
       if (orderDate && orderDate.getFullYear() === selectedYear) {
         const month = orderDate.getMonth();
         // Always prefer root-level total, fallback to payment.total only if missing or zero
@@ -138,7 +138,7 @@ async function loadChartsData() {
         }
       }
     });
-    
+
     // Create charts data based on selection
     if (selectedMonth === 'all') {
       // Show all 12 months
@@ -147,9 +147,9 @@ async function loadChartsData() {
       // Show daily breakdown for selected month
       await createMonthlyDetailCharts(selectedYear, parseInt(selectedMonth), db);
     }
-    
+
     console.log('Charts data loaded successfully');
-    
+
   } catch (error) {
     console.error('Error loading charts data:', error);
     if (error.code === 'permission-denied') {
@@ -162,7 +162,7 @@ async function loadChartsData() {
 }
 
 function showFallbackChartsData() {
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   createFullYearCharts(months, sampleOrders, sampleProfit);
 }
 
@@ -172,20 +172,20 @@ function createFullYearCharts(months, monthlyOrders, monthlyProfit) {
   ordersChartData = new google.visualization.DataTable();
   ordersChartData.addColumn('string', 'Month');
   ordersChartData.addColumn('number', 'Orders');
-  
+
   for (let i = 0; i < 12; i++) {
     ordersChartData.addRow([months[i], monthlyOrders[i]]);
   }
-  
+
   // Create profit chart data
   profitChartData = new google.visualization.DataTable();
   profitChartData.addColumn('string', 'Month');
   profitChartData.addColumn('number', 'Revenue');
-  
+
   for (let i = 0; i < 12; i++) {
     profitChartData.addRow([months[i], monthlyProfit[i]]);
   }
-  
+
   // Draw both charts
   drawOrdersChart();
   drawProfitChart();
@@ -193,18 +193,18 @@ function createFullYearCharts(months, monthlyOrders, monthlyProfit) {
 
 // Create charts for specific month daily view
 async function createMonthlyDetailCharts(year, month, db) {
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const dailyOrders = new Array(daysInMonth).fill(0);
   const dailyProfit = new Array(daysInMonth).fill(0);
-  
+
   // Get orders for the specific month
   const ordersSnapshot = await db.collection('orders').get();
-  
+
   ordersSnapshot.forEach(doc => {
     const order = doc.data();
     let orderDate = null;
-    
+
     // Handle different timestamp formats
     if (order.timestamp && order.timestamp.toDate) {
       orderDate = order.timestamp.toDate();
@@ -213,7 +213,7 @@ async function createMonthlyDetailCharts(year, month, db) {
     } else if (order.dateCreated) {
       orderDate = new Date(order.dateCreated);
     }
-    
+
     if (orderDate && orderDate.getFullYear() === year && orderDate.getMonth() === month) {
       const day = orderDate.getDate() - 1; // 0-indexed
       // Always prefer root-level total, fallback to payment.total only if missing or zero
@@ -233,25 +233,25 @@ async function createMonthlyDetailCharts(year, month, db) {
       dailyProfit[day] += paidTotal;
     }
   });
-  
+
   // Create orders chart data for daily view
   ordersChartData = new google.visualization.DataTable();
   ordersChartData.addColumn('string', 'Day');
   ordersChartData.addColumn('number', 'Orders');
-  
+
   for (let i = 0; i < daysInMonth; i++) {
     ordersChartData.addRow([`${i + 1}`, dailyOrders[i]]);
   }
-  
+
   // Create profit chart data for daily view
   profitChartData = new google.visualization.DataTable();
   profitChartData.addColumn('string', 'Day');
   profitChartData.addColumn('number', 'Revenue');
-  
+
   for (let i = 0; i < daysInMonth; i++) {
     profitChartData.addRow([`${i + 1}`, dailyProfit[i]]);
   }
-  
+
   // Draw both charts
   drawOrdersChart();
   drawProfitChart();
@@ -260,7 +260,7 @@ async function createMonthlyDetailCharts(year, month, db) {
 function drawOrdersChart() {
   const chartDiv = document.getElementById('ordersChart');
   if (!chartDiv || !ordersChartData) return;
-  
+
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
@@ -299,7 +299,7 @@ function drawOrdersChart() {
 function drawProfitChart() {
   const chartDiv = document.getElementById('profitChart');
   if (!chartDiv || !profitChartData) return;
-  
+
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect ? monthSelect.value : 'all';
   const isDaily = selectedMonth !== 'all';
@@ -342,7 +342,7 @@ function updateCurrentMonthDisplay() {
   const currentMonthDisplay = document.getElementById('currentMonthDisplay');
   if (currentMonthDisplay) {
     const now = new Date();
-    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const currentMonth = monthNames[now.getMonth()];
     const currentYear = now.getFullYear();
     currentMonthDisplay.textContent = `Current Month: ${currentMonth} ${currentYear}`;
@@ -363,25 +363,25 @@ function setCurrentMonth() {
 }
 
 // Year and Month selector event listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const yearSelect = document.getElementById('yearSelect');
   const monthSelect = document.getElementById('monthSelect');
-  
+
   // Initialize current month display
   updateCurrentMonthDisplay();
-  
+
   // Set current month as default selection
   setTimeout(setCurrentMonth, 100);
-  
+
   if (yearSelect) {
-    yearSelect.addEventListener('change', function() {
+    yearSelect.addEventListener('change', function () {
       console.log('Year changed to:', this.value);
       loadChartsData();
     });
   }
-  
+
   if (monthSelect) {
-    monthSelect.addEventListener('change', function() {
+    monthSelect.addEventListener('change', function () {
       console.log('Month changed to:', this.value);
       updateChartLabels();
       loadChartsData();
@@ -400,7 +400,7 @@ function updateChartLabels() {
     if (ordersHeader) ordersHeader.textContent = 'Monthly Orders';
     if (revenueHeader) revenueHeader.textContent = 'Monthly Revenue';
   } else {
-    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const monthName = monthNames[parseInt(selectedMonth)];
     if (ordersHeader) ordersHeader.textContent = `Daily Orders - ${monthName}`;
     if (revenueHeader) revenueHeader.textContent = `Daily Revenue - ${monthName}`;
@@ -420,13 +420,13 @@ function loadInventoryStatus() {
     console.log('Inventory already loaded, skipping...');
     return;
   }
-  
+
   console.log('Loading inventory status...');
   window.inventoryLoaded = true;
-  
+
   function waitForFirebase() {
     console.log('Checking Firebase availability...');
-    
+
     if (typeof firebase !== 'undefined' && firebase.firestore) {
       console.log('Firebase is available, fetching inventory data...');
       fetchInventoryData();
@@ -443,20 +443,20 @@ function loadInventoryStatus() {
     try {
       const db = firebase.firestore();
       const inventoryBody = document.getElementById('inventoryStatusBody');
-      
+
       if (!inventoryBody) {
         console.error('Inventory status table body not found');
         return;
       }
 
       console.log('Fetching inventory data from Firebase...');
-      
+
       // Set a timeout to show fallback data if Firebase is slow
       const timeoutId = setTimeout(() => {
         console.log('Firebase timeout, showing fallback inventory data');
         showFallbackInventoryData(inventoryBody);
       }, 5000);
-      
+
       db.collection('inventory')
         .get()
         .then((querySnapshot) => {
@@ -477,10 +477,10 @@ function loadInventoryStatus() {
           const items = [];
           querySnapshot.forEach(doc => items.push(doc.data()));
 
-          items.sort((a,b) => {
-            const qa = parseInt(a.quantity)||0;
-            const qb = parseInt(b.quantity)||0;
-            const rank = q => (q===0?0:(q<=5?1:2));
+          items.sort((a, b) => {
+            const qa = parseInt(a.quantity) || 0;
+            const qb = parseInt(b.quantity) || 0;
+            const rank = q => (q === 0 ? 0 : (q <= 5 ? 1 : 2));
             return rank(qa) - rank(qb);
           });
 
@@ -504,16 +504,16 @@ function loadInventoryStatus() {
             inventoryBody.addEventListener('click', function handleShowMore(e) {
               const btn = e.target.closest('#showMoreInventoryBtn');
               if (!btn) return;
-              
+
               remaining.forEach(item => inventoryBody.insertBefore(createInventoryRow(item), showMoreRow));
-              
+
               btn.textContent = 'Show Less';
               btn.id = 'showLessInventoryBtn';
-              
-              inventoryBody.addEventListener('click', function handleShowLess(ev){
+
+              inventoryBody.addEventListener('click', function handleShowLess(ev) {
                 const lessBtn = ev.target.closest('#showLessInventoryBtn');
-                if(!lessBtn) return;
-                
+                if (!lessBtn) return;
+
                 const rows = Array.from(inventoryBody.querySelectorAll('tr'));
                 const dataRows = rows.filter(r => !r.id);
                 dataRows.slice(MAX_VISIBLE).forEach(r => r.remove());
@@ -567,10 +567,10 @@ function createInventoryRow(item) {
   const tr = document.createElement('tr');
   const quantity = parseInt(item.quantity) || 0;
   const itemName = item.name || 'Unknown Item';
-  
+
   let statusClass = '';
   let statusLabel = '';
-  
+
   if (quantity === 0) {
     statusClass = 'empty';
     statusLabel = 'Empty';
@@ -581,7 +581,7 @@ function createInventoryRow(item) {
     statusClass = 'steady';
     statusLabel = 'Steady';
   }
-  
+
   tr.innerHTML = `
     <td>${itemName}</td>
     <td class="text-end">
@@ -591,7 +591,7 @@ function createInventoryRow(item) {
       </div>
     </td>
   `;
-  
+
   return tr;
 }
 
@@ -619,14 +619,14 @@ function initializeFirebaseAuth() {
 async function loadUserName(userId) {
   try {
     const userDoc = await firebase.firestore().collection('users').doc(userId).get();
-    
+
     if (userDoc.exists) {
       const userData = userDoc.data();
       updateWelcomeMessage(userData);
     } else {
       console.log("No user document found");
       const user = firebase.auth().currentUser;
-      updateWelcomeMessage({ 
+      updateWelcomeMessage({
         firstName: user.email.split('@')[0],
         role: 'User'
       });
@@ -640,18 +640,22 @@ async function loadUserName(userId) {
 // Update welcome message with user data
 function updateWelcomeMessage(userData) {
   const welcomeElement = document.getElementById('welcomeMessage');
-  
+
   if (welcomeElement) {
     let displayName = 'User';
-    
+
     if (userData.firstName && userData.lastName) {
-      displayName = `${userData.firstName} ${userData.lastName}`;
+      // Capitalize first letter of each name
+      const capitalizedFirstName = userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase();
+      const capitalizedLastName = userData.lastName.charAt(0).toUpperCase() + userData.lastName.slice(1).toLowerCase();
+      displayName = `${capitalizedFirstName} ${capitalizedLastName}`;
     } else if (userData.firstName) {
-      displayName = userData.firstName;
+      displayName = userData.firstName.charAt(0).toUpperCase() + userData.firstName.slice(1).toLowerCase();
     } else if (userData.displayName) {
-      displayName = userData.displayName;
+      // Capitalize first letter of display name
+      displayName = userData.displayName.charAt(0).toUpperCase() + userData.displayName.slice(1).toLowerCase();
     }
-    
+
     welcomeElement.textContent = `Welcome, ${displayName}!`;
     welcomeElement.style.setProperty('color', '#96392d', 'important');
     console.log(`✅ Welcome message updated: ${displayName}`);
@@ -671,19 +675,19 @@ async function loadSalesData() {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    
+
     console.log('Loading sales data for date range:', startOfDay, 'to', endOfDay);
-    
+
     // Get all orders and filter by date in JavaScript since we have mixed timestamp formats
     const ordersSnapshot = await firebase.firestore()
       .collection('orders')
       .get();
-    
+
     let totalRevenue = 0;
     let totalOrders = 0;
     let totalPax = 0; // Track total number of guests served
     let uniqueCustomers = new Set();
-    
+
     ordersSnapshot.forEach(doc => {
       const order = doc.data();
       let orderDate = null;
@@ -719,12 +723,12 @@ async function loadSalesData() {
         }
         totalRevenue += paidTotal;
         totalOrders++;
-        
+
         // Log payment method and source
         const paymentMethod = order.payment?.method || 'Unknown';
         const paymentSource = order.payment ? 'Payment System' : 'POS System';
         console.log(`Order ${doc.id}: ₱${paidTotal} (${paymentMethod} - ${paymentSource}) on ${orderDate.toLocaleString()}`);
-        
+
         // Add pax count from this order - only count if pax was actually entered
         if (order.paxNumber && parseInt(order.paxNumber) > 0) {
           const paxCount = parseInt(order.paxNumber);
@@ -740,13 +744,13 @@ async function loadSalesData() {
         }
       }
     });
-    
+
     console.log(`Found ${totalOrders} orders with total revenue ${totalRevenue} serving ${totalPax} guests total (only counting orders with pax specified)`);
-    
+
     updateSalesCard('revenue', totalRevenue);
     updateSalesCard('orders', totalOrders);
     updateSalesCard('customers', totalPax); // Show total pax - only actual entered values
-    
+
   } catch (error) {
     console.error('Error loading sales data:', error);
     // Set default values on error
@@ -754,7 +758,7 @@ async function loadSalesData() {
     updateSalesCard('orders', 0);
     updateSalesCard('customers', 0);
   }
-  
+
   // Ensure revenue is updated even if no orders found
   setTimeout(() => {
     const revenueElement = document.querySelector('.sales-card-top .fs-5');
@@ -769,7 +773,7 @@ async function loadSalesData() {
 function setupSalesDataListener() {
   try {
     const db = firebase.firestore();
-    
+
     // Listen for new orders (especially from payment system)
     db.collection('orders')
       .where('timestamp', '>=', new Date(new Date().setHours(0, 0, 0, 0)))
@@ -779,7 +783,7 @@ function setupSalesDataListener() {
       }, (error) => {
         console.error('Error setting up sales data listener:', error);
       });
-      
+
   } catch (error) {
     console.error('Error initializing sales data listener:', error);
   }
@@ -789,10 +793,10 @@ function setupSalesDataListener() {
 function updateSalesCard(type, value) {
   const cards = {
     revenue: '.sales-card-top .fs-5',
-    orders: '.sales-card-middle .fs-5', 
+    orders: '.sales-card-middle .fs-5',
     customers: '.sales-card-bottom .fs-5' // Now shows exact total pax entered (no defaults)
   };
-  
+
   const element = document.querySelector(cards[type]);
   if (element) {
     if (type === 'revenue') {
@@ -810,32 +814,90 @@ async function loadSalesSummaryData() {
     console.log('Sales summary already loaded, skipping...');
     return;
   }
-  
+
   try {
     console.log('Loading sales summary data...');
     window.salesSummaryLoaded = true;
-    
+
     const db = firebase.firestore();
     const today = new Date();
-    
+
     // Calculate date ranges
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    
+
     const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
+
     // Get all orders
-      db.collection('orders').onSnapshot(snapshot => {
-        let totalSales = 0;
-        let thisMonthSales = 0;
-        let todaySales = 0;
-        let lastMonthSales = 0;
-        snapshot.forEach(doc => {
-          const order = doc.data();
+    db.collection('orders').onSnapshot(snapshot => {
+      let totalSales = 0;
+      let thisMonthSales = 0;
+      let todaySales = 0;
+      let lastMonthSales = 0;
+      snapshot.forEach(doc => {
+        const order = doc.data();
+        // Always prefer root-level total, fallback to payment.total only if missing or zero
+        let orderTotal = 0;
+        if (typeof order.total === 'number' && order.total > 0) {
+          orderTotal = order.total;
+        } else if (typeof order.total === 'string' && parseFloat(order.total) > 0) {
+          orderTotal = parseFloat(order.total);
+        } else if (order.payment && typeof order.payment.total === 'number') {
+          orderTotal = order.payment.total;
+        } else if (order.payment && typeof order.payment.total === 'string') {
+          orderTotal = parseFloat(order.payment.total) || 0;
+        } else {
+          orderTotal = 0;
+        }
+        if (orderTotal < 0) orderTotal = 0;
+        let orderDate = null;
+        // Handle different timestamp formats
+        if (order.timestamp && order.timestamp.toDate) {
+          orderDate = order.timestamp.toDate();
+        } else if (order.createdAt) {
+          orderDate = new Date(order.createdAt);
+        } else if (order.dateCreated) {
+          orderDate = new Date(order.dateCreated);
+        }
+        // Skip orders with invalid or missing dates
+        if (!orderDate || !(orderDate instanceof Date) || isNaN(orderDate.getTime())) {
+          return;
+        }
+        // Total sales (all time)
+        totalSales += orderTotal;
+        // Today's sales
+        if (orderDate >= startOfToday && orderDate < endOfToday) {
+          todaySales += orderTotal;
+        }
+        // This month's sales
+        if (orderDate >= startOfMonth && orderDate < endOfMonth) {
+          thisMonthSales += orderTotal;
+        }
+        // Last month's sales (for growth calculation)
+        if (orderDate >= startOfLastMonth && orderDate < endOfLastMonth) {
+          lastMonthSales += orderTotal;
+        }
+      });
+
+      // Calculate growth percentage
+      const startOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+      const endOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      let yesterdaySales = 0;
+      snapshot.forEach(doc => {
+        const order = doc.data();
+        let orderDate = null;
+        if (order.timestamp && order.timestamp.toDate) {
+          orderDate = order.timestamp.toDate();
+        } else if (order.createdAt) {
+          orderDate = new Date(order.createdAt);
+        } else if (order.dateCreated) {
+          orderDate = new Date(order.dateCreated);
+        }
+        if (orderDate && orderDate >= startOfYesterday && orderDate < endOfYesterday) {
           // Always prefer root-level total, fallback to payment.total only if missing or zero
           let orderTotal = 0;
           if (typeof order.total === 'number' && order.total > 0) {
@@ -849,77 +911,19 @@ async function loadSalesSummaryData() {
           } else {
             orderTotal = 0;
           }
-          if (orderTotal < 0) orderTotal = 0;
-          let orderDate = null;
-          // Handle different timestamp formats
-          if (order.timestamp && order.timestamp.toDate) {
-            orderDate = order.timestamp.toDate();
-          } else if (order.createdAt) {
-            orderDate = new Date(order.createdAt);
-          } else if (order.dateCreated) {
-            orderDate = new Date(order.dateCreated);
-          }
-          // Skip orders with invalid or missing dates
-          if (!orderDate || !(orderDate instanceof Date) || isNaN(orderDate.getTime())) {
-            return;
-          }
-          // Total sales (all time)
-          totalSales += orderTotal;
-          // Today's sales
-          if (orderDate >= startOfToday && orderDate < endOfToday) {
-            todaySales += orderTotal;
-          }
-          // This month's sales
-          if (orderDate >= startOfMonth && orderDate < endOfMonth) {
-            thisMonthSales += orderTotal;
-          }
-          // Last month's sales (for growth calculation)
-          if (orderDate >= startOfLastMonth && orderDate < endOfLastMonth) {
-            lastMonthSales += orderTotal;
-          }
-        });
-      
-        // Calculate growth percentage
-        const startOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-        const endOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        let yesterdaySales = 0;
-        snapshot.forEach(doc => {
-          const order = doc.data();
-          let orderDate = null;
-          if (order.timestamp && order.timestamp.toDate) {
-            orderDate = order.timestamp.toDate();
-          } else if (order.createdAt) {
-            orderDate = new Date(order.createdAt);
-          } else if (order.dateCreated) {
-            orderDate = new Date(order.dateCreated);
-          }
-          if (orderDate && orderDate >= startOfYesterday && orderDate < endOfYesterday) {
-            // Always prefer root-level total, fallback to payment.total only if missing or zero
-            let orderTotal = 0;
-            if (typeof order.total === 'number' && order.total > 0) {
-              orderTotal = order.total;
-            } else if (typeof order.total === 'string' && parseFloat(order.total) > 0) {
-              orderTotal = parseFloat(order.total);
-            } else if (order.payment && typeof order.payment.total === 'number') {
-              orderTotal = order.payment.total;
-            } else if (order.payment && typeof order.payment.total === 'string') {
-              orderTotal = parseFloat(order.payment.total) || 0;
-            } else {
-              orderTotal = 0;
-            }
-            yesterdaySales += orderTotal;
-          }
-        });
-        let dayGrowth = 0;
-        if (yesterdaySales > 0) {
-          dayGrowth = ((todaySales - yesterdaySales) / yesterdaySales) * 100;
-        } else if (todaySales > 0) {
-          dayGrowth = 100;
+          yesterdaySales += orderTotal;
         }
-        updateSalesSummary(totalSales, thisMonthSales, todaySales, dayGrowth);
-        console.log(`Sales Summary - Total: ${totalSales}, This Month: ${thisMonthSales}, Today: ${todaySales}, Day Growth: ${dayGrowth.toFixed(1)}%`);
       });
-    
+      let dayGrowth = 0;
+      if (yesterdaySales > 0) {
+        dayGrowth = ((todaySales - yesterdaySales) / yesterdaySales) * 100;
+      } else if (todaySales > 0) {
+        dayGrowth = 100;
+      }
+      updateSalesSummary(totalSales, thisMonthSales, todaySales, dayGrowth);
+      console.log(`Sales Summary - Total: ${totalSales}, This Month: ${thisMonthSales}, Today: ${todaySales}, Day Growth: ${dayGrowth.toFixed(1)}%`);
+    });
+
   } catch (error) {
     console.error('Error loading sales summary data:', error);
     if (error.code === 'permission-denied') {
@@ -939,11 +943,11 @@ function updateSalesSummary(total, thisMonth, today, growthPercentage) {
   const thisMonthElement = document.getElementById('thisMonthSalesValue');
   const todayElement = document.getElementById('todaySalesValue');
   const growthElement = document.getElementById('salesGrowthPercentage');
-  
+
   if (totalElement) totalElement.textContent = Math.round(total).toLocaleString();
   if (thisMonthElement) thisMonthElement.textContent = Math.round(thisMonth).toLocaleString();
   if (todayElement) todayElement.textContent = Math.round(today).toLocaleString();
-  
+
   if (growthElement) {
     const icon = growthElement.previousElementSibling;
     growthElement.parentElement.className = 'd-flex align-items-center';
@@ -983,35 +987,35 @@ async function loadTopProductsData() {
     console.log('Top products already loaded, skipping...');
     return;
   }
-  
+
   try {
     console.log('Loading top products data...');
     window.topProductsLoaded = true;
-    
+
     // Set a timeout to show fallback data if Firebase is slow
     const timeoutId = setTimeout(() => {
       console.log('Firebase timeout, showing fallback top products data');
       showFallbackTopProductsData();
     }, 5000);
-    
+
     const db = firebase.firestore();
     const ordersSnapshot = await db.collection('orders').get();
-    
+
     clearTimeout(timeoutId);
-    
+
     // Object to store product counts
     const productCounts = {};
-    
+
     // Process each order
     ordersSnapshot.forEach(doc => {
       const order = doc.data();
-      
+
       // Check if order has items array
       if (order.items && Array.isArray(order.items)) {
         order.items.forEach(item => {
           const productName = item.name || item.productName || 'Unknown Product';
           const quantity = parseInt(item.quantity) || 1;
-          
+
           if (productCounts[productName]) {
             productCounts[productName] += quantity;
           } else {
@@ -1020,18 +1024,18 @@ async function loadTopProductsData() {
         });
       }
     });
-    
+
     // Convert to array and sort by count
     const sortedProducts = Object.entries(productCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 6); // Get top 6 products
-    
+
     // Update the display
     updateTopProductsDisplay(sortedProducts);
-    
+
     console.log('Top products loaded:', sortedProducts);
-    
+
   } catch (error) {
     console.error('Error loading top products data:', error);
     if (error.code === 'permission-denied') {
@@ -1052,19 +1056,19 @@ function showFallbackTopProductsData() {
     { name: 'Crispy Pata', count: 10 },
     { name: 'Sisig', count: 8 }
   ];
-  
+
   updateTopProductsDisplay(fallbackProducts);
 }
 
 // Update top products display
 function updateTopProductsDisplay(products) {
   const tbody = document.getElementById('topProductsBody');
-  
+
   if (!tbody) {
     console.error('Top products table body not found');
     return;
   }
-  
+
   if (products.length === 0) {
     tbody.innerHTML = `
       <tr>
@@ -1075,7 +1079,7 @@ function updateTopProductsDisplay(products) {
     `;
     return;
   }
-  
+
   tbody.innerHTML = products.map(product => `
     <tr>
       <td>${product.name}</td>
@@ -1085,54 +1089,54 @@ function updateTopProductsDisplay(products) {
 }
 
 // DOM Content Loaded event listener
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   console.log('🚀 Dashboard script loaded');
-  
+
   // Skip auto-refresh if this is an OMR page
   if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
     return;
   }
-  
+
   // Initialize time display
   updateTime();
   setInterval(updateTime, 1000 * 60);
-  
+
   // Load dashboard data immediately
   loadDashboardData();
-  
+
   // Initialize Firebase authentication
   initializeFirebaseAuth();
-  
+
   // Setup kitchen role access control
   setupKitchenAccess();
-  
+
   // Set up real-time updates for sales data
   setupSalesDataListener();
-  
+
   // Load sales summary data
   loadSalesSummaryData();
-  
+
   // Load top products data
   loadTopProductsData();
-  
+
   // Load inventory status
   loadInventoryStatus();
-  
+
   // Year selector for orders chart
   const yearSelect = document.getElementById('yearSelect');
   if (yearSelect) {
-    yearSelect.addEventListener('change', function() {
+    yearSelect.addEventListener('change', function () {
       console.log('Year changed to:', this.value);
       loadOrdersChartData();
     });
   }
-  
+
   // Logout functionality
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      
+
       if (typeof firebase !== 'undefined' && firebase.auth) {
         firebase.auth().signOut().then(() => {
           console.log('User signed out successfully');

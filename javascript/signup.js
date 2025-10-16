@@ -9,11 +9,27 @@ function generateReferralCode(name) {
 
 // Error display function
 function showError(message) {
+    // Sanitize message to remove any URLs or technical details
+    if (typeof message === 'string') {
+        message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+        message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+        message = message.replace(/localhost:\d+/g, '[LOCAL]');
+        message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+        message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+    }
     showMessageModal('Error', message, 'error');
 }
 
 // Success display function
 function showSuccess(message) {
+    // Sanitize message to remove any URLs or technical details
+    if (typeof message === 'string') {
+        message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+        message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+        message = message.replace(/localhost:\d+/g, '[LOCAL]');
+        message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+        message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+    }
     showMessageModal('Success', message, 'success');
 }
 
@@ -22,13 +38,13 @@ function showSuccess(message) {
 async function sendEmailOTP(email, userName) {
     try {
         console.log('📧 Starting SendGrid OTP send process...');
-        
+
         // Try SendGrid OTP Service first (primary method)
         if (window.sendGridOTPService) {
             try {
                 console.log('📬 Attempting SendGrid OTP...');
                 const result = await window.sendGridOTPService.sendEmailOTP(email, userName);
-                
+
                 if (result.success) {
                     if (result.emailSent) {
                         console.log('✅ Email OTP sent successfully via SendGrid');
@@ -40,12 +56,12 @@ async function sendEmailOTP(email, userName) {
                         };
                     } else {
                         console.log('⚠️ SendGrid OTP generated but email failed to send:', result.otp);
-                        
+
                         // Store OTP locally and display it
                         localStorage.setItem('emailOTP', result.otp);
                         localStorage.setItem('emailOTPExpiry', result.expiry);
                         localStorage.setItem('emailOTPEmail', email);
-                        
+
                         // Show OTP prominently in console
                         console.log('🔐 ===== YOUR OTP CODE =====');
                         console.log('📧 Email:', email);
@@ -53,10 +69,10 @@ async function sendEmailOTP(email, userName) {
                         console.log('🔢 OTP Code:', result.otp);
                         console.log('⏰ Expires in: 10 minutes');
                         console.log('=============================');
-                        
+
                         // OTP popup removed - OTP is now handled server-side
                         console.log(`OTP Code: ${result.otp} (Email not sent)`);
-                        
+
                         return {
                             success: true,
                             message: 'Verification code generated (email delivery failed)',
@@ -71,14 +87,14 @@ async function sendEmailOTP(email, userName) {
         } else {
             console.log('⚠️ SendGrid OTP service not available');
         }
-        
+
         // Final fallback to local OTP generation
         console.log('🔄 Falling back to local Email OTP generation');
         return await sendLocalEmailOTP(email, userName);
-        
+
     } catch (error) {
         console.error('❌ SendGrid OTP service failed:', error);
-        
+
         // Final fallback to local OTP generation
         console.log('🔄 Using local Email OTP generation');
         return await sendLocalEmailOTP(email, userName);
@@ -91,12 +107,12 @@ async function sendLocalEmailOTP(email, userName) {
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiry = Date.now() + (10 * 60 * 1000); // 10 minutes expiry
-        
+
         // Store OTP in localStorage for verification
         localStorage.setItem('emailOTP', otp);
         localStorage.setItem('emailOTPExpiry', expiry);
         localStorage.setItem('emailOTPEmail', email);
-        
+
         // Show OTP prominently in console
         console.log('🔐 ===== YOUR OTP CODE =====');
         console.log('📧 Email:', email);
@@ -104,13 +120,13 @@ async function sendLocalEmailOTP(email, userName) {
         console.log('🔢 OTP Code:', otp);
         console.log('⏰ Expires in: 10 minutes');
         console.log('=============================');
-        
+
         // OTP popup removed - OTP is now handled server-side
         console.log(`OTP Code: ${otp} (Generated locally)`);
-        
+
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         return {
             success: true,
             message: 'Verification code generated locally',
@@ -118,7 +134,7 @@ async function sendLocalEmailOTP(email, userName) {
             expiry: expiry,
             emailSent: false
         };
-        
+
     } catch (error) {
         console.error('Error sending local Email OTP:', error);
         return {
@@ -135,10 +151,10 @@ function showMessageModal(title, message, type) {
     const titleEl = document.getElementById('messageModalTitle');
     const bodyEl = document.getElementById('messageModalBody');
     const headerEl = modal.querySelector('.modal-header');
-    
+
     titleEl.textContent = title;
     bodyEl.textContent = message;
-    
+
     // Change header color based on message type
     if (type === 'error') {
         headerEl.style.backgroundColor = '#dc3545';
@@ -147,7 +163,7 @@ function showMessageModal(title, message, type) {
     } else {
         headerEl.style.backgroundColor = '#8B2E20';
     }
-    
+
     modal.style.display = 'block';
 }
 
@@ -159,11 +175,11 @@ function closeMessageModal() {
 async function checkEmailExists(email) {
     try {
         console.log('🔍 Checking if email exists:', email);
-        
+
         // Method 1: Try fetchSignInMethodsForEmail first
         try {
             const signInMethods = await firebase.auth().fetchSignInMethodsForEmail(email);
-            
+
             if (signInMethods && signInMethods.length > 0) {
                 console.log('❌ Email already exists in system (method 1)');
                 return true;
@@ -171,19 +187,19 @@ async function checkEmailExists(email) {
         } catch (fetchError) {
             console.log('⚠️ fetchSignInMethodsForEmail failed, trying alternative...');
         }
-        
+
         // Method 2: Try to create a user with a temporary password
         try {
             const tempPassword = 'TempCheck123!@#' + Math.random().toString(36).substring(7);
             const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, tempPassword);
-            
+
             // If we reach here, the email was available and user was created
             console.log('✅ Email is available for registration (method 2)');
-            
+
             // Delete the temporary user immediately
             await userCredential.user.delete();
             console.log('🗑️ Temporary user deleted');
-            
+
             return false;
         } catch (createError) {
             if (createError.code === 'auth/email-already-in-use') {
@@ -195,10 +211,10 @@ async function checkEmailExists(email) {
                 return false;
             }
         }
-        
+
     } catch (error) {
         console.error('❌ Error checking email existence:', error);
-        
+
         // If there's an error checking, we'll allow the signup to proceed
         // This prevents blocking legitimate users due to network issues
         console.log('⚠️ Email check failed, allowing signup to proceed');
@@ -217,12 +233,12 @@ async function initiateSignupProcess(name, email, phone, password) {
 
         // Check if email already exists
         const emailExists = await checkEmailExists(email);
-        
+
         if (emailExists) {
             // Reset button state
             continueBtn.textContent = originalText;
             continueBtn.disabled = false;
-            
+
             // Show error message
             showError('This email address is already registered. Please use a different email or try logging in.');
             return;
@@ -242,12 +258,12 @@ async function initiateSignupProcess(name, email, phone, password) {
         // Generate OTP via SendGrid
         try {
             console.log('📧 Generating OTP via SendGrid...');
-            
+
             const otpResult = await sendEmailOTP(email, name);
-            
+
             if (otpResult.success) {
                 console.log('✅ OTP generated successfully:', otpResult.otp);
-                
+
                 if (otpResult.emailSent) {
                     showSuccess('Verification code sent to your email! Please check your inbox and verify your email to complete registration.');
                 } else {
@@ -272,7 +288,7 @@ async function initiateSignupProcess(name, email, phone, password) {
 
     } catch (error) {
         console.error('Error initiating signup process:', error);
-        
+
         // Reset button state
         const continueBtn = document.querySelector('.login-btn');
         continueBtn.textContent = 'Continue';
@@ -301,11 +317,11 @@ function closePrivacyModal() {
 }
 
 // Close modal when clicking outside of it
-window.onclick = function(event) {
+window.onclick = function (event) {
     const termsModal = document.getElementById('termsModal');
     const privacyModal = document.getElementById('privacyModal');
     const messageModal = document.getElementById('messageModal');
-    
+
     if (event.target == termsModal) {
         closeTermsModal();
     }
@@ -321,7 +337,7 @@ window.onclick = function(event) {
 function togglePassword(inputId) {
     const passwordInput = document.getElementById(inputId);
     const toggleIcon = passwordInput.nextElementSibling;
-    
+
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
         toggleIcon.classList.remove('fa-eye');
@@ -334,7 +350,7 @@ function togglePassword(inputId) {
 }
 
 // Real-time validation and button state management
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const nameInput = document.getElementById('nameInput');
     const emailInput = document.getElementById('emailInput');
     const phoneInput = document.getElementById('phoneInput');
@@ -351,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners for real-time validation
     nameInput.addEventListener('input', updateButtonState);
-    emailInput.addEventListener('input', function() {
+    emailInput.addEventListener('input', function () {
         updateButtonState();
         // Add real-time email validation with debouncing
         clearTimeout(emailInput.validationTimeout);
@@ -360,12 +376,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000); // Wait 1 second after user stops typing
     });
     phoneInput.addEventListener('input', updateButtonState);
-    passwordInput.addEventListener('input', function() {
+    passwordInput.addEventListener('input', function () {
         updatePasswordRequirements();
         updatePasswordMatch();
         updateButtonState();
     });
-    confirmPasswordInput.addEventListener('input', function() {
+    confirmPasswordInput.addEventListener('input', function () {
         updatePasswordMatch();
         updateButtonState();
     });
@@ -378,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
         let requirementsText = '';
-        
+
         if (!hasMinLength) {
             requirementsText += '<span style="color: #dc3545;">✗ Must be at least 8 characters.</span><br>';
         } else {
@@ -403,14 +419,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePasswordMatch() {
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
-        
+
         if (confirmPassword.length === 0) {
             passwordMatch.style.display = 'none';
             return;
         }
-        
+
         passwordMatch.style.display = 'block';
-        
+
         if (password === confirmPassword) {
             matchText.innerHTML = '<span style="color: #28a745;">✓ Passwords match</span>';
         } else {
@@ -433,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const passwordValid = validatePassword(password);
         const confirmPasswordValid = password === confirmPassword && confirmPassword.length > 0;
         const termsValid = termsChecked;
-        
+
         // Check if there's an email error (indicating email is already taken)
         const emailError = emailInput.parentNode.querySelector('.email-error');
         const emailAvailable = !emailError || !emailError.textContent.includes('already registered');
@@ -490,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const emailExists = await checkEmailExists(email);
-            
+
             if (emailExists) {
                 showEmailError('This email address is already registered. Please use a different email.');
             } else {
@@ -509,10 +525,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (existingError) {
             existingError.remove();
         }
-        
+
         // Add error styling
         emailInput.style.borderColor = '#dc3545';
-        
+
         // Create error message
         const errorDiv = document.createElement('div');
         errorDiv.className = 'email-error';
@@ -520,20 +536,20 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.style.fontSize = '12px';
         errorDiv.style.marginTop = '5px';
         errorDiv.textContent = message;
-        
+
         emailInput.parentNode.appendChild(errorDiv);
     }
-    
+
     function showEmailChecking() {
         // Remove existing messages
         const existingError = emailInput.parentNode.querySelector('.email-error');
         if (existingError) {
             existingError.remove();
         }
-        
+
         // Add checking styling
         emailInput.style.borderColor = '#ffc107';
-        
+
         // Create checking message
         const checkingDiv = document.createElement('div');
         checkingDiv.className = 'email-error';
@@ -541,20 +557,20 @@ document.addEventListener('DOMContentLoaded', function() {
         checkingDiv.style.fontSize = '12px';
         checkingDiv.style.marginTop = '5px';
         checkingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking email availability...';
-        
+
         emailInput.parentNode.appendChild(checkingDiv);
     }
-    
+
     function showEmailSuccess(message) {
         // Remove existing error message
         const existingError = emailInput.parentNode.querySelector('.email-error');
         if (existingError) {
             existingError.remove();
         }
-        
+
         // Add success styling
         emailInput.style.borderColor = '#28a745';
-        
+
         // Create success message
         const successDiv = document.createElement('div');
         successDiv.className = 'email-error';
@@ -562,25 +578,25 @@ document.addEventListener('DOMContentLoaded', function() {
         successDiv.style.fontSize = '12px';
         successDiv.style.marginTop = '5px';
         successDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + message;
-        
+
         emailInput.parentNode.appendChild(successDiv);
     }
-    
+
     function clearEmailError() {
         // Remove existing error message
         const existingError = emailInput.parentNode.querySelector('.email-error');
         if (existingError) {
             existingError.remove();
         }
-        
+
         // Reset border color
         emailInput.style.borderColor = '';
     }
 
     // Form submission
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.querySelector('form').addEventListener('submit', function (e) {
         e.preventDefault();
-        
+
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
         const phone = phoneInput.value.trim();
@@ -631,35 +647,35 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Password requirements and match indicators visibility
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     var passwordInput = document.getElementById('password');
     var confirmPasswordInput = document.getElementById('confirmPassword');
     var requirements = document.querySelector('.password-requirements');
     var passwordMatch = document.getElementById('passwordMatch');
-    
+
     if (passwordInput && requirements) {
         requirements.style.display = 'none';
-        passwordInput.addEventListener('focus', function() {
+        passwordInput.addEventListener('focus', function () {
             requirements.style.display = 'block';
         });
-        passwordInput.addEventListener('blur', function() {
+        passwordInput.addEventListener('blur', function () {
             requirements.style.display = 'none';
         });
     }
-    
+
     if (confirmPasswordInput && passwordMatch) {
         passwordMatch.style.display = 'none';
-        confirmPasswordInput.addEventListener('focus', function() {
+        confirmPasswordInput.addEventListener('focus', function () {
             passwordMatch.style.display = 'block';
         });
-        confirmPasswordInput.addEventListener('blur', function() {
+        confirmPasswordInput.addEventListener('blur', function () {
             passwordMatch.style.display = 'none';
         });
     }
 });
 
 // Check for missing elements and skip validation if any are not found
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const nameInput = document.getElementById('nameInput');
     const emailInput = document.getElementById('emailInput');
     const phoneInput = document.getElementById('phoneInput');

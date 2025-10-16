@@ -6,7 +6,7 @@ class SendGridOTPService {
     constructor() {
         // Use dynamic base URL - defaults to current domain if config not available
         this.baseUrl = this.getBaseUrl();
-        this.otpExpiryMinutes = 10;
+        this.otpExpiryMinutes = 3;
         this.maxAttempts = 5;
         console.log('🔧 SendGrid OTP Service initialized with baseUrl:', this.baseUrl);
     }
