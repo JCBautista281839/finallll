@@ -551,7 +551,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function filterMenuTable(searchTerm) {
         const rows = document.querySelectorAll('#menuTableBody tr[data-doc-id]');
+        const visibleRows = [];
 
+        // First, filter and collect visible rows
         rows.forEach(row => {
             const nameCell = row.querySelector('.product-name');
             const categoryCell = row.querySelector('.category-badge');
@@ -561,10 +563,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (name.includes(searchTerm) || category.includes(searchTerm)) {
                 row.style.display = '';
+                visibleRows.push({ row, name, category });
             } else {
                 row.style.display = 'none';
             }
         });
+
+        // Sort visible rows to prioritize items that start with the search term
+        if (searchTerm && visibleRows.length > 0) {
+            visibleRows.sort((a, b) => {
+                const aStartsWith = a.name.startsWith(searchTerm);
+                const bStartsWith = b.name.startsWith(searchTerm);
+
+                if (aStartsWith && !bStartsWith) return -1;
+                if (!aStartsWith && bStartsWith) return 1;
+                return 0;
+            });
+
+            // Reorder the DOM elements based on the sorted array
+            const tableBody = document.getElementById('menuTableBody');
+            visibleRows.forEach(({ row }) => {
+                tableBody.appendChild(row);
+            });
+        }
     }
 
     function logout() {

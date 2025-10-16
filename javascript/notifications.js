@@ -1898,7 +1898,7 @@ async function approveOrder(orderId, notificationId) {
         // Reload notifications to update UI
         loadNotifications();
 
-        alert('✅ Order approved successfully! It has been sent to the kitchen for preparation.');
+        showToast('✅ Order approved successfully! It has been sent to the kitchen for preparation.', 'success');
 
     } catch (error) {
         console.error('Error approving order:', error);
@@ -1947,7 +1947,7 @@ async function declineOrder(orderId, notificationId) {
         // Reload notifications to update UI
         loadNotifications();
 
-        alert('❌ Order declined successfully. Customer will be notified.');
+        showToast('❌ Order declined successfully. Customer will be notified.', 'success');
 
     } catch (error) {
         console.error('Error declining order:', error);
@@ -2105,10 +2105,10 @@ window.handleLalamoveReady = async function (docId) {
         // Create a success notification for admin
         try {
             // Get reference number from notification data
-            const referenceNumber = notificationData.paymentInfo?.reference || 
-                                   notificationData.paymentDetails?.reference || 
-                                   'No reference';
-            
+            const referenceNumber = notificationData.paymentInfo?.reference ||
+                notificationData.paymentDetails?.reference ||
+                'No reference';
+
             await db.collection('notifications').add({
                 type: 'lalamove_order_success',
                 message: `Lalamove order placed successfully! (Reference Number: ${referenceNumber})`,
@@ -2130,7 +2130,7 @@ window.handleLalamoveReady = async function (docId) {
             console.warn('[notifications.js] ⚠️ Failed to create success notification:', notificationError);
         }
 
-        showToast(`Lalamove order placed successfully! 🎉<br>Quotation ID: ${quotationId}<br>Order ID: ${result.data?.id || 'N/A'}`, 'success');
+        showToast(`Lalamove order placed successfully! 🎉<br>Delivery has been scheduled.`, 'success');
         console.log('[notifications.js] ✅ Lalamove order result:', result);
 
         // Reset button after delay
@@ -2216,11 +2216,16 @@ window.handleLalamoveReady = async function (docId) {
             errorMsg += error.message;
             errorHint = 'The quotation data structure is incomplete or invalid. Check Firebase notification and order documents.';
         } else {
-            errorMsg += error.message;
+            // Sanitize error message to remove URLs and technical details
+            let sanitizedMessage = error.message;
+            if (sanitizedMessage.includes('http://') || sanitizedMessage.includes('https://') || sanitizedMessage.includes('127.') || sanitizedMessage.includes('localhost')) {
+                sanitizedMessage = 'Connection error. Please try again.';
+            }
+            errorMsg += sanitizedMessage;
         }
 
         console.error('[notifications.js] 💡 Error hint:', errorHint);
-        showToast(errorMsg + (errorHint ? `<br><small>${errorHint}</small>` : ''), 'error');
+        showToast(errorMsg, 'error');
 
         // Reset button after delay
         setTimeout(() => {
@@ -2236,6 +2241,14 @@ window.handleLalamoveReady = async function (docId) {
 
 // Function to show toast messages (enhanced for Lalamove integration)
 function showToast(message, type = "info", duration = 3000) {
+    // Sanitize message to remove any URLs or technical details
+    if (typeof message === 'string') {
+        message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+        message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+        message = message.replace(/localhost:\d+/g, '[LOCAL]');
+        message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+        message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+    }
     // Create toast container if it doesn't exist
     let toastContainer = document.getElementById('toast-container');
     if (!toastContainer) {
@@ -2324,7 +2337,7 @@ window.handleOrderPickedUp = async function (docId) {
         // Get notification data
         console.log('[notifications.js] 🔍 Getting notification data for docId:', docId);
         const notificationDoc = await db.collection('notifications').doc(docId).get();
-        
+
         if (!notificationDoc.exists) {
             throw new Error(`Notification document not found with ID: ${docId}`);
         }
@@ -2351,7 +2364,7 @@ window.handleOrderPickedUp = async function (docId) {
             pickedUpBy: 'admin', // or get current user if available
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         console.log('[notifications.js] ✅ Updated notification with pickup info');
 
         // Create a pickup confirmation notification
@@ -2382,7 +2395,7 @@ window.handleOrderPickedUp = async function (docId) {
             clickedButton.style.cursor = 'not-allowed';
         }
 
-        showToast(`Order marked as picked up! Reference: ${referenceNumber}`, 'success');
+        showToast(`Order marked as picked up! Delivery confirmed.`, 'success');
 
         // Refresh notifications after a short delay
         setTimeout(() => {
@@ -2391,7 +2404,7 @@ window.handleOrderPickedUp = async function (docId) {
 
     } catch (error) {
         console.error('[notifications.js] ❌ Error marking order as picked up:', error);
-        
+
         // Restore button on error
         if (clickedButton) {
             clickedButton.disabled = false;

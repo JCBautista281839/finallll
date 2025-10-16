@@ -8,7 +8,7 @@
                     firebase.auth().signOut().then(function () {
                         window.location.href = '/index.html';
                     }).catch(function (error) {
-                        alert('Logout failed: ' + error.message);
+                        alert('Logout failed. Please try again.');
                     });
                 } else {
                     window.location.href = '/index.html';

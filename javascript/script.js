@@ -5,7 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
         mainContent.style.display = 'block';
         mainContent.style.opacity = '1';
     }
-});
+});
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const forgot = document.querySelector('.forgot-password');
     if (forgot) {
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = userInput.includes('@') ? userInput : `${userInput}@victoria-bistro.com`;
             window.auth.sendPasswordResetEmail(email)
                 .then(() => alert('Password reset email sent.'))
-                .catch(err => alert('Reset failed: ' + (err.message || err.code)));
+                .catch(err => alert('Reset failed. Please try again.'));
         });
     }
 });
