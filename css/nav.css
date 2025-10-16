@@ -46,6 +46,54 @@ body {
   background: #f5f6fa;
 }
 
+/* Burger Menu Styles */
+.burger-menu-inline {
+  display: none;
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1.8rem;
+  color: #96392d;
+  cursor: pointer;
+  padding: 8px 12px;
+  margin-right: 15px;
+  transition: all 0.3s ease;
+  line-height: 1;
+  z-index: 1000;
+}
+
+.burger-menu-inline:hover {
+  transform: scale(1.05);
+  background: #e9ecef;
+  border-color: #96392d;
+}
+
+.burger-menu-inline:active {
+  transform: scale(0.95);
+}
+
+/* Hide burger menu when sidebar is active */
+.sidebar.active ~ .main .burger-menu-inline,
+body:has(.sidebar.active) .burger-menu-inline {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+}
+
+.sidebar-overlay.active {
+  display: block;
+}
+
 .dashboard-container {
   min-height: 100vh;
   overflow-x: hidden;
@@ -317,18 +365,29 @@ body {
 
 
 @media (max-width: 767px) and (min-width: 576px) {
+  .burger-menu-inline {
+    display: inline-block;
+  }
+
   .sidebar {
-    width: 75px;
-    left: 15px;
+    width: 60px;
+    left: -100px;
     margin-top: 8px;
-    height: 550px;
-    padding-top: 25px;
-    padding-bottom: 25px;
-    border-radius: 0 45px 45px 0;
+    height: 75vh;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-radius: 0 40px 40px 0;
+    position: fixed;
+    transition: left 0.3s ease;
+    z-index: 999;
+  }
+
+  .sidebar.active {
+    left: 15px !important;
   }
 
   .dashboard-container {
-    margin-left: 90px;
+    margin-left: 0 !important;
   }
 
   .brand img {
@@ -358,32 +417,43 @@ body {
 
 
 @media (max-width: 575px) {
+  .burger-menu-inline {
+    display: inline-block;
+  }
+
   .sidebar {
-    width: 70px;
-    left: 10px;
-    height: 500px;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    border-radius: 0 30px 30px 0;
+    width: 100px;
+    left: -100px;
+    height: 90vh;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border-radius: 0 25px 25px 0;
+    position: fixed;
+    transition: left 0.3s ease;
+    z-index: 999;
+  }
+
+  .sidebar.active {
+    left: 10px !important;
   }
 
   .dashboard-container {
-    margin-left: 80px;
+    margin-left: 0 !important;
   }
 
   .brand img {
-    width: 60px;
-    height: 60px;
-    border: 2px solid #eee;
+    width: 55px;
+    height: 55px;
+
   }
 
   .nav-icon {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
   }
 
   .nav-text {
-    font-size: 6px;
+    font-size: 10px;
     margin-top: 2px;
   }
 
@@ -403,15 +473,66 @@ body {
 
 }
 
+/* Tablet Landscape - 768px to 991px */
+@media (min-width: 768px) and (max-width: 991px) {
+  .burger-menu-inline {
+    display: inline-block;
+  }
+
+  .sidebar {
+    width: 100px;
+    left: -100px;
+    height: 90vh;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    border-radius: 0 35px 35px 0;
+    position: fixed;
+    transition: left 0.3s ease;
+    z-index: 999;
+  }
+
+  .sidebar.active {
+    left: 15px !important;
+  }
+
+  .dashboard-container {
+    margin-left: 0 !important;
+  }
+
+  .brand img {
+    width: 62px;
+    height: 62px;
+  }
+
+  .nav-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .nav-text {
+    font-size: 15px;
+  }
+}
 
 @media (max-width: 375px) {
+  .burger-menu-inline {
+    display: inline-block;
+  }
+
   .sidebar {
-    width: 65px;
-    left: 8px;
-    height: 450px;
+    width: 55px;
+    left: -100px;
+    height: 65vh;
     padding-top: 15px;
     padding-bottom: 15px;
     border-radius: 0 25px 25px 0;
+    position: fixed;
+    transition: left 0.3s ease;
+    z-index: 999;
+  }
+
+  .sidebar.active {
+    left: 8px !important;
   }
 
   .dashboard-container {
