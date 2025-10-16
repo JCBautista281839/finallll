@@ -588,7 +588,7 @@ function loadKitchenOrders() {
                         </div>
                         <div class="items-list">
                             <div class="item-row">
-                                <span class="item-name">Error: ${error.message}</span>
+                                <span class="item-name">Error: Connection failed</span>
                                 <span class="item-quantity">-</span>
                             </div>
                         </div>

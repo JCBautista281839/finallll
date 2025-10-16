@@ -638,6 +638,14 @@ class OMRTestingSystem {
      * Show alert
      */
     showAlert(message, type) {
+        // Sanitize message to remove any URLs or technical details
+        if (typeof message === 'string') {
+            message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+            message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+            message = message.replace(/localhost:\d+/g, '[LOCAL]');
+            message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+            message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+        }
         // Create alert element
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;

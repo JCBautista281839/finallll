@@ -706,7 +706,11 @@ async function addScannedItemsToOrder() {
         if (typeof showToast === 'function') {
             showToast(message, itemsNotFound.length > 0 ? 'warning' : 'success');
         } else {
-            alert(message);
+            // Use sanitized message instead of alert
+            const sanitizedMessage = message.replace(/https?:\/\/[^\s]+/g, '[URL]')
+                .replace(/127\.\d+\.\d+\.\d+/g, '[IP]')
+                .replace(/localhost:\d+/g, '[LOCAL]');
+            alert(sanitizedMessage);
         }
 
         console.log(`OMR Scanner: Added ${itemsAdded} items, ${itemsNotFound.length} not found`);
