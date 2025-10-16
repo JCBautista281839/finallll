@@ -30,6 +30,123 @@ body {
   background: #ececec;
 }
 
+/* Stock Warning Modal Styles */
+#stockWarningModal .modal-content {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  font-family: 'PoppinsRegular' !important;
+}
+
+#stockWarningModal .modal-header {
+  background-color: #96392d;
+  color: #ffffff;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  border-bottom: none;
+  padding: 20px;
+}
+
+#warning {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+#stockWarningModal .modal-header .modal-title {
+  font-family: 'PoppinsRegular' !important;
+  font-size: 25px !important;
+  font-weight: 600;
+}
+
+#stockWarningModal .modal-header .btn-close {
+  filter: none;
+  color: #ffffff !important;
+  opacity: 0.8;
+}
+
+#stockWarningModal .modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+#stockWarningModal .modal-body {
+  padding: 25px;
+  font-family: 'PoppinsRegular', sans-serif;
+  line-height: 1.6;
+}
+
+#stockWarningModal .modal-body p {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+#stockWarningModal .list-group {
+  margin-bottom: 20px;
+}
+
+#stockWarningModal .list-group-item {
+  border: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  color: #dc3545;
+  font-weight: 500;
+  padding: 10px 15px;
+}
+
+#stockWarningModal .modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 15px 25px;
+  background-color: #f8f9fa;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  justify-content: center !important;
+}
+
+#stockWarningModal .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+#stockWarningModal .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+#stockWarningModal .btn-primary {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+#stockWarningModal .btn-primary:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+/* Animation for modal appearance */
+#stockWarningModal .modal-content {
+  animation: stockWarningSlideIn 0.3s ease-out;
+}
+
+@keyframes stockWarningSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .main-content {
   background: #efefef;
   min-height: 100vh;

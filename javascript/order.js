@@ -424,7 +424,7 @@ function initializeOrdersListener() {
                     '<td colspan="8" class="text-center py-4 text-danger">' +
                     '<i class="fa fa-exclamation-triangle fa-2x mb-2 d-block"></i>' +
                     '<div>Error loading orders from Firebase</div>' +
-                    '<small class="text-muted">' + error.message + '</small>' +
+                    '<small class="text-muted">Connection error. Please try again.</small>' +
                     '<br/>' +
                     '<button class="btn btn-sm btn-outline-primary mt-2" onclick="initializeOrdersListener()">' +
                     'Retry' +
@@ -889,6 +889,16 @@ function filterOrders(searchTerm) {
         return cleanNum === cleanSearchTerm || // Exact match without leading zeros
             orderNum.includes(cleanSearchTerm) || // Partial match with original number
             order.orderNumberFormatted?.toLowerCase().includes(searchTerm.toLowerCase()); // Match with formatting
+    }).sort((a, b) => {
+        // Sort to prioritize orders that start with the search term
+        const aNum = a.orderNumber?.toString() || '';
+        const bNum = b.orderNumber?.toString() || '';
+        const aStartsWith = aNum.startsWith(cleanSearchTerm);
+        const bStartsWith = bNum.startsWith(cleanSearchTerm);
+
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        return 0;
     });
 
     if (filteredOrders.length === 0) {
@@ -1017,7 +1027,7 @@ function displayOrders(orders) {
             const errorRow = document.createElement('tr');
             errorRow.innerHTML = '<td colspan="8" class="text-danger">Error displaying order #' +
                 (orderData.orderNumberFormatted || orderData.orderNumber || 'Unknown') +
-                ' - ' + error.message + '</td>';
+                ' - Display error</td>';
             tableBody.appendChild(errorRow);
         }
     });
@@ -1197,7 +1207,8 @@ function viewOrderDetails(orderNumber) {
                 (orderData.status || 'Processing') +
                 '</span>' +
                 '</p>' +
-                (orderData.customerName ? '<p><strong>Customer:</strong> ' + orderData.customerName + '</p>' : '') +
+                (orderData.customerName ? '<p><strong>Customer Name:</strong> ' + orderData.customerName + '</p>' : '') +
+                (orderData.customerId ? '<p><strong>Customer ID:</strong> ' + orderData.customerId + '</p>' : '') +
                 '</div>' +
                 '<div class="col-md-6">' +
                 '<p><strong>Table:</strong> ' + (orderData.tableNumber || 'N/A') + '</p>' +
@@ -1239,7 +1250,20 @@ function viewOrderDetails(orderNumber) {
                             : (orderData.discountType ? orderData.discountType : ('₱' + computedDiscount.toFixed(2)))
                     ) +
                     '</td>' +
-                    '</tr>'
+                    '</tr>' +
+                    // Add customer information rows if available
+                    (orderData.customerName ? (
+                        '<tr>' +
+                        '<td colspan="2" class="text-end"><strong>Name:</strong></td>' +
+                        '<td class="text-end">' + orderData.customerName + '</td>' +
+                        '</tr>'
+                    ) : '') +
+                    (orderData.customerId ? (
+                        '<tr>' +
+                        '<td colspan="2" class="text-end"><strong>ID Number:</strong></td>' +
+                        '<td class="text-end">' + orderData.customerId + '</td>' +
+                        '</tr>'
+                    ) : '')
                 ) : '') +
                 '<tr>' +
                 '<td colspan="2" class="text-end"><strong>Total:</strong></td>' +
@@ -1285,8 +1309,380 @@ function viewOrderDetails(orderNumber) {
 }
 
 function printOrder(orderNumber) {
-    // You can implement print functionality here
-    window.print();
+    // Get the modal content
+    const modal = document.getElementById('orderDetailsModal');
+    if (!modal) {
+        console.error('Order modal not found');
+        return;
+    }
+
+    // Get the modal content
+    const modalContent = modal.querySelector('.modal-content');
+
+    // Extract order data from the modal
+    const orderData = extractOrderDataFromModal(modalContent);
+
+    // Create a clean print window with proper URL
+    const printWindow = window.open('about:blank', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+
+    // Create clean print-friendly HTML
+    const printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt - Order ${orderNumber}</title>
+            <meta charset="UTF-8">
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Arial', sans-serif;
+                    background: white;
+                    color: black;
+                    line-height: 1.4;
+                    margin: 0;
+                    padding: 0;
+                }
+                
+                .receipt-container {
+                    max-width: 100%;
+                    width: 100%;
+                    margin: 0;
+                    padding: 20px;
+                    background: white;
+                    box-sizing: border-box;
+                }
+                
+                .receipt-header {
+                    text-align: center;
+                    margin-bottom: 20px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 15px;
+                }
+                
+                .receipt-header h1 {
+                    font-size: 28px;
+                    color: #333;
+                    margin-bottom: 8px;
+                }
+                
+                .receipt-header p {
+                    font-size: 16px;
+                    color: #666;
+                }
+                
+                .order-info {
+                    margin-bottom: 20px;
+                }
+                
+                .order-info p {
+                    margin: 5px 0;
+                    font-size: 16px;
+                }
+                
+                .order-info strong {
+                    font-weight: bold;
+                }
+                
+                .items-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                }
+                
+                .items-table th,
+                .items-table td {
+                    border: 1px solid #ddd;
+                    padding: 12px;
+                    text-align: left;
+                    font-size: 16px;
+                }
+                
+                .items-table th {
+                    background-color: #f5f5f5;
+                    font-weight: bold;
+                }
+                
+                .order-summary {
+                    margin-top: 20px;
+                    border-top: 2px solid #333;
+                    padding-top: 15px;
+                }
+                
+                .summary-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                
+                .summary-table td {
+                    padding: 8px 0;
+                    font-size: 16px;
+                }
+                
+                .summary-table .label {
+                    text-align: left;
+                }
+                
+                .summary-table .amount {
+                    text-align: right;
+                    font-weight: bold;
+                }
+                
+                .total-row {
+                    border-top: 1px solid #333;
+                    padding-top: 12px;
+                    font-weight: bold;
+                    font-size: 18px;
+                }
+                
+                @media print {
+                    body {
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .receipt-container {
+                        margin: 0;
+                        padding: 20px;
+                        max-width: 100%;
+                        width: 100%;
+                    }
+                    .receipt-header h1 {
+                        font-size: 32px;
+                    }
+                    .receipt-header p {
+                        font-size: 18px;
+                    }
+                    .order-info p {
+                        font-size: 18px;
+                    }
+                    .items-table th,
+                    .items-table td {
+                        font-size: 18px;
+                        padding: 15px;
+                    }
+                    .summary-table td {
+                        font-size: 18px;
+                        padding: 10px 0;
+                    }
+                    .total-row {
+                        font-size: 20px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-container">
+                <div class="receipt-header">
+                    <h1>Viktoria's Bistro</h1>
+                    <p>Order Receipt</p>
+                </div>
+                
+                <div class="order-info">
+                    <p><strong>Order #:</strong> ${orderData.orderNumber}</p>
+                    <p><strong>Date:</strong> ${orderData.date}</p>
+                    <p><strong>Order Type:</strong> ${orderData.orderType}</p>
+                    <p><strong>Status:</strong> ${orderData.status}</p>
+                    <p><strong>Table:</strong> ${orderData.table}</p>
+                    <p><strong>Pax:</strong> ${orderData.pax}</p>
+                </div>
+                
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orderData.items.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.quantity}</td>
+                                <td>₱${item.price}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="order-summary">
+                    <table class="summary-table">
+                        <tr>
+                            <td class="label">Subtotal:</td>
+                            <td class="amount">₱${orderData.subtotal}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Tax:</td>
+                            <td class="amount">₱${orderData.tax}</td>
+                        </tr>
+                        ${orderData.discount ? `
+                        <tr>
+                            <td class="label">Discount:</td>
+                            <td class="amount">${orderData.discount}</td>
+                        </tr>
+                        ` : ''}
+                        ${orderData.customerName ? `
+                        <tr>
+                            <td class="label">Name:</td>
+                            <td class="amount">${orderData.customerName}</td>
+                        </tr>
+                        ` : ''}
+                        ${orderData.customerId ? `
+                        <tr>
+                            <td class="label">ID Number:</td>
+                            <td class="amount">${orderData.customerId}</td>
+                        </tr>
+                        ` : ''}
+                        <tr class="total-row">
+                            <td class="label">Total:</td>
+                            <td class="amount">₱${orderData.total}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+    // Write content to print window
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = function () {
+        setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+        }, 100);
+    };
+}
+
+// Helper function to extract order data from modal
+function extractOrderDataFromModal(modalContent) {
+    const orderData = {
+        orderNumber: '',
+        date: '',
+        orderType: '',
+        status: '',
+        table: '',
+        pax: '',
+        items: [],
+        subtotal: '0.00',
+        tax: '0.00',
+        discount: '',
+        customerName: '',
+        customerId: '',
+        total: '0.00'
+    };
+
+    try {
+        // Extract order number from modal title
+        const orderNumberEl = modalContent.querySelector('.modal-title');
+        if (orderNumberEl) {
+            orderData.orderNumber = orderNumberEl.textContent.replace('Order #', '').trim();
+        }
+
+        // Extract order info from the modal body
+        const modalBody = modalContent.querySelector('.modal-body');
+        if (modalBody) {
+            // Get all paragraphs and extract data
+            const paragraphs = modalBody.querySelectorAll('p');
+            paragraphs.forEach(p => {
+                const text = p.textContent;
+
+                if (text.includes('Date:')) {
+                    orderData.date = text.replace('Date:', '').trim();
+                } else if (text.includes('Order Type:')) {
+                    orderData.orderType = text.replace('Order Type:', '').trim();
+                } else if (text.includes('Status:')) {
+                    const statusBadge = p.querySelector('.badge');
+                    if (statusBadge) {
+                        orderData.status = statusBadge.textContent.trim();
+                    } else {
+                        orderData.status = text.replace('Status:', '').trim();
+                    }
+                } else if (text.includes('Table:')) {
+                    orderData.table = text.replace('Table:', '').trim();
+                } else if (text.includes('Pax:')) {
+                    orderData.pax = text.replace('Pax:', '').trim();
+                } else if (text.includes('Customer Name:')) {
+                    orderData.customerName = text.replace('Customer Name:', '').trim();
+                } else if (text.includes('Customer ID:')) {
+                    orderData.customerId = text.replace('Customer ID:', '').trim();
+                }
+            });
+        }
+
+        // Extract items from table
+        const itemRows = modalContent.querySelectorAll('tbody tr');
+        itemRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 3) {
+                const name = cells[0].textContent.trim();
+                const quantity = cells[1].textContent.trim();
+                const price = cells[2].textContent.replace('₱', '').trim();
+
+                if (name && quantity && price) {
+                    orderData.items.push({
+                        name: name,
+                        quantity: quantity,
+                        price: price
+                    });
+                }
+            }
+        });
+
+        // Extract summary from tfoot
+        const tfootRows = modalContent.querySelectorAll('tfoot tr');
+        tfootRows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 2) {
+                const label = cells[0].textContent.trim();
+                const value = cells[1].textContent.trim();
+
+                if (label.includes('Subtotal:')) {
+                    orderData.subtotal = value.replace('₱', '').trim();
+                } else if (label.includes('Tax:')) {
+                    orderData.tax = value.replace('₱', '').trim();
+                } else if (label.includes('Discount:')) {
+                    orderData.discount = value;
+                } else if (label.includes('Total:')) {
+                    orderData.total = value.replace('₱', '').trim();
+                }
+            }
+        });
+
+        // If no items found, try alternative selectors
+        if (orderData.items.length === 0) {
+            const allRows = modalContent.querySelectorAll('tr');
+            allRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 3) {
+                    const name = cells[0].textContent.trim();
+                    const quantity = cells[1].textContent.trim();
+                    const price = cells[2].textContent.replace('₱', '').trim();
+
+                    // Check if this looks like an item row (has price with ₱ symbol)
+                    if (name && quantity && price && cells[2].textContent.includes('₱')) {
+                        orderData.items.push({
+                            name: name,
+                            quantity: quantity,
+                            price: price
+                        });
+                    }
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error('Error extracting order data:', error);
+    }
+
+    return orderData;
 }
 
 const dateInput = document.querySelector('.date-input');

@@ -26,7 +26,7 @@
 
         .upload-dropzone:hover,
         .upload-dropzone.dragover {
-            border-color: #007bff;
+            border-color: #600a0a;
             background-color: #f8f9fa;
         }
 
@@ -34,6 +34,7 @@
             background-color: #e9ecef;
             border-radius: 5px;
             padding: 15px;
+            margin-top: -5px;
         }
 
         .upload-instructions ul {
@@ -159,6 +160,10 @@
                                 <li><a class="dropdown-item" href="#" id="generateRestockReport">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
                                         Restock Needed (includes Empty Items)
+                                    </a></li>
+                                <li><a class="dropdown-item" href="#" id="generateUsageReport">
+                                        <i class="fas fa-chart-line me-2"></i>
+                                        Ingredient Usage Report
                                     </a></li>
                             </ul>
                         </div>
@@ -306,6 +311,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
+    <script src="../javascript/unified-popup.js"></script>
     <script src="../javascript/navnotifi.js"></script>
     <script src="../main.js"></script>
     <script src="../javascript/auth-manager.js"></script>

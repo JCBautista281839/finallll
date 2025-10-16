@@ -40,6 +40,14 @@ let menuItemsData = {};
 
 // Toast notification function
 function showToast(message, type = 'info') {
+    // Sanitize message to remove any URLs or technical details
+    if (typeof message === 'string') {
+        message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+        message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+        message = message.replace(/localhost:\d+/g, '[LOCAL]');
+        message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+        message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+    }
     // Create toast container if it doesn't exist
     let toastContainer = document.getElementById('toast-container');
     if (!toastContainer) {
@@ -432,6 +440,18 @@ async function startPOSSystem() {
                     const itemDescription = (item.description || '').toLowerCase();
                     return itemName.includes(searchTerm) || itemDescription.includes(searchTerm);
                 });
+
+                // Sort to prioritize items that start with the search term
+                filteredItems.sort((a, b) => {
+                    const aName = (a.name || '').toLowerCase();
+                    const bName = (b.name || '').toLowerCase();
+                    const aStartsWith = aName.startsWith(searchTerm);
+                    const bStartsWith = bName.startsWith(searchTerm);
+
+                    if (aStartsWith && !bStartsWith) return -1;
+                    if (!aStartsWith && bStartsWith) return 1;
+                    return 0;
+                });
             }
 
             return filteredItems;
@@ -573,11 +593,135 @@ async function startPOSSystem() {
             });
         }
 
+        // Function to check if any ingredients for a menu item are empty
+        async function checkIngredientStock(itemName) {
+            try {
+                if (typeof firebase === 'undefined' || !firebase.firestore) {
+                    console.warn('Firebase not available for stock check');
+                    return { hasEmptyStock: false, emptyIngredients: [] };
+                }
+
+                const db = firebase.firestore();
+
+                // Get menu item data to find ingredients
+                const menuData = await getMenuItemData(db, itemName);
+                if (!menuData || !menuData.ingredients || menuData.ingredients.length === 0) {
+                    console.log(`No ingredients found for ${itemName}`);
+                    return { hasEmptyStock: false, emptyIngredients: [] };
+                }
+
+                const emptyIngredients = [];
+
+                // Check each ingredient's stock level
+                for (const ingredient of menuData.ingredients) {
+                    try {
+                        const inventoryQuery = await db.collection('inventory')
+                            .where('name', '==', ingredient.name)
+                            .limit(1)
+                            .get();
+
+                        if (!inventoryQuery.empty) {
+                            const inventoryData = inventoryQuery.docs[0].data();
+                            const currentStock = inventoryData.quantity || 0;
+
+                            if (currentStock <= 0) {
+                                emptyIngredients.push(ingredient.name);
+                            }
+                        } else {
+                            // Ingredient not found in inventory - treat as empty
+                            emptyIngredients.push(ingredient.name);
+                        }
+                    } catch (error) {
+                        console.warn(`Error checking stock for ingredient ${ingredient.name}:`, error);
+                        emptyIngredients.push(ingredient.name);
+                    }
+                }
+
+                return {
+                    hasEmptyStock: emptyIngredients.length > 0,
+                    emptyIngredients: emptyIngredients
+                };
+            } catch (error) {
+                console.error('Error checking ingredient stock:', error);
+                return { hasEmptyStock: false, emptyIngredients: [] };
+            }
+        }
+
+        // Function to show stock warning popup
+        function showStockWarningPopup(itemName, emptyIngredients) {
+            return new Promise((resolve) => {
+                // Create modal HTML
+                const modalHtml = `
+                    <div class="modal fade" id="stockWarningModal" tabindex="-1" aria-labelledby="stockWarningModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="stockWarningModalLabel">
+                                        <img class = "warning" src="/src/Icons/warning.png" style="width: 30px !important; height: 30px !important;">
+                                        Stock Warning
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="mb-3">The following ingredients are out of stock:</p>
+                                    <ul class="list-group list-group-flush mb-3">
+                                        ${emptyIngredients.map(ingredient => `<li class="list-group-item">${ingredient}</li>`).join('')}
+                                    </ul>
+                                    <p class="mb-0"><strong>${itemName}</strong> is not in stock. Do you want to continue?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="stockWarningNo">No</button>
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="stockWarningYes">Yes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Remove existing modal if any
+                const existingModal = document.getElementById('stockWarningModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+
+                // Add modal to document
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('stockWarningModal'));
+                modal.show();
+
+                // Handle button clicks
+                document.getElementById('stockWarningNo').addEventListener('click', () => {
+                    resolve(false);
+                });
+
+                document.getElementById('stockWarningYes').addEventListener('click', () => {
+                    resolve(true);
+                });
+
+                // Handle modal close
+                document.getElementById('stockWarningModal').addEventListener('hidden.bs.modal', () => {
+                    document.getElementById('stockWarningModal').remove();
+                });
+            });
+        }
+
         // Add item to order
         // Adds an item to the current order
-        window.addItemToOrder = function addItemToOrder(name, price, image) {
+        window.addItemToOrder = async function addItemToOrder(name, price, image) {
             try {
                 console.log(`🔧 Adding item: ${name} at ${price}`);
+
+                // Check ingredient stock before adding item
+                const stockCheck = await checkIngredientStock(name);
+                if (stockCheck.hasEmptyStock) {
+                    const shouldContinue = await showStockWarningPopup(name, stockCheck.emptyIngredients);
+                    if (!shouldContinue) {
+                        console.log(`User cancelled adding ${name} due to empty stock`);
+                        return;
+                    }
+                }
 
                 const orderItems = document.querySelector('.order-items');
                 if (!orderItems) {
@@ -1232,8 +1376,8 @@ async function startPOSSystem() {
 
                 // Load items
                 if (orderData.items && Array.isArray(orderData.items)) {
-                    orderData.items.forEach(item => {
-                        addItemToOrder(item.name, `₱${parseFloat(item.unitPrice).toFixed(2)}`, '');
+                    for (const item of orderData.items) {
+                        await addItemToOrder(item.name, `₱${parseFloat(item.unitPrice).toFixed(2)}`, '');
                         // Set correct quantity if not 1
                         const orderItemEl = document.querySelector(`.order-item[data-item-name="${item.name}"]`);
                         if (orderItemEl) {
@@ -1242,7 +1386,7 @@ async function startPOSSystem() {
                             const priceEl = orderItemEl.querySelector('.item-price');
                             if (priceEl) priceEl.textContent = `₱${parseFloat(item.lineTotal).toFixed(2)}`;
                         }
-                    });
+                    }
                 }
 
                 // Restore order details
@@ -1832,7 +1976,7 @@ async function addApprovedItemToPOS(item) {
         // Add to POS order multiple times for quantity
         for (let i = 0; i < quantity; i++) {
             if (typeof addItemToOrder === 'function') {
-                addItemToOrder(name, price, image);
+                await addItemToOrder(name, price, image);
             }
         }
 
