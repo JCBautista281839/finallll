@@ -5,7 +5,7 @@ class FirebaseOTPService {
     constructor() {
         this.otpCollection = 'otp_codes';
         this.maxAttempts = 5;
-        this.otpExpiryMinutes = 10;
+        this.otpExpiryMinutes = 3;
         
         // Use dynamic base URL - defaults to current domain if config not available
         this.baseUrl = (window.API_CONFIG && window.API_CONFIG.BASE_URL) || window.location.origin;
