@@ -117,8 +117,9 @@ function initializeOrderControls() {
       }
       orderData.subtotal = subtotal;
 
-      // Calculate tax as fixed amount (₱5.00) - same as POS system
-      const tax = 5.00;
+      // Calculate tax based on order type - Delivery orders have no tax
+      const orderType = orderData.orderType || '';
+      const tax = orderType === 'Delivery' ? 0.00 : 5.00;
       orderData.tax = tax;
 
       // Calculate discount
@@ -668,8 +669,9 @@ function initializeProceedButton() {
         }, 0);
       }
       orderData.subtotal = subtotal;
-      // Calculate tax as fixed amount (₱5.00) - same as POS system
-      const tax = 5.00;
+      // Calculate tax based on order type - Delivery orders have no tax
+      const orderType = orderData.orderType || '';
+      const tax = orderType === 'Delivery' ? 0.00 : 5.00;
       orderData.tax = tax;
       let discount = 0;
       if (typeof orderData.discountAmount !== 'undefined') {
@@ -802,8 +804,9 @@ function updateOrderSummary() {
         return sum + (price * qty);
       }, 0);
     }
-    // Calculate tax as fixed amount (₱5.00) - same as POS system
-    const tax = 5.00;
+    // Calculate tax based on order type - Delivery orders have no tax
+    const orderType = orderData.orderType || '';
+    const tax = orderType === 'Delivery' ? 0.00 : 5.00;
     const discountAmount = parseFloat(orderData.discountAmount) || 0;
     // Always recalculate total as subtotal + tax - discountAmount
     const total = subtotal + tax - discountAmount;
@@ -811,7 +814,7 @@ function updateOrderSummary() {
     // Debug logging (can be removed in production)
     console.log('Payment updateOrderSummary - Order data:', orderData);
     console.log('Payment updateOrderSummary - Subtotal:', subtotal);
-    console.log('Payment updateOrderSummary - Tax calculated (5%):', tax);
+    console.log('Payment updateOrderSummary - Tax calculated:', tax, 'Order Type:', orderType);
     const discountPercent = parseFloat(orderData.discountPercent) || 0;
     // Update summary fields by DOM position, not by summaryRows index
     // Subtotal

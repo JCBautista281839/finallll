@@ -74,29 +74,29 @@ window.UnifiedPopup = {
             document.head.appendChild(style);
         }
 
-        // Set colors based on type
+        // Set colors based on type using the specified color scheme
         let icon, color, bgColor;
         switch (type) {
             case 'success':
                 icon = '✅';
-                color = '#28a745';
-                bgColor = '#d4edda';
+                color = '#96392d';
+                bgColor = '#f5f5f5';
                 break;
             case 'error':
                 icon = '❌';
-                color = '#dc3545';
-                bgColor = '#f8d7da';
+                color = '#96392d';
+                bgColor = '#f5f5f5';
                 break;
             case 'warning':
                 icon = '⚠️';
-                color = '#ffc107';
-                bgColor = '#fff3cd';
+                color = '#96392d';
+                bgColor = '#f5f5f5';
                 break;
             case 'info':
             default:
                 icon = 'ℹ️';
-                color = '#17a2b8';
-                bgColor = '#d1ecf1';
+                color = '#96392d';
+                bgColor = '#f5f5f5';
                 break;
         }
 
@@ -107,7 +107,7 @@ window.UnifiedPopup = {
                 ${message}
             </div>
             <button id="popup-ok-btn" style="
-                background: ${color};
+                background: #96392d;
                 color: white;
                 border: none;
                 padding: 12px 24px;
@@ -224,6 +224,57 @@ window.UnifiedPopup = {
 
             content.appendChild(cancelBtn);
         });
+    },
+
+    // Prompt dialog
+    prompt: function (message, defaultValue = '') {
+        return new Promise((resolve) => {
+            const popup = this.show(message, 'info', {
+                autoClose: false,
+                buttonText: 'OK'
+            });
+
+            const content = popup.querySelector('.unified-popup-content');
+            const okBtn = document.getElementById('popup-ok-btn');
+
+            // Create input field
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = defaultValue;
+            input.placeholder = 'Enter your response...';
+            input.style.cssText = `
+                width: 100%;
+                padding: 12px;
+                border: 2px solid #96392d;
+                border-radius: 6px;
+                font-size: 16px;
+                margin: 16px 0;
+                outline: none;
+                transition: border-color 0.2s ease;
+            `;
+            input.addEventListener('focus', () => {
+                input.style.borderColor = '#96392d';
+            });
+
+            // Insert input before the button
+            okBtn.parentNode.insertBefore(input, okBtn);
+
+            const handleSubmit = () => {
+                const value = input.value.trim();
+                this.hide();
+                resolve(value);
+            };
+
+            okBtn.addEventListener('click', handleSubmit);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSubmit();
+                }
+            });
+
+            // Focus the input
+            setTimeout(() => input.focus(), 100);
+        });
     }
 };
 
@@ -235,6 +286,11 @@ window.alert = function (message) {
 // Replace the native confirm function globally
 window.confirm = function (message) {
     return UnifiedPopup.confirm(message);
+};
+
+// Replace the native prompt function globally
+window.prompt = function (message, defaultValue = '') {
+    return UnifiedPopup.prompt(message, defaultValue);
 };
 
 // Make it available globally

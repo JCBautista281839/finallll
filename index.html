@@ -383,7 +383,7 @@
           <span>VIKTORIA'S BISTRO. ALL RIGHTS RESERVED.</span>
         </div>
         <div class="footer-links">
-          <a href="#">TERMS OF SERVICE</a>
+          <a href="#" onclick="showTermsOfService(event)">TERMS OF SERVICE</a>
         </div>
       </div>
     </div>
@@ -836,6 +836,139 @@
             locationContainer.classList.remove('active');
           }
         });
+      }
+    });
+  </script>
+
+  <!-- Terms of Service Modal -->
+  <div id="termsModal" class="terms-modal" style="display: none;">
+    <div class="terms-modal-overlay" onclick="closeTermsModal()"></div>
+    <div class="terms-modal-content">
+      <div class="terms-modal-header">
+        <h2 class="terms-modal-title">TERMS OF SERVICE</h2>
+        <button class="terms-modal-close" onclick="closeTermsModal()">&times;</button>
+      </div>
+      <div class="terms-modal-body">
+        <div class="terms-section">
+          <h3>1. Use of Our Website</h3>
+          <p>You agree to use this website only for lawful purposes and in a way that does not infringe the rights of
+            others or restrict their use of the Site.</p>
+
+          <h4>You may:</h4>
+          <ul>
+            <li>Browse the menu and view our products and services.</li>
+            <li>Place online orders (if available).</li>
+            <li>Contact us through the provided forms or contact information.</li>
+          </ul>
+
+          <h4>You may not:</h4>
+          <ul>
+            <li>Attempt to interfere with the website's functionality or security.</li>
+            <li>Use our website for fraudulent or misleading purposes.</li>
+            <li>Copy, reproduce, or exploit any part of the website without our written permission.</li>
+          </ul>
+        </div>
+
+        <div class="terms-section">
+          <h3>2. Online Orders and Payments</h3>
+          <p>If the Site allows online ordering:</p>
+          <ul>
+            <li>Prices, menu items, and availability may change without notice.</li>
+            <li>All payments must be made using accepted payment methods shown at checkout.</li>
+            <li>Once an order is placed and confirmed, it cannot be canceled or refunded unless allowed under our Refund
+              Policy.</li>
+            <li>We reserve the right to refuse or cancel any order if we suspect fraud or unauthorized activity.</li>
+          </ul>
+        </div>
+
+        <div class="terms-section">
+          <h3>3. Intellectual Property</h3>
+          <p>All content on this website—including text, images, graphics, logos, and layout—is the property of
+            Viktoria's Bistro unless otherwise stated.</p>
+          <p>You may not use, copy, or distribute any content without prior written consent.</p>
+        </div>
+
+        <div class="terms-section">
+          <h3>4. Privacy</h3>
+          <p>Your use of our Site is also governed by our Privacy Policy, which explains how we collect, use, and
+            protect your information.</p>
+          <p>By using our Site, you consent to our data practices as described in that policy.</p>
+        </div>
+
+        <div class="terms-section">
+          <h3>5. Third-Party Links</h3>
+          <p>Our website may include links to third-party websites for your convenience.</p>
+          <p>We do not control these sites and are not responsible for their content, services, or privacy practices.
+            Use them at your own risk.</p>
+        </div>
+
+        <div class="terms-section">
+          <h3>6. Disclaimers and Limitation of Liability</h3>
+          <p>Our website and its contents are provided "as is" and "as available."</p>
+          <p>We make no guarantees regarding:</p>
+          <ul>
+            <li>The accuracy, completeness, or reliability of information on the Site.</li>
+            <li>The Site being free from errors, interruptions, or viruses.</li>
+          </ul>
+          <p>To the fullest extent permitted by law, Viktoria's Bistro and its team will not be liable for any damages
+            resulting from your use or inability to use the Site.</p>
+        </div>
+
+        <div class="terms-section">
+          <h3>7. Changes to These Terms</h3>
+          <p>We may update these Terms from time to time. Any changes will be posted on this page with an updated
+            effective date.</p>
+          <p>Continued use of the Site after updates means you accept the new Terms.</p>
+        </div>
+
+        <div class="terms-section">
+          <h3>8. Termination</h3>
+          <p>We may suspend or terminate your access to the Site at any time, without notice, if we believe you have
+            violated these Terms or engaged in harmful conduct.</p>
+        </div>
+
+        <div class="terms-section">
+          <h3>9. Governing Law</h3>
+          <p>These Terms are governed by and construed in accordance with the laws of the Republic of the Philippines,
+            without regard to conflict of law principles.</p>
+        </div>
+      </div>
+      <div class="terms-modal-footer">
+        <button class="terms-modal-btn" onclick="closeTermsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terms of Service JavaScript -->
+  <script>
+    function showTermsOfService(event) {
+      event.preventDefault();
+      const modal = document.getElementById('termsModal');
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeTermsModal() {
+      const modal = document.getElementById('termsModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function (event) {
+      const modal = document.getElementById('termsModal');
+      if (event.target === modal) {
+        closeTermsModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        const modal = document.getElementById('termsModal');
+        if (modal.style.display === 'block') {
+          closeTermsModal();
+        }
       }
     });
   </script>

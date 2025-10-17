@@ -1794,6 +1794,15 @@ async function loadNotifications() {
 function timeAgo(date) {
     var now = new Date();
     var seconds = Math.floor((now - date) / 1000);
+
+    // Debug logging for timestamp accuracy
+    console.log('🕐 TimeAgo Debug:', {
+        now: now.toISOString(),
+        date: date.toISOString(),
+        secondsDiff: seconds,
+        minutesDiff: Math.floor(seconds / 60)
+    });
+
     var interval = Math.floor(seconds / 31536000);
     if (interval >= 1) return interval + ' year' + (interval > 1 ? 's' : '') + ' ago';
     interval = Math.floor(seconds / 2592000);
@@ -1806,6 +1815,66 @@ function timeAgo(date) {
     if (interval >= 1) return interval + ' minute' + (interval > 1 ? 's' : '') + ' ago';
     return 'Just now';
 }
+
+// Utility function to test notification timestamp accuracy
+window.testNotificationTimestamps = function () {
+    console.log('🧪 Testing notification timestamp accuracy...');
+
+    // Create a test notification with current timestamp
+    const db = firebase.firestore();
+    db.collection('notifications').add({
+        type: 'test',
+        message: 'Test notification for timestamp accuracy',
+        item: 'Test Item',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        seen: false
+    }).then(() => {
+        console.log('✅ Test notification created');
+        // Refresh notifications to see the timestamp
+        if (typeof loadNotifications === 'function') {
+            loadNotifications();
+        }
+    }).catch((error) => {
+        console.error('❌ Error creating test notification:', error);
+    });
+};
+
+// Utility function to check notification timestamps
+window.debugNotificationTimestamps = function () {
+    console.log('🔍 Debugging notification timestamps...');
+    const db = firebase.firestore();
+
+    db.collection('notifications')
+        .orderBy('timestamp', 'desc')
+        .limit(5)
+        .get()
+        .then((snapshot) => {
+            console.log('📋 Recent notifications:');
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const timestamp = data.timestamp;
+                let date = null;
+
+                if (timestamp && typeof timestamp.toDate === 'function') {
+                    date = timestamp.toDate();
+                } else if (timestamp instanceof Date) {
+                    date = timestamp;
+                } else if (typeof timestamp === 'string') {
+                    date = new Date(timestamp);
+                }
+
+                console.log(`📄 ${doc.id}:`, {
+                    message: data.message,
+                    timestamp: timestamp,
+                    date: date ? date.toISOString() : 'Invalid',
+                    timeAgo: date ? timeAgo(date) : 'Invalid'
+                });
+            });
+        })
+        .catch((error) => {
+            console.error('❌ Error fetching notifications:', error);
+        });
+};
 
 // Auto-load notifications after Firebase initialization
 async function initializeNotifications() {

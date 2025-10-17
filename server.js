@@ -105,6 +105,65 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
+// Authentication middleware to verify user roles
+async function authenticateUser(req, res, next) {
+    try {
+        // Get the authorization header
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No valid authorization token provided' });
+        }
+        
+        const token = authHeader.split(' ')[1];
+        
+        // Verify the Firebase token
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        req.user = decodedToken;
+        
+        // Get user role from Firestore
+        const userDoc = await admin.firestore().collection('users').doc(decodedToken.uid).get();
+        
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            req.userRole = userData.role || 'user';
+        } else {
+            req.userRole = 'user';
+        }
+        
+        next();
+    } catch (error) {
+        console.error('Authentication error:', error);
+        return res.status(401).json({ error: 'Invalid token or authentication failed' });
+    }
+}
+
+// Role-based access control middleware
+function requireRole(allowedRoles) {
+    return (req, res, next) => {
+        if (!req.userRole) {
+            return res.status(403).json({ error: 'User role not found' });
+        }
+        
+        if (!allowedRoles.includes(req.userRole)) {
+            return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        
+        next();
+    };
+}
+
+// Middleware to check if user is authenticated (for HTML pages)
+function checkAuthForPage(req, res, next) {
+    // For HTML pages, we'll check authentication on the client side
+    // This middleware is mainly for logging and basic security
+    const userAgent = req.get('User-Agent') || '';
+    const referer = req.get('Referer') || '';
+    
+    console.log(`Page access attempt: ${req.path} from ${referer}`);
+    next();
+}
+
 // Basic middleware
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -2032,6 +2091,227 @@ app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
   }
 });
 
+/* ====== Firebase OTP API Endpoints ====== */
+
+// Firebase Send OTP endpoint
+app.post('/api/firebase-send-otp', rateLimitMiddleware, async (req, res) => {
+  try {
+    const { email, userName, otp } = req.body;
+
+    if (!email || !userName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
+    }
+
+    console.log(`[Firebase API] Send OTP request for: ${email}`);
+
+    // Generate OTP if not provided
+    const generatedOTP = otp || generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store OTP locally
+    otpStorage.set(email, {
+      otp: generatedOTP,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now(),
+      source: 'firebase'
+    });
+
+    console.log(`[Firebase API] OTP generated: ${generatedOTP} for ${email}`);
+
+    // Try to send email via SendGrid
+    const emailResult = await sendOTPEmail(email, userName, generatedOTP);
+
+    if (emailResult.success) {
+      if (emailResult.emailSent) {
+        console.log(`📧 Firebase email sent successfully to ${email}`);
+        res.json({
+          success: true,
+          otp: generatedOTP,
+          expiry: expiry,
+          message: 'Firebase OTP sent successfully',
+          emailSent: true
+        });
+      } else {
+        console.log(`📧 SendGrid not configured, OTP generated locally: ${emailResult.message}`);
+        res.json({
+          success: true,
+          otp: generatedOTP,
+          expiry: expiry,
+          message: 'OTP generated successfully (SendGrid not configured)',
+          emailSent: false,
+          emailError: emailResult.message
+        });
+      }
+    } else {
+      console.log(`📧 Firebase email failed: ${emailResult.message}`);
+      res.json({
+        success: true,
+        otp: generatedOTP,
+        expiry: expiry,
+        message: 'Firebase OTP generated successfully (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[Firebase API] Send OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send Firebase OTP'
+    });
+  }
+});
+
+// Firebase Verify OTP endpoint
+app.post('/api/firebase-verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    console.log(`[Firebase API] Verify OTP request for: ${email}`);
+
+    // Check local storage for Firebase OTP
+    if (!otpStorage.has(email)) {
+      return res.json({
+        success: false,
+        message: 'No OTP found for this email'
+      });
+    }
+
+    const storedData = otpStorage.get(email);
+
+    // Check if OTP has expired
+    if (Date.now() > storedData.expiry) {
+      otpStorage.delete(email);
+      return res.json({
+        success: false,
+        message: 'OTP has expired'
+      });
+    }
+
+    // Check attempt limit
+    if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+      otpStorage.delete(email);
+      return res.json({
+        success: false,
+        message: 'Too many failed attempts'
+      });
+    }
+
+    // Verify OTP
+    if (storedData.otp === otp) {
+      otpStorage.delete(email); // Remove OTP after successful verification
+      console.log(`[Firebase API] OTP verified successfully for: ${email}`);
+      return res.json({
+        success: true,
+        message: 'Firebase OTP verified successfully'
+      });
+    } else {
+      // Increment attempt count
+      storedData.attempts++;
+      otpStorage.set(email, storedData);
+
+      const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+      return res.json({
+        success: false,
+        message: `Invalid OTP. ${remainingAttempts} attempts remaining.`
+      });
+    }
+
+  } catch (error) {
+    console.error('[Firebase API] Verify OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify Firebase OTP'
+    });
+  }
+});
+
+// Firebase Resend OTP endpoint
+app.post('/api/firebase-resend-otp', rateLimitMiddleware, async (req, res) => {
+  try {
+    const { email, userName } = req.body;
+
+    if (!email || !userName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
+    }
+
+    console.log(`[Firebase API] Resend OTP request for: ${email}`);
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store new OTP
+    otpStorage.set(email, {
+      otp: otp,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now(),
+      source: 'firebase'
+    });
+
+    console.log(`[Firebase API] New OTP generated: ${otp} for ${email}`);
+
+    // Try to send email via SendGrid
+    const emailResult = await sendOTPEmail(email, userName, otp);
+
+    if (emailResult.success) {
+      if (emailResult.emailSent) {
+        console.log(`📧 Firebase email resent successfully to ${email}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'Firebase OTP resent successfully',
+          emailSent: true
+        });
+      } else {
+        console.log(`📧 SendGrid not configured, OTP regenerated locally: ${emailResult.message}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'OTP regenerated successfully (SendGrid not configured)',
+          emailSent: false,
+          emailError: emailResult.message
+        });
+      }
+    } else {
+      console.log(`📧 Firebase email resend failed: ${emailResult.message}`);
+      res.json({
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'Firebase OTP resent successfully (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[Firebase API] Resend OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend Firebase OTP'
+    });
+  }
+});
+
 /* ====== Simple OTP System (No Email Sending) ====== */
 
 /* ====== Security Middleware - Block Direct File Access ====== */
@@ -2235,8 +2515,54 @@ app.get('/Order.html', (req, res) => {
 });
 
 app.get('/kitchen.html', (req, res) => {
-    console.log('Redirecting /kitchen.html to /kitchen');
-    res.redirect(301, '/kitchen');
+    console.log('🚫 Blocked access to /kitchen.html - URL blocked');
+    res.status(403).send(`
+        <html>
+            <head>
+                <title>Access Denied</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 50px; 
+                        background-color: #f5f5f5;
+                    }
+                    .error-container {
+                        background: white;
+                        padding: 30px;
+                        border-radius: 10px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        max-width: 500px;
+                        margin: 0 auto;
+                    }
+                    .error-code { 
+                        font-size: 72px; 
+                        color: #e74c3c; 
+                        margin: 0;
+                    }
+                    .error-message { 
+                        font-size: 24px; 
+                        color: #2c3e50; 
+                        margin: 20px 0;
+                    }
+                    .error-description {
+                        color: #7f8c8d;
+                        margin: 20px 0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="error-container">
+                    <h1 class="error-code">403</h1>
+                    <h2 class="error-message">Access Denied</h2>
+                    <p class="error-description">
+                        This URL has been blocked for security reasons.<br>
+                        Kitchen interface access is restricted.
+                    </p>
+                </div>
+            </body>
+        </html>
+    `);
 });
 
 app.get('/analytics.html', (req, res) => {
@@ -2383,6 +2709,41 @@ blockedDirectories.forEach(pattern => {
 
 app.use(express.static(path.join(__dirname)));
 
+// 🚫 COMPREHENSIVE URL BLOCKING MIDDLEWARE
+// Block all URLs except specific allowed ones
+const allowedRoutes = [
+  '/',
+  '/login',
+  '/register', 
+  '/forgot-password',
+  '/otp',
+  '/api/login',
+  '/api/register',
+  '/api/send-otp',
+  '/api/verify-otp',
+  '/api/resend-otp',
+  '/api/reset-password-with-otp',
+  '/api/firebase-send-otp',
+  '/api/firebase-verify-otp',
+  '/api/firebase-resend-otp',
+  '/customer',
+  '/customer/',
+  '/customer/login',
+  '/customer/register',
+  '/customer/forgot-password',
+  '/customer/otp',
+  '/customer/account',
+  '/customer/menu',
+  '/customer/css',
+  '/customer/javascript',
+  '/customer/html',
+  '/css',
+  '/javascript',
+  '/images',
+  '/favicon.ico'
+];
+
+  
 /* ====== Local app routes (static pages) ====== */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
@@ -2390,17 +2751,19 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'html', 'login.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'html', 'signup.html')));
 app.get('/otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'otp.html')));
-app.get('/pos', (req, res) => res.sendFile(path.join(__dirname, 'html', 'pos.html')));
-app.get('/payment', (req, res) => res.sendFile(path.join(__dirname, 'html', 'payment.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Dashboard.html')));
-app.get('/menu', (req, res) => res.sendFile(path.join(__dirname, 'html', 'menu.html')));
-app.get('/inventory', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Inventory.html')));
-app.get('/order', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Order.html')));
-app.get('/kitchen', (req, res) => res.sendFile(path.join(__dirname, 'html', 'kitchen.html')));
-app.get('/analytics', (req, res) => res.sendFile(path.join(__dirname, 'html', 'analytics.html')));
-app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Settings.html')));
-app.get('/user', (req, res) => res.sendFile(path.join(__dirname, 'html', 'user.html')));
-app.get('/notifications', (req, res) => {
+app.get('/pos', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'pos.html')));
+app.get('/payment', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'payment.html')));
+app.get('/dashboard', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Dashboard.html')));
+app.get('/menu', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'menu.html')));
+app.get('/inventory', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Inventory.html')));
+app.get('/order', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Order.html')));
+app.get('/kitchen', checkAuthForPage, (req, res) => {
+    res.sendFile(path.join(__dirname, 'html', 'kitchen.html'));
+});
+app.get('/analytics', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'analytics.html')));
+app.get('/settings', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Settings.html')));
+app.get('/user', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'user.html')));
+app.get('/notifications', checkAuthForPage, (req, res) => {
     // Check if user is kitchen user and block access
     // This is a basic check - in production you'd want proper authentication
     const userAgent = req.get('User-Agent') || '';
@@ -2414,9 +2777,9 @@ app.get('/notifications', (req, res) => {
     
     res.sendFile(path.join(__dirname, 'html', 'notifi.html'));
 });
-app.get('/receipt', (req, res) => res.sendFile(path.join(__dirname, 'html', 'receipt.html')));
-app.get('/addproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'addproduct.html')));
-app.get('/editproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'editproduct.html')));
+app.get('/receipt', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'receipt.html')));
+app.get('/addproduct', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'addproduct.html')));
+app.get('/editproduct', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'editproduct.html')));
 app.get('/forgot-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'forgot-password.html')));
 app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'reset-password.html')));
 app.get('/verify-password-reset-otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'verify-password-reset-otp.html')));
