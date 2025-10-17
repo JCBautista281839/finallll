@@ -146,7 +146,7 @@ async function loadCustomerData() {
 async function loadCustomerOrders() {
     try {
         const db = firebase.firestore();
-        const ordersSnapshot = await db.collection('orders')
+        const ordersSnapshot = await db.collection('delivery')
             .where('userId', '==', currentUser.uid)
             .orderBy('createdAt', 'desc')
             .limit(10)
