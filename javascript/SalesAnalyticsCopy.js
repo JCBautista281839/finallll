@@ -1943,37 +1943,157 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         const wb = XLSX.utils.book_new();
 
-        // 1. Summary Sheet
+        // Get current date and time for report generation
+        const now = new Date();
+        const exportDateTime = now.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        // 1. Summary Sheet with Enhanced Information
         const s = window.currentAnalyticsData.summary;
+        const orders = window.currentAnalyticsData.orders || [];
+        const totalOrders = orders.length;
+        const payments = window.currentAnalyticsData.paymentMethods;
+        
+        // Calculate additional metrics
+        const totalGrossSales = parseFloat(s.grossSales) || 0;
+        const totalDiscount = parseFloat(s.discount) || 0;
+        const totalTax = parseFloat(s.tax) || 0;
+        const totalNetSales = parseFloat(s.netSales) || 0;
+        const avgOrderValue = parseFloat(s.averageOrderValue) || 0;
+        
+        // Calculate payment method percentages
+        const cashAmount = parseFloat(payments.Cash) || 0;
+        const gcashAmount = parseFloat(payments.GCash) || 0;
+        const cardAmount = parseFloat(payments.Card) || 0;
+        const totalPayments = cashAmount + gcashAmount + cardAmount;
+        
+        const cashPercent = totalPayments > 0 ? ((cashAmount / totalPayments) * 100).toFixed(2) : 0;
+        const gcashPercent = totalPayments > 0 ? ((gcashAmount / totalPayments) * 100).toFixed(2) : 0;
+        const cardPercent = totalPayments > 0 ? ((cardAmount / totalPayments) * 100).toFixed(2) : 0;
+        
+        // Calculate highest and lowest order values
+        const orderTotals = orders.map(o => parseFloat(o.total) || 0);
+        const highestOrder = orderTotals.length > 0 ? Math.max(...orderTotals) : 0;
+        const lowestOrder = orderTotals.length > 0 ? Math.min(...orderTotals) : 0;
+        
+        // Calculate discount rate
+        const discountRate = totalGrossSales > 0 ? ((totalDiscount / totalGrossSales) * 100).toFixed(2) : 0;
+        
         const summary = [
-          ['SALES ANALYTICS REPORT'],
-          [`Date Range: ${window.currentAnalyticsData.dateRange}`],
+          ['═══════════════════════════════════════════════════════════════'],
+          ['VIKTORIA\'S BISTRO'],
+          ['COMPREHENSIVE SALES ANALYTICS REPORT'],
+          ['═══════════════════════════════════════════════════════════════'],
           [''],
-          ['Gross Sales', s.grossSales],
-          ['Discount', s.discount],
-          ['Tax', s.tax],
-          ['Net Sales', s.netSales],
-          ['Average Order Value', s.averageOrderValue],
+          ['REPORT INFORMATION'],
+          ['Date Range:', window.currentAnalyticsData.dateRange],
+          ['Report Generated:', exportDateTime],
+          ['Total Orders Analyzed:', totalOrders],
+          ['Report Period:', 'All Time / Custom Range'],
           [''],
-          ['PAYMENT METHODS'],
-          ['Cash', window.currentAnalyticsData.paymentMethods.Cash],
-          ['GCash', window.currentAnalyticsData.paymentMethods.GCash],
-          ['Card', window.currentAnalyticsData.paymentMethods.Card]
+          ['═══════════════════════════════════════════════════════════════'],
+          ['SALES SUMMARY'],
+          ['═══════════════════════════════════════════════════════════════'],
+          ['Gross Sales:', `₱${totalGrossSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+          ['Total Discount:', `₱${totalDiscount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${discountRate}%`],
+          ['Tax Amount:', `₱${totalTax.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+          ['Net Sales:', `₱${totalNetSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+          [''],
+          ['ORDER METRICS'],
+          ['Total Number of Orders:', totalOrders],
+          ['Average Order Value:', `₱${avgOrderValue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+          ['Highest Order:', `₱${highestOrder.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+          ['Lowest Order:', `₱${lowestOrder.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+          [''],
+          ['═══════════════════════════════════════════════════════════════'],
+          ['PAYMENT METHODS BREAKDOWN'],
+          ['═══════════════════════════════════════════════════════════════'],
+          ['Payment Method', 'Amount', 'Percentage', 'Order Count'],
+          ['Cash', `₱${cashAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${cashPercent}%`, orders.filter(o => o.payment?.method === 'Cash').length],
+          ['GCash', `₱${gcashAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${gcashPercent}%`, orders.filter(o => o.payment?.method === 'GCash').length],
+          ['Card', `₱${cardAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${cardPercent}%`, orders.filter(o => o.payment?.method === 'Card').length],
+          ['Total:', `₱${totalPayments.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, '100.00%', totalOrders]
         ];
+        
         const wsSummary = XLSX.utils.aoa_to_sheet(summary);
+        
+        // Set column widths for Summary sheet
+        wsSummary['!cols'] = [
+          { wch: 30 },  // Label column
+          { wch: 25 },  // Value column
+          { wch: 15 },  // Percentage column
+          { wch: 15 }   // Count column
+        ];
+        
         XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
 
-        // 2. Orders Sheet
-        const ordersData = window.currentAnalyticsData.orders.map(o => [
-          o.id,
-          o.timestamp.toLocaleString(),
-          o.total,
-          o.payment?.method || 'Unknown'
-        ]);
+        // 2. Enhanced Orders Sheet
+        const ordersHeader = [
+          ['═══════════════════════════════════════════════════════════════════════════════'],
+          ['DETAILED ORDER LISTING'],
+          ['═══════════════════════════════════════════════════════════════════════════════'],
+          [''],
+          ['Order ID', 'Date', 'Time', 'Order Type', 'Payment Method', 'Items Count', 'Subtotal', 'Discount', 'Tax', 'Total Amount']
+        ];
+        
+        const ordersData = window.currentAnalyticsData.orders.map((o, index) => {
+          const date = o.timestamp.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+          const time = o.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+          const itemsCount = o.items ? o.items.length : 0;
+          const orderType = o.orderType || 'Dine-In';
+          const subtotal = o.subtotal || parseFloat(o.total) || 0;
+          const discount = o.discount || 0;
+          const tax = o.tax || 0;
+          const total = parseFloat(o.total) || 0;
+          
+          return [
+            o.id || `ORD-${index + 1}`,
+            date,
+            time,
+            orderType,
+            o.payment?.method || 'Cash',
+            itemsCount,
+            `₱${subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            `₱${discount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            `₱${tax.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            `₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          ];
+        });
+        
+        const ordersFooter = [
+          [''],
+          ['═══════════════════════════════════════════════════════════════════════════════'],
+          ['ORDERS SUMMARY'],
+          ['Total Orders:', orders.length, '', '', '', '', '', '', '', `₱${totalNetSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+          ['═══════════════════════════════════════════════════════════════════════════════']
+        ];
+        
         const wsOrders = XLSX.utils.aoa_to_sheet([
-          ['Order ID', 'Date/Time', 'Total', 'Payment Method'],
-          ...ordersData
+          ...ordersHeader,
+          ...ordersData,
+          ...ordersFooter
         ]);
+        
+        // Set column widths for Orders sheet
+        wsOrders['!cols'] = [
+          { wch: 15 },  // Order ID
+          { wch: 15 },  // Date
+          { wch: 12 },  // Time
+          { wch: 12 },  // Order Type
+          { wch: 15 },  // Payment Method
+          { wch: 12 },  // Items Count
+          { wch: 15 },  // Subtotal
+          { wch: 12 },  // Discount
+          { wch: 12 },  // Tax
+          { wch: 15 }   // Total
+        ];
+        
         XLSX.utils.book_append_sheet(wb, wsOrders, 'Orders');
 
         // Save file
