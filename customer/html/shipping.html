@@ -65,14 +65,20 @@
         <h2 class="form-title payment-title">PAYMENT INFORMATION</h2>
 
         <h3>Payment</h3>
-        <div class="payment-option">
+        <div class="payment-option" id="gcash-option">
           <input type="radio" name="payment" id="gcash-payment" checked>
           <span>📱 GCash</span>
+          <span class="payment-locked-badge"
+            style="display: none; margin-left: auto; color: green; font-size: 14px; font-weight: 600;">✓
+            Confirmed</span>
         </div>
 
-        <div class="payment-option">
+        <div class="payment-option" id="bank-transfer-option">
           <input type="radio" name="payment" id="bank-transfer-payment">
           <span>🏦 Bank Transfer</span>
+          <span class="payment-locked-badge"
+            style="display: none; margin-left: auto; color: green; font-size: 14px; font-weight: 600;">✓
+            Confirmed</span>
         </div>
       </div>
 
