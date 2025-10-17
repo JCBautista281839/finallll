@@ -109,9 +109,17 @@ function showToast(message, type = 'info') {
 // Wait for Firebase to be ready before initializing
 function waitForFirebase() {
     try {
+        // Prevent multiple initializations
+        if (window.posInitialized) {
+            console.log('POS already initialized, skipping...');
+            return;
+        }
+
         if (window.isFirebaseReady && window.isFirebaseReady()) {
+            window.posInitialized = true;
             initializePOS();
         } else if (typeof firebase !== 'undefined' && firebase.firestore) {
+            window.posInitialized = true;
             initializePOS();
         } else {
             setTimeout(waitForFirebase, 500); // Increased timeout for more stability
@@ -957,15 +965,23 @@ async function startPOSSystem() {
         // Handles Proceed button: saves order and navigates to payment
 
         const proceedBtn = document.querySelector('.proceed-btn');
-        if (proceedBtn) {
+        if (proceedBtn && !proceedBtn.hasProceedListener) {
+            proceedBtn.hasProceedListener = true;
             proceedBtn.addEventListener('click', async function () {
                 await saveOrder();
             });
         }
 
         async function saveOrder() {
-            // CRITICAL: For "Pending Payment" orders, we MUST reuse the same Order ID and Firestore document
-            // This prevents creating new documents and maintains consistency across all pages
+            // Prevent duplicate submissions
+            if (window.isSavingOrder) {
+                console.log('Order preparation already in progress, skipping duplicate...');
+                return;
+            }
+            window.isSavingOrder = true;
+
+            // CRITICAL: For "Pending Payment" orders, we MUST reuse the same Order ID
+            // This ensures consistency when navigating between POS and Payment pages
 
             let pendingOrderId = null;
 
@@ -985,20 +1001,8 @@ async function startPOSSystem() {
             if (!pendingOrderId) {
                 pendingOrderId = sessionStorage.getItem('savedPendingOrderId') || sessionStorage.getItem('pendingOrderId');
                 if (pendingOrderId) {
-                    // Verify this order exists and is still pending
-                    try {
-                        const db = firebase.firestore();
-                        const existingDoc = await db.collection('orders').doc(String(pendingOrderId)).get();
-                        if (existingDoc.exists && existingDoc.data().status === 'Pending Payment') {
-                            console.log('🔄 Resuming existing pending order:', pendingOrderId);
-                        } else {
-                            // Order exists but is not pending, generate new ID
-                            pendingOrderId = null;
-                        }
-                    } catch (error) {
-                        console.log('Error checking existing order, will create new:', error);
-                        pendingOrderId = null;
-                    }
+                    // Use the saved pending order ID (no Firebase check needed from POS)
+                    console.log('🔄 Using saved pending order ID:', pendingOrderId);
                 }
             }
 
@@ -1015,7 +1019,7 @@ async function startPOSSystem() {
             const orderItemsContainer = document.querySelector('.order-items');
             const orderItems = orderItemsContainer ? Array.from(orderItemsContainer.children).filter(el => el.classList.contains('order-item') && el.offsetParent !== null) : [];
             if (!orderItems || orderItems.length === 0) {
-                alert('Please add items from the menu first.');
+                showCustomAlert('Please add items from the menu first.');
                 return;
             }
             // Build orderData from DOM
@@ -1027,7 +1031,7 @@ async function startPOSSystem() {
             const paxValue = paxNumberInput ? paxNumberInput.value.trim() : '';
             // Defensive validation
             if (orderType === 'Dine in' && (!tableNumberValue || !paxValue)) {
-                alert('Please enter both Table Number and Pax before proceeding.');
+                showCustomAlert('Please enter both Table Number and Pax before proceeding.');
                 return;
             }
 
@@ -1037,12 +1041,12 @@ async function startPOSSystem() {
                 const paxNumber = parseInt(paxValue);
 
                 if (tableNumber <= 0) {
-                    alert('Table Number must be greater than 0.');
+                    showCustomAlert('Table Number must be greater than 0.');
                     return;
                 }
 
                 if (paxNumber <= 0) {
-                    alert('Pax must be greater than 0.');
+                    showCustomAlert('Pax must be greater than 0.');
                     return;
                 }
             }
@@ -1060,7 +1064,7 @@ async function startPOSSystem() {
                 };
             });
             if (!items.length) {
-                alert('Order must have at least one item.');
+                showCustomAlert('Order must have at least one item.');
                 return;
             }
             // Ensure order summary is up to date before reading values
@@ -1122,48 +1126,23 @@ async function startPOSSystem() {
             };
 
             // Debug logging
-            console.log('Saving order with values:', { subtotal, tax, discount, total });
-            try {
-                const db = firebase.firestore();
-                const orderRef = db.collection('orders').doc(String(pendingOrderId));
+            console.log('Preparing order for Payment page:', { subtotal, tax, discount, total });
 
-                // CRITICAL: Use the same Firestore document reference for all "Pending Payment" orders
-                // This ensures Payment, Kitchen, and Orders pages all reference the same document
+            // Save to sessionStorage for payment page (NO Firebase save from POS)
+            sessionStorage.setItem('posOrder', JSON.stringify(orderData));
+            sessionStorage.setItem('savedPendingOrderId', String(pendingOrderId));
+            sessionStorage.setItem('pendingOrderId', String(pendingOrderId));
 
-                // Always check if document exists in Firestore before deciding to update or create
-                const docSnapshot = await orderRef.get();
-                if (docSnapshot.exists) {
-                    // Document exists, update it
-                    console.log('🔄 Updating existing order document:', pendingOrderId);
-                    await orderRef.update({
-                        ...orderData,
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-                        updatedAt: new Date().toISOString()
-                    });
-                } else {
-                    // Document doesn't exist, create it
-                    console.log('🆕 Creating new order document:', pendingOrderId);
-                    await orderRef.set(orderData);
-                }
+            // UI cleanup
+            document.querySelector('.order-items').innerHTML = '';
+            updateOrderSummary();
+            if (tableNumberInput) tableNumberInput.value = '';
 
-                // Save to sessionStorage for payment page and persist pending id markers
-                sessionStorage.setItem('posOrder', JSON.stringify(orderData));
-                sessionStorage.setItem('savedPendingOrderId', String(pendingOrderId));
-                sessionStorage.setItem('pendingOrderId', String(pendingOrderId));
-                // UI cleanup
-                document.querySelector('.order-items').innerHTML = '';
-                updateOrderSummary();
-                if (tableNumberInput) tableNumberInput.value = '';
+            // Navigate to Payment page - Payment page will handle Firebase saving
+            window.location.href = '/html/payment.html';
 
-                // IMPORTANT: Do NOT generate new Order ID here - keep the same ID for pending orders
-                // Only refresh Order ID when order is completed/processed (not pending)
-                // This ensures the same Order ID persists through Payment page and back to POS for edits
-
-                window.location.href = '/html/payment.html';
-            } catch (error) {
-                console.error('Error saving order:', error);
-                alert('There was an error processing your order. Please try again.');
-            }
+            // Reset the flag to allow future saves
+            window.isSavingOrder = false;
         }
 
         // Also update order number when clearing the order
@@ -2524,6 +2503,98 @@ function decreaseQuantity(button) {
     }
 }
 
+// Custom notification function to replace browser alerts
+function showCustomAlert(message, type = 'error') {
+    // Remove any existing custom alerts
+    const existingAlert = document.querySelector('.custom-alert');
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+
+    // Create custom alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'custom-alert';
+    alertDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background:rgb(255, 255, 255);
+        color: #96392d;
+        padding: 20px 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        font-family: 'PoppinsRegular';
+        font-size: 16px;
+        font-weight: 500;
+        text-align: center;
+        min-width: 300px;
+        max-width: 500px;
+        border: 2px solid ${type === 'error' ? '#96392d' : '#96392d'};
+    `;
+
+    // Create message content
+    const messageDiv = document.createElement('div');
+    messageDiv.textContent = message;
+    messageDiv.style.marginBottom = '15px';
+
+    // Create OK button
+    const okButton = document.createElement('button');
+    okButton.textContent = 'OK';
+    okButton.style.cssText = `
+        background: #96392d;
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    `;
+
+    // Add hover effect
+    okButton.addEventListener('mouseenter', function () {
+        this.style.transform = 'translateY(-1px)';
+        this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+    });
+    okButton.addEventListener('mouseleave', function () {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+    });
+
+    // Add click handler
+    okButton.addEventListener('click', function () {
+        alertDiv.remove();
+    });
+
+    // Add escape key handler
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            alertDiv.remove();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+
+    // Assemble the alert
+    alertDiv.appendChild(messageDiv);
+    alertDiv.appendChild(okButton);
+    document.body.appendChild(alertDiv);
+
+    // Focus the button for keyboard navigation
+    okButton.focus();
+
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 10000);
+}
+
 // Function to setup real-time validation for Table Number and Pax inputs
 function setupInputValidation() {
     const tableNumberInput = document.querySelector('.table-number input');
@@ -2544,7 +2615,7 @@ function setupInputValidation() {
             const value = parseInt(this.value);
             if (value <= 0 && this.value !== '') {
                 this.value = '';
-                alert('Table Number must be greater than 0.');
+                showCustomAlert('Table Number must be greater than 0.');
             }
         });
     }
@@ -2564,7 +2635,7 @@ function setupInputValidation() {
             const value = parseInt(this.value);
             if (value <= 0 && this.value !== '') {
                 this.value = '';
-                alert('Pax must be greater than 0.');
+                showCustomAlert('Pax must be greater than 0.');
             }
         });
     }
