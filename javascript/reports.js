@@ -459,7 +459,7 @@ function buildTicketDetailHTML(ticket) {
                     <option value="pending" ${ticket.status === 'pending' ? 'selected' : ''}>Pending</option>
                     <option value="in-progress" ${ticket.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
                     <option value="resolved" ${ticket.status === 'resolved' ? 'selected' : ''}>Resolved</option>
-                    <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''}>Closed</option>
+                    <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''}>Declined</option>
                 </select>
             </div>
             
@@ -513,7 +513,7 @@ function buildTicketDetailHTML(ticket) {
 // Update ticket (status and add response)
 async function updateTicket() {
     if (!currentTicket) {
-        alert('No ticket selected');
+        showToast('No ticket selected', 'error');
         return;
     }
 
@@ -544,17 +544,21 @@ async function updateTicket() {
         await db.collection('supportTickets').doc(currentTicket.id).update(updateData);
 
         console.log('[Reports] Ticket updated successfully');
-        alert('Ticket updated successfully!');
 
-        // Close modal
-        closeTicketModal();
+        // Show success toast
+        showToast('Ticket updated successfully!', 'success');
+
+        // Close modal after a short delay to ensure toast shows
+        setTimeout(() => {
+            closeTicketModal();
+        }, 500);
 
         // Reload tickets
         await loadTickets();
 
     } catch (error) {
         console.error('[Reports] Error updating ticket:', error);
-        alert('Error updating ticket. Please try again.');
+        showToast('Error updating ticket. Please try again.', 'error');
     }
 }
 
@@ -597,7 +601,7 @@ function formatStatus(status) {
         'pending': 'Pending',
         'in-progress': 'In Progress',
         'resolved': 'Resolved',
-        'closed': 'Closed'
+        'closed': 'Declined'
     };
     return labels[status] || status;
 }
@@ -619,4 +623,74 @@ document.getElementById('ticketModal')?.addEventListener('click', (e) => {
     }
 });
 
+// Toast Notification System
+function showToast(message, type = 'info', duration = 4000) {
+    console.log('[Toast] Showing toast:', message, 'Type:', type);
+
+    // Create toast container if it doesn't exist
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+        console.log('[Toast] Created toast container');
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    // Get icon based on type
+    const iconClass = {
+        'success': 'fas fa-check-circle',
+        'error': 'fas fa-exclamation-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'info': 'fas fa-info-circle'
+    }[type] || 'fas fa-info-circle';
+
+    // Build toast HTML with inline styling for visibility
+    toast.innerHTML = `
+        <i class="toast-icon ${iconClass}"></i>
+        <span class="toast-content">${message}</span>
+        <button class="toast-close" onclick="removeToast(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+    // Ensure visibility with inline styles
+    toast.style.display = 'flex';
+    toast.style.visibility = 'visible';
+    toast.style.opacity = '1';
+
+    // Add to container
+    container.appendChild(toast);
+    console.log('[Toast] Toast element added to DOM');
+
+    // Auto remove after duration
+    setTimeout(() => {
+        if (toast && toast.parentNode) {
+            toast.classList.add('removing');
+            setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.remove();
+                    console.log('[Toast] Toast removed');
+                }
+            }, 300);
+        }
+    }, duration);
+}
+
+// Helper function to remove toast
+function removeToast(element) {
+    const toast = element.closest('.toast');
+    if (toast) {
+        toast.classList.add('removing');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }
+}
+
 console.log('[Reports] Script loaded');
+

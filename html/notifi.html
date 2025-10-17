@@ -109,7 +109,7 @@
     <script src="../main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Auto-refresh notifications every 30 seconds for real-time updates
+        // Auto-refresh notifications with real-time listener
         document.addEventListener('DOMContentLoaded', function () {
             // Skip auto-refresh if this is an OMR page
             if (window.location.pathname.includes('OMR') || window.location.pathname.includes('omr')) {
@@ -119,8 +119,8 @@
             // Setup kitchen role access control
             setupKitchenNotificationsAccess();
 
-            loadNotifications();
-            setInterval(loadNotifications, 30000);
+            // Setup real-time notification listener instead of polling
+            setupRealtimeNotificationListener();
 
             // Logout functionality
             const logoutBtn = document.getElementById('logoutBtn');
@@ -129,8 +129,72 @@
             }
         });
 
+        // Setup real-time notification listener
+        function setupRealtimeNotificationListener() {
+            console.log('🔔 Setting up real-time notification listener...');
+
+            try {
+                // Wait for Firebase to be initialized
+                if (typeof initializeFirebase === 'function') {
+                    initializeFirebase();
+                }
+
+                // Set up auth state listener
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (!user) {
+                        console.log('📵 No authenticated user');
+                        return;
+                    }
+
+                    console.log('✅ User authenticated, setting up real-time listener');
+
+                    // Get the Firestore database
+                    const db = firebase.firestore();
+
+                    // Set up real-time listener for notifications collection
+                    // Order by timestamp DESC to get newest first, limit to 500
+                    const unsubscribe = db.collection('notifications')
+                        .orderBy('timestamp', 'desc')
+                        .limit(500)
+                        .onSnapshot(
+                            (snapshot) => {
+                                console.log('🔄 Real-time update received! Total notifications:', snapshot.size);
+
+                                // Call loadNotifications to refresh the UI with new data
+                                if (typeof loadNotifications === 'function') {
+                                    loadNotifications();
+                                }
+                            },
+                            (error) => {
+                                console.error('❌ Real-time listener error:', error);
+                                console.log('📊 Attempting fallback: Query index might be missing');
+
+                                // Fallback to periodic polling if real-time fails
+                                console.log('⏱️ Falling back to polling every 15 seconds...');
+                                setInterval(loadNotifications, 15000);
+                            }
+                        );
+
+                    // Store unsubscribe function for cleanup if needed
+                    window.notificationListenerUnsubscribe = unsubscribe;
+                });
+
+            } catch (error) {
+                console.error('❌ Error setting up real-time listener:', error);
+                console.log('⏱️ Falling back to polling...');
+                // Fallback to polling
+                loadNotifications();
+                setInterval(loadNotifications, 15000);
+            }
+        }
+
         // Logout functionality
         function handleLogout() {
+            // Unsubscribe from real-time listener before logout
+            if (typeof window.notificationListenerUnsubscribe === 'function') {
+                window.notificationListenerUnsubscribe();
+            }
+
             firebase.auth().signOut().then(() => {
                 console.log('User signed out successfully');
                 window.location.href = '../index.html';

@@ -1425,19 +1425,83 @@ async function loadNotifications() {
                     });
             });
     } else {
-        // Admin users see all notifications - using JavaScript sorting for consistency
-        console.log('👑 Admin: Querying for all notifications with JavaScript sorting...');
+        // Admin users see all notifications - using ordered query for consistency
+        console.log('👑 Admin: Querying for all notifications with orderBy timestamp...');
 
         queryPromise = db.collection('notifications')
-            .limit(100) // Get more to ensure we have the latest
+            .orderBy('timestamp', 'desc') // Order by timestamp, newest first
+            .limit(500) // Increased from 100 to 500 to capture more notifications
             .get()
             .then(function (querySnapshot) {
-                console.log('👑 Admin: Loaded', querySnapshot.size, 'notifications, sorting in JavaScript...');
-                // Sort by timestamp in JavaScript for consistent behavior
+                console.log('👑 Admin: Loaded', querySnapshot.size, 'notifications (ordered by timestamp)');
+                // Docs are already sorted by Firestore
                 const docs = [];
                 querySnapshot.forEach(function (doc) {
                     docs.push(doc);
                 });
+                // Return all docs (up to 500), but display only first 100
+                return { docs: docs.slice(0, 100) };
+            })
+            .catch(function (error) {
+                console.error('❌ Admin: Query error (might need composite index):', error.message);
+
+                // Fallback: Get all notifications without ordering and sort in JavaScript
+                console.log('⚠️ Attempting fallback: Query without orderBy...');
+                return db.collection('notifications')
+                    .limit(500)
+                    .get()
+                    .then(function (querySnapshot) {
+                        console.log('👑 Admin: Fallback - Loaded', querySnapshot.size, 'notifications, sorting in JavaScript...');
+                        const docs = [];
+                        querySnapshot.forEach(function (doc) {
+                            docs.push(doc);
+                        });
+
+                        // Sort by timestamp in JavaScript
+                        docs.sort(function (a, b) {
+                            const getTimestamp = (doc) => {
+                                const timestamp = doc.data().timestamp;
+                                if (!timestamp) return new Date(0);
+                                try {
+                                    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+                                        return timestamp.toDate();
+                                    } else if (timestamp instanceof Date) {
+                                        return timestamp;
+                                    } else if (typeof timestamp === 'string') {
+                                        return new Date(timestamp);
+                                    } else {
+                                        return new Date(0);
+                                    }
+                                } catch (e) {
+                                    return new Date(0);
+                                }
+                            };
+                            const timestampA = getTimestamp(a);
+                            const timestampB = getTimestamp(b);
+                            return timestampB - timestampA; // Descending order (newest first)
+                        });
+                        return { docs: docs.slice(0, 100) };
+                    });
+            });
+    }
+
+    queryPromise
+        .then(function (result) {
+            // Handle both QuerySnapshot and custom result format
+            var docs = result.docs || result;
+
+            // Ensure docs are in array format
+            if (docs && docs.forEach && !Array.isArray(docs)) {
+                const docsArray = [];
+                docs.forEach(doc => docsArray.push(doc));
+                docs = docsArray;
+            }
+
+            if (Array.isArray(docs)) {
+                console.log('📊 Admin: Processing', docs.length, 'notifications');
+                console.log('📊 Admin: Notification types found:', docs.map(doc => doc.data().type));
+
+                // Ensure docs are sorted by timestamp (descending - newest first)
                 docs.sort(function (a, b) {
                     const getTimestamp = (doc) => {
                         const timestamp = doc.data().timestamp;
@@ -1460,17 +1524,7 @@ async function loadNotifications() {
                     const timestampB = getTimestamp(b);
                     return timestampB - timestampA; // Descending order (newest first)
                 });
-                return { docs: docs.slice(0, 50) }; // Return only the first 50 after sorting
-            });
-    }
-
-    queryPromise
-        .then(function (result) {
-            // Handle both QuerySnapshot and custom result format
-            var docs = result.docs || result;
-            if (Array.isArray(docs)) {
-                console.log('📊 Admin: Processing', docs.length, 'notifications');
-                console.log('📊 Admin: Notification types found:', docs.map(doc => doc.data().type));
+                console.log('✅ Admin: Notifications sorted by timestamp (newest first)');
             } else {
                 console.log('📊 Admin: Processing', docs.size || 0, 'notifications');
             }
@@ -1649,71 +1703,16 @@ async function loadNotifications() {
                         </td>
                         <td>${time}</td>
                     </tr>`;
-                    } else if (data.type === 'order_approval' && data.requiresAction) {
-                        // Handle order approval notifications with action buttons
-                        rows += `<tr class="order-approval-row" data-doc-id="${doc.id}">
-                        <td><span style='font-weight:600; color: #007bff;'>${typeText}</span></td>
-                        <td>
-                            <div class="order-notification-content">
-                                <p><strong>${data.message || ''}</strong></p>
-                                <div class="order-details">
-                                    <small><strong>Customer:</strong> ${data.customerInfo?.name || 'Unknown'} | 
-                                    <strong>Email:</strong> ${data.customerInfo?.email || 'Unknown'} | 
-                                    <strong>Total:</strong> ₱${data.orderDetails?.total || 'Unknown'} | 
-                                    <strong>Payment:</strong> ${data.paymentDetails?.method?.toUpperCase() || 'Unknown'} | 
-                                    <strong>Reference:</strong> ${data.paymentDetails?.reference || 'Unknown'}</small>
-                                </div>
-                                ${data.paymentDetails?.receiptUrl ?
-                                `<div class="receipt-preview">
-                                        <small><strong>Receipt:</strong> 
-                                        <a href="#" onclick="viewReceipt('${data.paymentDetails.receiptUrl}', '${data.paymentDetails.receiptName || 'receipt.jpg'}')" 
-                                           style="color: #007bff; text-decoration: underline;">View Receipt</a>
-                                        </small>
-                                    </div>` :
-                                (data.paymentDetails?.receiptData ?
-                                    `<div class="receipt-preview">
-                                            <small><strong>Receipt:</strong> 
-                                            <a href="#" onclick="viewReceipt('${data.paymentDetails.receiptData}', '${data.paymentDetails.receiptName || 'receipt.jpg'}')" 
-                                               style="color: #007bff; text-decoration: underline;">View Receipt</a>
-                                            </small>
-                                        </div>` : ''
-                                )
-                            }
-                                <div class="action-buttons" style="margin-top: 10px;">
-                                    ${data.shippingDetails?.method && data.shippingDetails.method !== 'pickup' ? `
-                                    <button class="btn btn-warning btn-sm me-2" onclick="handleLalamoveReady('${doc.id}')" 
-                                            ${data.lalamoveOrderPlaced ? 'disabled' : ''}
-                                            style="background: ${data.lalamoveOrderPlaced ? '#6c757d' : '#ffc107'}; border: none; padding: 5px 15px; border-radius: 4px; color: ${data.lalamoveOrderPlaced ? 'white' : 'black'}; font-size: 0.8rem; cursor: ${data.lalamoveOrderPlaced ? 'not-allowed' : 'pointer'};">
-                                        <i class="fas fa-${data.lalamoveOrderPlaced ? 'check' : 'motorcycle'}"></i> ${data.lalamoveOrderPlaced ? 'Order Placed' : 'Lalamove Ready!'}
-                                    </button>
-                                    ` : `
-                                    <button class="btn btn-success btn-sm me-2" onclick="handleOrderPickedUp('${doc.id}')" 
-                                            ${data.orderPickedUp ? 'disabled' : ''}
-                                            style="background: ${data.orderPickedUp ? '#6c757d' : '#28a745'}; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem; cursor: ${data.orderPickedUp ? 'not-allowed' : 'pointer'};">
-                                        <i class="fas fa-${data.orderPickedUp ? 'check' : 'shopping-bag'}"></i> ${data.orderPickedUp ? 'Picked Up' : 'Mark as Picked Up'}
-                                    </button>
-                                    `}
-                                    <button class="btn btn-danger btn-sm" onclick="declineOrder('${data.orderId}', '${doc.id}')" 
-                                            style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white; font-size: 0.8rem;">
-                                        <i class="fas fa-times"></i> Decline Order
-                                    </button>
-                                </div>
-                            </div>
-                        </td>
-                        <td>${time}</td>
-                    </tr>`;
                     } else {
-                        // Regular notification display (skip payment verification for kitchen users)
-                        if (userRole === 'kitchen' && data.type === 'payment_verification') {
-                            console.log('🍳 Kitchen: Skipping payment verification notification');
-                            return; // Skip this notification for kitchen users
+                        // Skip rendering payment_verification and order_approval in regular row format
+                        // These should only appear in their expanded forms above
+                        if (data.type === 'payment_verification' || data.type === 'order_approval') {
+                            console.log('✅ Skipping', data.type, 'from regular display - already shown in expanded form');
+                            return; // Skip this notification
                         }
 
                         var statusColor = '';
-                        if (data.type === 'payment_verification') {
-                            if (data.status === 'approved') statusColor = 'color: #28a745;';
-                            else if (data.status === 'declined') statusColor = 'color: #dc3545;';
-                        } else if (data.type === 'lalamove_order_success') {
+                        if (data.type === 'lalamove_order_success') {
                             statusColor = 'color: #933F32;';
                         } else if (data.type === 'order_pickup') {
                             statusColor = 'color: #933F32;';
