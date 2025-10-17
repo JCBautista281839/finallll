@@ -1,10 +1,10 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   updateTopDateTime();
   setInterval(updateTopDateTime, 1000);
 
   const backBtn = document.querySelector('.back-button');
   if (backBtn) {
-    backBtn.addEventListener('click', function() {
+    backBtn.addEventListener('click', function () {
       window.location.href = '/html/pos.html';
     });
   }
@@ -12,13 +12,22 @@ document.addEventListener('DOMContentLoaded', function() {
   async function renderReceipt() {
     try {
       const raw = sessionStorage.getItem('paymentReceipt');
-      if (!raw) return;
+      console.log('Receipt data from sessionStorage:', raw);
+      if (!raw) {
+        console.error('No paymentReceipt data found in sessionStorage');
+        return;
+      }
       const data = JSON.parse(raw);
+      console.log('Parsed receipt data:', data);
 
       const itemsContainer = document.getElementById('receiptItems');
+      console.log('Items container found:', !!itemsContainer);
+      console.log('Data items:', data.items);
       if (itemsContainer && Array.isArray(data.items)) {
+        console.log('Processing', data.items.length, 'items');
         itemsContainer.innerHTML = '';
-        data.items.forEach(it => {
+        data.items.forEach((it, index) => {
+          console.log(`Item ${index}:`, it);
           const row = document.createElement('div');
           row.className = 'item-row';
           row.innerHTML = `
@@ -27,28 +36,43 @@ document.addEventListener('DOMContentLoaded', function() {
           `;
           itemsContainer.appendChild(row);
         });
+      } else {
+        console.error('Items container not found or data.items is not an array');
       }
 
       const subtotalEl = document.getElementById('subtotal');
       const taxEl = document.getElementById('tax');
       const totalEl = document.getElementById('total');
+      console.log('Financial elements found:', {
+        subtotalEl: !!subtotalEl,
+        taxEl: !!taxEl,
+        totalEl: !!totalEl
+      });
+
       // Recalculate subtotal from items if missing or zero
       let subtotal = Number(data.subtotal);
+      console.log('Initial subtotal from data:', subtotal);
       if ((!subtotal || subtotal === 0) && Array.isArray(data.items)) {
         subtotal = data.items.reduce((sum, item) => {
           const price = typeof item.unitPrice !== 'undefined' ? Number(item.unitPrice) : (Number(item.price) || 0);
           const qty = Number(item.quantity) || 0;
-          return sum + (price * qty);
+          const lineTotal = price * qty;
+          console.log(`Item calculation: ${item.name} - Price: ${price}, Qty: ${qty}, Line Total: ${lineTotal}`);
+          return sum + lineTotal;
         }, 0);
+        console.log('Recalculated subtotal from items:', subtotal);
       }
-  // Declare discountAmount before using it in total calculation
-  let discountAmount = Number(data.discountAmount || 0);
-  if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
-  let tax = Number(data.tax || 0);
-  if (taxEl) taxEl.textContent = `₱${tax.toFixed(2)}`;
-  // Always recalculate total as subtotal + tax - discount
-  let total = subtotal + tax - discountAmount;
-  if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
+      // Declare discountAmount before using it in total calculation
+      let discountAmount = Number(data.discountAmount || 0);
+      console.log('Discount amount:', discountAmount);
+      if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
+      let tax = Number(data.tax || 0);
+      console.log('Tax amount:', tax);
+      if (taxEl) taxEl.textContent = `₱${tax.toFixed(2)}`;
+      // Always recalculate total as subtotal + tax - discount
+      let total = subtotal + tax - discountAmount;
+      console.log('Final total calculation:', subtotal, '+', tax, '-', discountAmount, '=', total);
+      if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
 
       // Handle collapsible discount row
       const discountRow = document.querySelector('.discount-row');
@@ -224,6 +248,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (e) {
       console.error('Failed to load receipt data', e);
+      // Show error message to user
+      const itemsContainer = document.getElementById('receiptItems');
+      if (itemsContainer) {
+        itemsContainer.innerHTML = '<div class="text-center text-danger">Error loading receipt data</div>';
+      }
     }
   }
   renderReceipt();
@@ -252,17 +281,17 @@ function updateTopDateTime() {
 }
 
 
-(function setupAfterPrintRedirect(){
-  function goBackToMenu(){
+(function setupAfterPrintRedirect() {
+  function goBackToMenu() {
     window.location.href = '/html/pos.html';
   }
- 
+
   window.addEventListener('afterprint', goBackToMenu);
- 
+
   const mediaQuery = window.matchMedia('print');
   if (mediaQuery && typeof mediaQuery.addEventListener === 'function') {
-    mediaQuery.addEventListener('change', (m)=>{ if (!m.matches) goBackToMenu(); });
+    mediaQuery.addEventListener('change', (m) => { if (!m.matches) goBackToMenu(); });
   } else if (mediaQuery && typeof mediaQuery.addListener === 'function') {
-    mediaQuery.addListener((m)=>{ if (!m.matches) goBackToMenu(); });
+    mediaQuery.addListener((m) => { if (!m.matches) goBackToMenu(); });
   }
 })();

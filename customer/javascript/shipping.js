@@ -84,7 +84,7 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     const formData = JSON.parse(sessionStorage.getItem('orderFormData') || '{}');
     console.log('Customer form data:', formData);
 
-    const customerName = formData.firstName && formData.lastName ? 
+    const customerName = formData.firstName && formData.lastName ?
       `${formData.firstName} ${formData.lastName}` : 'Unknown Customer';
     const customerPhone = formData.phone || 'Unknown Phone';
     const customerEmail = formData.email || 'No email provided';
@@ -109,18 +109,18 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
     const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
     const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
     const orderSubtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
-    
+
     // Get selected shipping method to calculate correct shipping cost
     const pickupRadio = document.getElementById('pickup-radio');
     const lalamoveRadio = document.getElementById('lalamove-radio');
     let selectedShippingMethod = 'pickup'; // default
-    
+
     if (pickupRadio && pickupRadio.checked) {
       selectedShippingMethod = 'pickup';
     } else if (lalamoveRadio && lalamoveRadio.checked) {
       selectedShippingMethod = 'lalamove';
     }
-    
+
     // Calculate shipping cost based on selected method
     let shippingCost = 0;
     if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
@@ -228,7 +228,7 @@ async function storeLalamoveQuotation(quotationData, orderData) {
   try {
     const db = firebase.firestore();
     const quotationRef = db.collection('lalamove_quotations').doc();
-    
+
     await quotationRef.set({
       quotationId: quotationData.data.quotationId,
       orderId: orderData.orderId,
@@ -248,7 +248,7 @@ async function storeLalamoveQuotation(quotationData, orderData) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    
+
     console.log('[SHIPPING] Lalamove quotation stored in Firestore:', quotationRef.id);
     return quotationRef.id;
   } catch (error) {
@@ -717,6 +717,24 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      // Restrict reference code input to numbers only
+      if (referenceCode) {
+        // Remove any non-numeric characters on input
+        referenceCode.addEventListener('input', function (e) {
+          this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Prevent non-numeric characters from being typed
+        referenceCode.addEventListener('keypress', function (e) {
+          const char = String.fromCharCode(e.which);
+          if (!/[0-9]/.test(char)) {
+            e.preventDefault();
+          }
+        });
+
+        console.log('✓ Reference code validation: Numbers only');
+      }
+
       // QR Code images - replace these paths with your actual QR code images
       const qrCodes = {
         gcash: '../../src/IMG/gcash-qr.jpg', // Replace with your GCash QR code
@@ -1058,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Get order summary
           const orderSummary = prepareOrderSummary();
-          
+
           const paymentInfo = {
             type: currentPaymentType,
             reference: refCode,
@@ -1240,10 +1258,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Get all required data for order creation
         const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
-        
+
         // Get current authenticated user information
         const currentUser = firebase.auth().currentUser;
-        
+
         // Provide fallback values if customer info is missing, but use authenticated user data if available
         if (!formData.name) {
           if (currentUser && currentUser.displayName) {
@@ -1254,7 +1272,7 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.name = 'Guest';
           }
         }
-        
+
         if (!formData.email) {
           if (currentUser && currentUser.email) {
             formData.email = currentUser.email;
@@ -1273,14 +1291,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Try to create Firebase order first
         let orderId = null;
-        
+
         // Use the pre-generated order ID from payment confirmation
         const preGeneratedOrderId = sessionStorage.getItem('preGeneratedOrderId');
         if (preGeneratedOrderId) {
           console.log('🆔 Using pre-generated Order ID for order creation:', preGeneratedOrderId);
           orderId = preGeneratedOrderId;
         }
-        
+
         try {
           // Create order with the pre-generated ID and selected shipping method
           await createFirebaseOrder(formData, cartData, quotationData, payment, selectedPaymentMethod, orderId, selectedShippingMethod);
@@ -1306,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Store order ID for confirmation page
           sessionStorage.setItem('orderId', orderId);
-          
+
           // Clear the pre-generated order ID since it's been used
           sessionStorage.removeItem('preGeneratedOrderId');
 
@@ -1331,12 +1349,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get selected payment method
     function getSelectedPaymentMethod() {
       const gcashPayment = document.getElementById('gcash-payment');
-      const cardPayment = document.getElementById('card-payment');
+      const bankTransferPayment = document.getElementById('bank-transfer-payment');
 
       if (gcashPayment && gcashPayment.checked) {
         return 'gcash';
-      } else if (cardPayment && cardPayment.checked) {
-        return 'card';
+      } else if (bankTransferPayment && bankTransferPayment.checked) {
+        return 'bank_transfer';
       }
 
       return 'gcash'; // default
@@ -1346,13 +1364,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function getSelectedShippingMethod() {
       const pickupRadio = document.getElementById('pickup-radio');
       const lalamoveRadio = document.getElementById('lalamove-radio');
-      
+
       if (pickupRadio && pickupRadio.checked) {
         return 'pickup';
       } else if (lalamoveRadio && lalamoveRadio.checked) {
         return 'lalamove';
       }
-      
+
       return 'pickup'; // default to pickup
     }
 
@@ -1361,11 +1379,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const cartData = JSON.parse(sessionStorage.getItem('cartData') || '{}');
       const subtotal = parseFloat(sessionStorage.getItem('orderSubtotal') || '0');
       const quotationData = JSON.parse(sessionStorage.getItem('quotationData') || '{}');
-      
+
       // Get currently selected shipping method
       const selectedShippingMethod = getSelectedShippingMethod();
       console.log('[prepareOrderSummary] Selected shipping method:', selectedShippingMethod);
-      
+
       // Calculate shipping cost based on selected method
       let shippingCost = 0;
       if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
@@ -1375,7 +1393,7 @@ document.addEventListener('DOMContentLoaded', function () {
         shippingCost = 0;
         console.log('[prepareOrderSummary] Pickup selected, shipping cost: 0');
       }
-      
+
       const orderSummary = {
         items: Object.values(cartData).map(item => ({
           name: item.name,
@@ -1400,33 +1418,33 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to check if quotation has expired
     function isQuotationExpired(quotationData) {
       console.log('[shipping.js] 🕐 Checking quotation expiry...');
-      
+
       if (!quotationData?.data?.expiresAt) {
         console.log('[shipping.js] ⚠️ No expiry date found in quotation');
         return false;
       }
-      
+
       try {
         const expiresAt = new Date(quotationData.data.expiresAt);
         const now = new Date();
         const isExpired = now >= expiresAt;
-        
+
         const timeUntilExpiry = expiresAt.getTime() - now.getTime();
         const minutesUntilExpiry = Math.round(timeUntilExpiry / (1000 * 60));
-        
+
         console.log('[shipping.js] 📅 Quotation expiry check:', {
           expiresAt: expiresAt.toISOString(),
           now: now.toISOString(),
           isExpired: isExpired,
           minutesUntilExpiry: minutesUntilExpiry
         });
-        
+
         if (isExpired) {
           console.log('[shipping.js] ❌ Quotation has EXPIRED');
         } else {
           console.log(`[shipping.js] ✅ Quotation valid for ${minutesUntilExpiry} more minutes`);
         }
-        
+
         return isExpired;
       } catch (error) {
         console.error('[shipping.js] Error checking quotation expiry:', error);
@@ -1437,23 +1455,23 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to refresh expired quotation with same addresses
     async function refreshExpiredQuotation(expiredQuotation) {
       console.log('[shipping.js] 🔄 Refreshing expired quotation...');
-      
+
       try {
         if (!expiredQuotation?.data?.stops || expiredQuotation.data.stops.length < 2) {
           throw new Error('Invalid expired quotation structure - missing stops');
         }
-        
+
         const stops = expiredQuotation.data.stops;
         const pickupStop = stops[0];
         const deliveryStop = stops[1];
-        
+
         console.log('[shipping.js] 📍 Extracting addresses from expired quotation:', {
           pickup: pickupStop.address,
           delivery: deliveryStop.address,
           pickupCoords: pickupStop.coordinates,
           deliveryCoords: deliveryStop.coordinates
         });
-        
+
         // Create fresh quotation request using same addresses and coordinates
         const bodyObj = {
           data: {
@@ -1485,37 +1503,37 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
         };
-        
+
         console.log('[shipping.js] 📤 Sending fresh quotation request:', bodyObj);
-        
+
         // Call quotation API
         const response = await fetch('/api/quotation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(bodyObj)
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Fresh quotation API failed: ${response.status} ${errorText}`);
         }
-        
+
         const freshQuotation = await response.json();
         console.log('[shipping.js] ✅ Fresh quotation received:', freshQuotation);
-        
+
         // Validate fresh quotation
         if (!freshQuotation.data || !freshQuotation.data.quotationId) {
           throw new Error('Fresh quotation response is invalid');
         }
-        
+
         console.log('[shipping.js] 🆕 Fresh quotation validated successfully:', {
           newQuotationId: freshQuotation.data.quotationId,
           newExpiresAt: freshQuotation.data.expiresAt,
           stops: freshQuotation.data.stops?.length || 0
         });
-        
+
         return freshQuotation;
-        
+
       } catch (error) {
         console.error('[shipping.js] ❌ Error refreshing quotation:', error);
         throw new Error(`Failed to refresh quotation: ${error.message}`);
@@ -1526,7 +1544,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function placeLalamoveOrder() {
       try {
         console.log('[shipping.js] ====== PLACE LALAMOVE ORDER START ======');
-        
+
         // Get quotation from session storage (different keys might be used)
         const rawQuotation = sessionStorage.getItem('quotationData') || sessionStorage.getItem('quotationResponse') || sessionStorage.getItem('quotation');
         if (!rawQuotation) {
@@ -1549,25 +1567,25 @@ document.addEventListener('DOMContentLoaded', function () {
         // Check if quotation has expired and refresh if needed
         if (isQuotationExpired(quotation)) {
           console.log('[shipping.js] 🔄 Quotation expired, attempting to refresh...');
-          
+
           try {
             // Get fresh quotation using same addresses
             const freshQuotation = await refreshExpiredQuotation(quotation);
-            
+
             // Update quotation variable with fresh data
             quotation = freshQuotation;
-            
+
             // Update sessionStorage with fresh quotation
             sessionStorage.setItem('quotationData', JSON.stringify(freshQuotation));
             console.log('[shipping.js] 💾 Fresh quotation stored in sessionStorage');
-            
+
             // Log the refresh success
             console.log('[shipping.js] ✅ Successfully refreshed expired quotation:', {
               oldQuotationId: JSON.parse(rawQuotation).data.quotationId,
               newQuotationId: freshQuotation.data.quotationId,
               newExpiresAt: freshQuotation.data.expiresAt
             });
-            
+
           } catch (refreshError) {
             console.error('[shipping.js] ❌ Failed to refresh expired quotation:', refreshError);
             throw new Error(`Quotation expired and refresh failed: ${refreshError.message}`);
@@ -1579,7 +1597,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Get customer info
         const formData = JSON.parse(sessionStorage.getItem('formData') || '{}');
         const currentUser = firebase.auth().currentUser;
-        const customerName = formData.name || (formData.firstName ? (formData.firstName + (formData.lastName ? ' ' + formData.lastName : '')) : 
+        const customerName = formData.name || (formData.firstName ? (formData.firstName + (formData.lastName ? ' ' + formData.lastName : '')) :
           (currentUser && currentUser.displayName ? currentUser.displayName : 'Guest'));
         const customerPhone = formData.phone || formData.contact || '';
 
@@ -1604,7 +1622,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }
         };
-        
+
         console.log('[shipping.js] 📤 Sending Lalamove order with valid quotation:', {
           quotationId: payload.data.quotationId,
           senderStopId: payload.data.sender.stopId,
@@ -1631,11 +1649,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('[shipping.js] ✅ Lalamove order placed successfully:', result);
         showStatus('Lalamove order placed successfully! Check server logs for details.', false);
-        
+
         // Store result for inspection
         sessionStorage.setItem('lalamoveTestResult', JSON.stringify(result));
         console.log('[shipping.js] ====== PLACE LALAMOVE ORDER SUCCESS ======');
-        
+
         return result;
       } catch (error) {
         console.error('[shipping.js] ❌ placeLalamoveOrder error:', error);
@@ -1714,9 +1732,9 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
   try {
     // Initialize Lalamove Quotation Manager
     const quotationManager = new LalamoveQuotationManager();
-    
+
     console.log('[createFirebaseOrder] Creating order with shipping method:', selectedShippingMethod);
-    
+
     // Check if Firebase is available
     if (typeof firebase === 'undefined') {
       console.warn('Firebase not available for order creation');
@@ -1766,7 +1784,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
 
       // Fallback: Create order directly with Firestore
       const db = firebase.firestore();
-      
+
       // Use pre-generated order ID or create new one
       const orderId = preGeneratedOrderId || ('ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
       console.log('Using Order ID for Firestore creation:', orderId);
@@ -1835,16 +1853,16 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
     }
 
     // Convert cart data to items array
-      const items = Object.values(cartData).map(item => ({
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        totalPrice: (typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''))) * item.quantity
-      }));
-    
+    const items = Object.values(cartData).map(item => ({
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      totalPrice: (typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''))) * item.quantity
+    }));
+
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-    
+
     // Calculate shipping cost based on selected method
     let shippingCost = 0;
     if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
@@ -1856,7 +1874,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
       shippingCost = 0;
       console.log('[createFirebaseOrder] Pickup selected, shipping cost: 0');
     }
-    
+
     const total = subtotal + shippingCost;
 
     // Get current user ID if available
@@ -1875,15 +1893,15 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
 
     // Get current authenticated user information for order data
     const currentUser = firebase.auth().currentUser;
-    
+
     // Prepare order data
     const orderData = {
       orderId: preGeneratedOrderId || ('ORDER_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
       customerInfo: {
         firstName: formData.firstName || '',
         lastName: formData.lastName || '',
-        fullName: formData.firstName && formData.lastName ? 
-          `${formData.firstName} ${formData.lastName}` : 
+        fullName: formData.firstName && formData.lastName ?
+          `${formData.firstName} ${formData.lastName}` :
           (currentUser && currentUser.displayName ? currentUser.displayName : 'Unknown Customer'),
         email: formData.email || (currentUser && currentUser.email ? currentUser.email : 'No email provided'),
         phone: formData.phone || 'Unknown Phone',
@@ -1936,7 +1954,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
       estimatedDeliveryTime: quotationData.estimatedDeliveryTime || null,
       userId: currentUserId
     };
-    
+
     console.log('[shipping.js] 📦 Order data includes Lalamove stops:', {
       hasLalamoveData: !!orderData.lalamoveData,
       stopsCount: orderData.lalamoveData?.stops?.length || 0,
@@ -2008,7 +2026,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
 async function sendOrderApprovalNotification(orderId, formData, cartData, quotationData, paymentInfo, paymentMethod, selectedShippingMethod = 'pickup') {
   try {
     console.log('[sendOrderApprovalNotification] Sending notification with shipping method:', selectedShippingMethod);
-    
+
     // Check if Firebase is available
     if (typeof firebase === 'undefined') {
       console.warn('Firebase not available for admin notification');
@@ -2050,7 +2068,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
       const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/[^\d.]/g, '')) : parseFloat(item.price);
       return sum + (price * item.quantity);
     }, 0);
-    
+
     // Calculate shipping cost based on selected method
     let shippingCost = 0;
     if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
@@ -2058,7 +2076,7 @@ async function sendOrderApprovalNotification(orderId, formData, cartData, quotat
     } else {
       shippingCost = 0; // Pickup is free
     }
-    
+
     const total = subtotal + shippingCost;
 
     // Create comprehensive notification for admin
@@ -2162,7 +2180,7 @@ async function sendNotificationViaServer(orderId, formData, cartData, quotationD
       const price = typeof item.price === 'number' ? item.price : parseFloat((item.price || '0').replace(/[^\d.]/g, ''));
       return sum + (price * item.quantity);
     }, 0);
-    
+
     // Calculate shipping cost based on selected method
     let shippingCost = 0;
     if (selectedShippingMethod === 'lalamove' || selectedShippingMethod === 'delivery') {
@@ -2170,7 +2188,7 @@ async function sendNotificationViaServer(orderId, formData, cartData, quotationD
     } else {
       shippingCost = 0; // Pickup is free
     }
-    
+
     const total = subtotal + shippingCost;
 
     const notificationPayload = {

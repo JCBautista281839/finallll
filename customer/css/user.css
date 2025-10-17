@@ -59,6 +59,7 @@
 .btn-save i {
   color: white;
 }
+
 @font-face {
   font-family: 'PoppinsMedium';
   src: url('/../src/fonts/Poppins-Medium.woff') format('woff');
@@ -127,6 +128,7 @@ body {
 .profile-header span {
   display: inline-block;
   width: 850px;
+  color: #933F32;
 }
 
 .profile-header i {
@@ -149,7 +151,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #d6d4d5;
+  color: #111;
   font-size: 1.1rem;
   font-family: 'PoppinsRegular', sans-serif;
   background: none;
@@ -217,43 +219,47 @@ body {
 }
 
 .profile-value {
-  color: #888;
+  color: #111;
   font-size: 1.08rem;
   font-weight: 400;
   margin-top: 0;
 }
 
 .profile-desc {
-  color: #b4b4b4;
+  color: #111;
   font-size: 0.92rem;
   margin-top: 2px;
   font-weight: 400;
 }
+
 .profile-address-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #b4b4b4;
+  color: #111;
   font-size: 1.08rem;
   cursor: pointer;
 }
+
 .profile-address-row i {
   color: #b4b4b4;
   font-size: 1.3rem;
   margin-left: 4px;
 }
+
 .logout-link {
-  color: #a30000;
-  font-size: 1.15rem;
-  font-weight: 500;
+  color: #933F32;
+  font-size: 1.30rem;
+  font-weight: 600;
   text-decoration: none;
   margin-top: 32px;
   display: inline-block;
   transition: color 0.2s;
   font-family: 'PoppinsMedium', Arial, sans-serif;
 }
+
 .logout-link:hover {
-  color: #d32f2f;
+  color: #b8493d;
 }
 
 .profile-divider {
@@ -353,7 +359,7 @@ body {
 /* Section titles like 'General', 'Security' */
 .profile-section-titles {
   font-family: 'PoppinsMedium', Arial, sans-serif;
-  color: #b4b4b4;
+  color: #933F32;
   font-size: 1.25rem;
   font-weight: 500;
   margin-bottom: -15px;
@@ -363,7 +369,7 @@ body {
 
 .profile-section-title {
   font-family: 'PoppinsMedium', Arial, sans-serif;
-  color: #b4b4b4;
+  color: #933F32;
   font-size: 1.25rem;
   font-weight: 500;
   margin-bottom: -15px;
@@ -377,7 +383,7 @@ body {
   border-radius: 10px;
   padding: 8px 18px;
   font-size: 1.08rem;
-  color: #888;
+  color: #111;
   font-family: 'PoppinsRegular', Arial, sans-serif;
   width: 100%;
   margin-bottom: 0;
@@ -419,6 +425,7 @@ body {
 .profile-input {
   pointer-events: none;
 }
+
 .profile-settings-wrapper.editing .profile-input {
   pointer-events: auto;
 }
@@ -429,20 +436,25 @@ body {
     flex-direction: column;
     padding: 24px 0 0 0;
   }
+
   .profile-divider {
     width: 100%;
     height: 100px;
     min-height: 0;
     margin: 32px 0;
   }
-  .profile-left, .profile-right {
+
+  .profile-left,
+  .profile-right {
     max-width: 100%;
     min-width: 0;
     padding: 0 16px;
   }
+
   .profile-avatar {
     margin: 0 auto 18px auto;
   }
+
   .profile-section-title {
     text-align: center;
   }
@@ -451,52 +463,57 @@ body {
 /* Flexbox for form sections */
 .d-flex {
   display: flex;
-  justify-content: space-between; /* Distributes items with space between */
-  align-items: center;            /* Aligns items vertically */
+  justify-content: space-between;
+  /* Distributes items with space between */
+  align-items: center;
+  /* Aligns items vertically */
 }
 
 .d-flex label {
-  width: 25%; /* Fixed width for the label */
+  width: 25%;
+  /* Fixed width for the label */
 }
 
 .d-flex input {
-  flex: 1; /* Make input fields take up equal remaining space */
+  flex: 1;
+  /* Make input fields take up equal remaining space */
 }
 
 button {
-  width: 100%; /* Make the Save button take up the full width */
+  width: 100%;
+  /* Make the Save button take up the full width */
 }
 
 /* Optional: Style for the button */
 /* Center the Save button in the parent container */
 .btn-danger {
-  padding: 10px 20px;    
-  font-size: 1.3rem;     
-  border-radius: 10px;    
-  width: 20%;             
-  text-align: center;     
-  display: block;         
-  margin: 0 auto; 
-          
+  padding: 10px 20px;
+  font-size: 1.3rem;
+  border-radius: 10px;
+  width: 20%;
+  text-align: center;
+  display: block;
+  margin: 0 auto;
+
 }
 
 .btn-plus {
-  display: flex;               
-  justify-content: center;     
-  align-items: center;        
-  width: 50px;                
-  height: 50px;                
-  background-color: #f56b2a;   
-  color: white;              
-  font-size: 1.5rem;          
-  border-radius: 50%;         
-  border: none;                
-  cursor: pointer;            
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  background-color: #f56b2a;
+  color: white;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
 }
 
 
 .btn-plus::before {
-  content: "+"; 
+  content: "+";
   font-weight: bold;
 }
 
@@ -510,7 +527,8 @@ button {
     flex-direction: column;
   }
 
-  .col-md-3, .col-md-9 {
+  .col-md-3,
+  .col-md-9 {
     width: 100%;
     margin-bottom: 15px;
   }
@@ -525,15 +543,19 @@ button {
     font-size: 14px;
     padding: 8px;
   }
-  
+
 }
+
 @media (max-width: 768px) {
   .container-fluid {
-    padding: 10px;  /* Less padding on small screens */
+    padding: 10px;
+    /* Less padding on small screens */
   }
 
-  .sidebar, .main-content {
-    padding: 20px;  /* Less padding on small screens */
+  .sidebar,
+  .main-content {
+    padding: 20px;
+    /* Less padding on small screens */
   }
 
   /* Stack sidebar and content on mobile */
@@ -541,8 +563,11 @@ button {
     flex-direction: column;
   }
 
-  .col-md-2, .col-md-7 {
-    width: 100%;  /* Full width on mobile */
-    margin-bottom: 15px;  /* Add space between the elements */
+  .col-md-2,
+  .col-md-7 {
+    width: 100%;
+    /* Full width on mobile */
+    margin-bottom: 15px;
+    /* Add space between the elements */
   }
 }

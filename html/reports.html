@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Support Tickets - Admin Panel</title>
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="../css/nav.css">
     <link rel="stylesheet" href="../css/reports.css">
     <link rel="icon" href="../src/IMG/DB.png" type="image/png">
 </head>
+
 <body class="bg-light">
     <!-- Mobile overlay for sidebar -->
     <div class="mobile-overlay" id="mobileOverlay"></div>
@@ -21,7 +23,8 @@
     <div class="dashboard-container d-flex" id="dashboardContainer">
         <!-- Sidebar Navigation -->
         <aside id="sidebar" class="sidebar d-flex flex-column align-items-center py-3">
-            <button id="closeSidebarBtn" class="btn btn-outline-light d-lg-none mb-3" style="align-self: flex-start; margin-left: 1rem;">
+            <button id="closeSidebarBtn" class="btn btn-outline-light d-lg-none mb-3"
+                style="align-self: flex-start; margin-left: 1rem;">
                 <i class="bi bi-x-lg"></i>
             </button>
             <div class="brand mb-1">
@@ -33,9 +36,11 @@
                     <div class="nav-text">Home</div>
                 </a>
 
-                <a href="../html/notifi.html" class="nav-link text-white" title="Notifications" style="position:relative;">
+                <a href="../html/notifi.html" class="nav-link text-white" title="Notifications"
+                    style="position:relative;">
                     <img src="../src/Icons/bell.png" alt="Notifications" class="nav-icon">
-                    <span class="notification-badge" style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+                    <span class="notification-badge"
+                        style="display:none;position:absolute;top:6px;right:12px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
                     <div class="nav-text">Notifications</div>
                 </a>
                 <a href="../html/Order.html" class="nav-link text-white" title="Orders">
@@ -64,9 +69,11 @@
                     <img src="../src/Icons/user.png" alt="user" class="nav-icon">
                     <div class="nav-text">Users</div>
                 </a>
-                <a href="../html/reports.html" class="nav-link text-white active" title="Support Tickets" style="position:relative;">
-                    <img src="../src/Icons/support.png" alt="Support" class="nav-icon">
-                    <span class="support-badge" style="display:none;position:absolute;top:8px;right:18px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+                <a href="../html/reports.html" class="nav-link text-white active" title="Support Tickets"
+                    style="position:relative;">
+                    <img src="../src/Icons/service.png" alt="Support" class="nav-icon">
+                    <span class="support-badge"
+                        style="display:none;position:absolute;top:8px;right:18px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
                     <div class="nav-text">Support</div>
                 </a>
                 <div style="flex-grow: 1;"></div>
@@ -161,7 +168,8 @@
                     </div>
                     <div class="filter-group flex-grow-1">
                         <label><i class="fas fa-search"></i> Search:</label>
-                        <input type="text" id="searchInput" class="search-input" placeholder="Search by ticket ID or customer name...">
+                        <input type="text" id="searchInput" class="search-input"
+                            placeholder="Search by ticket ID or customer name...">
                     </div>
                 </div>
             </div>
@@ -228,4 +236,5 @@
     <script src="../javascript/reports.js"></script>
     <script src="../javascript/support-badge.js"></script>
 </body>
+
 </html>
