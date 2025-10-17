@@ -706,6 +706,99 @@ document.addEventListener('DOMContentLoaded', function () {
       sessionStorage.setItem('orderSubtotal', totalPrice.toString());
     }
 
+    // ========================================
+    // PAYMENT LOCK FUNCTIONS
+    // ========================================
+
+    /**
+     * Disables both payment method options after payment confirmation
+     * This ensures only one payment method can be confirmed per order
+     */
+    function disableBothPaymentMethods() {
+      const gcashPayment = document.getElementById('gcash-payment');
+      const bankTransferPayment = document.getElementById('bank-transfer-payment');
+      const gcashOption = document.getElementById('gcash-option');
+      const bankTransferOption = document.getElementById('bank-transfer-option');
+
+      // Disable the radio buttons
+      if (gcashPayment) {
+        gcashPayment.disabled = true;
+      }
+      if (bankTransferPayment) {
+        bankTransferPayment.disabled = true;
+      }
+
+      // Add disabled CSS class to parent options
+      if (gcashOption) {
+        gcashOption.classList.add('disabled', 'confirmed');
+      }
+      if (bankTransferOption) {
+        bankTransferOption.classList.add('disabled', 'confirmed');
+      }
+
+      // Show the confirmed badges
+      const badges = document.querySelectorAll('.payment-locked-badge');
+      badges.forEach(badge => {
+        badge.style.display = 'flex';
+      });
+
+      // Store payment lock state
+      sessionStorage.setItem('isPaymentConfirmed', 'true');
+
+      console.log('✓ Both payment methods locked - payment already confirmed');
+    }
+
+    /**
+     * Enables both payment method options for selection
+     * Used when resetting or allowing user to change payment method
+     */
+    function enableBothPaymentMethods() {
+      const gcashPayment = document.getElementById('gcash-payment');
+      const bankTransferPayment = document.getElementById('bank-transfer-payment');
+      const gcashOption = document.getElementById('gcash-option');
+      const bankTransferOption = document.getElementById('bank-transfer-option');
+
+      // Enable the radio buttons
+      if (gcashPayment) {
+        gcashPayment.disabled = false;
+      }
+      if (bankTransferPayment) {
+        bankTransferPayment.disabled = false;
+      }
+
+      // Remove disabled CSS class from parent options
+      if (gcashOption) {
+        gcashOption.classList.remove('disabled', 'confirmed');
+      }
+      if (bankTransferOption) {
+        bankTransferOption.classList.remove('disabled', 'confirmed');
+      }
+
+      // Hide the confirmed badges
+      const badges = document.querySelectorAll('.payment-locked-badge');
+      badges.forEach(badge => {
+        badge.style.display = 'none';
+      });
+
+      // Clear payment lock state
+      sessionStorage.removeItem('isPaymentConfirmed');
+
+      console.log('✓ Payment methods unlocked - can select new payment method');
+    }
+
+    /**
+     * Prevents clicking on disabled payment method
+     * Shows alert message when user tries to click a locked payment method
+     */
+    function preventLockedPaymentClick(paymentRadio, paymentName) {
+      const isPaymentConfirmed = sessionStorage.getItem('isPaymentConfirmed') === 'true';
+
+      if (isPaymentConfirmed && paymentRadio.disabled) {
+        return false; // Prevent the click handler from executing
+      }
+      return true;
+    }
+
     // Payment Modal Functionality
     function initPaymentModal() {
       const gcashPayment = document.getElementById('gcash-payment');
@@ -931,6 +1024,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Payment option click handlers
       gcashPayment.addEventListener('change', function () {
+        // Check if payment is already confirmed
+        const isPaymentConfirmed = sessionStorage.getItem('isPaymentConfirmed') === 'true';
+        if (isPaymentConfirmed) {
+          // Uncheck the radio button and show alert
+          this.checked = false;
+          alert('⚠️ Payment method already confirmed.\n\nOnly one payment method can be used per order.\n\nTo use a different payment method, please contact the admin.');
+          return;
+        }
+
         if (this.checked) {
           // Clear any existing payment info when switching methods
           sessionStorage.removeItem('paymentInfo');
@@ -940,6 +1042,15 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       bankTransferPayment.addEventListener('change', function () {
+        // Check if payment is already confirmed
+        const isPaymentConfirmed = sessionStorage.getItem('isPaymentConfirmed') === 'true';
+        if (isPaymentConfirmed) {
+          // Uncheck the radio button and show alert
+          this.checked = false;
+          alert('⚠️ Payment method already confirmed.\n\nOnly one payment method can be used per order.\n\nTo use a different payment method, please contact the admin.');
+          return;
+        }
+
         if (this.checked) {
           // Clear any existing payment info when switching methods  
           sessionStorage.removeItem('paymentInfo');
@@ -1126,6 +1237,9 @@ document.addEventListener('DOMContentLoaded', function () {
           hidePaymentModal();
           showStatus((currentPaymentType === 'gcash' ? 'GCash' : 'Bank Transfer') + ' payment confirmed! Receipt uploaded successfully.', false);
 
+          // ✓ LOCK PAYMENT METHODS - Only one payment method allowed per order
+          disableBothPaymentMethods();
+
           // Enable the Place Order button
           enablePlaceOrderButton();
 
@@ -1191,6 +1305,9 @@ document.addEventListener('DOMContentLoaded', function () {
               // Hide modal and show success
               hidePaymentModal();
               showStatus((currentPaymentType === 'gcash' ? 'GCash' : 'Bank Transfer') + ' payment confirmed! Receipt saved locally.', false);
+
+              // ✓ LOCK PAYMENT METHODS - Only one payment method allowed per order
+              disableBothPaymentMethods();
 
               // Enable the Place Order button
               enablePlaceOrderButton();
@@ -1270,6 +1387,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Initialize payment modal
       initPaymentModal();
+
+      // ✓ CHECK AND LOCK PAYMENT IF ALREADY CONFIRMED
+      // This ensures payment lock persists across page refreshes
+      const paymentInfo = sessionStorage.getItem('paymentInfo');
+      const isPaymentAlreadyConfirmed = sessionStorage.getItem('isPaymentConfirmed') === 'true';
+
+      if (paymentInfo || isPaymentAlreadyConfirmed) {
+        console.log('✓ Payment already confirmed on this order - locking payment methods');
+        disableBothPaymentMethods();
+      }
 
       // Find and modify the payment button
       const paymentBtn = document.querySelector('.continue-btn');
