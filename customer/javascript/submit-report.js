@@ -110,18 +110,20 @@ function waitForFirebase() {
 async function loadCustomerData() {
     try {
         const db = firebase.firestore();
-        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        // Load from 'customers' collection (same as profile settings page)
+        const userDoc = await db.collection('customers').doc(currentUser.uid).get();
         
         if (userDoc.exists) {
             customerData = userDoc.data();
             console.log('[Submit Report] Customer data loaded:', customerData);
             
-            // Populate customer info (using 'name' and 'phone' fields from Firestore)
-            const name = customerData.name || customerData.fullName || currentUser.displayName || 'Not provided';
-            const phone = customerData.phone || customerData.contactNumber || customerData.phoneNumber || 'Not provided';
+            // Populate customer info - using same field names as profile settings
+            const name = customerData.fullName || customerData.name || currentUser.displayName || 'Not provided';
+            const phone = customerData.contactNumber || customerData.phone || customerData.phoneNumber || 'Not provided';
             
             console.log('[Submit Report] Name:', name);
             console.log('[Submit Report] Phone:', phone);
+            console.log('[Submit Report] Available fields:', Object.keys(customerData));
             
             document.getElementById('customerName').textContent = name;
             document.getElementById('customerEmail').textContent = currentUser.email || 'Not provided';

@@ -442,8 +442,14 @@ function buildTicketDetailHTML(ticket) {
     if (ticket.photoURL) {
         html += `
             <div class="ticket-photo">
-                <h4><i class="fas fa-image"></i> Attached Photo</h4>
-                <img src="${ticket.photoURL}" alt="Ticket Photo" style="max-width: 100%; border-radius: 8px;">
+                <button class="view-photo-btn" onclick="togglePhotoCollapse(this)" 
+                    style="background: #f5f5f5; border: 1px solid #ddd; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; color: #333; width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;">
+                    <i class="fas fa-eye"></i> View Photo
+                    <i class="fas fa-chevron-down" style="margin-left: auto;"></i>
+                </button>
+                <div class="ticket-photo-container" style="margin-top: 12px; display: none;">
+                    <img src="${ticket.photoURL}" alt="Ticket Photo" style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
             </div>
         `;
     }
@@ -522,6 +528,13 @@ async function updateTicket() {
         const response = document.getElementById('adminResponse').value.trim();
 
         const db = firebase.firestore();
+        const adminUser = firebase.auth().currentUser;
+
+        if (!adminUser) {
+            showToast('You must be logged in as admin', 'error');
+            return;
+        }
+
         const updateData = {
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -529,18 +542,39 @@ async function updateTicket() {
 
         // Add response to conversation if provided
         if (response) {
+            console.log('[Reports] Adding response to conversation:', response);
+            
             const adminUser = firebase.auth().currentUser;
+            
+            // Create conversation entry with timestamp as a regular Date (Firestore will handle it)
             const conversationEntry = {
                 from: 'admin',
+                isAdmin: true,
                 authorName: adminUser.displayName || adminUser.email || 'Admin',
                 message: response,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: new Date()  // Use regular Date instead of serverTimestamp
             };
 
-            updateData.conversation = firebase.firestore.FieldValue.arrayUnion(conversationEntry);
+            console.log('[Reports] Conversation entry:', conversationEntry);
+            
+            // Check if conversation array exists
+            const ticketDoc = await db.collection('supportTickets').doc(currentTicket.id).get();
+            const existingConversation = ticketDoc.data().conversation || [];
+            
+            console.log('[Reports] Existing conversation:', existingConversation);
+            
+            // Add new entry to conversation
+            const updatedConversation = [...existingConversation, conversationEntry];
+            
+            console.log('[Reports] Updated conversation array:', updatedConversation);
+            
+            updateData.conversation = updatedConversation;
+        } else {
+            console.log('[Reports] No response provided, skipping conversation update');
         }
 
         // Update in Firestore
+        console.log('[Reports] Updating ticket with data:', updateData);
         await db.collection('supportTickets').doc(currentTicket.id).update(updateData);
 
         console.log('[Reports] Ticket updated successfully');
@@ -689,6 +723,20 @@ function removeToast(element) {
         setTimeout(() => {
             toast.remove();
         }, 300);
+    }
+}
+
+// Toggle photo collapse/expand
+function togglePhotoCollapse(button) {
+    const photoContainer = button.nextElementSibling;
+    const isHidden = photoContainer.style.display === 'none';
+    
+    if (isHidden) {
+        photoContainer.style.display = 'block';
+        button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Photo <i class="fas fa-chevron-up" style="margin-left: auto;"></i>';
+    } else {
+        photoContainer.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-eye"></i> View Photo <i class="fas fa-chevron-down" style="margin-left: auto;"></i>';
     }
 }
 
