@@ -543,9 +543,9 @@ async function updateTicket() {
         // Add response to conversation if provided
         if (response) {
             console.log('[Reports] Adding response to conversation:', response);
-            
+
             const adminUser = firebase.auth().currentUser;
-            
+
             // Create conversation entry with timestamp as a regular Date (Firestore will handle it)
             const conversationEntry = {
                 from: 'admin',
@@ -556,18 +556,18 @@ async function updateTicket() {
             };
 
             console.log('[Reports] Conversation entry:', conversationEntry);
-            
+
             // Check if conversation array exists
             const ticketDoc = await db.collection('supportTickets').doc(currentTicket.id).get();
             const existingConversation = ticketDoc.data().conversation || [];
-            
+
             console.log('[Reports] Existing conversation:', existingConversation);
-            
+
             // Add new entry to conversation
             const updatedConversation = [...existingConversation, conversationEntry];
-            
+
             console.log('[Reports] Updated conversation array:', updatedConversation);
-            
+
             updateData.conversation = updatedConversation;
         } else {
             console.log('[Reports] No response provided, skipping conversation update');
@@ -730,7 +730,7 @@ function removeToast(element) {
 function togglePhotoCollapse(button) {
     const photoContainer = button.nextElementSibling;
     const isHidden = photoContainer.style.display === 'none';
-    
+
     if (isHidden) {
         photoContainer.style.display = 'block';
         button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Photo <i class="fas fa-chevron-up" style="margin-left: auto;"></i>';

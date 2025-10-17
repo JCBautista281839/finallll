@@ -476,33 +476,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const homeNavLink = document.querySelector('#homeNavLink') || document.querySelector('a[href*="Dashboard.html"]');
 
         if (userRole === 'kitchen') {
-            console.log('🍳 Kitchen role detected - Setting up limited access');
+            console.log('🍳 Kitchen role detected - Setting up role-based access for: kitchen');
 
-            // Kitchen staff can view inventory but have limited editing capabilities
-            // They can only update quantities for existing items, not add/delete
-
-            // Hide add new item button
-            if (addButton) {
-                addButton.style.display = 'none';
-            }
-
-            // Hide delete buttons
-            deleteButtons.forEach(btn => {
-                btn.style.display = 'none';
-            });
-
-            // Hide edit buttons (kitchen can only view)
-            editButtons.forEach(btn => {
-                btn.style.display = 'none';
-            });
+            // Kitchen staff have FULL inventory management access
+            // They can add, edit, and delete inventory items
 
             // Redirect home link to kitchen dashboard for kitchen staff
             if (homeNavLink) {
-                homeNavLink.href = '/kitchen';
+                homeNavLink.href = '../html/kitchen.html';
                 homeNavLink.title = 'Kitchen Dashboard';
             }
 
-            // Show only: Home, Notifications, Inventory (View Only), Logout
+            // Show only: Home (Kitchen), Notifications, Inventory, Logout
             allNavLinks.forEach(link => {
                 const title = link.getAttribute('title');
                 const href = link.getAttribute('href');
@@ -521,11 +506,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            // Add visual indicator that this is view-only mode
-            const pageTitle = document.querySelector('h1, .page-title');
-            if (pageTitle) {
-                pageTitle.innerHTML += ' <span class="badge bg-warning">View Only</span>';
-            }
+            // Kitchen users have full inventory management - no "View Only" badge needed
 
         } else if (userRole === 'admin' || userRole === 'manager') {
             console.log('👑 Admin/Manager role - Full access granted');
@@ -749,34 +730,19 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('ingredientUom').value = (cells[2].textContent || '').trim();
         document.getElementById('ingredientQty').value = (cells[1].textContent || '').trim();
 
-        // Apply role-based field restrictions
-        if (window.currentUserRole === 'kitchen') {
-            // Kitchen staff can only edit quantity
-            document.getElementById('ingredientName').disabled = true;
-            document.getElementById('ingredientUom').disabled = true;
-            document.getElementById('ingredientQty').disabled = false;
+        // Kitchen staff have full inventory management access
+        // Allow editing all fields (name, unit, quantity) and deleting items
+        document.getElementById('ingredientName').disabled = false;
+        document.getElementById('ingredientUom').disabled = false;
+        document.getElementById('ingredientQty').disabled = false;
 
-            // Add visual indicator
-            document.getElementById('ingredientName').classList.add('bg-light');
-            document.getElementById('ingredientUom').classList.add('bg-light');
+        // Remove any disabled styling
+        document.getElementById('ingredientName').classList.remove('bg-light');
+        document.getElementById('ingredientUom').classList.remove('bg-light');
 
-            // Hide delete button for kitchen staff
-            const deleteBtn = document.getElementById('ingredientDeleteBtn');
-            if (deleteBtn) deleteBtn.style.display = 'none';
-        } else {
-            // Full access for admin/manager
-            document.getElementById('ingredientName').disabled = false;
-            document.getElementById('ingredientUom').disabled = false;
-            document.getElementById('ingredientQty').disabled = false;
-
-            // Remove disabled styling
-            document.getElementById('ingredientName').classList.remove('bg-light');
-            document.getElementById('ingredientUom').classList.remove('bg-light');
-
-            // Show delete button
-            const deleteBtn = document.getElementById('ingredientDeleteBtn');
-            if (deleteBtn) deleteBtn.style.display = '';
-        }
+        // Show delete button for all users with inventory access
+        const deleteBtn = document.getElementById('ingredientDeleteBtn');
+        if (deleteBtn) deleteBtn.style.display = '';
 
 
         document.getElementById('ingredientModal').setAttribute('data-current-doc-id', docId);
