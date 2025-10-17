@@ -674,11 +674,10 @@
               return;
             }
 
-            if (confirm('Are you sure you want to remove this item from your cart?')) {
-              await removeFromCart(itemId);
-              updatePopupContent();
-              updateCartCounter();
-            }
+            // Remove item directly without confirmation
+            await removeFromCart(itemId);
+            updatePopupContent();
+            updateCartCounter();
           });
         });
       }
