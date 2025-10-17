@@ -103,45 +103,38 @@
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <main class="main-content flex-grow-1">
-      <div class="container-fluid">
-        <!-- Header with burger menu -->
-        <div class="d-flex align-items-center mb-4">
-          <button class="burger-menu-inline" id="burgerMenu" aria-label="Toggle Menu">
+      <div class="container-fluid px-2 px-md-3 px-lg-4">
+        <!-- Header with burger menu, search, and date picker -->
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3 mb-md-4">
+          <button class="burger-menu-inline d-block d-md-none mb-2 mb-md-0" id="burgerMenu" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
-        </div>
-
-        <div class="row mb-4 filters-row">
-          <div class="col-md-6">
-            <div class="search-container">
-              <input type="search" id="orderSearch" class="form-control search-input"
-                placeholder="Enter Order Number (e.g., 0001)" aria-label="Search orders" autocomplete="on">
-              <img src="../src/Icons/search.png" alt="Search" class="search-icon">
-            </div>
+          <div class="search-container flex-grow-1 w-100 w-md-auto me-md-3">
+            <input type="search" id="orderSearch" class="form-control search-input"
+              placeholder="Enter Order Number (e.g., 0001)" aria-label="Search orders" autocomplete="on">
+            <img src="../src/Icons/search.png" alt="Search" class="search-icon">
           </div>
-          <div class="col-md-6">
-            <div class="date-container">
-              <input type="date" class="form-control date-input">
-              <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
-            </div>
+          <div class="date-container mt-2 mt-md-0">
+            <input type="date" class="form-control date-input">
+            <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
           </div>
         </div>
 
 
-        <div class="card">
-          <div class="card-body p-0">
+        <div class="card shadow-sm">
+          <div class="card-body p-0 p-md-3">
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th class="border-0 text-center" style="width: 10%">Order ID</th>
-                    <th class="border-0 text-center" style="width: 10%">Order Type</th>
-                    <th class="border-0 text-center" style="width: 8%">Table No.</th>
-                    <th class="border-0 text-center" style="width: 8%">Pax</th>
-                    <th class="border-0 text-center" style="width: 22%">Items</th>
-                    <th class="border-0 text-center" style="width: 15%">Total</th>
-                    <th class="border-0 text-center" style="width: 15%">Status</th>
-                    <th class="border-0 text-center">Actions</th>
+                    <th class="border-0 text-center d-none d-lg-table-cell small" style="width: 10%">Order ID</th>
+                    <th class="border-0 text-center small" style="width: 10%">Order Type</th>
+                    <th class="border-0 text-center d-none d-md-table-cell small" style="width: 8%">Table No.</th>
+                    <th class="border-0 text-center d-none d-md-table-cell small" style="width: 8%">Pax</th>
+                    <th class="border-0 text-center d-none d-sm-table-cell small" style="width: 22%">Items</th>
+                    <th class="border-0 text-center small" style="width: 15%">Total</th>
+                    <th class="border-0 text-center d-none d-sm-table-cell small" style="width: 15%">Status</th>
+                    <th class="border-0 text-center small" style="width: 10%">Actions</th>
                   </tr>
                 </thead>
                 <tbody>

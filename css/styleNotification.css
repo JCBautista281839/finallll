@@ -203,9 +203,9 @@
 @media (max-width: 1200px) {
     .header-action-row {
         flex-direction: row;
-        gap: 0.4rem;
+        gap: 0.1rem;
         align-items: center;
-        margin-left: -17px;
+        margin-left: -16px;
     }
 
     .inventory-title {

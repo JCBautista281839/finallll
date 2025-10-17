@@ -714,11 +714,22 @@ input[type="date"] {
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
-    padding: 15px;
+    padding: 1rem;
+    background: #f5f6fa;
+    /* Light gray background */
+    min-height: 100vh;
   }
 
   .container-fluid {
-    padding: 20px;
+    padding: 0;
+  }
+
+  .table-responsive {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin: 0;
   }
 
   .search-container,

@@ -101,11 +101,12 @@
     color: #760000;
     border: none;
     margin-left: -5px;
-    background-color: transparent !important; /* Add this line! */
+    background-color: transparent !important;
+    /* Add this line! */
 }
 
 .btn-outline-primary.dropdown-toggle.show {
-    background-color: #f8f9fa !important; 
+    background-color: #f8f9fa !important;
     color: #760000 !important;
 }
 
@@ -122,7 +123,7 @@
 }
 
 .btn-outline-secondary.dropdown-toggle.show {
-    background-color: #f8f9fa !important; 
+    background-color: #f8f9fa !important;
     color: #760000 !important;
 }
 
@@ -410,12 +411,12 @@
     margin-left: 33px;
 }
 
-.btn-outline-info{
+.btn-outline-info {
     background-color: #545454;
     color: #ffffff !important;
 }
 
-.btn-outline-info:hover{
+.btn-outline-info:hover {
     background-color: #a8a8a8;
     color: #ffffff !important;
 }

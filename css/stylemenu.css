@@ -113,7 +113,7 @@
   background-color: transparent !important;
 }
 
-.btn-primary:focus{
+.btn-primary:focus {
   color: #7a2e24 !important;
 }
 
@@ -146,7 +146,7 @@
   font-family: 'PoppinsLight';
 }
 
-.product-info::first-letter{
+.product-info::first-letter {
   text-transform: uppercase;
 }
 
@@ -188,13 +188,13 @@
   box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
 }
 
-.btn-outline-primary{
+.btn-outline-primary {
   border: none !important;
   background-color: transparent !important;
   color: #010101 !important;
 }
 
-.btn-outline-secondary{
+.btn-outline-secondary {
   border: none !important;
   background-color: transparent !important;
   color: #010101 !important;
@@ -349,28 +349,39 @@
 
 
 @media (max-width: 768px) {
-  .menu-container {
+  .main-content {
+    background: #f5f6fa;
+    /* Light gray background */
+    min-height: 100vh;
     padding: 1rem;
   }
-  
+
+  .menu-container {
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin: 0;
+  }
+
   .menu-title {
     font-size: 2rem;
   }
-  
+
   .search-container {
     min-width: 200px;
   }
-  
+
   .d-flex.gap-3 {
     flex-direction: column;
     gap: 1rem !important;
   }
-  
+
   .product-image {
     width: 50px;
     height: 50px;
   }
-  
+
   .table-responsive {
     font-size: 0.9rem;
   }
@@ -380,15 +391,15 @@
   .main-content {
     padding: 1rem !important;
   }
-  
+
   .menu-container {
     border-radius: 12px;
   }
-  
+
   .search-container {
     min-width: 100%;
   }
-  
+
   .product-name {
     font-size: 0.9rem;
   }
@@ -661,7 +672,9 @@
   color: #6c757d;
 }
 
-.ingredients-search .btn i { font-size: 1.1rem; }
+.ingredients-search .btn i {
+  font-size: 1.1rem;
+}
 
 .ingredients-tags {
   display: flex;
@@ -710,6 +723,7 @@
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: translateY(-10px) scale(1);
@@ -792,7 +806,7 @@
 .menu-table {
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .table-header {
@@ -886,7 +900,7 @@ tr:hover .edit-row-btn {
   .menu-table-container {
     overflow-x: auto;
   }
-  
+
   .edit-form {
     width: 95%;
     margin: 1rem;
