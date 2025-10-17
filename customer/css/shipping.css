@@ -324,6 +324,39 @@ hr {
   font-size: 16px;
 }
 
+/* Payment option disabled state */
+.payment-option.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f0f0f0;
+  border-color: #d0d0d0;
+  pointer-events: none;
+}
+
+.payment-option.disabled:hover {
+  border-color: #d0d0d0;
+  background: #f0f0f0;
+}
+
+.payment-option.disabled input[type="radio"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.payment-option.confirmed {
+  background: #f0f8f0;
+  border-color: #28a745;
+}
+
+.payment-locked-badge {
+  color: #28a745;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 /* Order Form Sidebar */
 .order-form {
   width: 450px;
@@ -535,7 +568,7 @@ hr {
   border-radius: 30px !important;
 }
 
-.payment-modal::-webkit-scrollbar{
+.payment-modal::-webkit-scrollbar {
   display: none;
   margin-right: -15px !important;
 }
@@ -873,7 +906,7 @@ hr {
   animation: slideInDown 0.4s ease-out;
 }
 
-.instructions-modal::-webkit-scrollbar{
+.instructions-modal::-webkit-scrollbar {
   display: none;
   margin-right: -15px !important;
 }
@@ -996,7 +1029,7 @@ hr {
 
 .instructions-footer {
   padding: 20px 30px 30px 30px;
-  background: white ;
+  background: white;
   border-radius: 0 0 15px 15px;
   text-align: center;
 }
