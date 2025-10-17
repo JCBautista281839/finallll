@@ -48,7 +48,7 @@
       <div class="profile-fields">
         <div class="profile-field">
           <div class="profile-label">Email Address</div>
-          <input class="profile-input" type="text" name="email">
+          <div class="profile-input profile-input-readonly" name="email">christianbautista265853@gmail.com</div>
         </div>
         <div class="profile-field">
           <div class="profile-label">Password</div>
@@ -279,6 +279,69 @@
     </div>
   </div>
 
+  <!-- Password Change OTP Modal -->
+  <div id="passwordOTPModal" class="password-otp-modal" style="display: none;">
+    <div class="password-otp-modal-overlay" onclick="closePasswordOTPModal()"></div>
+    <div class="password-otp-modal-content">
+      <!-- Modal Header -->
+      <div class="password-otp-modal-header">
+        <h2><i class="fas fa-shield-alt"></i> Verify Password Change</h2>
+        <button class="password-otp-modal-close" onclick="closePasswordOTPModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="password-otp-modal-body">
+        <div class="otp-info">
+          <i class="fas fa-envelope"></i>
+          <p>We've sent a verification code to your email address to confirm the password change.</p>
+          <p class="email-display">Email: <span id="passwordOTPEmail"></span></p>
+        </div>
+
+        <div class="otp-input-container">
+          <label for="passwordOTPInput">Enter 6-digit verification code:</label>
+          <div class="otp-inputs">
+            <input type="text" class="otp-input" maxlength="1" data-index="0">
+            <input type="text" class="otp-input" maxlength="1" data-index="1">
+            <input type="text" class="otp-input" maxlength="1" data-index="2">
+            <input type="text" class="otp-input" maxlength="1" data-index="3">
+            <input type="text" class="otp-input" maxlength="1" data-index="4">
+            <input type="text" class="otp-input" maxlength="1" data-index="5">
+          </div>
+        </div>
+
+        <div class="otp-actions">
+          <p class="resend-text">
+            Didn't receive the code? <span class="resend-link" onclick="resendPasswordOTP()">Resend code</span>
+          </p>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="passwordOTPLoading" class="loading-indicator" style="display: none;">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Verifying code...</span>
+        </div>
+
+        <!-- Error Message -->
+        <div id="passwordOTPError" class="error-message" style="display: none;">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span id="passwordOTPErrorText"></span>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" onclick="closePasswordOTPModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button type="button" class="btn-submit" id="verifyPasswordOTPBtn" onclick="verifyPasswordOTP()">
+            <i class="fas fa-check"></i> Verify & Update Password
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -287,6 +350,9 @@
 
   <!-- Firebase Config -->
   <script src="../firebase-config.js"></script>
+
+  <!-- API Configuration -->
+  <script src="../../javascript/config.js"></script>
 
   <!-- Authentication Manager for Auto Logout -->
   <script src="../javascript/auth-manager.js"></script>

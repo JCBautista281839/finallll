@@ -1,3 +1,278 @@
+/* Read-only email field styling */
+.profile-input-readonly {
+  background-color: #f8f9fa !important;
+  border: 1px solid #e9ecef !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
+  user-select: none;
+  font-family: 'PoppinsRegular', sans-serif;
+  font-size: 1rem;
+  padding: 12px;
+  border-radius: 8px;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.profile-input-readonly:hover {
+  background-color: #f8f9fa !important;
+  border-color: #e9ecef !important;
+}
+
+/* Password OTP Modal Styles */
+.password-otp-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-otp-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.password-otp-modal-content {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.password-otp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 24px;
+}
+
+.password-otp-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.password-otp-modal-header h2 i {
+  color: #007bff;
+}
+
+.password-otp-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.password-otp-modal-close:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.password-otp-modal-body {
+  padding: 0 24px 24px 24px;
+}
+
+.otp-info {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.otp-info i {
+  font-size: 3rem;
+  color: #007bff;
+  margin-bottom: 16px;
+}
+
+.otp-info p {
+  margin: 8px 0;
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+.email-display {
+  font-weight: 600;
+  color: #2c3e50 !important;
+}
+
+.otp-input-container {
+  margin-bottom: 24px;
+}
+
+.otp-input-container label {
+  display: block;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.otp-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.otp-inputs .otp-input {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.otp-inputs .otp-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.otp-inputs .otp-input.filled {
+  border-color: #28a745;
+  background-color: #f8fff9;
+}
+
+.otp-actions {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.resend-text {
+  color: #6c757d;
+  margin: 0;
+}
+
+.resend-link {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.resend-link:hover {
+  color: #0056b3;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: #6c757d;
+}
+
+.loading-indicator i {
+  color: #007bff;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: #721c24;
+}
+
+.error-message i {
+  color: #dc3545;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.form-actions .btn-cancel,
+.form-actions .btn-submit {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-actions .btn-cancel {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.form-actions .btn-cancel:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.form-actions .btn-submit {
+  background-color: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+}
+
+.form-actions .btn-submit:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.form-actions .btn-submit:disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  cursor: not-allowed;
+}
+
 /* Side-by-side Save/Cancel buttons */
 .profile-btn-row {
   display: flex;
