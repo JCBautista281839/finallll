@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function () {
         right: 20px;
         padding: 15px 20px;
         border-radius: 5px;
-        color: white;
+        color: #ffffff !important;
         font-weight: 500;
         z-index: 1000;
         max-width: 300px;
@@ -367,6 +367,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       statusEl.textContent = message;
       statusEl.style.backgroundColor = isError ? '#e74c3c' : '#933F32';
+      statusEl.style.color = '#ffffff';
       statusEl.style.display = 'block';
 
       // Auto-hide after 5 seconds
