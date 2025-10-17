@@ -190,6 +190,15 @@ function initializeOrderControls() {
           status: 'Pending Payment'
         });
 
+        // Ensure each item has lineTotal calculated before saving
+        if (orderData.items && Array.isArray(orderData.items)) {
+          orderData.items.forEach(item => {
+            const price = parseFloat(item.unitPrice || item.price) || 0;
+            const qty = parseInt(item.quantity) || 1;
+            item.lineTotal = price * qty;
+          });
+        }
+
         // Persist pending identifiers so POS can reuse the same order ID when editing later
         try {
           sessionStorage.setItem('posOrder', JSON.stringify(orderData));
@@ -732,6 +741,15 @@ function initializeProceedButton() {
           status: orderData.status,
           total: orderData.total
         });
+
+        // Ensure each item has lineTotal calculated before saving to receipt
+        if (orderData.items && Array.isArray(orderData.items)) {
+          orderData.items.forEach(item => {
+            const price = parseFloat(item.unitPrice || item.price) || 0;
+            const qty = parseInt(item.quantity) || 1;
+            item.lineTotal = price * qty;
+          });
+        }
 
         // Remove pendingOrderId from sessionStorage on finalize
         sessionStorage.removeItem('pendingOrderId');

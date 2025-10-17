@@ -66,8 +66,9 @@
           <div class="nav-text">Users</div>
         </a>
         <a href="../html/reports.html" class="nav-link text-white" title="Support Tickets" style="position:relative;">
-          <img src="../src/Icons/support.png" alt="Support" class="nav-icon">
-          <span class="support-badge" style="display:none;position:absolute;top:8px;right:18px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
+          <img src="../src/Icons/service.png" alt="Support" class="nav-icon">
+          <span class="support-badge"
+            style="display:none;position:absolute;top:8px;right:18px;background:#e53935;color:#fff;border-radius:50%;padding:2px 7px;font-size:0.85rem;font-weight:700;z-index:2;"></span>
           <div class="nav-text">Support</div>
         </a>
         <div style="flex-grow: 1;"></div>
@@ -380,7 +381,7 @@
 
   <!-- Burger Menu Script -->
   <script>
-    (function() {
+    (function () {
       const burgerMenu = document.getElementById('burgerMenu');
       const sidebar = document.querySelector('.sidebar');
       const overlay = document.getElementById('sidebarOverlay');
@@ -388,14 +389,14 @@
       if (!burgerMenu || !sidebar || !overlay) return;
 
       // Toggle sidebar
-      burgerMenu.addEventListener('click', function(e) {
+      burgerMenu.addEventListener('click', function (e) {
         e.stopPropagation();
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
       });
 
       // Close sidebar when clicking overlay
-      overlay.addEventListener('click', function() {
+      overlay.addEventListener('click', function () {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
       });
@@ -403,14 +404,14 @@
       // Close sidebar when clicking nav links
       const navLinks = sidebar.querySelectorAll('.nav-link');
       navLinks.forEach(link => {
-        link.addEventListener('click', function() {
+        link.addEventListener('click', function () {
           sidebar.classList.remove('active');
           overlay.classList.remove('active');
         });
       });
 
       // Close sidebar on window resize to desktop
-      window.addEventListener('resize', function() {
+      window.addEventListener('resize', function () {
         if (window.innerWidth > 991) {
           sidebar.classList.remove('active');
           overlay.classList.remove('active');
@@ -418,7 +419,7 @@
       });
 
       // Close sidebar on Escape key
-      document.addEventListener('keydown', function(e) {
+      document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && sidebar.classList.contains('active')) {
           sidebar.classList.remove('active');
           overlay.classList.remove('active');
