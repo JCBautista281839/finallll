@@ -28,6 +28,43 @@ function updateRowStatus(row) {
         statusLabel = 'Steady';
     }
 
+    // Persist previous status for each item in localStorage
+    let prevStatus = localStorage.getItem('inventory_prevStatus_' + itemName);
+
+    // Only notify if status changes from steady to low/no stock, or from low to empty, or from steady to empty
+    // OR if this is the first time we're seeing a low stock item (no previous status stored)
+    let shouldNotify = false;
+    if ((notifyType === 'empty' || notifyType === 'restock') && (prevStatus !== statusLabel || !prevStatus)) {
+        shouldNotify = true;
+    }
+
+    // Reset notification history for this item if restocked
+    if (statusLabel === 'Steady' && prevStatus && prevStatus !== 'Steady') {
+        ['empty', 'restock'].forEach(function (type) {
+            localStorage.removeItem('inventory_notified_' + itemName + '_' + type);
+        });
+    }
+
+    // Only notify once per item per status change
+    if (shouldNotify && typeof sendInventoryNotification === 'function') {
+        const key = 'inventory_notified_' + itemName + '_' + notifyType;
+        if (!localStorage.getItem(key)) {
+            console.log('[Inventory] Sending notification:', { type: notifyType, msg: notifyMsg, item: itemName });
+            sendInventoryNotification(notifyType, notifyMsg, itemName);
+            localStorage.setItem(key, 'true');
+        }
+    } else if (shouldNotify && typeof sendInventoryNotification !== 'function') {
+        console.warn('[Inventory] sendInventoryNotification function not available. Make sure notifications.js is loaded.');
+    }
+
+    // Debug: Log when notifications should be sent
+    if (shouldNotify) {
+        console.log('[Inventory] DEBUG: Should notify for', itemName, 'with status', statusLabel, 'and type', notifyType);
+    }
+
+    // Update previous status in localStorage
+    localStorage.setItem('inventory_prevStatus_' + itemName, statusLabel);
+
     // Only update the status cell
     if (!statusClass) {
         cells[3].innerHTML = '';
@@ -39,6 +76,7 @@ function updateRowStatus(row) {
         '<span class="status-text">' + statusLabel + '</span>' +
         '</div>';
 }
+
 // Convert for display: always show in user-friendly unit
 function getDisplayStock(quantity, baseUnit) {
     // baseUnit: 'g', 'ml', 'pcs'
@@ -136,8 +174,155 @@ if (typeof sendInventoryNotification === 'undefined') {
     document.head.appendChild(script);
 }
 
+// Test function to manually trigger inventory notifications
+window.testInventoryNotification = function () {
+    console.log('[Inventory] Testing notification system...');
+    if (typeof sendInventoryNotification === 'function') {
+        console.log('[Inventory] sendInventoryNotification function is available');
+        // Test with a sample notification
+        sendInventoryNotification('empty', 'Test item is out of stock!', 'Test Item');
+        console.log('[Inventory] Test notification sent');
+    } else {
+        console.error('[Inventory] sendInventoryNotification function not available');
+    }
+};
+
+// Function to manually trigger notifications for all low stock items
+window.triggerLowStockNotifications = function () {
+    console.log('[Inventory] Triggering notifications for all low stock items...');
+    const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
+    let notificationCount = 0;
+
+    rows.forEach(function (row) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 4) return;
+
+        const itemName = (cells[0].textContent || '').trim();
+        const stockText = (cells[1].textContent || '').trim();
+        const stockValue = parseFloat(stockText);
+        const stock = isNaN(stockValue) ? 0 : stockValue;
+        const statusText = (cells[3].textContent || '').trim();
+
+        if (stock === 0 && statusText.includes('Empty')) {
+            console.log('[Inventory] Triggering empty notification for:', itemName);
+            sendInventoryNotification('empty', `${itemName} is out of stock!`, itemName);
+            notificationCount++;
+        } else if (stock >= 1 && stock <= 5 && statusText.includes('Need Restocking')) {
+            console.log('[Inventory] Triggering restock notification for:', itemName);
+            sendInventoryNotification('restock', `Low stock: ${itemName}`, itemName);
+            notificationCount++;
+        }
+    });
+
+    console.log(`[Inventory] Triggered ${notificationCount} notifications`);
+    return notificationCount;
+};
+
+// Function to clear notification history and force trigger notifications
+window.clearNotificationHistoryAndNotify = function () {
+    console.log('[Inventory] Clearing notification history and triggering notifications...');
+
+    // Clear all notification history
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+        if (key.startsWith('inventory_notified_') || key.startsWith('inventory_prevStatus_')) {
+            localStorage.removeItem(key);
+            console.log('[Inventory] Cleared:', key);
+        }
+    });
+
+    // Force trigger notifications for all low stock items
+    return triggerLowStockNotifications();
+};
+
+// Function to create test inventory notifications
+window.createTestInventoryNotifications = function () {
+    console.log('[Inventory] Creating test inventory notifications...');
+
+    // Create multiple test notifications with different timestamps
+    const testNotifications = [
+        { type: 'empty', message: 'Test Chicken is out of stock!', item: 'Test Chicken' },
+        { type: 'restock', message: 'Low stock: Test Bread', item: 'Test Bread' },
+        { type: 'empty', message: 'Test Beef is out of stock!', item: 'Test Beef' }
+    ];
+
+    let createdCount = 0;
+    testNotifications.forEach((notification, index) => {
+        setTimeout(() => {
+            console.log(`[Inventory] Creating test notification ${index + 1}:`, notification);
+            sendInventoryNotification(notification.type, notification.message, notification.item);
+            createdCount++;
+
+            if (createdCount === testNotifications.length) {
+                console.log('[Inventory] All test notifications created');
+                // Refresh notifications after a short delay
+                setTimeout(() => {
+                    if (typeof forceRefreshNotifications === 'function') {
+                        forceRefreshNotifications();
+                    }
+                    if (typeof forceRefreshDropdownNotifications === 'function') {
+                        forceRefreshDropdownNotifications();
+                    }
+                }, 1000);
+            }
+        }, index * 500); // Stagger the creation by 500ms
+    });
+
+    return testNotifications.length;
+};
+
+// Function to clear test notifications (for cleanup)
+window.clearTestNotifications = function () {
+    console.log('[Inventory] Clearing test notifications...');
+    const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+    if (!db) {
+        console.error('[Inventory] Firestore not available');
+        return;
+    }
+
+    // Delete notifications that contain "Test" in the message
+    db.collection('notifications')
+        .where('message', '>=', 'Test')
+        .where('message', '<=', 'Test\uf8ff')
+        .get()
+        .then(querySnapshot => {
+            const batch = db.batch();
+            querySnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            return batch.commit();
+        })
+        .then(() => {
+            console.log('[Inventory] Test notifications cleared');
+            // Refresh notifications
+            if (typeof forceRefreshNotifications === 'function') {
+                forceRefreshNotifications();
+            }
+            if (typeof forceRefreshDropdownNotifications === 'function') {
+                forceRefreshDropdownNotifications();
+            }
+        })
+        .catch(error => {
+            console.error('[Inventory] Error clearing test notifications:', error);
+        });
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Inventory page loaded, initializing Firebase...');
+
+    // Load notifications when inventory page loads
+    if (typeof loadNotifications === 'function') {
+        console.log('[Inventory] Loading notifications on page load...');
+        loadNotifications();
+    } else {
+        console.warn('[Inventory] loadNotifications function not available');
+    }
+
+    // Auto-trigger notifications for existing low stock items after a short delay
+    setTimeout(function () {
+        console.log('[Inventory] Auto-triggering notifications for existing low stock items...');
+        triggerLowStockNotifications();
+    }, 2000); // Wait 2 seconds for inventory to load
 
     // Always call setupEventListeners at the end to ensure all static buttons are wired up
     document.addEventListener('readystatechange', function () {
@@ -388,8 +573,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let prevStatus = localStorage.getItem('inventory_prevStatus_' + itemName);
 
         // Only notify if status changes from steady to low/no stock, or from low to empty, or from steady to empty
+        // OR if this is the first time we're seeing a low stock item (no previous status stored)
         let shouldNotify = false;
-        if ((notifyType === 'empty' || notifyType === 'restock') && prevStatus !== statusLabel) {
+        if ((notifyType === 'empty' || notifyType === 'restock') && (prevStatus !== statusLabel || !prevStatus)) {
             shouldNotify = true;
         }
 
@@ -408,6 +594,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 sendInventoryNotification(notifyType, notifyMsg, itemName);
                 localStorage.setItem(key, 'true');
             }
+        } else if (shouldNotify && typeof sendInventoryNotification !== 'function') {
+            console.warn('[Inventory] sendInventoryNotification function not available. Make sure notifications.js is loaded.');
+        }
+
+        // Debug: Log when notifications should be sent
+        if (shouldNotify) {
+            console.log('[Inventory] DEBUG: Should notify for', itemName, 'with status', statusLabel, 'and type', notifyType);
         }
         // Update previous status in localStorage
         localStorage.setItem('inventory_prevStatus_' + itemName, statusLabel);
@@ -1982,8 +2175,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Format stock for display
-    function getDisplayStock(quantity, baseUnit) {
-
-        return convertFromBase(quantity, baseUnit);
-    }
 }); // <-- Close DOMContentLoaded event listener
