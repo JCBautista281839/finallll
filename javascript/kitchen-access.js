@@ -307,6 +307,7 @@ function loadKitchenOrders() {
     ordersContainer.innerHTML = '';
 
     // Listen for orders that are in kitchen workflow (both Pending Payment and In the Kitchen)
+    // For Pending Payment orders, only show those that haven't been marked ready yet
     db.collection('orders')
         .where('status', 'in', ['Pending Payment', 'In the Kitchen'])
         .onSnapshot((snapshot) => {
@@ -349,6 +350,58 @@ function loadKitchenOrders() {
             // Immediately clear the container to remove "No Orders" placeholder
             ordersContainer.innerHTML = '';
 
+            // Filter out Pending Payment orders that have been marked ready
+            const filteredOrders = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const status = data.status;
+
+                // Include all "In the Kitchen" orders
+                if (status === 'In the Kitchen') {
+                    filteredOrders.push({ docId: doc.id, data, orderId: doc.id });
+                }
+                // Include "Pending Payment" orders only if they haven't been marked ready
+                else if (status === 'Pending Payment' && !data.orderReadyAt) {
+                    filteredOrders.push({ docId: doc.id, data, orderId: doc.id });
+                }
+                // Skip Pending Payment orders that have been marked ready
+                else if (status === 'Pending Payment' && data.orderReadyAt) {
+                    console.log('🍳 Skipping Pending Payment order that has been marked ready:', doc.id);
+                }
+            });
+
+            if (filteredOrders.length === 0) {
+                console.log('🍳 No active orders after filtering, showing "No Orders" placeholder');
+                ordersContainer.innerHTML = `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div class="order-title">
+                                <h5 class="order-number">No Orders</h5>
+                                <div class="order-datetime">
+                                    <span class="order-date">Waiting for orders</span>
+                                    <span class="order-time">Kitchen Ready</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            <div class="items-header">
+                                <span>Items</span><span>Qty</span>
+                            </div>
+                            <div class="items-list">
+                                <div class="item-row">
+                                    <span class="item-name">No orders in queue</span>
+                                    <span class="item-quantity">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-actions">
+                            <button class="btn btn-secondary order-ready-btn" disabled>No Orders</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             // Process orders - update existing cards or create new ones
             const existingCards = new Map();
             const currentCards = ordersContainer.querySelectorAll('.order-card');
@@ -381,11 +434,8 @@ function loadKitchenOrders() {
             const ordersToProcess = [];
             const orderNumberToDocMap = new Map(); // Track which doc has the most recent data for each order
 
-            // Collect all orders first
-            snapshot.forEach((doc) => {
-                const docId = doc.id;
-                const data = doc.data();
-                const orderId = data.orderNumberFormatted || data.orderNumber || docId;
+            // Process filtered orders instead of all snapshot orders
+            filteredOrders.forEach(({ docId, data, orderId }) => {
                 const orderNumber = data.orderNumber || data.orderNumberFormatted;
 
                 console.log('📋 Processing order from Firestore:', {
@@ -503,10 +553,10 @@ function loadKitchenOrders() {
 
             });
 
-            // Remove cards for orders that no longer exist in Firestore
-            // Only remove if the order is not in the current snapshot
+            // Remove cards for orders that no longer exist in filtered orders
+            // Only remove if the order is not in the current filtered orders
             const currentOrderNumbers = new Set();
-            ordersToProcess.forEach(({ data }) => {
+            filteredOrders.forEach(({ data }) => {
                 const orderNumber = data.orderNumber || data.orderNumberFormatted;
                 if (orderNumber) {
                     currentOrderNumbers.add(String(orderNumber));
@@ -533,14 +583,13 @@ function loadKitchenOrders() {
             const currentOrderIds = new Set();
             const newOrderIds = [];
 
-            // Collect current order IDs
-            snapshot.forEach((doc) => {
-                const orderId = doc.id;
-                currentOrderIds.add(orderId);
+            // Collect current order IDs from filtered orders
+            filteredOrders.forEach(({ docId }) => {
+                currentOrderIds.add(docId);
 
                 // Check if this is a new order
-                if (!existingOrderIds.has(orderId) && !isInitialLoad) {
-                    newOrderIds.push(orderId);
+                if (!existingOrderIds.has(docId) && !isInitialLoad) {
+                    newOrderIds.push(docId);
                 }
             });
 
