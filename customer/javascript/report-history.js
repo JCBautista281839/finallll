@@ -329,28 +329,28 @@ function showTicketDetails(docId, ticket) {
             ` : ''}
             
             ${ticket.conversation && ticket.conversation.length > 0 ? (() => {
-                // Separate admin responses from customer messages
-                const adminResponses = ticket.conversation.filter(msg => msg.from === 'admin' || msg.isAdmin);
-                const customerMessages = ticket.conversation.filter(msg => msg.from !== 'admin' && !msg.isAdmin);
-                
-                console.log('[Ticket Details] Full ticket object:', ticket);
-                console.log('[Ticket Details] Conversation array:', ticket.conversation);
-                console.log('[Ticket Details] Conversation length:', ticket.conversation.length);
-                console.log('[Ticket Details] Admin responses:', adminResponses);
-                console.log('[Ticket Details] Customer messages:', customerMessages);
-                
-                let html = '';
-                
-                // Show admin responses in dedicated section
-                if (adminResponses.length > 0) {
-                    html += `
+            // Separate admin responses from customer messages
+            const adminResponses = ticket.conversation.filter(msg => msg.from === 'admin' || msg.isAdmin);
+            const customerMessages = ticket.conversation.filter(msg => msg.from !== 'admin' && !msg.isAdmin);
+
+            console.log('[Ticket Details] Full ticket object:', ticket);
+            console.log('[Ticket Details] Conversation array:', ticket.conversation);
+            console.log('[Ticket Details] Conversation length:', ticket.conversation.length);
+            console.log('[Ticket Details] Admin responses:', adminResponses);
+            console.log('[Ticket Details] Customer messages:', customerMessages);
+
+            let html = '';
+
+            // Show admin responses in dedicated section
+            if (adminResponses.length > 0) {
+                html += `
                         <div style="margin-top: 20px; padding: 16px; background: #f0f7ff; border-left: 4px solid #933F32; border-radius: 8px;">
                             <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; color: #933F32; font-size: 1rem;">
                                 <i class="fas fa-user-shield"></i> Support Team Responses (${adminResponses.length})
                             </strong>
                             ${adminResponses.map(msg => {
-                                console.log('[Response Item] Processing message:', msg);
-                                return `
+                    console.log('[Response Item] Processing message:', msg);
+                    return `
                                 <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #933F32;">
                                     <div style="font-weight: 600; margin-bottom: 5px; color: #933F32; display: flex; align-items: center; gap: 6px;">
                                         <i class="fas fa-shield-alt"></i> ${msg.authorName || 'Support Team'}
@@ -361,16 +361,16 @@ function showTicketDetails(docId, ticket) {
                                     </div>
                                 </div>
                             `;
-                            }).join('')}
+                }).join('')}
                         </div>
                     `;
-                } else {
-                    console.log('[Ticket Details] No admin responses found');
-                }
-                
-                // Show customer messages if any
-                if (customerMessages.length > 0) {
-                    html += `
+            } else {
+                console.log('[Ticket Details] No admin responses found');
+            }
+
+            // Show customer messages if any
+            if (customerMessages.length > 0) {
+                html += `
                         <div style="margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
                             <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; color: #333;">
                                 <i class="fas fa-comments"></i> Your Messages (${customerMessages.length})
@@ -388,10 +388,10 @@ function showTicketDetails(docId, ticket) {
                             `).join('')}
                         </div>
                     `;
-                }
-                
-                return html;
-            })() : `<div style="margin-top: 20px; padding: 16px; background: #f9f9f9; border-radius: 8px; text-align: center; color: #999;"><i class="fas fa-comment-slash"></i> No responses yet. The support team will reply to your ticket soon.</div>`}
+            }
+
+            return html;
+        })() : `<div style="margin-top: 20px; padding: 16px; background: #f9f9f9; border-radius: 8px; text-align: center; color: #999;"><i class="fas fa-comment-slash"></i> No responses yet. The support team will reply to your ticket soon.</div>`}
             
             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
                 <button onclick="this.closest('.ticket-detail-modal').remove()" 
@@ -418,7 +418,7 @@ function showTicketDetails(docId, ticket) {
 function togglePhotoCollapse(button) {
     const photoContainer = button.nextElementSibling;
     const isHidden = photoContainer.style.display === 'none';
-    
+
     if (isHidden) {
         photoContainer.style.display = 'block';
         button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Photo <i class="fas fa-chevron-up" style="margin-left: auto;"></i>';

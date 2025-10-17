@@ -110,7 +110,7 @@ function waitForFirebase() {
 async function loadCustomerData() {
     try {
         const db = firebase.firestore();
-        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const userDoc = await db.collection('customers').doc(currentUser.uid).get();
 
         if (userDoc.exists) {
             customerData = userDoc.data();
