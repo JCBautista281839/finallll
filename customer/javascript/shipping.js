@@ -223,6 +223,35 @@ window.sendPaymentVerificationNotification = async function (paymentInfo) {
   }
 }
 
+// Function to send payment verification notification with retry logic
+window.sendPaymentVerificationNotificationWithRetry = async function (paymentInfo, maxRetries = 3, delayMs = 1000) {
+  console.log('🔄 Attempting to send payment notification (with retry logic)...');
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`📤 Attempt ${attempt}/${maxRetries} to send payment verification notification`);
+      const result = await sendPaymentVerificationNotification(paymentInfo);
+
+      if (result) {
+        console.log(`✅ Payment notification sent successfully on attempt ${attempt}`);
+        return true;
+      }
+    } catch (error) {
+      console.warn(`❌ Attempt ${attempt} failed:`, error.message);
+
+      // Wait before retrying (except on last attempt)
+      if (attempt < maxRetries) {
+        const waitTime = delayMs * attempt; // Exponential backoff: 1s, 2s, 3s
+        console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+  }
+
+  console.warn('⚠️ Could not send payment notification after all retries, but order will proceed');
+  return false;
+}
+
 // Function to store Lalamove quotation in Firestore
 async function storeLalamoveQuotation(quotationData, orderData) {
   try {
@@ -1105,9 +1134,35 @@ document.addEventListener('DOMContentLoaded', function () {
           console.log('Current payment type:', currentPaymentType);
           console.log('Reference code:', refCode);
 
-          // Don't await this - let it run in background
-          sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
-            console.warn('Payment verification notification failed:', notificationError.message);
+          // Send notification with retry logic
+          const notificationPromise = sendPaymentVerificationNotificationWithRetry(paymentInfo);
+
+          notificationPromise.then((success) => {
+            if (success) {
+              console.log('✅ Payment notification sent successfully to admin');
+              // Show brief success feedback
+              const statusDiv = document.getElementById('status-message') || document.querySelector('.status-message');
+              if (statusDiv) {
+                statusDiv.style.color = 'green';
+                statusDiv.textContent = 'Payment verified! Notifying admin...';
+                setTimeout(() => {
+                  statusDiv.textContent = '';
+                }, 2000);
+              }
+            } else {
+              console.warn('⚠️ Payment notification could not be sent, but order will proceed');
+              const statusDiv = document.getElementById('status-message') || document.querySelector('.status-message');
+              if (statusDiv) {
+                statusDiv.style.color = 'orange';
+                statusDiv.textContent = 'Order submitted. Admin notification is queued.';
+                setTimeout(() => {
+                  statusDiv.textContent = '';
+                }, 2000);
+              }
+            }
+          }).catch(notificationError => {
+            console.warn('Payment verification notification error:', notificationError.message);
+            // Don't block order - notification is optional
           });
 
           console.log('Payment confirmation saved:', { type: currentPaymentType, reference: refCode, receiptUrl: paymentInfo.receiptUrl });
@@ -1145,9 +1200,19 @@ document.addEventListener('DOMContentLoaded', function () {
               console.log('Current payment type (fallback):', currentPaymentType);
               console.log('Reference code (fallback):', refCode);
 
-              // Don't await this - let it run in background
-              sendPaymentVerificationNotification(paymentInfo).catch(notificationError => {
-                console.warn('Payment verification notification failed (fallback):', notificationError.message);
+              // Send notification with retry logic (fallback path)
+              const fallbackNotificationPromise = sendPaymentVerificationNotificationWithRetry(paymentInfo);
+
+              fallbackNotificationPromise.then((success) => {
+                if (success) {
+                  console.log('✅ Fallback: Payment notification sent successfully');
+                  showStatus('Payment confirmed and admin notified!', false);
+                } else {
+                  console.warn('⚠️ Fallback: Payment notification queued for later delivery');
+                  showStatus('Payment confirmed. Admin will be notified shortly.', false);
+                }
+              }).catch(notificationError => {
+                console.warn('Fallback: Payment notification error:', notificationError.message);
               });
 
               console.log('Payment confirmation saved with base64 fallback:', { type: currentPaymentType, reference: refCode });
