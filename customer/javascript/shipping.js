@@ -1892,7 +1892,7 @@ async function createFirebaseOrder(formData, cartData, quotationData, paymentInf
         source: 'customer_web'
       };
 
-      await db.collection('orders').doc(orderId).set(orderData);
+      await db.collection('delivery').doc(orderId).set(orderData);
       console.log('Order created successfully with fallback method:', orderId);
       return orderId;
     }

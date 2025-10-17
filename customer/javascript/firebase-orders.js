@@ -130,8 +130,8 @@ if (typeof FirebaseOrderManager === 'undefined') {
           version: '1.0'
         };
 
-        // Save to Firestore
-        await this.db.collection('orders').doc(orderId).set(orderDoc);
+        // Save to Firestore - customer orders go to 'delivery' collection
+        await this.db.collection('delivery').doc(orderId).set(orderDoc);
 
         console.log('[FirebaseOrderManager] Order saved successfully:', orderId);
 
