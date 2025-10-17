@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
@@ -64,7 +65,6 @@ initializeFirebaseAdmin();
 
 const { spawn, exec } = require('child_process');
 const multer = require('multer');
-const fs = require('fs');
 
 const app = express();
 
@@ -338,21 +338,21 @@ async function sendOTPEmail(email, userName, otp) {
 
     console.log(`📧 Sending OTP email to ${email} via SendGrid`);
 
-    const subject = `Your Viktoria's Bistro Verification Code - ${otp}`;
+    const subject = `Your Viktoria's Bistro Verification Code`;
 
     const htmlContent = `
             <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
                 <!-- Header with Logo and Background -->
                 <div style="background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%); color: white; padding: 30px 20px; text-align: center; position: relative; overflow: hidden;">
                     <!-- Background Pattern -->
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"food\" patternUnits=\"userSpaceOnUse\" width=\"20\" height=\"20\"><circle cx=\"10\" cy=\"10\" r=\"2\" fill=\"white\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23food)\"/></svg>');"></div>
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,</div>
                     
                     <!-- Logo -->
                     <div style="position: relative; z-index: 1;">
-                        <div style="display: inline-block; background: rgba(255,255,255,0.2); border-radius: 50%; padding: 15px; margin-bottom: 15px; backdrop-filter: blur(10px);">
-                            <img src="http://localhost:5001/src/IMG/Logo.png" alt="Viktoria's Bistro Logo" style="width: 60px; height: 60px; border-radius: 50%;">
+                        <div style="display: inline-block; background: white; border-radius: 50%; padding: 15px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.25);">
+                            <img src="cid:logo" alt="Viktoria's Bistro Logo" style="width: 100px; height: 100px; border-radius: 50%; display: block; object-fit: cover;">
                         </div>
-                        <h1 style="margin: 0; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🍽️ Viktoria's Bistro</h1>
+                        <h1 style="margin: 0; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);"> Viktoria's Bistro</h1>
                         <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Fine Dining Experience</p>
                     </div>
                 </div>
@@ -368,7 +368,7 @@ async function sendOTPEmail(email, userName, otp) {
                     <!-- OTP Code Box -->
                     <div style="background: linear-gradient(135deg, #8B2E20 0%, #A0522D 100%); color: white; padding: 30px; text-align: center; margin: 30px 0; border-radius: 15px; box-shadow: 0 5px 15px rgba(139, 46, 32, 0.3); position: relative; overflow: hidden;">
                         <!-- Background Pattern -->
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"dots\" patternUnits=\"userSpaceOnUse\" width=\"10\" height=\"10\"><circle cx=\"5\" cy=\"5\" r=\"1\" fill=\"white\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23dots)\"/></svg>');"></div>
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: url('data:image/svg+xml,</div>
                         
                         <div style="position: relative; z-index: 1;">
                             <p style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Your Verification Code</p>
@@ -378,7 +378,7 @@ async function sendOTPEmail(email, userName, otp) {
                     
                     <!-- Important Information -->
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #8B2E20;">
-                        <p style="margin: 0 0 10px 0; color: #8B2E20; font-weight: bold; font-size: 16px;">⏰ This code will expire in 10 minutes.</p>
+                        <p style="margin: 0 0 10px 0; color: #8B2E20; font-weight: bold; font-size: 16px;"> This code will expire in 3 minutes.</p>
                         <p style="margin: 0; color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
                     </div>
                     
@@ -386,8 +386,8 @@ async function sendOTPEmail(email, userName, otp) {
                     <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #f0f0f0; text-align: center;">
                         <p style="color: #8B2E20; font-weight: bold; margin: 0 0 5px 0;">Best regards,<br>The Viktoria's Bistro Team</p>
                         <p style="color: #999; font-size: 12px; margin: 10px 0 0 0;">
-                            📍 123 Restaurant Street, City, Country<br>
-                            📞 +1 (555) 123-4567 | 📧 info@viktoriasbistro.com
+                            📍 Bisita St, Imus, 4103 Cavite <br>
+                            📞 046 850 3816 / 0917 592 1007 | 📧 support@viktoriasbistro.restaurant
                         </p>
                     </div>
                 </div>
@@ -404,13 +404,18 @@ async function sendOTPEmail(email, userName, otp) {
             
             VERIFICATION CODE: ${otp}
             
-            This code will expire in 10 minutes.
+            This code will expire in 3 minutes.
             
             If you didn't request this code, please ignore this email.
             
             Best regards,
             The Viktoria's Bistro Team
         `;
+
+    // Read and encode logo
+    const logoPath = path.join(__dirname, 'src', 'IMG', 'Logo.png');
+    const logoBuffer = fs.readFileSync(logoPath);
+    const logoBase64 = logoBuffer.toString('base64');
 
     const emailData = {
       personalizations: [{
@@ -429,6 +434,15 @@ async function sendOTPEmail(email, userName, otp) {
         {
           type: 'text/html',
           value: htmlContent
+        }
+      ],
+      attachments: [
+        {
+          content: logoBase64,
+          filename: 'Logo.png',
+          type: 'image/png',
+          disposition: 'inline',
+          content_id: 'logo'
         }
       ]
     };
@@ -2299,7 +2313,7 @@ const blockedDirectories = [
 // Create blocking routes for all directories
 blockedDirectories.forEach(pattern => {
     app.get(pattern, (req, res) => {
-        console.log(`🚫 Blocked manual access to: ${req.path}`);
+        console.log(`Blocked manual access to: ${req.path}`);
         res.status(404).send(`
             <!DOCTYPE html>
             <html>
@@ -2356,10 +2370,10 @@ blockedDirectories.forEach(pattern => {
             </head>
             <body>
                 <div class="container">
-                    <h1>🚫 Access Denied</h1>
+                    <h1> Access Denied</h1>
                     <p>Direct access to this path is not allowed.</p>
                     <p>Please use the navigation menu to access pages.</p>
-                    <a href="/" class="home-btn">🏠 Go Home</a>
+                    <a href="/" class="home-btn"> Go Home</a>
                 </div>
             </body>
             </html>
@@ -2394,7 +2408,7 @@ app.get('/notifications', (req, res) => {
     
     // If coming from kitchen page, redirect back
     if (referer.includes('kitchen')) {
-        console.log('🚫 Blocked kitchen user from accessing notifications page');
+        console.log('Blocked kitchen user from accessing notifications page');
         return res.redirect('/kitchen');
     }
     
@@ -2517,14 +2531,14 @@ async function logPasswordChangeEvent(email, firebaseUpdateSuccess, eventType = 
         // Test Firestore access first
         const testDoc = await admin.firestore().collection('security_audit_logs').doc('test').get();
         await admin.firestore().collection('security_audit_logs').add(logEntry);
-        console.log(`[Security Audit] ✅ Log entry saved to Firestore for: ${email}`);
+        console.log(`[Security Audit] Log entry saved to Firestore for: ${email}`);
       } catch (firestoreError) {
-        console.error(`[Security Audit] ❌ Failed to save log to Firestore:`, firestoreError.message);
-        console.log(`[Security Audit] ⚠️ Firestore access denied - logging to console only`);
+        console.error(`[Security Audit] Failed to save log to Firestore:`, firestoreError.message);
+        console.log(`[Security Audit] Firestore access denied - logging to console only`);
         console.log(`[Security Audit] Log entry (console only):`, JSON.stringify(logEntry, null, 2));
       }
     } else {
-      console.log(`[Security Audit] ⚠️ Firebase Admin SDK not available - logging to console only`);
+      console.log(`[Security Audit] Firebase Admin SDK not available - logging to console only`);
       console.log(`[Security Audit] Log entry (console only):`, JSON.stringify(logEntry, null, 2));
     }
 
@@ -2538,14 +2552,14 @@ async function sendPasswordChangeNotification(email, eventType = 'password_reset
   try {
     const eventDetails = {
       'password_reset': {
-        subject: '🔒 Password Reset - Victoria\'s Bistro',
-        title: '🔒 Password Successfully Reset',
+        subject: 'Password Reset - Victoria\'s Bistro',
+        title: 'Password Successfully Reset',
         description: 'This is a security notification to confirm that your password has been successfully reset for your Victoria\'s Bistro account.',
         actionText: 'If you did NOT request this password reset, please contact us immediately'
       },
       'password_change': {
-        subject: '🔒 Password Changed - Victoria\'s Bistro',
-        title: '🔒 Password Successfully Changed',
+        subject: 'Password Changed - Victoria\'s Bistro',
+        title: 'Password Successfully Changed',
         description: 'This is a security notification to confirm that your password has been successfully changed for your Victoria\'s Bistro account.',
         actionText: 'If you did NOT make this change, please contact us immediately'
       }
@@ -2572,7 +2586,7 @@ async function sendPasswordChangeNotification(email, eventType = 'password_reset
                         <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #28a745; margin: 20px 0;">
                             <p><strong>Account:</strong> ${email}</p>
                             <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-                            <p><strong>Status:</strong> ✅ Password updated successfully</p>
+                            <p><strong>Status:</strong> Password updated successfully</p>
                         </div>
                         
                         <p><strong>What you should do:</strong></p>
@@ -2601,7 +2615,7 @@ async function sendPasswordChangeNotification(email, eventType = 'password_reset
 
     // For password change notifications, we'll use a simple console log instead of email
     // since sendOTPEmail is designed for OTP emails, not general notifications
-    console.log(`[Security Notification] ✅ Password change notification logged for: ${email}`);
+    console.log(`[Security Notification] Password change notification logged for: ${email}`);
     console.log(`[Security Notification] Email would be sent with subject: ${event.subject}`);
     
     // TODO: Implement proper email sending for password change notifications
@@ -2622,19 +2636,19 @@ async function sendAdminSecurityAlert(email, eventType) {
 
     const eventDetails = {
       'password_reset': {
-        title: '🔒 Password Reset Alert',
+        title: 'Password Reset Alert',
         description: 'A user has successfully reset their password',
         severity: 'medium'
       },
       'password_change': {
-        title: '🔒 Password Change Alert',
+        title: 'Password Change Alert',
         description: 'A user has successfully changed their password',
         severity: 'low'
       }
     };
 
     const event = eventDetails[eventType] || {
-      title: '🔒 Security Event',
+      title: 'Security Event',
       description: 'A security event has occurred',
       severity: 'low'
     };
