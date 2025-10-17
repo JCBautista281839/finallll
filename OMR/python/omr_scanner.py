@@ -475,9 +475,15 @@ class OMRScanner:
             start_index = 2 if detected_form in [1, 2] else 0  # Skip first 2 if form detected
             
             for i, circle in enumerate(circles): # Iterate through all circles
-                # For form identifier circles (first 2 when form is detected) - SKIP THESE FROM DISPLAY
+                # For form identifier circles (first 2 when form is detected)
                 if detected_form in [1, 2] and i < 2:
-                    # Form identifiers are used for detection only, not displayed to user
+                    is_shaded = any(c['id'] == circle['id'] for c in shaded_result['shaded_circle_data'])
+                    if i == 0:
+                        item_name = "FORM_ID_1"
+                    else:
+                        item_name = "FORM_ID_2"
+                    status = "Shaded" if is_shaded else "Not Shaded"
+                    selected_items_display.append(f"ID {circle['id']}: {item_name} ({status})")
                     continue
                 
                 # For menu item circles
@@ -493,9 +499,9 @@ class OMRScanner:
                         'fill_percentage': next(c['fill_percentage'] for c in shaded_result['shaded_circle_data'] if c['id'] == circle['id']), # Get fill_percentage for shaded item
                         'confidence': min(100, max(70, 100 - next(c['fill_percentage'] for c in shaded_result['shaded_circle_data'] if c['id'] == circle['id']) + 70))
                     })
-                    
-                    # Only add shaded menu items to display (not form identifiers, not unshaded items)
-                    selected_items_display.append(f"ID {circle['id']}: {item_name} (Shaded)")
+
+                status = "Shaded" if is_shaded else "Not Shaded"
+                selected_items_display.append(f"ID {circle['id']}: {item_name} ({status})")
 
             # Calculate totals
             total_price = sum(item['price'] for item in selected_items) # Keep original calculation for total price
