@@ -31,11 +31,25 @@ function updateRowStatus(row) {
     // Persist previous status for each item in localStorage
     let prevStatus = localStorage.getItem('inventory_prevStatus_' + itemName);
 
-    // Only notify if status changes from steady to low/no stock, or from low to empty, or from steady to empty
-    // OR if this is the first time we're seeing a low stock item (no previous status stored)
+    // Only notify if status actually changes from steady to low/no stock, or from low to empty, or from steady to empty
+    // Do NOT notify on every refresh - only on actual status changes
     let shouldNotify = false;
-    if ((notifyType === 'empty' || notifyType === 'restock') && (prevStatus !== statusLabel || !prevStatus)) {
-        shouldNotify = true;
+
+    if (notifyType === 'empty' || notifyType === 'restock') {
+        if (prevStatus && prevStatus !== statusLabel) {
+            // Status changed from something else to low/empty
+            shouldNotify = true;
+            console.log('[Inventory] Status changed for', itemName, 'from', prevStatus, 'to', statusLabel);
+        } else if (!prevStatus) {
+            // First time seeing this item - only notify if it's transitioning from steady to low/empty
+            // We need to check if this is a real status change or just first load
+            const hasBeenNotified = localStorage.getItem('inventory_notified_' + itemName + '_' + notifyType);
+            if (!hasBeenNotified) {
+                // Only notify if we haven't notified for this status before
+                shouldNotify = true;
+                console.log('[Inventory] First detection of low stock for', itemName, 'with status', statusLabel);
+            }
+        }
     }
 
     // Reset notification history for this item if restocked
@@ -233,6 +247,48 @@ window.clearNotificationHistoryAndNotify = function () {
 
     // Force trigger notifications for all low stock items
     return triggerLowStockNotifications();
+};
+
+// Function to reset notification system (clear all history and prevent notifications on refresh)
+window.resetInventoryNotificationSystem = function () {
+    console.log('[Inventory] Resetting notification system...');
+
+    // Clear all notification history
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+        if (key.startsWith('inventory_notified_') || key.startsWith('inventory_prevStatus_')) {
+            localStorage.removeItem(key);
+            console.log('[Inventory] Cleared:', key);
+        }
+    });
+
+    // Set all current low stock items as "already notified" to prevent notifications on refresh
+    const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
+    rows.forEach(function (row) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 4) return;
+
+        const itemName = (cells[0].textContent || '').trim();
+        const stockText = (cells[1].textContent || '').trim();
+        const stockValue = parseFloat(stockText);
+        const stock = isNaN(stockValue) ? 0 : stockValue;
+        const statusText = (cells[3].textContent || '').trim();
+
+        if (stock === 0 && statusText.includes('Empty')) {
+            localStorage.setItem('inventory_notified_' + itemName + '_empty', 'true');
+            localStorage.setItem('inventory_prevStatus_' + itemName, 'Empty');
+            console.log('[Inventory] Marked as notified (empty):', itemName);
+        } else if (stock >= 1 && stock <= 5 && statusText.includes('Need Restocking')) {
+            localStorage.setItem('inventory_notified_' + itemName + '_restock', 'true');
+            localStorage.setItem('inventory_prevStatus_' + itemName, 'Need Restocking');
+            console.log('[Inventory] Marked as notified (restock):', itemName);
+        } else if (stock >= 6) {
+            localStorage.setItem('inventory_prevStatus_' + itemName, 'Steady');
+            console.log('[Inventory] Marked as steady:', itemName);
+        }
+    });
+
+    console.log('[Inventory] Notification system reset - no more notifications on refresh');
 };
 
 // Function to create test inventory notifications
