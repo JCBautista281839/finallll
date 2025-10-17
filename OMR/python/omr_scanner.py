@@ -42,9 +42,10 @@ class OMRScanner:
             'Hotsi', 'Longsi', 'BtrShrp', 'CrisKK', 'HnyWngs', 'Tocsi',
             'Spag', 'CrsPata', 'TbnRc', 'Egg', 'CdnBlu', 'Nachos',
             'SngHip', 'GrlcRc', 'Fst4', 'Viktoria\'s Cheesy Bacon',
-            # Column 3 (circles 33-40)
+            # Column 3 (circles 33-43)
             'Fish&Moj', 'FrFrs', 'ChkTapa', 'BufWngs', 
-            'Viktoria\'s Double Cheesy Bacon', 'HamEggChs', 'BfBroc', 'CrisDng'
+            'Viktoria\'s Double Cheesy Bacon', 'HamEggChs', 'BfBroc', 'CrisDng',
+            'Pitcher of Iced Tea', 'Pitcher of Lemonade', 'Wintermelon Milktea', 'Cucumber Lemonade', 'Spanish Latte'
         ]
         
         # Combined menu items for backward compatibility
@@ -148,7 +149,12 @@ class OMRScanner:
             'Viktoria’s Double Cheesy Bacon': 350.00,
             'HamEggChs': 150.00,
             'BfBroc': 505.00,
-            'CrisDng': 495.00
+            'CrisDng': 495.00,
+            'Pitcher of Iced Tea': 170.00,
+            'Pitcher of Lemonade': 170.00,
+            'Wintermelon Milktea': 89.00,
+            'Cucumber Lemonade': 170.00,
+            'Spanish Latte': 140.00
         }
 
     def load_image(self, filepath: str) -> Optional[np.ndarray]:

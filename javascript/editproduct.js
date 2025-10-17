@@ -541,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tbody.innerHTML = '';
 
         if (selectedIngredients.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No ingredients added</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No ingredients added</td></tr>';
             return;
         }
 
@@ -554,9 +554,48 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${ingredient.name}</td>
                 <td>${ingredient.quantity}</td>
                 <td>${ingredient.unit}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-danger delete-ingredient-btn" 
+                            data-ingredient-index="${index}" 
+                            title="Delete ingredient">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
             `;
             tbody.appendChild(row);
         });
+
+        // Add event listeners for delete buttons
+        tbody.querySelectorAll('.delete-ingredient-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const ingredientIndex = parseInt(this.getAttribute('data-ingredient-index'));
+                deleteIngredient(ingredientIndex);
+            });
+        });
+    }
+
+    function deleteIngredient(ingredientIndex) {
+        if (ingredientIndex < 0 || ingredientIndex >= selectedIngredients.length) {
+            console.error('Invalid ingredient index:', ingredientIndex);
+            return;
+        }
+
+        const ingredient = selectedIngredients[ingredientIndex];
+        const ingredientName = ingredient.name;
+
+        // Show confirmation dialog
+        if (confirm(`Are you sure you want to delete "${ingredientName}" from this product?`)) {
+            // Remove ingredient from selectedIngredients array
+            selectedIngredients.splice(ingredientIndex, 1);
+
+            // Update the ingredients table
+            updateIngredientsTable();
+
+            // Show success message
+            showMessage(`"${ingredientName}" has been removed from the product.`, 'success');
+
+            console.log('Ingredient deleted:', ingredientName);
+        }
     }
 
     function closeIngredientDetail() {
