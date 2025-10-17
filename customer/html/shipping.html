@@ -138,9 +138,9 @@
           <div class="form-group">
             <label for="reference-code">Payment Reference Code * (Required for Order)</label>
             <input type="text" id="reference-code" placeholder="Enter payment reference code (min 5 characters)"
-              required minlength="5">
+              required minlength="5" inputmode="numeric" pattern="[0-9]*">
             <small class="form-help">Enter the reference code from your payment confirmation (minimum 5 characters,
-              letters and numbers only)</small>
+              numbers only)</small>
           </div>
 
           <!-- Receipt Upload -->
@@ -271,7 +271,8 @@
         </div>
 
         <div class="instructions-footer-note">
-          <p><strong>Enjoy your meal! Thank you for choosing Viktoria's Bistro! You are welcome to dine with us!</strong></p>
+          <p><strong>Enjoy your meal! Thank you for choosing Viktoria's Bistro! You are welcome to dine with
+              us!</strong></p>
         </div>
       </div>
 
