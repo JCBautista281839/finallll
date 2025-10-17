@@ -456,9 +456,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Setup role-based access control
+    // Setup role-based access control - Enhanced version
     function setupRoleBasedAccess(userRole) {
         console.log('Setting up role-based access for:', userRole);
+
+        // Wait for auth-guard if available
+        if (typeof window.authGuard !== 'undefined') {
+            const authGuard = window.authGuard;
+            console.log('🔐 Using AuthGuard for access control');
+        }
 
         // Get all navigation links
         const allNavLinks = document.querySelectorAll('.nav-link');
@@ -485,13 +491,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 btn.style.display = 'none';
             });
 
+            // Hide edit buttons (kitchen can only view)
+            editButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+
             // Redirect home link to kitchen dashboard for kitchen staff
             if (homeNavLink) {
-                homeNavLink.href = '../html/kitchen.html';
+                homeNavLink.href = '/kitchen';
                 homeNavLink.title = 'Kitchen Dashboard';
             }
 
-            // Show only: Home, Notifications, Inventory, Logout
+            // Show only: Home, Notifications, Inventory (View Only), Logout
             allNavLinks.forEach(link => {
                 const title = link.getAttribute('title');
                 const href = link.getAttribute('href');
@@ -501,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     title === 'Notifications' ||
                     title === 'Inventory' ||
                     title === 'Logout' ||
-                    href && href.includes('kitchen.html')) {
+                    href && (href.includes('kitchen.html') || href.includes('/kitchen'))) {
                     link.style.display = 'block';
                     link.style.visibility = 'visible';
                     link.style.opacity = '1';
@@ -509,6 +520,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     link.style.display = 'none';
                 }
             });
+
+            // Add visual indicator that this is view-only mode
+            const pageTitle = document.querySelector('h1, .page-title');
+            if (pageTitle) {
+                pageTitle.innerHTML += ' <span class="badge bg-warning">View Only</span>';
+            }
 
         } else if (userRole === 'admin' || userRole === 'manager') {
             console.log('👑 Admin/Manager role - Full access granted');
@@ -518,6 +535,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 link.style.display = 'block';
                 link.style.visibility = 'visible';
                 link.style.opacity = '1';
+            });
+
+        } else if (userRole === 'server') {
+            console.log('🍽️ Server role - Limited access');
+
+            // Servers have limited access - hide admin functions
+            const adminElements = document.querySelectorAll('[data-admin-only]');
+            adminElements.forEach(el => el.style.display = 'none');
+
+            // Hide inventory management buttons
+            if (addButton) addButton.style.display = 'none';
+            editButtons.forEach(btn => btn.style.display = 'none');
+            deleteButtons.forEach(btn => btn.style.display = 'none');
+
+            // Show only relevant navigation
+            allNavLinks.forEach(link => {
+                const title = link.getAttribute('title');
+                const href = link.getAttribute('href');
+
+                if (title === 'Home' ||
+                    title === 'Orders' ||
+                    title === 'POS' ||
+                    title === 'Menu' ||
+                    title === 'Notifications' ||
+                    title === 'Logout' ||
+                    href && (href.includes('dashboard') || href.includes('order') || href.includes('pos') || href.includes('menu'))) {
+                    link.style.display = 'block';
+                    link.style.visibility = 'visible';
+                    link.style.opacity = '1';
+                } else {
+                    link.style.display = 'none';
+                }
             });
 
         } else {

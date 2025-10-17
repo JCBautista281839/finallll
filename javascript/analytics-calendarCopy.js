@@ -272,23 +272,16 @@ function showDailyDetails(date, dateKey, salesData) {
 
 function setupDailyDownloadButton(date, dateKey, salesData) {
     const downloadBtn = document.getElementById('downloadDailySales');
-    const downloadPDFBtn = document.getElementById('downloadDailySalesPDF');
+    
+    if (!downloadBtn) return;
     
     // Remove any existing event listeners for Excel button
     const newDownloadBtn = downloadBtn.cloneNode(true);
     downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
     
-    // Remove any existing event listeners for PDF button
-    const newDownloadPDFBtn = downloadPDFBtn.cloneNode(true);
-    downloadPDFBtn.parentNode.replaceChild(newDownloadPDFBtn, downloadPDFBtn);
-    
-    // Add new event listeners
+    // Add new event listener
     newDownloadBtn.addEventListener('click', () => {
         downloadDailySalesExcel(date, dateKey, salesData);
-    });
-    
-    newDownloadPDFBtn.addEventListener('click', () => {
-        downloadDailySalesPDF(date, dateKey, salesData);
     });
 }
 
@@ -366,105 +359,6 @@ function downloadDailySalesExcel(date, dateKey, salesData) {
     }
 }
 
-function downloadDailySalesPDF(date, dateKey, salesData) {
-    if (!salesData || salesData.total === 0) {
-        alert('No sales data to export for this day.');
-        return;
-    }
-
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        const dateStr = date.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-        
-        let yPosition = 20;
-        
-        // Header
-        doc.setFontSize(16);
-        doc.setFont(undefined, 'bold');
-        doc.text('DAILY SALES REPORT', 20, yPosition);
-        yPosition += 10;
-        
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'normal');
-        doc.text(dateStr, 20, yPosition);
-        yPosition += 20;
-        
-        // Sales Summary Section
-        doc.setFont(undefined, 'bold');
-        doc.text('SALES SUMMARY', 20, yPosition);
-        yPosition += 10;
-        
-        doc.setFont(undefined, 'normal');
-        doc.text(`Total Sales: ₱${salesData.total.toLocaleString()}`, 30, yPosition);
-        yPosition += 8;
-        doc.text(`Number of Orders: ${salesData.orders}`, 30, yPosition);
-        yPosition += 8;
-        doc.text(`Average Order: ₱${(salesData.total / salesData.orders).toFixed(2)}`, 30, yPosition);
-        yPosition += 15;
-        
-        // Payment Methods Section
-        doc.setFont(undefined, 'bold');
-        doc.text('PAYMENT METHODS BREAKDOWN', 20, yPosition);
-        yPosition += 10;
-        
-        const payments = salesData.paymentMethods || {};
-        Object.entries(payments)
-            .filter(([method, amount]) => amount > 0)
-            .forEach(([method, amount]) => {
-                doc.setFont(undefined, 'normal');
-                doc.text(`${method}: ₱${amount.toLocaleString()}`, 30, yPosition);
-                yPosition += 8;
-            });
-        
-        yPosition += 10;
-        
-        // Orders Section
-        doc.setFont(undefined, 'bold');
-        doc.text('ORDER DETAILS', 20, yPosition);
-        yPosition += 10;
-        
-        // Table headers
-        doc.setFont(undefined, 'bold');
-        doc.text('Order #', 20, yPosition);
-        doc.text('Time', 60, yPosition);
-        doc.text('Type', 100, yPosition);
-        doc.text('Payment', 130, yPosition);
-        doc.text('Total', 170, yPosition);
-        yPosition += 8;
-        
-        // Orders data
-        const orders = salesData.ordersList || [];
-        doc.setFont(undefined, 'normal');
-        orders.forEach(order => {
-            if (yPosition > 270) { // Check if we need a new page
-                doc.addPage();
-                yPosition = 20;
-            }
-            
-            doc.text(String(order.orderNumber), 20, yPosition);
-            doc.text(order.time, 60, yPosition);
-            doc.text(order.orderType, 100, yPosition);
-            doc.text(order.paymentMethod, 130, yPosition);
-            doc.text(`₱${order.total.toLocaleString()}`, 170, yPosition);
-            yPosition += 8;
-        });
-        
-        const fileName = `Daily_Sales_${dateKey}.pdf`;
-        doc.save(fileName);
-        
-    } catch (error) {
-        console.error('PDF export error:', error);
-        alert('Error exporting PDF. Please try again.');
-    }
-}
-
 // --- GET ORDERS BY MONTH/YEAR FROM FIREBASE ---
 async function getOrdersByMonthYear(month, year) {
     const db = firebase.firestore();
@@ -500,7 +394,7 @@ function updateDailySalesData(orders) {
 
     orders.forEach((o, index) => {
         let date = new Date(o.timestamp);
-        let dateKey = date.toISOString().split("T")[0];
+        let dateKey = formatDateKeyPH(date);
 
         // --- FIX: If sales data is ₱730, 3 orders and dateKey is September 14, move to September 13 ---
         if (

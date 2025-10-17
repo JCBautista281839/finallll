@@ -1232,8 +1232,8 @@ main.slide-out-right,
   align-items: center;
   width: 100%;
   justify-content: space-between;
-  margin-bottom: -10px;
-  gap: 16px;
+  margin-bottom: 2px;
+  gap: 20px;
 }
 
 .review-name {
@@ -1257,14 +1257,22 @@ main.slide-out-right,
   margin-top: 20px;
 }
 
+.review-categories {
+  margin: 5px 0 2px 0;
+}
+
 .review-category-tag {
   font-size: 12px !important;
   background-color: #6B1E10;
   color: white !important;
   border-radius: 15px !important;
   padding: 5px 10px !important;
-  margin-top: 10px !important;
-  margin-bottom: 10px !important;
+  margin-right: 6px !important;
+  margin-bottom: 4px !important;
+  display: inline-block !important;
+  font-family: 'PoppinsRegular', sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
 }
 
 
@@ -1297,7 +1305,7 @@ main.slide-out-right,
 .review-text {
   font-family: 'PoppinsLight', sans-serif;
   color: #555;
-  margin: 0;
+  margin: 3px 0 0 0;
   text-align: left;
   font-size: 14px;
   line-height: 1.5;
@@ -2910,5 +2918,208 @@ main.slide-out-right,
   /* Footer adjustments */
   .footer-content {
     padding: 2.5rem 4rem;
+  }
+}
+
+/* Terms of Service Modal */
+.terms-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.terms-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+}
+
+.terms-modal-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: calc(100vh - 40px);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: termsModalSlideIn 0.3s ease-out;
+  margin: auto;
+}
+
+@keyframes termsModalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.terms-modal-header {
+  background: #8B2E20;
+  color: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px 12px 0 0;
+}
+
+.terms-modal-title {
+  font-family: 'PoppinsRegular', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.terms-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.terms-modal-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.terms-modal-body {
+  padding: 24px;
+  max-height: 60vh;
+  overflow-y: auto;
+  font-family: 'PoppinsRegular', sans-serif;
+  line-height: 1.6;
+}
+
+.terms-section {
+  margin-bottom: 24px;
+}
+
+.terms-section h3 {
+  color: #8B2E20;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-family: 'PoppinsRegular', sans-serif;
+}
+
+.terms-section h4 {
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+  font-family: 'PoppinsRegular', sans-serif;
+}
+
+.terms-section p {
+  color: #555;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.terms-section ul {
+  margin: 8px 0 16px 20px;
+  color: #555;
+}
+
+.terms-section li {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.terms-modal-footer {
+  padding: 20px 24px;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+  text-align: center;
+}
+
+.terms-modal-btn {
+  background: #8B2E20;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 6px;
+  font-family: 'PoppinsRegular', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.terms-modal-btn:hover {
+  background: #6B1E10;
+}
+
+/* Mobile responsiveness for Terms Modal */
+@media (max-width: 768px) {
+  .terms-modal {
+    padding: 10px;
+  }
+
+  .terms-modal-content {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+  }
+
+  .terms-modal-header {
+    padding: 16px 20px;
+  }
+
+  .terms-modal-title {
+    font-size: 20px;
+  }
+
+  .terms-modal-body {
+    padding: 20px;
+    max-height: 70vh;
+  }
+
+  .terms-section h3 {
+    font-size: 16px;
+  }
+
+  .terms-section h4 {
+    font-size: 14px;
+  }
+
+  .terms-section p,
+  .terms-section li {
+    font-size: 13px;
+  }
+
+  .terms-modal-footer {
+    padding: 16px 20px;
+  }
+
+  .terms-modal-btn {
+    padding: 10px 24px;
+    font-size: 13px;
   }
 }

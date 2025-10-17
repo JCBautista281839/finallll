@@ -1596,6 +1596,8 @@ async function loadNotifications() {
                         typeText = 'Restock';
                     } else if (data.type === 'payment_verification') {
                         typeText = 'Payment Verification';
+                    } else if (data.type === 'payment_declined') {
+                        typeText = 'Payment Declined';
                     } else if (data.type === 'order_approval') {
                         typeText = 'Order Approval';
                     } else if (data.type === 'lalamove_order_success') {
@@ -1637,11 +1639,18 @@ async function loadNotifications() {
                     }
 
                     // Handle payment verification notifications with action buttons (only for admin users)
-                    if (data.type === 'payment_verification' && data.status === 'pending' && userRole !== 'kitchen') {
-                        rows += `<tr class="payment-verification-row" data-doc-id="${doc.id}">
+                    // Show for both 'pending' and 'declined' status, but disable buttons if declined
+                    if (data.type === 'payment_verification' && (data.status === 'pending' || data.status === 'declined') && userRole !== 'kitchen') {
+                        const isDeclined = data.status === 'declined' || data.buttonsDisabled === true;
+                        const declinedBanner = isDeclined ? `<div style="background: #933F32; color: white; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; text-align: center; font-weight: 600;">
+                            <i class="fas fa-times-circle"></i> Payment Declined
+                        </div>` : '';
+                        
+                        rows += `<tr class="payment-verification-row ${isDeclined ? 'declined-row' : ''}" data-doc-id="${doc.id}" style="${isDeclined ? 'opacity: 0.7;' : ''}">
                         <td><span style='font-weight:600; color: #933F32;'>${typeText}</span></td>
                         <td>
                             <div class="payment-notification-content">
+                                ${declinedBanner}
                                 <p><strong>${data.message || ''}</strong></p>
                                 <div class="customer-details">
                                     <small><strong>Customer:</strong> ${data.customerInfo?.name || 'Unknown'} | 
@@ -1682,21 +1691,22 @@ async function loadNotifications() {
                             }
                                 <div class="action-buttons" style="margin-top: 10px;">
                                     ${data.quotation?.serviceType && data.quotation.serviceType !== 'PICKUP' ? `
-                                    <button class="btn btn-warning btn-sm me-2" onclick="handleLalamoveReady('${doc.id}')" 
-                                            ${data.lalamoveOrderPlaced ? 'disabled' : ''}
-                                            style="background: ${data.lalamoveOrderPlaced ? '#6c757d' : '#ffc107'}; border: none; padding: 5px 15px; border-radius: 4px; color: ${data.lalamoveOrderPlaced ? 'white' : 'black'}; cursor: ${data.lalamoveOrderPlaced ? 'not-allowed' : 'pointer'};">
+                                    <button class="btn btn-warning btn-sm me-2" onclick="${isDeclined ? 'return false;' : `handleLalamoveReady('${doc.id}')`}" 
+                                            ${data.lalamoveOrderPlaced || isDeclined ? 'disabled' : ''}
+                                            style="background: ${data.lalamoveOrderPlaced || isDeclined ? '#6c757d' : '#ffc107'}; border: none; padding: 5px 15px; border-radius: 4px; color: ${data.lalamoveOrderPlaced || isDeclined ? 'white' : 'black'}; cursor: ${data.lalamoveOrderPlaced || isDeclined ? 'not-allowed' : 'pointer'};">
                                         <i class="fas fa-${data.lalamoveOrderPlaced ? 'check' : 'motorcycle'}"></i> ${data.lalamoveOrderPlaced ? 'Order Placed' : 'Lalamove Ready!'}
                                     </button>
                                     ` : `
-                                    <button class="btn btn-success btn-sm me-2" onclick="handleOrderPickedUp('${doc.id}')" 
-                                            ${data.orderPickedUp ? 'disabled' : ''}
-                                            style="background: ${data.orderPickedUp ? '#6c757d' : '#28a745'}; border: none; padding: 5px 15px; border-radius: 4px; color: white; cursor: ${data.orderPickedUp ? 'not-allowed' : 'pointer'};">
+                                    <button class="btn btn-success btn-sm me-2" onclick="${isDeclined ? 'return false;' : `handleOrderPickedUp('${doc.id}')`}" 
+                                            ${data.orderPickedUp || isDeclined ? 'disabled' : ''}
+                                            style="background: ${data.orderPickedUp || isDeclined ? '#6c757d' : '#28a745'}; border: none; padding: 5px 15px; border-radius: 4px; color: white; cursor: ${data.orderPickedUp || isDeclined ? 'not-allowed' : 'pointer'};">
                                         <i class="fas fa-${data.orderPickedUp ? 'check' : 'shopping-bag'}"></i> ${data.orderPickedUp ? 'Picked Up' : 'Mark as Picked Up'}
                                     </button>
                                     `}
-                                    <button class="btn btn-danger btn-sm" onclick="handlePaymentVerification('${doc.id}', 'declined')" 
-                                            style="background: #dc3545; border: none; padding: 5px 15px; border-radius: 4px; color: white;">
-                                        ✗ Decline
+                                    <button class="btn btn-danger btn-sm" onclick="${isDeclined ? 'return false;' : `handlePaymentVerification('${doc.id}', 'declined')`}" 
+                                            ${isDeclined ? 'disabled' : ''}
+                                            style="background: ${isDeclined ? '#6c757d' : '#933F32'}; border: none; padding: 5px 15px; border-radius: 4px; color: white; cursor: ${isDeclined ? 'not-allowed' : 'pointer'};">
+                                        ✗ ${isDeclined ? 'Declined' : 'Decline'}
                                     </button>
                                 </div>
                             </div>
@@ -1706,7 +1716,8 @@ async function loadNotifications() {
                     } else {
                         // Skip rendering payment_verification and order_approval in regular row format
                         // These should only appear in their expanded forms above
-                        if (data.type === 'payment_verification' || data.type === 'order_approval') {
+                        // Exception: payment_verification with status other than 'pending' or 'declined' can be shown in regular format
+                        if ((data.type === 'payment_verification' && (data.status === 'pending' || data.status === 'declined')) || data.type === 'order_approval') {
                             console.log('✅ Skipping', data.type, 'from regular display - already shown in expanded form');
                             return; // Skip this notification
                         }
@@ -1716,6 +1727,8 @@ async function loadNotifications() {
                             statusColor = 'color: #933F32;';
                         } else if (data.type === 'order_pickup') {
                             statusColor = 'color: #933F32;';
+                        } else if (data.type === 'payment_declined') {
+                            statusColor = 'color: #dc3545; font-weight: 700;';
                         }
                         rows += `<tr><td><span style='font-weight:600; ${statusColor}'>${typeText}</span></td><td>${data.message || ''}</td><td>${time}</td></tr>`;
                     }
@@ -1890,11 +1903,347 @@ if (document.readyState === 'loading') {
     initializeNotifications();
 }
 
+// Function to create decline confirmation modal
+function createDeclineConfirmationModal(customerName, paymentType, reference, onConfirm, onCancel) {
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'decline-modal-overlay';
+    modalOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s ease-in-out;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'decline-modal-content';
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+        overflow: hidden;
+        animation: slideIn 0.3s ease-out;
+    `;
+
+    // Create modal header
+    const modalHeader = document.createElement('div');
+    modalHeader.className = 'decline-modal-header';
+    modalHeader.style.cssText = `
+        background: linear-gradient(135deg, #933F32 0%, #7a2f25 100%);
+        color: white;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    `;
+    modalHeader.innerHTML = `
+        <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+        <h3 style="margin: 0; font-size: 20px; font-weight: 600;">Decline Payment Verification</h3>
+    `;
+
+    // Create modal body
+    const modalBody = document.createElement('div');
+    modalBody.className = 'decline-modal-body';
+    modalBody.style.cssText = `
+        padding: 24px;
+        color: #333;
+    `;
+    modalBody.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <p style="font-size: 16px; margin-bottom: 16px; color: #555;">Are you sure you want to decline this payment verification?</p>
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; border-left: 4px solid #933F32;">
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #333;">Customer:</strong> 
+                    <span style="color: #555;">${customerName}</span>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #333;">Payment Type:</strong> 
+                    <span style="color: #555;">${paymentType}</span>
+                </div>
+                <div>
+                    <strong style="color: #333;">Reference Number:</strong> 
+                    <span style="color: #555; font-family: monospace; background: #fff; padding: 2px 8px; border-radius: 4px;">${reference}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Create modal footer
+    const modalFooter = document.createElement('div');
+    modalFooter.className = 'decline-modal-footer';
+    modalFooter.style.cssText = `
+        padding: 16px 24px;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        border-top: 1px solid #dee2e6;
+    `;
+
+    // Create Cancel button
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.className = 'decline-btn-cancel';
+    cancelButton.style.cssText = `
+        padding: 10px 24px;
+        border: 2px solid #6c757d;
+        background: white;
+        color: #6c757d;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    `;
+    cancelButton.onmouseover = () => {
+        cancelButton.style.background = '#6c757d';
+        cancelButton.style.color = 'white';
+    };
+    cancelButton.onmouseout = () => {
+        cancelButton.style.background = 'white';
+        cancelButton.style.color = '#6c757d';
+    };
+    cancelButton.onclick = () => {
+        document.body.removeChild(modalOverlay);
+        if (onCancel) onCancel();
+    };
+
+    // Create Confirm Decline button
+    const confirmButton = document.createElement('button');
+    confirmButton.textContent = 'Confirm Decline';
+    confirmButton.className = 'decline-btn-confirm';
+    confirmButton.style.cssText = `
+        padding: 10px 24px;
+        border: none;
+        background: linear-gradient(135deg, #933F32 0%, #7a2f25 100%);
+        color: white;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(147, 63, 50, 0.3);
+    `;
+    confirmButton.onmouseover = () => {
+        confirmButton.style.transform = 'translateY(-2px)';
+        confirmButton.style.boxShadow = '0 4px 12px rgba(147, 63, 50, 0.4)';
+    };
+    confirmButton.onmouseout = () => {
+        confirmButton.style.transform = 'translateY(0)';
+        confirmButton.style.boxShadow = '0 2px 8px rgba(147, 63, 50, 0.3)';
+    };
+    confirmButton.onclick = () => {
+        document.body.removeChild(modalOverlay);
+        if (onConfirm) onConfirm();
+    };
+
+    // Assemble modal
+    modalFooter.appendChild(cancelButton);
+    modalFooter.appendChild(confirmButton);
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(modalBody);
+    modalContent.appendChild(modalFooter);
+    modalOverlay.appendChild(modalContent);
+
+    // Close modal when clicking overlay
+    modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) {
+            document.body.removeChild(modalOverlay);
+            if (onCancel) onCancel();
+        }
+    };
+
+    // Close modal with ESC key
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(modalOverlay);
+            document.removeEventListener('keydown', escHandler);
+            if (onCancel) onCancel();
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+
+    // Add animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Add modal to page
+    document.body.appendChild(modalOverlay);
+
+    // Focus on confirm button for accessibility
+    setTimeout(() => confirmButton.focus(), 100);
+}
+
+// Function to create success modal
+function createSuccessModal(message, referenceNumber) {
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'success-modal-overlay';
+    modalOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10001;
+        animation: fadeIn 0.2s ease-in-out;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'success-modal-content';
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 450px;
+        width: 90%;
+        overflow: hidden;
+        animation: slideIn 0.3s ease-out;
+    `;
+
+    // Create modal header
+    const modalHeader = document.createElement('div');
+    modalHeader.className = 'success-modal-header';
+    modalHeader.style.cssText = `
+        background: linear-gradient(135deg, #933F32 0%, #7a2f25 100%);
+        color: white;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    `;
+    modalHeader.innerHTML = `
+        <i class="fas fa-check-circle" style="font-size: 28px;"></i>
+        <h3 style="margin: 0; font-size: 20px; font-weight: 600;">Order Declined Successfully</h3>
+    `;
+
+    // Create modal body
+    const modalBody = document.createElement('div');
+    modalBody.className = 'success-modal-body';
+    modalBody.style.cssText = `
+        padding: 24px;
+        text-align: center;
+        color: #333;
+    `;
+    modalBody.innerHTML = `
+        <div style="margin-bottom: 16px;">
+            <p style="font-size: 16px; margin-bottom: 12px; color: #555;">${message}</p>
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; display: inline-block;">
+                <strong style="color: #333;">Reference Number:</strong><br>
+                <span style="color: #933F32; font-family: monospace; font-size: 18px; font-weight: 600;">${referenceNumber}</span>
+            </div>
+        </div>
+        <p style="font-size: 14px; color: #6c757d; margin-top: 16px;">
+            <i class="fas fa-info-circle"></i> A notification has been created for this action.
+        </p>
+    `;
+
+    // Create modal footer
+    const modalFooter = document.createElement('div');
+    modalFooter.className = 'success-modal-footer';
+    modalFooter.style.cssText = `
+        padding: 16px 24px;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        border-top: 1px solid #dee2e6;
+    `;
+
+    // Create OK button
+    const okButton = document.createElement('button');
+    okButton.textContent = 'OK';
+    okButton.style.cssText = `
+        padding: 10px 32px;
+        border: none;
+        background: linear-gradient(135deg, #933F32 0%, #7a2f25 100%);
+        color: white;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(147, 63, 50, 0.3);
+        min-width: 120px;
+    `;
+    okButton.onmouseover = () => {
+        okButton.style.transform = 'translateY(-2px)';
+        okButton.style.boxShadow = '0 4px 12px rgba(147, 63, 50, 0.4)';
+    };
+    okButton.onmouseout = () => {
+        okButton.style.transform = 'translateY(0)';
+        okButton.style.boxShadow = '0 2px 8px rgba(147, 63, 50, 0.3)';
+    };
+    okButton.onclick = () => {
+        document.body.removeChild(modalOverlay);
+    };
+
+    // Assemble modal
+    modalFooter.appendChild(okButton);
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(modalBody);
+    modalContent.appendChild(modalFooter);
+    modalOverlay.appendChild(modalContent);
+
+    // Close modal when clicking overlay
+    modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) {
+            document.body.removeChild(modalOverlay);
+        }
+    };
+
+    // Close modal with ESC key
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(modalOverlay);
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+
+    // Add modal to page
+    document.body.appendChild(modalOverlay);
+
+    // Focus on OK button for accessibility
+    setTimeout(() => okButton.focus(), 100);
+
+    // Auto-close after 3 seconds
+    setTimeout(() => {
+        if (document.body.contains(modalOverlay)) {
+            document.body.removeChild(modalOverlay);
+        }
+    }, 3000);
+}
+
 // Function to handle payment verification (approve/decline)
 window.handlePaymentVerification = async function (docId, action) {
     const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
     if (!db) {
-        alert('Database connection error. Please try again.');
+        createSuccessModal('Database connection error. Please try again.', 'ERROR');
         return;
     }
 
@@ -1904,7 +2253,7 @@ window.handlePaymentVerification = async function (docId, action) {
         const doc = await docRef.get();
 
         if (!doc.exists) {
-            alert('Notification not found.');
+            createSuccessModal('Notification not found.', 'ERROR');
             return;
         }
 
@@ -1913,7 +2262,21 @@ window.handlePaymentVerification = async function (docId, action) {
         const paymentType = data.paymentInfo?.type?.toUpperCase() || 'UNKNOWN';
         const reference = data.paymentInfo?.reference || 'Unknown';
 
-        if (!confirm(`Are you sure you want to ${action} the payment verification for ${customerName} (${paymentType} - ${reference})?`)) {
+        // Show confirmation modal for decline action
+        if (action === 'declined') {
+            createDeclineConfirmationModal(
+                customerName,
+                paymentType,
+                reference,
+                async () => {
+                    // User confirmed decline - process it
+                    await processDeclineAction(db, docRef, data, customerName, paymentType, reference, doc);
+                },
+                () => {
+                    // User cancelled - do nothing
+                    console.log('User cancelled decline action');
+                }
+            );
             return;
         }
 
@@ -1968,7 +2331,7 @@ window.handlePaymentVerification = async function (docId, action) {
                 reference,
                 searchedOrders: ordersQuery.size
             });
-            alert('Related order not found. Please ensure the order exists and has "Pending Payment" status.');
+            createSuccessModal('Related order not found. Please ensure the order exists and has "Pending Payment" status.', 'ERROR');
             return;
         }
 
@@ -1996,49 +2359,125 @@ window.handlePaymentVerification = async function (docId, action) {
             });
 
             // Redirect to POS with order data
-            alert('✅ Payment approved! Redirecting to POS for order processing...');
-
+            createSuccessModal('Payment approved! Redirecting to POS for order processing...', reference);
+            
             // Store order data for POS to pick up
             sessionStorage.setItem('approvedOrderId', orderDoc.id);
             sessionStorage.setItem('approvedOrderData', JSON.stringify(orderDoc.data()));
 
-            // Redirect to POS page
-            window.location.href = '/html/pos.html?mode=approved-order&orderId=' + orderDoc.id;
+            // Redirect to POS page after a short delay
+            setTimeout(() => {
+                window.location.href = '/html/pos.html?mode=approved-order&orderId=' + orderDoc.id;
+            }, 2000);
             return;
-        }
-
-        // Handle decline action
-        if (action === 'declined') {
-            // Update the notification status
-            await docRef.update({
-                status: action,
-                adminAction: {
-                    action: action,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    admin: 'Admin'
-                },
-                message: `Payment verification ${action} for ${customerName} (${paymentType}) - Reference: ${reference}`
-            });
-
-            // If order was found, mark it as declined
-            if (orderDoc) {
-                await db.collection('orders').doc(orderDoc.id).update({
-                    status: 'Payment Declined',
-                    declinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    declinedBy: 'admin'
-                });
-            }
-
-            // Show success message
-            alert('Payment verification declined.');
-
-            // Reload notifications to update the display
-            loadNotifications();
         }
 
     } catch (error) {
         console.error('Error handling payment verification:', error);
-        alert('Error processing payment verification. Please try again.');
+        createSuccessModal('Error processing payment verification. Please try again.', 'ERROR');
+    }
+}
+
+// Helper function to process decline action
+async function processDeclineAction(db, docRef, data, customerName, paymentType, reference, originalDoc) {
+    try {
+        // Find the related order
+        const ordersQuery = await db.collection('orders')
+            .where('status', '==', 'Pending Payment')
+            .get();
+
+        let orderDoc = null;
+        let bestMatch = null;
+        let bestMatchScore = 0;
+
+        ordersQuery.forEach(doc => {
+            const orderData = doc.data();
+            let matchScore = 0;
+
+            // Check payment reference match (highest priority)
+            if (orderData.paymentInfo?.reference === reference && reference !== 'Unknown' && reference !== 'no-reference') {
+                matchScore += 10;
+            }
+
+            // Check customer name match
+            if (orderData.customerInfo?.name === customerName && customerName !== 'Unknown Customer') {
+                matchScore += 5;
+            }
+
+            // Check customer phone match if available
+            if (data.customerInfo?.phone && orderData.customerInfo?.phone === data.customerInfo.phone) {
+                matchScore += 3;
+            }
+
+            // Check payment type match
+            if (orderData.paymentInfo?.type?.toLowerCase() === paymentType.toLowerCase()) {
+                matchScore += 2;
+            }
+
+            if (matchScore > bestMatchScore) {
+                bestMatchScore = matchScore;
+                bestMatch = doc;
+            }
+        });
+
+        orderDoc = bestMatch;
+
+        console.log('🔍 Processing decline for order:', orderDoc ? orderDoc.id : 'none');
+
+        // Update the original notification status (mark as declined but keep it visible)
+        await docRef.update({
+            status: 'declined',
+            buttonsDisabled: true, // Flag to disable buttons
+            adminAction: {
+                action: 'declined',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                admin: 'Admin'
+            },
+            message: `Payment verification declined for ${customerName} (${paymentType}) - Reference: ${reference}`
+        });
+
+        // If order was found, mark it as declined
+        if (orderDoc) {
+            await db.collection('orders').doc(orderDoc.id).update({
+                status: 'Payment Declined',
+                declinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                declinedBy: 'admin'
+            });
+        }
+
+        // Create NEW notification for the decline action
+        await db.collection('notifications').add({
+            type: 'payment_declined',
+            message: `The Order has been declined (Reference Number: ${reference})`,
+            customerInfo: {
+                name: customerName,
+                phone: data.customerInfo?.phone || 'N/A'
+            },
+            paymentInfo: {
+                type: paymentType,
+                reference: reference
+            },
+            orderId: orderDoc ? orderDoc.id : null,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'unread',
+            seen: false,
+            declinedBy: 'admin',
+            declinedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log('✅ Decline notification created successfully');
+
+        // Show success modal
+        createSuccessModal('The payment verification has been declined.', reference);
+
+        // Reload notifications after a short delay
+        setTimeout(() => {
+            loadNotifications();
+        }, 3000);
+
+    } catch (error) {
+        console.error('❌ Error processing decline action:', error);
+        createSuccessModal('Error processing decline. Please try again.', 'ERROR');
     }
 }
 
