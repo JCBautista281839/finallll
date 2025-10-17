@@ -294,9 +294,16 @@
         // Verify Email OTP Code
         async function verifyOTP() {
             const otp = Array.from(otpInputs).map(input => input.value).join('');
+            const email = localStorage.getItem('signupEmail');
             
             if (otp.length !== 6) {
                 alert('Please enter the complete 6-digit code');
+                return;
+            }
+            
+            if (!email) {
+                alert('Email not found. Please sign up again.');
+                window.location.href = '../html/signup.html';
                 return;
             }
             
@@ -305,162 +312,32 @@
             verifyButton.disabled = true;
             
             try {
-                // Wait for Firebase to be ready
-                await waitForFirebase();
-                
-                if (typeof firebase === 'undefined') {
-                    throw new Error('Firebase not loaded. Please refresh the page and try again.');
-                }
-                
-                // Get current user
-                const user = firebase.auth().currentUser;
-                if (!user) {
-                    // No Firebase user yet - this is normal for OTP verification flow
-                    console.log('No Firebase user found - proceeding with OTP verification only');
-                } else {
-                    console.log('Firebase user found:', user.email);
-                }
-                
-                // Get email from localStorage first
-                const email = localStorage.getItem('signupEmail');
-                
-                console.log('Verifying Email OTP for email:', email);
-                
-                // Verify Email OTP using Firebase
-                let verificationSuccess = false;
-                
-                // Try Firebase OTP verification first
-                if (window.firebaseOTPService) {
-                    try {
-                        console.log('🔥 Attempting Firebase OTP verification...');
-                        const firebaseResult = await window.firebaseOTPService.verifyEmailOTP(email, otp);
-                        
-                        if (firebaseResult.success) {
-                            console.log('✅ Firebase OTP verified successfully');
-                            verificationSuccess = true;
-                        } else {
-                            console.log('❌ Firebase OTP verification failed:', firebaseResult.message);
-                            alert(firebaseResult.message);
-                            return;
-                        }
-                    } catch (firebaseError) {
-                        console.log('🔄 Firebase verification failed:', firebaseError.message);
-                        // Continue to fallback methods
-                    }
-                }
-                
-                // Fallback to server API verification
-                if (!verificationSuccess) {
-                    try {
-                        console.log('🔄 Attempting server OTP verification...');
-                        
-                        const response = await fetch(`${window.location.origin}/api/sendgrid-verify-otp`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ email, otp })
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            console.log('✅ Server OTP verified successfully');
-                            verificationSuccess = true;
-                        } else {
-                            console.log('❌ Server OTP verification failed:', result.message);
-                            alert(result.message);
-                            return;
-                        }
-                    } catch (serverError) {
-                        console.log('🔄 Server verification failed, trying local fallback...');
-                        
-                        // Fallback to local OTP verification
-                        try {
-                            const storedOTP = localStorage.getItem('emailOTP');
-                            const storedExpiry = localStorage.getItem('emailOTPExpiry');
-                            
-                            if (!storedOTP) {
-                                throw new Error('No OTP found. Please request a new verification code.');
-                            }
-                            
-                            if (Date.now() > parseInt(storedExpiry)) {
-                                localStorage.removeItem('emailOTP');
-                                localStorage.removeItem('emailOTPExpiry');
-                                throw new Error('OTP has expired. Please request a new verification code.');
-                            }
-                            
-                            if (storedOTP === otp) {
-                                localStorage.removeItem('emailOTP');
-                                localStorage.removeItem('emailOTPExpiry');
-                                console.log('✅ Local OTP verified successfully');
-                                verificationSuccess = true;
-                            } else {
-                                throw new Error('Invalid OTP code. Please check and try again.');
-                            }
-                        } catch (localError) {
-                            console.log('❌ Local OTP verification failed:', localError.message);
-                            alert(localError.message);
-                            return;
-                        }
-                    }
-                }
-                
-                // Create Firebase user account after successful OTP verification
-                if (verificationSuccess) {
-                    console.log('🔐 Creating Firebase user account...');
+                // Wait for OTP managers to be ready
+                if (!window.otpVerificationManager) {
+                    console.log('⏳ Waiting for OTP managers to initialize...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     
-                    const signupEmail = localStorage.getItem('signupEmail');
-                    const signupPassword = localStorage.getItem('signupPassword');
-                    const signupName = localStorage.getItem('signupName');
-                    const signupPhone = localStorage.getItem('signupPhone');
-                    
-                    if (signupEmail && signupPassword) {
-                        try {
-                            // Create Firebase user account
-                            const userCredential = await firebase.auth().createUserWithEmailAndPassword(signupEmail, signupPassword);
-                            const user = userCredential.user;
-                            
-                            // Update user profile
-                            await user.updateProfile({
-                                displayName: signupName
-                            });
-                            
-                            // Store user data in Firestore
-                            await firebase.firestore().collection('customers').doc(user.uid).set({
-                                name: signupName,
-                                email: signupEmail,
-                                phone: signupPhone,
-                                isEmailVerified: true,
-                                referralCode: generateReferralCode(signupName),
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                            
-                            console.log('✅ Firebase user account created successfully');
-                            
-                        } catch (firebaseError) {
-                            console.error('❌ Error creating Firebase user:', firebaseError);
-                            // Don't fail the entire process if Firebase user creation fails
-                            console.log('⚠️ Continuing without Firebase user creation');
-                        }
+                    if (!window.otpVerificationManager) {
+                        throw new Error('OTP verification system not ready. Please refresh the page.');
                     }
                 }
                 
-                // Clear stored data
-                localStorage.removeItem('signupEmail');
-                localStorage.removeItem('signupName');
-                localStorage.removeItem('signupPassword');
-                localStorage.removeItem('signupPhone');
+                console.log('✅ Using OTPVerificationManager for verification');
                 
-                 // Show success message
-                 alert('Email verified successfully! You are now logged in.');
-                 
-                 // Redirect to main page for automatic login
-                 window.location.href = '../index.html';
+                // Use the comprehensive OTPVerificationManager class
+                await window.otpVerificationManager.verifyOTP(email, otp);
+                
+                // Success! The OTPVerificationManager handles:
+                // - OTP verification (SendGrid, local, and server fallback)
+                // - Firebase user account creation
+                // - Saving to 'users' collection
+                // - Saving to 'customers' collection with full profile
+                // - Saving to 'customer_activity' collection with loyalty data
+                // - Clearing localStorage
+                // - Redirecting to login page
                 
             } catch (error) {
-                console.error('OTP verification error:', error);
+                console.error('❌ OTP verification error:', error);
                 alert('Verification failed: ' + error.message);
                 
                 // Reset button state
