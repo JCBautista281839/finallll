@@ -87,6 +87,9 @@
     <!-- SendGrid OTP Service -->
     <script src="../javascript/sendgrid-otp.js?v=2.3"></script>
     
+    <!-- Firebase OTP Service -->
+    <script src="../javascript/firebase-otp.js"></script>
+    
     <!-- OTP Verification Functions -->
     <script src="../javascript/otp.js"></script>
     
@@ -346,6 +349,19 @@
 
 
         
+        // Show resend success message
+        function showResendSuccess() {
+            const resendLink = document.querySelector('.resend-link');
+            const originalText = resendLink.innerHTML;
+            resendLink.innerHTML = '✓ Code sent! Check your email';
+            resendLink.style.color = '#28a745';
+            
+            setTimeout(() => {
+                resendLink.innerHTML = originalText;
+                resendLink.style.color = '';
+            }, 3000);
+        }
+        
         // Resend Email OTP Code
         async function resendCode() {
             const resendLink = document.querySelector('.resend-link');
@@ -390,7 +406,9 @@
                             localStorage.setItem('emailOTP', firebaseResult.otp);
                             localStorage.setItem('emailOTPExpiry', firebaseResult.expiry);
                             
-                            alert(`New OTP Code: ${firebaseResult.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                            // Show success message without displaying OTP
+                            console.log('📧 New OTP sent to your email. Please check your inbox.');
+                            showResendSuccess();
                             resendSuccess = true;
                         }
                     } catch (firebaseError) {
@@ -418,7 +436,9 @@
                             localStorage.setItem('emailOTP', result.otp);
                             localStorage.setItem('emailOTPExpiry', result.expiry);
                             
-                            alert(`New OTP Code: ${result.otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                            // Show success message without displaying OTP
+                            console.log('📧 New OTP sent to your email. Please check your inbox.');
+                            showResendSuccess();
                             resendSuccess = true;
                         }
                     } catch (serverError) {
@@ -434,7 +454,9 @@
                         localStorage.setItem('emailOTP', otp);
                         localStorage.setItem('emailOTPExpiry', Date.now() + (10 * 60 * 1000));
                         
-                        alert(`New OTP Code: ${otp}\n\nUse this code to verify your email.\nExpires in 10 minutes.`);
+                        // Show success message without displaying OTP
+                        console.log('📧 New OTP generated locally. Please check your email or contact support.');
+                        showResendSuccess();
                         resendSuccess = true;
                     } catch (localError) {
                         console.log('🔄 Local OTP generation failed:', localError.message);
