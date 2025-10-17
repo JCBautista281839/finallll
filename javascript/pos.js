@@ -864,8 +864,11 @@ async function startPOSSystem() {
                 if (itemNumberEl) itemNumberEl.textContent = quantity;
             });
 
-            // Calculate tax as fixed amount (₱5.00)
-            const tax = 5.00;
+            // Calculate tax based on order type
+            // Delivery orders have no tax
+            const orderTypeEl = document.querySelector('.order-type span');
+            const orderType = orderTypeEl ? orderTypeEl.textContent.trim() : '';
+            const tax = orderType === 'Delivery' ? 0.00 : 5.00;
             let discountPercent = 0;
             let discount = 0;
             let discountType = 'none';
@@ -1107,8 +1110,11 @@ async function startPOSSystem() {
                 orderNumber: orderNumberFormatted,
                 orderNumberFormatted: orderNumberFormatted,
                 orderType,
-                tableNumber: tableNumberValue,
-                pax: paxValue,
+                // Only include table and pax for non-Delivery orders
+                ...(orderType !== 'Delivery' && {
+                    tableNumber: tableNumberValue,
+                    pax: paxValue
+                }),
                 items,
                 subtotal,
                 tax,
@@ -1280,6 +1286,26 @@ async function startPOSSystem() {
                         paxInput.required = false;
                         paxInput.value = '';
                     }
+                } else if (selectedType === 'Delivery') {
+                    // Hide table and pax inputs for delivery (no table number, no pax)
+                    document.querySelector('.table-number').style.display = 'none';
+                    document.querySelector('.pax-number').style.display = 'none';
+                    if (tableInput) {
+                        tableInput.required = false;
+                        tableInput.value = '';
+                    }
+                    if (paxInput) {
+                        paxInput.required = false;
+                        paxInput.value = '';
+                    }
+                }
+
+                // Update order number display based on order type
+                updateOrderNumber();
+
+                // Update order summary in real-time when order type changes
+                if (typeof window.updateOrderSummary === 'function') {
+                    window.updateOrderSummary();
                 }
             }
         });
@@ -2609,6 +2635,11 @@ function setupInputValidation() {
             } else {
                 this.setCustomValidity('');
             }
+
+            // Update order summary in real-time when table number changes
+            if (typeof window.updateOrderSummary === 'function') {
+                window.updateOrderSummary();
+            }
         });
 
         tableNumberInput.addEventListener('blur', function () {
@@ -2628,6 +2659,11 @@ function setupInputValidation() {
                 this.reportValidity();
             } else {
                 this.setCustomValidity('');
+            }
+
+            // Update order summary in real-time when pax changes
+            if (typeof window.updateOrderSummary === 'function') {
+                window.updateOrderSummary();
             }
         });
 
