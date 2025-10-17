@@ -2696,6 +2696,116 @@ app.use((req, res, next) => {
     return requestedPath === route || requestedPath.startsWith(route + '/');
   });
   
+  // Special handling for dashboard - allow only if user is logged in
+  if (requestedPath === '/dashboard' || requestedPath === '/Dashboard.html') {
+    // Check if user is logged in via session or token
+    const isLoggedIn = req.session && req.session.userId;
+    
+    if (!isLoggedIn) {
+      console.log(`🚫 BLOCKED DASHBOARD ACCESS: ${req.method} ${requestedPath} from ${req.ip} - Not logged in`);
+      
+      res.status(401).send(`
+        <html>
+          <head>
+            <title>Login Required - Victoria's Bistro</title>
+            <style>
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                text-align: center; 
+                padding: 50px; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .error-container {
+                background: white;
+                padding: 40px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                max-width: 600px;
+                margin: 0 auto;
+              }
+              .logo {
+                font-size: 32px;
+                font-weight: bold;
+                color: #8B4513;
+                margin-bottom: 20px;
+              }
+              .error-code { 
+                font-size: 120px; 
+                color: #e74c3c; 
+                margin: 0;
+                font-weight: bold;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+              }
+              .error-message { 
+                font-size: 28px; 
+                color: #2c3e50; 
+                margin: 20px 0;
+                font-weight: 600;
+              }
+              .error-description {
+                color: #7f8c8d;
+                margin: 20px 0;
+                font-size: 16px;
+                line-height: 1.6;
+              }
+              .login-button {
+                background: #3498db;
+                color: white;
+                padding: 15px 30px;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+                margin: 20px 0;
+                transition: background 0.3s;
+              }
+              .login-button:hover {
+                background: #2980b9;
+              }
+              .contact-info {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #ecf0f1;
+                color: #95a5a6;
+                font-size: 14px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="error-container">
+              <div class="logo">🍽️ Victoria's Bistro</div>
+              <h1 class="error-code">401</h1>
+              <h2 class="error-message">Login Required</h2>
+              <p class="error-description">
+                You must be logged in to access the dashboard.<br>
+                Please log in to view restaurant management data.
+              </p>
+              <a href="/login" class="login-button">Go to Login</a>
+              <div class="contact-info">
+                <strong>Victoria's Bistro</strong><br>
+                Restaurant Management System<br>
+                All rights reserved
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      return;
+    }
+    
+    // User is logged in, allow access
+    console.log(`✅ DASHBOARD ACCESS GRANTED: ${req.method} ${requestedPath} from ${req.ip} - User logged in`);
+    next();
+    return;
+  }
+  
   if (!isAllowed) {
     console.log(`🚫 BLOCKED URL ACCESS: ${req.method} ${requestedPath} from ${req.ip}`);
     
