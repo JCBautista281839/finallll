@@ -488,9 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Add styles
-
-
     // Add content styles
     const content = notification.querySelector('.notification-content');
     content.style.cssText = `
