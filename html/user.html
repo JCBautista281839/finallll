@@ -97,10 +97,18 @@
             </div>
         </aside>
 
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <main class="main-content flex-grow-1 p-4">
             <div class="account-container">
                 <div class="account-content d-flex flex-column">
-                    <h1 class="account-title">Account</h1>
+                    <div class="d-flex align-items-center mb-4">
+                        <button class="burger-menu-inline" id="burgerMenu" aria-label="Toggle Menu">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <h1 class="account-title">Account</h1>
+                    </div>
 
                     <div class="account-body d-flex">
                         <!-- Left Panel - Profile -->
@@ -307,6 +315,55 @@
     <script src="../javascript/form-validation.js"></script>
     <script src="../javascript/user.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Dashboard Burger Menu Script -->
+    <script>
+        (function () {
+            const burgerMenu = document.getElementById('burgerMenu');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (!burgerMenu || !sidebar || !overlay) return;
+
+            // Toggle sidebar
+            burgerMenu.addEventListener('click', function (e) {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+
+            // Close sidebar when clicking overlay
+            overlay.addEventListener('click', function () {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+
+            // Close sidebar when clicking nav links
+            const navLinks = sidebar.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function () {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            });
+
+            // Close sidebar on window resize to desktop
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 991) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            });
+
+            // Close sidebar on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            });
+        })();
+    </script>
 
     <script>
         // Additional page-specific initialization if needed

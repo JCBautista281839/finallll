@@ -675,36 +675,39 @@ input[type="date"] {
 }
 
 #orderDetailsModal .modal-footer .btn {
-min-width: 200px;
-padding: 10px 18px;
-border-radius: 15px;
-font-size: 14px;
-box-shadow: none;
-transition: background-color 0.15s ease, transform 0.08s ease;
+  min-width: 200px;
+  padding: 10px 18px;
+  border-radius: 15px;
+  font-size: 14px;
+  box-shadow: none;
+  transition: background-color 0.15s ease, transform 0.08s ease;
 }
 
 #orderDetailsModal .modal-footer .btn.btn-secondary {
-background-color: #6c757d; /* muted gray like your screenshot */
-color: #fff;
-border: none;
+  background-color: #6c757d;
+  /* muted gray like your screenshot */
+  color: #fff;
+  border: none;
 }
 
 #orderDetailsModal .modal-footer .btn.btn-secondary:hover {
-background-color: #5b6268;
+  background-color: #5b6268;
 }
 
 #orderDetailsModal .modal-footer .btn.btn-primary {
-background-color: #96392d; /* Bootstrap primary blue (tweak as needed) */
-color: #fff;
-border-color: #96392d;
+  background-color: #96392d;
+  /* Bootstrap primary blue (tweak as needed) */
+  color: #fff;
+  border-color: #96392d;
 }
 
 #orderDetailsModal .modal-footer .btn.btn-primary:hover {
-background-color: #890404;
+  background-color: #890404;
 }
 
-#orderDetailsModal .modal-footer .btn + .btn {
-margin-left: 12px; /* gap between Close and Print */
+#orderDetailsModal .modal-footer .btn+.btn {
+  margin-left: 12px;
+  /* gap between Close and Print */
 }
 
 
@@ -725,5 +728,42 @@ margin-left: 12px; /* gap between Close and Print */
 
   .date-input {
     width: 100%;
+  }
+
+  /* Hide first column (Order ID) on mobile/tablet */
+  .table th:first-child,
+  .table td:first-child {
+    display: none;
+  }
+
+  /* Adjust remaining columns */
+  .table th:nth-child(2),
+  .table td:nth-child(2) {
+    width: 20%;
+    /* Customer column */
+  }
+
+  .table th:nth-child(3),
+  .table td:nth-child(3) {
+    width: 40%;
+    /* Items column - more space */
+  }
+
+  .table th:nth-child(4),
+  .table td:nth-child(4) {
+    width: 15%;
+    /* Total column */
+  }
+
+  .table th:nth-child(5),
+  .table td:nth-child(5) {
+    width: 15%;
+    /* Status column */
+  }
+
+  .table th:nth-child(6),
+  .table td:nth-child(6) {
+    width: 10%;
+    /* Actions column */
   }
 }

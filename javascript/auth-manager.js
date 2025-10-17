@@ -15,7 +15,7 @@ if (typeof AuthManager === 'undefined') {
       this.inactivityTimeout = null;
       this.isLoggingOut = false;
       this.isNavigating = false; // Track if user is navigating vs closing tab
-      
+
       // Configuration
       this.config = {
         inactivityTimeout: 30 * 60 * 1000, // 30 minutes of inactivity
@@ -24,7 +24,7 @@ if (typeof AuthManager === 'undefined') {
         enableTabCloseLogout: true, // Enabled to logout on tab close
         enableVisibilityLogout: false // Disabled by default - only logout on actual tab close
       };
-      
+
       this.init();
     }
 
@@ -32,24 +32,24 @@ if (typeof AuthManager === 'undefined') {
     async init() {
       try {
         console.log('[AuthManager] Initializing universal authentication manager...');
-        
+
         // Wait for Firebase to be ready
         await this.waitForFirebase();
-        
+
         // Configure Firebase auth persistence to SESSION (persists only for tab session)
         await this.configureAuthPersistence();
-        
+
         // Set up event listeners
         this.setupEventListeners();
-        
+
         // Set up inactivity monitoring
         if (this.config.enableInactivityLogout) {
           this.setupInactivityMonitoring();
         }
-        
+
         this.isInitialized = true;
         console.log('[AuthManager] Universal authentication manager initialized successfully');
-        
+
       } catch (error) {
         console.error('[AuthManager] Initialization failed:', error);
         this.isInitialized = false;
@@ -60,17 +60,17 @@ if (typeof AuthManager === 'undefined') {
     waitForFirebase() {
       return new Promise((resolve, reject) => {
         const checkFirebase = () => {
-          if (typeof firebase !== 'undefined' && 
-              firebase.apps && 
-              firebase.apps.length > 0 && 
-              firebase.auth) {
+          if (typeof firebase !== 'undefined' &&
+            firebase.apps &&
+            firebase.apps.length > 0 &&
+            firebase.auth) {
             resolve();
           } else {
             setTimeout(checkFirebase, 100);
           }
         };
         checkFirebase();
-        
+
         // Timeout after 10 seconds
         setTimeout(() => {
           reject(new Error('Firebase initialization timeout'));
@@ -82,13 +82,13 @@ if (typeof AuthManager === 'undefined') {
     async configureAuthPersistence() {
       try {
         console.log('[AuthManager] Configuring Firebase auth persistence...');
-        
+
         // Set Firebase auth persistence to SESSION
         // This ensures the user is logged out when the tab/browser is closed
         await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
-        
+
         console.log('[AuthManager] Firebase auth persistence set to SESSION');
-        
+
       } catch (error) {
         console.error('[AuthManager] Error configuring auth persistence:', error);
         // Don't throw error - continue with default persistence
@@ -98,27 +98,27 @@ if (typeof AuthManager === 'undefined') {
     // Set up all event listeners
     setupEventListeners() {
       console.log('[AuthManager] Setting up event listeners...');
-      
+
       // Tab close detection
       if (this.config.enableTabCloseLogout) {
         window.addEventListener('beforeunload', this.handleBeforeUnload.bind(this));
         window.addEventListener('unload', this.handleUnload.bind(this));
       }
-      
+
       // Visibility change detection (tab switching, minimizing, etc.)
       if (this.config.enableVisibilityLogout) {
         document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
       }
-      
+
       // Page hide detection (mobile browsers, some desktop scenarios)
       window.addEventListener('pagehide', this.handlePageHide.bind(this));
-      
+
       // Navigation detection to distinguish between tab close and navigation
       this.setupNavigationDetection();
-      
+
       // User activity detection for inactivity timeout
       this.setupActivityListeners();
-      
+
       console.log('[AuthManager] Event listeners set up successfully');
     }
 
@@ -130,36 +130,36 @@ if (typeof AuthManager === 'undefined') {
         if (target && target.href && !target.href.startsWith('javascript:')) {
           this.isNavigating = true;
           console.log('[AuthManager] Navigation detected - user clicked link');
-          
+
           // Reset navigation flag after a short delay
           setTimeout(() => {
             this.isNavigating = false;
           }, 1000);
         }
       });
-      
+
       // Detect form submissions (navigation)
       document.addEventListener('submit', () => {
         this.isNavigating = true;
         console.log('[AuthManager] Navigation detected - form submission');
-        
+
         setTimeout(() => {
           this.isNavigating = false;
         }, 1000);
       });
-      
+
       // Detect programmatic navigation
       const originalPushState = history.pushState;
       const originalReplaceState = history.replaceState;
-      
-      history.pushState = function(...args) {
+
+      history.pushState = function (...args) {
         this.isNavigating = true;
         console.log('[AuthManager] Navigation detected - pushState');
         setTimeout(() => { this.isNavigating = false; }, 1000);
         return originalPushState.apply(history, args);
       }.bind(this);
-      
-      history.replaceState = function(...args) {
+
+      history.replaceState = function (...args) {
         this.isNavigating = true;
         console.log('[AuthManager] Navigation detected - replaceState');
         setTimeout(() => { this.isNavigating = false; }, 1000);
@@ -172,7 +172,7 @@ if (typeof AuthManager === 'undefined') {
       const activityEvents = [
         'mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'
       ];
-      
+
       activityEvents.forEach(event => {
         document.addEventListener(event, this.resetInactivityTimer.bind(this), true);
       });
@@ -187,12 +187,12 @@ if (typeof AuthManager === 'undefined') {
     // Reset inactivity timer
     resetInactivityTimer() {
       if (!this.config.enableInactivityLogout) return;
-      
+
       // Clear existing timeout
       if (this.inactivityTimeout) {
         clearTimeout(this.inactivityTimeout);
       }
-      
+
       // Set new timeout
       this.inactivityTimeout = setTimeout(() => {
         console.log('[AuthManager] User inactive for', this.config.inactivityTimeout / 1000 / 60, 'minutes');
@@ -203,7 +203,7 @@ if (typeof AuthManager === 'undefined') {
     // Handle beforeunload event (tab close, page refresh, navigation)
     handleBeforeUnload(event) {
       console.log('[AuthManager] beforeunload event triggered');
-      
+
       // Only logout if user is actually authenticated
       if (this.isUserAuthenticated()) {
         console.log('[AuthManager] User is authenticated, preparing logout on tab close');
@@ -215,7 +215,7 @@ if (typeof AuthManager === 'undefined') {
     // Handle unload event
     handleUnload(event) {
       console.log('[AuthManager] unload event triggered');
-      
+
       // Only logout if it's not navigation and user is authenticated
       if (!this.isNavigating && this.isUserAuthenticated() && !this.isLoggingOut) {
         console.log('[AuthManager] Performing immediate logout on unload (tab close detected)');
@@ -231,7 +231,7 @@ if (typeof AuthManager === 'undefined') {
     handleVisibilityChange(event) {
       if (document.hidden) {
         console.log('[AuthManager] Page became hidden');
-        
+
         // Only logout on visibility change if explicitly enabled
         if (this.config.enableVisibilityLogout && this.isUserAuthenticated()) {
           console.log('[AuthManager] Logging out due to page visibility change');
@@ -249,7 +249,7 @@ if (typeof AuthManager === 'undefined') {
     // Handle page hide event (mobile browsers, some desktop scenarios)
     handlePageHide(event) {
       console.log('[AuthManager] pagehide event triggered');
-      
+
       // Only logout on page hide if it's likely a tab close (not navigation)
       // Check if the page is being unloaded (persisted = false means tab close)
       if (event.persisted === false && this.isUserAuthenticated() && !this.isLoggingOut) {
@@ -277,16 +277,16 @@ if (typeof AuthManager === 'undefined') {
         console.log('[AuthManager] Logout already in progress, skipping');
         return;
       }
-      
+
       console.log('[AuthManager] Performing logout due to:', reason);
       this.isLoggingOut = true;
-      
+
       // Clear inactivity timer
       if (this.inactivityTimeout) {
         clearTimeout(this.inactivityTimeout);
         this.inactivityTimeout = null;
       }
-      
+
       // Set logout timeout
       this.logoutTimeout = setTimeout(() => {
         this.executeLogout(reason);
@@ -299,16 +299,16 @@ if (typeof AuthManager === 'undefined') {
         console.log('[AuthManager] Logout already in progress, skipping immediate logout');
         return;
       }
-      
+
       console.log('[AuthManager] Performing immediate logout due to:', reason);
       this.isLoggingOut = true;
-      
+
       // Clear any pending logout timeout
       if (this.logoutTimeout) {
         clearTimeout(this.logoutTimeout);
         this.logoutTimeout = null;
       }
-      
+
       // Execute logout immediately
       this.executeLogout(reason);
     }
@@ -317,14 +317,14 @@ if (typeof AuthManager === 'undefined') {
     async executeLogout(reason) {
       try {
         console.log('[AuthManager] Executing logout due to:', reason);
-        
+
         // Check if Firebase is available
         if (typeof firebase === 'undefined' || !firebase.auth) {
           console.log('[AuthManager] Firebase not available, clearing local storage only');
           this.clearAllStorage();
           return;
         }
-        
+
         // Get current user
         const user = firebase.auth().currentUser;
         if (!user) {
@@ -332,23 +332,23 @@ if (typeof AuthManager === 'undefined') {
           this.clearAllStorage();
           return;
         }
-        
+
         console.log('[AuthManager] Logging out user:', user.email);
-        
+
         // Sign out from Firebase
         await firebase.auth().signOut();
-        
+
         // Clear all browser storage
         this.clearAllStorage();
-        
+
         console.log('[AuthManager] Logout completed successfully');
-        
+
         // Log logout event for analytics/debugging
         this.logLogoutEvent(reason, user.email);
-        
+
       } catch (error) {
         console.error('[AuthManager] Error during logout:', error);
-        
+
         // Even if Firebase logout fails, clear all storage
         this.clearAllStorage();
       } finally {
@@ -360,11 +360,11 @@ if (typeof AuthManager === 'undefined') {
     clearAllStorage() {
       try {
         console.log('[AuthManager] Clearing all browser storage...');
-        
+
         // Remove authentication-related items from localStorage
         const itemsToRemove = [
           'userRole',
-          'signupEmail', 
+          'signupEmail',
           'signupName',
           'userProfile',
           'cartItems',
@@ -399,22 +399,22 @@ if (typeof AuthManager === 'undefined') {
           'staffData',
           'customerData'
         ];
-        
+
         itemsToRemove.forEach(item => {
           localStorage.removeItem(item);
         });
-        
+
         // Clear all session storage
         sessionStorage.clear();
-        
+
         // Clear IndexedDB if available
         this.clearIndexedDB();
-        
+
         // Clear cookies (if any authentication cookies exist)
         this.clearAuthCookies();
-        
+
         console.log('[AuthManager] All browser storage cleared successfully');
-        
+
       } catch (error) {
         console.error('[AuthManager] Error clearing browser storage:', error);
       }
@@ -437,7 +437,7 @@ if (typeof AuthManager === 'undefined') {
             'menu-db',
             'order-db'
           ];
-          
+
           databasesToClear.forEach(dbName => {
             try {
               const deleteRequest = indexedDB.deleteDatabase(dbName);
@@ -472,14 +472,14 @@ if (typeof AuthManager === 'undefined') {
           'staffSession',
           'customerSession'
         ];
-        
+
         cookiesToClear.forEach(cookieName => {
           // Clear cookie for current domain
           document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
           // Clear cookie for parent domain
           document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
         });
-        
+
         console.log('[AuthManager] Authentication cookies cleared');
       } catch (error) {
         console.error('[AuthManager] Error clearing cookies:', error);
@@ -496,20 +496,20 @@ if (typeof AuthManager === 'undefined') {
           userAgent: navigator.userAgent,
           url: window.location.href
         };
-        
+
         console.log('[AuthManager] Logout event:', logoutEvent);
-        
+
         // Store in localStorage for debugging (optional)
         const logoutHistory = JSON.parse(localStorage.getItem('logoutHistory') || '[]');
         logoutHistory.push(logoutEvent);
-        
+
         // Keep only last 10 logout events
         if (logoutHistory.length > 10) {
           logoutHistory.splice(0, logoutHistory.length - 10);
         }
-        
+
         localStorage.setItem('logoutHistory', JSON.stringify(logoutHistory));
-        
+
       } catch (error) {
         console.error('[AuthManager] Error logging logout event:', error);
       }
@@ -518,18 +518,18 @@ if (typeof AuthManager === 'undefined') {
     // Manual logout method (for logout buttons)
     async manualLogout() {
       console.log('[AuthManager] Manual logout requested');
-      
+
       // Clear any pending automatic logout
       if (this.logoutTimeout) {
         clearTimeout(this.logoutTimeout);
         this.logoutTimeout = null;
       }
-      
+
       if (this.inactivityTimeout) {
         clearTimeout(this.inactivityTimeout);
         this.inactivityTimeout = null;
       }
-      
+
       await this.executeLogout('manual');
     }
 
@@ -537,7 +537,7 @@ if (typeof AuthManager === 'undefined') {
     updateConfig(newConfig) {
       this.config = { ...this.config, ...newConfig };
       console.log('[AuthManager] Configuration updated:', this.config);
-      
+
       // Restart inactivity monitoring if timeout changed
       if (this.config.enableInactivityLogout) {
         this.resetInactivityTimer();
@@ -568,24 +568,24 @@ if (typeof AuthManager === 'undefined') {
     // Destroy the auth manager (cleanup)
     destroy() {
       console.log('[AuthManager] Destroying authentication manager...');
-      
+
       // Clear timeouts
       if (this.logoutTimeout) {
         clearTimeout(this.logoutTimeout);
         this.logoutTimeout = null;
       }
-      
+
       if (this.inactivityTimeout) {
         clearTimeout(this.inactivityTimeout);
         this.inactivityTimeout = null;
       }
-      
+
       // Remove event listeners
       window.removeEventListener('beforeunload', this.handleBeforeUnload.bind(this));
       window.removeEventListener('unload', this.handleUnload.bind(this));
       document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
       window.removeEventListener('pagehide', this.handlePageHide.bind(this));
-      
+
       this.isInitialized = false;
       console.log('[AuthManager] Authentication manager destroyed');
     }
@@ -603,22 +603,29 @@ if (typeof AuthManager === 'undefined') {
   }
 
   // Global functions for backward compatibility
-  window.performAutoLogout = function(reason) {
+  window.performAutoLogout = function (reason) {
     const manager = initializeAuthManager();
     return manager.performLogout(reason);
   };
 
-  window.performManualLogout = function() {
+  window.performManualLogout = function () {
     const manager = initializeAuthManager();
     return manager.manualLogout();
   };
 
-  window.getAuthManager = function() {
+  // Global logoutUser function for HTML onclick handlers
+  window.logoutUser = function () {
+    console.log('[AuthManager] logoutUser() called from HTML');
+    const manager = initializeAuthManager();
+    return manager.manualLogout();
+  };
+
+  window.getAuthManager = function () {
     return initializeAuthManager();
   };
 
   // Initialize when DOM is ready
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     console.log('[auth-manager.js] DOM loaded, initializing Universal Auth Manager...');
     initializeAuthManager();
   });

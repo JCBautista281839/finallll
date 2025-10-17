@@ -89,10 +89,16 @@
             </nav>
         </aside>
 
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Main Content Area -->
         <div class="main-content flex-grow-1 p-4">
             <!-- Header Section -->
             <div class="content-header">
+                <button class="burger-menu-inline" id="burgerMenu" aria-label="Toggle Menu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <div>
                     <h1 class="page-title"><i class="fas fa-headset"></i> Support Tickets</h1>
                     <p class="page-subtitle">Manage customer support requests and issues</p>
@@ -236,6 +242,55 @@
     <!-- Reports Management Script -->
     <script src="../javascript/reports.js"></script>
     <script src="../javascript/support-badge.js"></script>
+
+    <!-- Dashboard Burger Menu Script -->
+    <script>
+        (function () {
+            const burgerMenu = document.getElementById('burgerMenu');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (!burgerMenu || !sidebar || !overlay) return;
+
+            // Toggle sidebar
+            burgerMenu.addEventListener('click', function (e) {
+                e.stopPropagation();
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+
+            // Close sidebar when clicking overlay
+            overlay.addEventListener('click', function () {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+
+            // Close sidebar when clicking nav links
+            const navLinks = sidebar.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function () {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            });
+
+            // Close sidebar on window resize to desktop
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 991) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            });
+
+            // Close sidebar on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            });
+        })();
+    </script>
 
     <!-- Test Toast Script -->
     <script>
