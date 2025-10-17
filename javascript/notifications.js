@@ -936,6 +936,16 @@ async function sendInventoryNotification(type, message, itemName) {
         seen: false
     }).then(() => {
         console.log('[Notification] Notification sent:', fullMessage);
+
+        // Refresh dropdown notifications if available
+        if (typeof loadDropdownNotifications === 'function') {
+            loadDropdownNotifications();
+        }
+
+        // Update notification badge
+        if (typeof refreshUnseenNotificationBadge === 'function') {
+            refreshUnseenNotificationBadge();
+        }
     }).catch((err) => {
         console.error('[Notification] Error sending notification:', err);
     });
@@ -962,6 +972,143 @@ function updateNotificationBadge(count) {
     badge.style.display = count > 0 ? 'inline-block' : 'none';
     if (count > 0) animateNotificationIcon();
 }
+
+// Force refresh notifications - useful for testing
+window.forceRefreshNotifications = function () {
+    console.log('[Notifications] Force refreshing notifications...');
+    if (typeof loadNotifications === 'function') {
+        loadNotifications();
+    } else {
+        console.error('[Notifications] loadNotifications function not available');
+    }
+};
+
+// Debug function to check what notifications exist in the database
+window.debugNotifications = async function () {
+    console.log('[Notifications] Debugging notifications in database...');
+    const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+    if (!db) {
+        console.error('[Notifications] Firestore not available');
+        return;
+    }
+
+    try {
+        const snapshot = await db.collection('notifications').limit(20).get();
+        console.log('[Notifications] Found', snapshot.size, 'notifications in database');
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            console.log('[Notifications] Notification:', {
+                id: doc.id,
+                type: data.type,
+                message: data.message,
+                item: data.item,
+                timestamp: data.timestamp,
+                seen: data.seen
+            });
+        });
+
+        // Check specifically for inventory notifications
+        const inventorySnapshot = await db.collection('notifications')
+            .where('type', 'in', ['empty', 'restock', 'inventory'])
+            .limit(10)
+            .get();
+        console.log('[Notifications] Found', inventorySnapshot.size, 'inventory notifications');
+
+    } catch (error) {
+        console.error('[Notifications] Error debugging notifications:', error);
+    }
+};
+
+// Test function to create a manual inventory notification
+window.createTestInventoryNotification = async function () {
+    console.log('[Notifications] Creating test inventory notification...');
+    const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+    if (!db) {
+        console.error('[Notifications] Firestore not available');
+        return;
+    }
+
+    try {
+        const testNotification = {
+            type: 'empty',
+            message: 'Test ingredient is out of stock!',
+            item: 'Test Ingredient',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            seen: false
+        };
+
+        const docRef = await db.collection('notifications').add(testNotification);
+        console.log('[Notifications] Test notification created with ID:', docRef.id);
+
+        // Refresh notifications display
+        if (typeof loadNotifications === 'function') {
+            loadNotifications();
+        }
+
+    } catch (error) {
+        console.error('[Notifications] Error creating test notification:', error);
+    }
+};
+
+// Debug function to check notification sorting
+window.debugNotificationSorting = async function () {
+    console.log('[Notifications] Debugging notification sorting...');
+    const db = window.db || (firebase && firebase.firestore ? firebase.firestore() : null);
+    if (!db) {
+        console.error('[Notifications] Firestore not available');
+        return;
+    }
+
+    try {
+        const snapshot = await db.collection('notifications').limit(10).get();
+        console.log('[Notifications] Found', snapshot.size, 'notifications');
+
+        const notifications = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            let timestamp = null;
+
+            if (data.timestamp) {
+                try {
+                    if (data.timestamp.toDate && typeof data.timestamp.toDate === 'function') {
+                        timestamp = data.timestamp.toDate();
+                    } else if (data.timestamp instanceof Date) {
+                        timestamp = data.timestamp;
+                    } else if (typeof data.timestamp === 'string') {
+                        timestamp = new Date(data.timestamp);
+                    }
+                } catch (e) {
+                    console.warn('Error processing timestamp for', doc.id, e);
+                }
+            }
+
+            notifications.push({
+                id: doc.id,
+                type: data.type,
+                message: data.message,
+                timestamp: timestamp,
+                timestampString: timestamp ? timestamp.toISOString() : 'No timestamp'
+            });
+        });
+
+        // Sort by timestamp (newest first)
+        notifications.sort((a, b) => {
+            if (!a.timestamp && !b.timestamp) return 0;
+            if (!a.timestamp) return 1;
+            if (!b.timestamp) return -1;
+            return b.timestamp - a.timestamp;
+        });
+
+        console.log('[Notifications] Sorted notifications (newest first):');
+        notifications.forEach((notif, index) => {
+            console.log(`${index + 1}. ${notif.type} - ${notif.message} - ${notif.timestampString}`);
+        });
+
+    } catch (error) {
+        console.error('[Notifications] Error debugging sorting:', error);
+    }
+};
 
 // Query Firestore for unseen notifications and update badge
 async function refreshUnseenNotificationBadge() {
@@ -1215,8 +1362,25 @@ async function loadNotifications() {
                     docs.push(doc);
                 });
                 docs.sort(function (a, b) {
-                    const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
-                    const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
+                    const getTimestamp = (doc) => {
+                        const timestamp = doc.data().timestamp;
+                        if (!timestamp) return new Date(0);
+                        try {
+                            if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+                                return timestamp.toDate();
+                            } else if (timestamp instanceof Date) {
+                                return timestamp;
+                            } else if (typeof timestamp === 'string') {
+                                return new Date(timestamp);
+                            } else {
+                                return new Date(0);
+                            }
+                        } catch (e) {
+                            return new Date(0);
+                        }
+                    };
+                    const timestampA = getTimestamp(a);
+                    const timestampB = getTimestamp(b);
                     return timestampB - timestampA; // Descending order
                 });
                 return { docs: docs };
@@ -1236,41 +1400,67 @@ async function loadNotifications() {
                             }
                         });
                         docs.sort(function (a, b) {
-                            const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
-                            const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
+                            const getTimestamp = (doc) => {
+                                const timestamp = doc.data().timestamp;
+                                if (!timestamp) return new Date(0);
+                                try {
+                                    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+                                        return timestamp.toDate();
+                                    } else if (timestamp instanceof Date) {
+                                        return timestamp;
+                                    } else if (typeof timestamp === 'string') {
+                                        return new Date(timestamp);
+                                    } else {
+                                        return new Date(0);
+                                    }
+                                } catch (e) {
+                                    return new Date(0);
+                                }
+                            };
+                            const timestampA = getTimestamp(a);
+                            const timestampB = getTimestamp(b);
                             return timestampB - timestampA;
                         });
                         return { docs: docs.slice(0, 50) };
                     });
             });
     } else {
-        // Admin users see all notifications - using simple query to avoid index issues
-        console.log('👑 Admin: Querying for all notifications with simple query...');
+        // Admin users see all notifications - using JavaScript sorting for consistency
+        console.log('👑 Admin: Querying for all notifications with JavaScript sorting...');
 
         queryPromise = db.collection('notifications')
-            .orderBy('timestamp', 'desc')
-            .limit(50)
+            .limit(100) // Get more to ensure we have the latest
             .get()
-            .catch(function (error) {
-                console.log('⚠️ Admin: Error with timestamp orderBy query, using basic query:', error);
-                // Final fallback - just get recent notifications without ordering
-                return db.collection('notifications')
-                    .limit(50)
-                    .get()
-                    .then(function (querySnapshot) {
-                        console.log('👑 Admin: Fallback loaded', querySnapshot.size, 'notifications (no ordering)');
-                        // Sort by timestamp in JavaScript
-                        const docs = [];
-                        querySnapshot.forEach(function (doc) {
-                            docs.push(doc);
-                        });
-                        docs.sort(function (a, b) {
-                            const timestampA = a.data().timestamp ? a.data().timestamp.toDate() : new Date(0);
-                            const timestampB = b.data().timestamp ? b.data().timestamp.toDate() : new Date(0);
-                            return timestampB - timestampA; // Descending order
-                        });
-                        return { docs: docs };
-                    });
+            .then(function (querySnapshot) {
+                console.log('👑 Admin: Loaded', querySnapshot.size, 'notifications, sorting in JavaScript...');
+                // Sort by timestamp in JavaScript for consistent behavior
+                const docs = [];
+                querySnapshot.forEach(function (doc) {
+                    docs.push(doc);
+                });
+                docs.sort(function (a, b) {
+                    const getTimestamp = (doc) => {
+                        const timestamp = doc.data().timestamp;
+                        if (!timestamp) return new Date(0);
+                        try {
+                            if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+                                return timestamp.toDate();
+                            } else if (timestamp instanceof Date) {
+                                return timestamp;
+                            } else if (typeof timestamp === 'string') {
+                                return new Date(timestamp);
+                            } else {
+                                return new Date(0);
+                            }
+                        } catch (e) {
+                            return new Date(0);
+                        }
+                    };
+                    const timestampA = getTimestamp(a);
+                    const timestampB = getTimestamp(b);
+                    return timestampB - timestampA; // Descending order (newest first)
+                });
+                return { docs: docs.slice(0, 50) }; // Return only the first 50 after sorting
             });
     }
 
@@ -1280,6 +1470,7 @@ async function loadNotifications() {
             var docs = result.docs || result;
             if (Array.isArray(docs)) {
                 console.log('📊 Admin: Processing', docs.length, 'notifications');
+                console.log('📊 Admin: Notification types found:', docs.map(doc => doc.data().type));
             } else {
                 console.log('📊 Admin: Processing', docs.size || 0, 'notifications');
             }
@@ -1318,11 +1509,29 @@ async function loadNotifications() {
                         paymentVerificationCount++;
                     }
 
+                    // Safe timestamp handling for console log
+                    let timestampForLog = 'No timestamp';
+                    if (data.timestamp) {
+                        try {
+                            if (data.timestamp.toDate && typeof data.timestamp.toDate === 'function') {
+                                timestampForLog = data.timestamp.toDate();
+                            } else if (data.timestamp instanceof Date) {
+                                timestampForLog = data.timestamp;
+                            } else if (typeof data.timestamp === 'string') {
+                                timestampForLog = new Date(data.timestamp);
+                            } else {
+                                timestampForLog = 'Invalid timestamp';
+                            }
+                        } catch (e) {
+                            timestampForLog = 'Error processing timestamp';
+                        }
+                    }
+
                     console.log('🔔 Admin: Processing notification', notifCount, ':', {
                         id: doc.id,
                         type: data.type,
                         status: data.status,
-                        timestamp: data.timestamp ? data.timestamp.toDate() : 'No timestamp',
+                        timestamp: timestampForLog,
                         message: data.message ? data.message.substring(0, 50) + '...' : 'No message'
                     });
 
@@ -1520,6 +1729,30 @@ async function loadNotifications() {
             console.log('✅ Admin: Processed', notifCount, 'notifications');
             console.log('💳 Admin: Found', paymentVerificationCount, 'payment verification notifications');
             console.log('📝 Admin: Final HTML rows length:', rows.length, 'characters');
+
+            // Debug: Log first few notifications to check sorting
+            if (docs.length > 0) {
+                console.log('🔍 Admin: First 3 notifications (should be newest first):');
+                for (let i = 0; i < Math.min(3, docs.length); i++) {
+                    const data = docs[i].data();
+                    const timestamp = data.timestamp;
+                    let timestampStr = 'No timestamp';
+                    if (timestamp) {
+                        try {
+                            if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+                                timestampStr = timestamp.toDate().toISOString();
+                            } else if (timestamp instanceof Date) {
+                                timestampStr = timestamp.toISOString();
+                            } else if (typeof timestamp === 'string') {
+                                timestampStr = new Date(timestamp).toISOString();
+                            }
+                        } catch (e) {
+                            timestampStr = 'Error parsing timestamp';
+                        }
+                    }
+                    console.log(`  ${i + 1}. ${data.type} - ${data.message} - ${timestampStr}`);
+                }
+            }
 
             if (paymentVerificationCount === 0) {
                 console.log('⚠️ Admin: No payment verification notifications found - they might be newer than the 50 limit or have timestamp issues');
