@@ -30,7 +30,6 @@ body {
   background: #ececec;
 }
 
-/* Stock Warning Modal Styles */
 #stockWarningModal .modal-content {
   border-radius: 15px;
   border: none;
@@ -164,16 +163,12 @@ body {
   background: #efefef;
   padding: 2rem;
   overflow-y: auto;
-  /* Hide scrollbar for Chrome, Safari and Opera */
   scrollbar-width: none;
-  /* Firefox */
   -ms-overflow-style: none;
-  /* IE and Edge */
 }
 
 .menu-panel::-webkit-scrollbar {
   display: none;
-  /* Chrome, Safari and Opera */
 }
 
 
