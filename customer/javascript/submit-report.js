@@ -9,10 +9,10 @@ let customerData = null;
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Submit Report Modal] Initializing...');
-    
+
     // Wait for Firebase to initialize
     await waitForFirebase();
-    
+
     // Check authentication
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
@@ -21,13 +21,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             setupFormListeners();
         }
     });
-    
+
     // Add ESC key listener to close modals
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const reportModal = document.getElementById('submitReportModal');
             const successModal = document.getElementById('successModal');
-            
+
             if (successModal && successModal.style.display === 'flex') {
                 closeSuccessModal();
             } else if (reportModal && reportModal.style.display === 'flex') {
@@ -43,7 +43,7 @@ function openReportModal() {
     if (modal) {
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
-        
+
         // Load fresh customer data when opening
         if (currentUser) {
             loadCustomerData();
@@ -57,7 +57,7 @@ function closeReportModal() {
     if (modal) {
         modal.style.display = 'none';
         document.body.style.overflow = ''; // Restore scrolling
-        
+
         // Reset form
         const form = document.getElementById('reportForm');
         if (form) {
@@ -80,10 +80,10 @@ function closeSuccessModal() {
         modal.style.display = 'none';
         document.body.style.overflow = '';
     }
-    
+
     // Close report modal too
     closeReportModal();
-    
+
     // Refresh tickets list
     if (currentUser) {
         loadCustomerTickets(currentUser.uid);
@@ -94,8 +94,8 @@ function closeSuccessModal() {
 function waitForFirebase() {
     return new Promise((resolve) => {
         const checkFirebase = () => {
-            if (typeof firebase !== 'undefined' && 
-                firebase.apps && 
+            if (typeof firebase !== 'undefined' &&
+                firebase.apps &&
                 firebase.apps.length > 0) {
                 resolve();
             } else {
@@ -110,21 +110,19 @@ function waitForFirebase() {
 async function loadCustomerData() {
     try {
         const db = firebase.firestore();
-        // Load from 'customers' collection (same as profile settings page)
-        const userDoc = await db.collection('customers').doc(currentUser.uid).get();
-        
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+
         if (userDoc.exists) {
             customerData = userDoc.data();
             console.log('[Submit Report] Customer data loaded:', customerData);
-            
-            // Populate customer info - using same field names as profile settings
-            const name = customerData.fullName || customerData.name || currentUser.displayName || 'Not provided';
-            const phone = customerData.contactNumber || customerData.phone || customerData.phoneNumber || 'Not provided';
-            
+
+            // Populate customer info (using 'name' and 'phone' fields from Firestore)
+            const name = customerData.name || customerData.fullName || currentUser.displayName || 'Not provided';
+            const phone = customerData.phone || customerData.contactNumber || customerData.phoneNumber || 'Not provided';
+
             console.log('[Submit Report] Name:', name);
             console.log('[Submit Report] Phone:', phone);
-            console.log('[Submit Report] Available fields:', Object.keys(customerData));
-            
+
             document.getElementById('customerName').textContent = name;
             document.getElementById('customerEmail').textContent = currentUser.email || 'Not provided';
             document.getElementById('customerPhone').textContent = phone;
@@ -153,20 +151,20 @@ async function loadCustomerOrders() {
             .orderBy('createdAt', 'desc')
             .limit(10)
             .get();
-        
+
         const orderSelect = document.getElementById('orderId');
-        
+
         if (!ordersSnapshot.empty) {
             ordersSnapshot.forEach(doc => {
                 const order = doc.data();
                 const option = document.createElement('option');
                 option.value = doc.id;
-                
+
                 // Format order display
                 const date = order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : 'Unknown date';
                 const total = order.total ? `₱${order.total.toFixed(2)}` : '';
                 const status = order.status || '';
-                
+
                 option.textContent = `Order #${doc.id.substring(0, 8)} - ${date} ${total} (${status})`;
                 orderSelect.appendChild(option);
             });
@@ -183,7 +181,7 @@ function setupFormListeners() {
     const subjectInput = document.getElementById('subject');
     const descriptionInput = document.getElementById('description');
     const photoUpload = document.getElementById('photoUpload');
-    
+
     // Character counter for description only (subject is now number-only)
     if (descriptionInput) {
         descriptionInput.addEventListener('input', () => {
@@ -193,12 +191,12 @@ function setupFormListeners() {
             }
         });
     }
-    
+
     // Photo upload preview
     if (photoUpload) {
         photoUpload.addEventListener('change', handlePhotoUpload);
     }
-    
+
     // Form submission
     if (form) {
         form.addEventListener('submit', handleSubmit);
@@ -208,7 +206,7 @@ function setupFormListeners() {
 // Handle photo upload and preview
 function handlePhotoUpload(event) {
     const file = event.target.files[0];
-    
+
     if (file) {
         // Check file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
@@ -216,13 +214,13 @@ function handlePhotoUpload(event) {
             event.target.value = '';
             return;
         }
-        
+
         // Update file name display
         document.getElementById('fileName').textContent = file.name;
-        
+
         // Show preview
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const preview = document.getElementById('imagePreview');
             const previewImg = document.getElementById('previewImg');
             previewImg.src = e.target.result;
@@ -242,36 +240,36 @@ function removeImage() {
 // Handle form submission
 async function handleSubmit(event) {
     event.preventDefault();
-    
+
     if (!currentUser) {
         alert('Please login to submit a ticket');
         return;
     }
-    
+
     // Get form data
     const formData = {
         category: document.getElementById('category').value,
         subject: document.getElementById('subject').value.trim(),
         description: document.getElementById('description').value.trim()
     };
-    
+
     // Validate
     if (formData.description.length < 20) {
         alert('Please provide a more detailed description (minimum 20 characters)');
         return;
     }
-    
+
     // Show loading
     document.getElementById('loadingIndicator').style.display = 'block';
     document.getElementById('submitBtn').disabled = true;
-    
+
     try {
         const db = firebase.firestore();
-        
+
         // Upload photo if provided
         let photoURL = null;
         const photoFile = document.getElementById('photoUpload').files[0];
-        
+
         if (photoFile) {
             console.log('[Submit Report] Photo file detected, uploading to Cloudinary...');
             photoURL = await uploadPhoto(photoFile);
@@ -281,10 +279,10 @@ async function handleSubmit(event) {
                 console.warn('[Submit Report] Photo upload failed, continuing without photo');
             }
         }
-        
+
         // Generate ticket ID
         const ticketId = generateTicketId();
-        
+
         // Create ticket object
         const ticket = {
             ticketId: ticketId,
@@ -304,18 +302,18 @@ async function handleSubmit(event) {
             adminNotes: '',
             conversation: []
         };
-        
+
         // Save to Firestore
         await db.collection('supportTickets').add(ticket);
-        
+
         console.log('[Submit Report] Ticket submitted successfully:', ticketId);
-        
+
         // Hide loading
         document.getElementById('loadingIndicator').style.display = 'none';
-        
+
         // Show success modal
         showSuccessModal(ticketId);
-        
+
     } catch (error) {
         console.error('[Submit Report] Error submitting ticket:', error);
         alert('Error submitting ticket. Please try again.');
@@ -328,17 +326,17 @@ async function handleSubmit(event) {
 async function uploadPhoto(file) {
     try {
         console.log('[Submit Report] Uploading photo to Cloudinary...');
-        
+
         // Check if Cloudinary upload function is available
         if (typeof window.uploadImageToCloudinary !== 'function') {
             console.error('[Submit Report] Cloudinary upload function not available');
             throw new Error('Photo upload service not available');
         }
-        
+
         // Upload to Cloudinary
         const result = await window.uploadImageToCloudinary(file);
         console.log('[Submit Report] Photo uploaded successfully:', result.secure_url);
-        
+
         return result.secure_url;
     } catch (error) {
         console.error('[Submit Report] Error uploading photo to Cloudinary:', error);
@@ -359,7 +357,7 @@ function generateTicketId() {
 function showSuccessModal(ticketId) {
     // Close report modal first
     closeReportModal();
-    
+
     // Show success modal
     document.getElementById('ticketIdDisplay').textContent = ticketId;
     const successModal = document.getElementById('successModal');
@@ -371,7 +369,7 @@ function showSuccessModal(ticketId) {
 // View my tickets - now just closes modal and scrolls to tickets
 function viewMyTickets() {
     closeSuccessModal();
-    
+
     // Scroll to tickets section
     const ticketsSection = document.querySelector('.support-section');
     if (ticketsSection) {
