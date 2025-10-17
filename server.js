@@ -2032,6 +2032,227 @@ app.post('/api/sendgrid-resend-otp', rateLimitMiddleware, async (req, res) => {
   }
 });
 
+/* ====== Firebase OTP API Endpoints ====== */
+
+// Firebase Send OTP endpoint
+app.post('/api/firebase-send-otp', rateLimitMiddleware, async (req, res) => {
+  try {
+    const { email, userName, otp } = req.body;
+
+    if (!email || !userName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
+    }
+
+    console.log(`[Firebase API] Send OTP request for: ${email}`);
+
+    // Generate OTP if not provided
+    const generatedOTP = otp || generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store OTP locally
+    otpStorage.set(email, {
+      otp: generatedOTP,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now(),
+      source: 'firebase'
+    });
+
+    console.log(`[Firebase API] OTP generated: ${generatedOTP} for ${email}`);
+
+    // Try to send email via SendGrid
+    const emailResult = await sendOTPEmail(email, userName, generatedOTP);
+
+    if (emailResult.success) {
+      if (emailResult.emailSent) {
+        console.log(`📧 Firebase email sent successfully to ${email}`);
+        res.json({
+          success: true,
+          otp: generatedOTP,
+          expiry: expiry,
+          message: 'Firebase OTP sent successfully',
+          emailSent: true
+        });
+      } else {
+        console.log(`📧 SendGrid not configured, OTP generated locally: ${emailResult.message}`);
+        res.json({
+          success: true,
+          otp: generatedOTP,
+          expiry: expiry,
+          message: 'OTP generated successfully (SendGrid not configured)',
+          emailSent: false,
+          emailError: emailResult.message
+        });
+      }
+    } else {
+      console.log(`📧 Firebase email failed: ${emailResult.message}`);
+      res.json({
+        success: true,
+        otp: generatedOTP,
+        expiry: expiry,
+        message: 'Firebase OTP generated successfully (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[Firebase API] Send OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send Firebase OTP'
+    });
+  }
+});
+
+// Firebase Verify OTP endpoint
+app.post('/api/firebase-verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    console.log(`[Firebase API] Verify OTP request for: ${email}`);
+
+    // Check local storage for Firebase OTP
+    if (!otpStorage.has(email)) {
+      return res.json({
+        success: false,
+        message: 'No OTP found for this email'
+      });
+    }
+
+    const storedData = otpStorage.get(email);
+
+    // Check if OTP has expired
+    if (Date.now() > storedData.expiry) {
+      otpStorage.delete(email);
+      return res.json({
+        success: false,
+        message: 'OTP has expired'
+      });
+    }
+
+    // Check attempt limit
+    if (storedData.attempts >= MAX_OTP_ATTEMPTS) {
+      otpStorage.delete(email);
+      return res.json({
+        success: false,
+        message: 'Too many failed attempts'
+      });
+    }
+
+    // Verify OTP
+    if (storedData.otp === otp) {
+      otpStorage.delete(email); // Remove OTP after successful verification
+      console.log(`[Firebase API] OTP verified successfully for: ${email}`);
+      return res.json({
+        success: true,
+        message: 'Firebase OTP verified successfully'
+      });
+    } else {
+      // Increment attempt count
+      storedData.attempts++;
+      otpStorage.set(email, storedData);
+
+      const remainingAttempts = MAX_OTP_ATTEMPTS - storedData.attempts;
+      return res.json({
+        success: false,
+        message: `Invalid OTP. ${remainingAttempts} attempts remaining.`
+      });
+    }
+
+  } catch (error) {
+    console.error('[Firebase API] Verify OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify Firebase OTP'
+    });
+  }
+});
+
+// Firebase Resend OTP endpoint
+app.post('/api/firebase-resend-otp', rateLimitMiddleware, async (req, res) => {
+  try {
+    const { email, userName } = req.body;
+
+    if (!email || !userName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and user name are required'
+      });
+    }
+
+    console.log(`[Firebase API] Resend OTP request for: ${email}`);
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const expiry = Date.now() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store new OTP
+    otpStorage.set(email, {
+      otp: otp,
+      expiry: expiry,
+      attempts: 0,
+      createdAt: Date.now(),
+      source: 'firebase'
+    });
+
+    console.log(`[Firebase API] New OTP generated: ${otp} for ${email}`);
+
+    // Try to send email via SendGrid
+    const emailResult = await sendOTPEmail(email, userName, otp);
+
+    if (emailResult.success) {
+      if (emailResult.emailSent) {
+        console.log(`📧 Firebase email resent successfully to ${email}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'Firebase OTP resent successfully',
+          emailSent: true
+        });
+      } else {
+        console.log(`📧 SendGrid not configured, OTP regenerated locally: ${emailResult.message}`);
+        res.json({
+          success: true,
+          otp: otp,
+          expiry: expiry,
+          message: 'OTP regenerated successfully (SendGrid not configured)',
+          emailSent: false,
+          emailError: emailResult.message
+        });
+      }
+    } else {
+      console.log(`📧 Firebase email resend failed: ${emailResult.message}`);
+      res.json({
+        success: true,
+        otp: otp,
+        expiry: expiry,
+        message: 'Firebase OTP resent successfully (email failed to send)',
+        emailSent: false,
+        emailError: emailResult.message
+      });
+    }
+
+  } catch (error) {
+    console.error('[Firebase API] Resend OTP error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to resend Firebase OTP'
+    });
+  }
+});
+
 /* ====== Simple OTP System (No Email Sending) ====== */
 
 /* ====== Security Middleware - Block Direct File Access ====== */
