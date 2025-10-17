@@ -489,23 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     // Add styles
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #4CAF50, #45a049);
-      color: white;
-      padding: 15px 20px;
-      border-radius: 10px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      z-index: 1000;
-      max-width: 350px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      transform: translateX(100%);
-      transition: transform 0.3s ease-in-out;
-    `;
+
 
     // Add content styles
     const content = notification.querySelector('.notification-content');
