@@ -1,9 +1,37 @@
 /* Submit Report Modal Styles */
+@font-face {
+    font-family: 'PoppinsMedium';
+    src: url('../../src/fonts/Poppins-Medium.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PoppinsBlack';
+    src: url('../../src/fonts/Poppins-Black.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PoppinsRegular';
+    src: url('../../src/fonts/Poppins-Regular.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PoppinsExtraLight';
+    src: url('../../src/fonts/Poppins-ExtraLight.woff') format('woff');
+    font-weight: 200;
+    font-style: normal;
+}
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 /* Modal Overlay */
@@ -24,6 +52,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -51,6 +80,7 @@
     animation: slideUp 0.3s ease;
     display: flex;
     flex-direction: column;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 @keyframes slideUp {
@@ -58,6 +88,7 @@
         transform: translateY(50px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -108,6 +139,7 @@
     padding: 24px;
     overflow-y: auto;
     flex: 1;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .modal-intro {
@@ -115,11 +147,13 @@
     font-size: 0.95rem;
     margin-bottom: 24px;
     text-align: center;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 /* Form Styles */
 .report-form {
     max-width: 100%;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .form-group {
@@ -132,6 +166,7 @@
     color: #333;
     margin-bottom: 8px;
     font-size: 0.95rem;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .form-group label i {
@@ -147,9 +182,10 @@
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
-    font-family: inherit;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
     transition: all 0.3s ease;
-    text-transform: none !important; /* Override any capitalize styling */
+    text-transform: none !important;
+    /* Override any capitalize styling */
 }
 
 .form-group input[type="text"]:focus,
@@ -170,6 +206,7 @@
     margin-top: 6px;
     font-size: 0.85rem;
     color: #888;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 /* File Upload */
@@ -208,6 +245,7 @@
 .file-label span {
     color: #666;
     font-size: 0.9rem;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 /* Image Preview */
@@ -254,12 +292,14 @@
     padding: 20px;
     border-radius: 8px;
     margin: 30px 0;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .customer-info-preview h3 {
     font-size: 1rem;
     color: #333;
     margin-bottom: 15px;
+    font-family: 'PoppinsMedium', 'Poppins', sans-serif;
 }
 
 .customer-info-preview h3 i {
@@ -271,22 +311,26 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .info-item {
     display: flex;
     flex-direction: column;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .info-label {
     font-size: 0.85rem;
     color: #888;
     margin-bottom: 4px;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .info-item span:last-child {
     font-weight: 600;
     color: #333;
+    font-family: 'PoppinsMedium', 'Poppins', sans-serif;
 }
 
 /* Form Actions */
@@ -310,6 +354,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    font-family: 'PoppinsMedium', 'Poppins', sans-serif;
 }
 
 .btn-cancel {
@@ -322,13 +367,14 @@
 }
 
 .btn-submit {
-    background: #933F32;
-    color: white;
+    background: #933F32 !important;
+    color: white !important;
 }
 
 .btn-submit:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(147, 63, 50, 0.4);
+    background: #7a3228 !important;
 }
 
 .btn-submit:disabled {
@@ -342,6 +388,7 @@
     padding: 20px;
     color: #933F32;
     font-weight: 600;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .loading-indicator i {
@@ -383,6 +430,7 @@
     text-align: center;
     animation: slideUp 0.3s ease;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .success-icon {
@@ -395,12 +443,14 @@
     color: #333;
     margin-bottom: 15px;
     font-size: 1.5rem;
+    font-family: 'PoppinsMedium', 'Poppins', sans-serif;
 }
 
 .success-modal-content p {
     color: #666;
     margin-bottom: 20px;
     font-size: 1rem;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .success-actions {
@@ -420,6 +470,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
 .success-actions button:hover {

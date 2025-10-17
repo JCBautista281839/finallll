@@ -316,32 +316,82 @@ function showTicketDetails(docId, ticket) {
             
             ${ticket.photoURL ? `
                 <div style="margin-bottom: 20px;">
-                    <strong style="display: block; margin-bottom: 10px; color: #333;">
-                        <i class="fas fa-image"></i> Attachment:
-                    </strong>
-                    <img src="${ticket.photoURL}" alt="Ticket attachment" 
-                        style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <button class="view-photo-btn" onclick="togglePhotoCollapse(this)" 
+                        style="background: #f5f5f5; border: 1px solid #ddd; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; color: #333; width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;">
+                        <i class="fas fa-eye"></i> View Photo
+                        <i class="fas fa-chevron-down" style="margin-left: auto;"></i>
+                    </button>
+                    <div class="ticket-photo-container" style="margin-top: 12px; display: none;">
+                        <img src="${ticket.photoURL}" alt="Ticket attachment" 
+                            style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    </div>
                 </div>
             ` : ''}
             
-            ${ticket.conversation && ticket.conversation.length > 0 ? `
-                <div style="margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
-                    <strong style="display: block; margin-bottom: 15px; color: #333;">
-                        <i class="fas fa-comments"></i> Conversation:
-                    </strong>
-                    ${ticket.conversation.map(msg => `
-                        <div style="background: ${msg.isAdmin ? '#e3f2fd' : '#f5f5f5'}; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                            <div style="font-weight: 600; margin-bottom: 5px; color: ${msg.isAdmin ? '#1976d2' : '#666'};">
-                                ${msg.isAdmin ? 'Support Team' : 'You'}
-                            </div>
-                            <div style="color: #333;">${msg.message}</div>
-                            <div style="font-size: 0.8rem; color: #999; margin-top: 5px;">
-                                ${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleString() : ''}
-                            </div>
+            ${ticket.conversation && ticket.conversation.length > 0 ? (() => {
+                // Separate admin responses from customer messages
+                const adminResponses = ticket.conversation.filter(msg => msg.from === 'admin' || msg.isAdmin);
+                const customerMessages = ticket.conversation.filter(msg => msg.from !== 'admin' && !msg.isAdmin);
+                
+                console.log('[Ticket Details] Full ticket object:', ticket);
+                console.log('[Ticket Details] Conversation array:', ticket.conversation);
+                console.log('[Ticket Details] Conversation length:', ticket.conversation.length);
+                console.log('[Ticket Details] Admin responses:', adminResponses);
+                console.log('[Ticket Details] Customer messages:', customerMessages);
+                
+                let html = '';
+                
+                // Show admin responses in dedicated section
+                if (adminResponses.length > 0) {
+                    html += `
+                        <div style="margin-top: 20px; padding: 16px; background: #f0f7ff; border-left: 4px solid #933F32; border-radius: 8px;">
+                            <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; color: #933F32; font-size: 1rem;">
+                                <i class="fas fa-user-shield"></i> Support Team Responses (${adminResponses.length})
+                            </strong>
+                            ${adminResponses.map(msg => {
+                                console.log('[Response Item] Processing message:', msg);
+                                return `
+                                <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #933F32;">
+                                    <div style="font-weight: 600; margin-bottom: 5px; color: #933F32; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-shield-alt"></i> ${msg.authorName || 'Support Team'}
+                                    </div>
+                                    <div style="color: #333; line-height: 1.5;">${msg.message}</div>
+                                    <div style="font-size: 0.8rem; color: #999; margin-top: 8px;">
+                                        <i class="far fa-clock"></i> ${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleString() : 'N/A'}
+                                    </div>
+                                </div>
+                            `;
+                            }).join('')}
                         </div>
-                    `).join('')}
-                </div>
-            ` : ''}
+                    `;
+                } else {
+                    console.log('[Ticket Details] No admin responses found');
+                }
+                
+                // Show customer messages if any
+                if (customerMessages.length > 0) {
+                    html += `
+                        <div style="margin-top: 20px; border-top: 2px solid #e0e0e0; padding-top: 20px;">
+                            <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; color: #333;">
+                                <i class="fas fa-comments"></i> Your Messages (${customerMessages.length})
+                            </strong>
+                            ${customerMessages.map(msg => `
+                                <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                                    <div style="font-weight: 600; margin-bottom: 5px; color: #666;">
+                                        You
+                                    </div>
+                                    <div style="color: #333;">${msg.message}</div>
+                                    <div style="font-size: 0.8rem; color: #999; margin-top: 5px;">
+                                        ${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleString() : 'N/A'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                return html;
+            })() : `<div style="margin-top: 20px; padding: 16px; background: #f9f9f9; border-radius: 8px; text-align: center; color: #999;"><i class="fas fa-comment-slash"></i> No responses yet. The support team will reply to your ticket soon.</div>`}
             
             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
                 <button onclick="this.closest('.ticket-detail-modal').remove()" 
@@ -362,4 +412,18 @@ function showTicketDetails(docId, ticket) {
             modal.remove();
         }
     });
+}
+
+// Toggle photo collapse/expand
+function togglePhotoCollapse(button) {
+    const photoContainer = button.nextElementSibling;
+    const isHidden = photoContainer.style.display === 'none';
+    
+    if (isHidden) {
+        photoContainer.style.display = 'block';
+        button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Photo <i class="fas fa-chevron-up" style="margin-left: auto;"></i>';
+    } else {
+        photoContainer.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-eye"></i> View Photo <i class="fas fa-chevron-down" style="margin-left: auto;"></i>';
+    }
 }

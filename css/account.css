@@ -623,7 +623,7 @@ input {
 
 /* Order History Styles */
 #order-history-container {
-    margin-top: 2rem;
+    margin-top: -1rem;
 }
 
 #order-loading {
@@ -813,6 +813,33 @@ input {
 .approval-note i {
     margin-right: 0.5rem;
     color: #f0ad4e;
+}
+
+/* Payment Reference Code Section */
+.order-payment-ref {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.ref-code-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.85rem;
+}
+
+.ref-code-value {
+    padding: 0.4rem 0.8rem;
+    background: #e8f5e9;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1b5e20;
+    border: 1px solid #c8e6c9;
+    font-family: 'Courier New', monospace;
 }
 
 /* Responsive Design */
@@ -1429,4 +1456,91 @@ input {
     .order-history-item {
         padding: 0.75rem;
     }
+}
+
+/* Ticket Detail Modal - View Photo Button Styles */
+.view-photo-btn {
+    background: #f5f5f5 !important;
+    border: 1px solid #ddd !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    width: 100% !important;
+    text-align: left !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.3s ease !important;
+    font-family: 'PoppinsRegular', 'Poppins', sans-serif !important;
+}
+
+.view-photo-btn:hover {
+    background: #efefef !important;
+    border-color: #bbb !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Ticket Photo Container */
+.ticket-photo-container {
+    display: none;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+/* Admin Responses Section */
+.ticket-admin-responses {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f0f7ff;
+    border-left: 4px solid #933F32;
+    border-radius: 8px;
+}
+
+.ticket-admin-responses strong {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    color: #933F32;
+    font-size: 1rem;
+}
+
+.admin-response-item {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border-left: 3px solid #933F32;
+}
+
+.admin-response-header {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #933F32;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-response-content {
+    color: #333;
+    line-height: 1.5;
+}
+
+.admin-response-timestamp {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 8px;
 }
