@@ -2650,6 +2650,151 @@ blockedDirectories.forEach(pattern => {
 
 app.use(express.static(path.join(__dirname)));
 
+// 🚫 COMPREHENSIVE URL BLOCKING MIDDLEWARE
+// Block all URLs except specific allowed ones
+const allowedRoutes = [
+  '/',
+  '/login',
+  '/register', 
+  '/forgot-password',
+  '/otp',
+  '/api/login',
+  '/api/register',
+  '/api/send-otp',
+  '/api/verify-otp',
+  '/api/resend-otp',
+  '/api/reset-password-with-otp',
+  '/api/firebase-send-otp',
+  '/api/firebase-verify-otp',
+  '/api/firebase-resend-otp',
+  '/customer',
+  '/customer/',
+  '/customer/login',
+  '/customer/register',
+  '/customer/forgot-password',
+  '/customer/otp',
+  '/customer/account',
+  '/customer/menu',
+  '/customer/css',
+  '/customer/javascript',
+  '/customer/html',
+  '/css',
+  '/javascript',
+  '/images',
+  '/favicon.ico'
+];
+
+// Middleware to block all URLs except allowed ones
+app.use((req, res, next) => {
+  const requestedPath = req.path;
+  
+  // Check if the requested path is in allowed routes
+  const isAllowed = allowedRoutes.some(route => {
+    if (route.endsWith('/')) {
+      return requestedPath === route || requestedPath.startsWith(route);
+    }
+    return requestedPath === route || requestedPath.startsWith(route + '/');
+  });
+  
+  if (!isAllowed) {
+    console.log(`🚫 BLOCKED URL ACCESS: ${req.method} ${requestedPath} from ${req.ip}`);
+    
+    res.status(403).send(`
+      <html>
+        <head>
+          <title>Access Denied - Victoria's Bistro</title>
+          <style>
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              text-align: center; 
+              padding: 50px; 
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              margin: 0;
+              min-height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .error-container {
+              background: white;
+              padding: 40px;
+              border-radius: 15px;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+              max-width: 600px;
+              margin: 0 auto;
+            }
+            .logo {
+              font-size: 32px;
+              font-weight: bold;
+              color: #8B4513;
+              margin-bottom: 20px;
+            }
+            .error-code { 
+              font-size: 120px; 
+              color: #e74c3c; 
+              margin: 0;
+              font-weight: bold;
+              text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            }
+            .error-message { 
+              font-size: 28px; 
+              color: #2c3e50; 
+              margin: 20px 0;
+              font-weight: 600;
+            }
+            .error-description {
+              color: #7f8c8d;
+              margin: 20px 0;
+              font-size: 16px;
+              line-height: 1.6;
+            }
+            .blocked-url {
+              background: #f8f9fa;
+              padding: 10px;
+              border-radius: 5px;
+              font-family: monospace;
+              color: #e74c3c;
+              margin: 15px 0;
+            }
+            .contact-info {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #ecf0f1;
+              color: #95a5a6;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="error-container">
+            <div class="logo">🍽️ Victoria's Bistro</div>
+            <h1 class="error-code">403</h1>
+            <h2 class="error-message">Access Denied</h2>
+            <p class="error-description">
+              This URL has been blocked for security reasons.<br>
+              Unauthorized access to this resource is not permitted.
+            </p>
+            <div class="blocked-url">
+              Blocked URL: ${requestedPath}
+            </div>
+            <p class="error-description">
+              If you believe this is an error, please contact the administrator.
+            </p>
+            <div class="contact-info">
+              <strong>Victoria's Bistro</strong><br>
+              Restaurant Management System<br>
+              All rights reserved
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    return;
+  }
+  
+  next();
+});
+
 /* ====== Local app routes (static pages) ====== */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
@@ -3726,149 +3871,4 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.log(`   ✅ SendGrid API key configured and ready for email sending`);
   }
-});
-
-// 🚫 COMPREHENSIVE URL BLOCKING MIDDLEWARE
-// Block all URLs except specific allowed ones
-const allowedRoutes = [
-  '/',
-  '/login',
-  '/register', 
-  '/forgot-password',
-  '/otp',
-  '/api/login',
-  '/api/register',
-  '/api/send-otp',
-  '/api/verify-otp',
-  '/api/resend-otp',
-  '/api/reset-password-with-otp',
-  '/api/firebase-send-otp',
-  '/api/firebase-verify-otp',
-  '/api/firebase-resend-otp',
-  '/customer',
-  '/customer/',
-  '/customer/login',
-  '/customer/register',
-  '/customer/forgot-password',
-  '/customer/otp',
-  '/customer/account',
-  '/customer/menu',
-  '/customer/css',
-  '/customer/javascript',
-  '/customer/html',
-  '/css',
-  '/javascript',
-  '/images',
-  '/favicon.ico'
-];
-
-// Middleware to block all URLs except allowed ones
-app.use((req, res, next) => {
-  const requestedPath = req.path;
-  
-  // Check if the requested path is in allowed routes
-  const isAllowed = allowedRoutes.some(route => {
-    if (route.endsWith('/')) {
-      return requestedPath === route || requestedPath.startsWith(route);
-    }
-    return requestedPath === route || requestedPath.startsWith(route + '/');
-  });
-  
-  if (!isAllowed) {
-    console.log(`🚫 BLOCKED URL ACCESS: ${req.method} ${requestedPath} from ${req.ip}`);
-    
-    res.status(403).send(`
-      <html>
-        <head>
-          <title>Access Denied - Victoria's Bistro</title>
-          <style>
-            body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              text-align: center; 
-              padding: 50px; 
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              margin: 0;
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .error-container {
-              background: white;
-              padding: 40px;
-              border-radius: 15px;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-              max-width: 600px;
-              margin: 0 auto;
-            }
-            .logo {
-              font-size: 32px;
-              font-weight: bold;
-              color: #8B4513;
-              margin-bottom: 20px;
-            }
-            .error-code { 
-              font-size: 120px; 
-              color: #e74c3c; 
-              margin: 0;
-              font-weight: bold;
-              text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            }
-            .error-message { 
-              font-size: 28px; 
-              color: #2c3e50; 
-              margin: 20px 0;
-              font-weight: 600;
-            }
-            .error-description {
-              color: #7f8c8d;
-              margin: 20px 0;
-              font-size: 16px;
-              line-height: 1.6;
-            }
-            .blocked-url {
-              background: #f8f9fa;
-              padding: 10px;
-              border-radius: 5px;
-              font-family: monospace;
-              color: #e74c3c;
-              margin: 15px 0;
-            }
-            .contact-info {
-              margin-top: 30px;
-              padding-top: 20px;
-              border-top: 1px solid #ecf0f1;
-              color: #95a5a6;
-              font-size: 14px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="error-container">
-            <div class="logo">🍽️ Victoria's Bistro</div>
-            <h1 class="error-code">403</h1>
-            <h2 class="error-message">Access Denied</h2>
-            <p class="error-description">
-              This URL has been blocked for security reasons.<br>
-              Unauthorized access to this resource is not permitted.
-            </p>
-            <div class="blocked-url">
-              Blocked URL: ${requestedPath}
-            </div>
-            <p class="error-description">
-              If you believe this is an error, please contact the administrator.
-            </p>
-            <div class="contact-info">
-              <strong>Victoria's Bistro</strong><br>
-              Restaurant Management System<br>
-              All rights reserved
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
-    return;
-  }
-  
-  next();
 });
