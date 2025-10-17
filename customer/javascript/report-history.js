@@ -27,11 +27,11 @@ function goToSubmitReport() {
 function toggleAllTickets() {
     const btn = document.getElementById('viewTicketsBtn');
     const ticketsList = document.getElementById('tickets-list');
-    
+
     if (!ticketsList) return;
-    
+
     showingAllTickets = !showingAllTickets;
-    
+
     if (showingAllTickets) {
         // Show all tickets
         btn.innerHTML = '<i class="fas fa-eye-slash"></i> Show Less';
@@ -47,7 +47,7 @@ function toggleAllTickets() {
 function displayTickets(tickets) {
     const ticketsList = document.getElementById('tickets-list');
     if (!ticketsList) return;
-    
+
     ticketsList.innerHTML = '';
     tickets.forEach(({ id, data }) => {
         const ticketElement = createTicketElement(id, data);
@@ -60,24 +60,24 @@ async function loadCustomerTickets(userId) {
     const ticketsLoading = document.getElementById('tickets-loading');
     const noTickets = document.getElementById('no-tickets');
     const ticketsList = document.getElementById('tickets-list');
-    
+
     // Show loading
     if (ticketsLoading) ticketsLoading.style.display = 'block';
     if (noTickets) noTickets.style.display = 'none';
     if (ticketsList) ticketsList.innerHTML = '';
-    
+
     try {
         const db = firebase.firestore();
-        
+
         // Query tickets for this customer
         // Removed orderBy to avoid index requirement - will sort in JavaScript instead
         const ticketsSnapshot = await db.collection('supportTickets')
             .where('customerId', '==', userId)
             .get();
-        
+
         // Hide loading
         if (ticketsLoading) ticketsLoading.style.display = 'none';
-        
+
         if (ticketsSnapshot.empty) {
             if (noTickets) noTickets.style.display = 'block';
         } else {
@@ -86,16 +86,16 @@ async function loadCustomerTickets(userId) {
             ticketsSnapshot.forEach(doc => {
                 allCustomerTickets.push({ id: doc.id, data: doc.data() });
             });
-            
+
             // Sort by createdAt descending
             allCustomerTickets.sort((a, b) => {
                 if (!a.data.createdAt || !b.data.createdAt) return 0;
                 return b.data.createdAt.toMillis() - a.data.createdAt.toMillis();
             });
-            
+
             // Display only the most recent ticket by default
             displayTickets(allCustomerTickets.slice(0, 1));
-            
+
             // Show/hide the "View Past Tickets" button
             const viewTicketsBtn = document.getElementById('viewTicketsBtn');
             if (viewTicketsBtn) {
@@ -124,22 +124,22 @@ async function loadCustomerTickets(userId) {
 function createTicketElement(docId, ticket) {
     const ticketCard = document.createElement('div');
     ticketCard.className = 'ticket-card';
-    
+
     // Get status badge class
     const statusClass = getStatusClass(ticket.status);
     const statusText = formatStatus(ticket.status);
-    
+
     // Get category icon
     const categoryIcon = getCategoryIcon(ticket.category);
-    
+
     // Format date
-    const dateStr = ticket.createdAt ? 
+    const dateStr = ticket.createdAt ?
         new Date(ticket.createdAt.toDate()).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric'
         }) : 'Unknown date';
-    
+
     ticketCard.innerHTML = `
         <div class="ticket-header">
             <div class="ticket-id">
@@ -167,10 +167,10 @@ function createTicketElement(docId, ticket) {
             ` : ''}
         </div>
     `;
-    
+
     // Add click to expand/view details
     ticketCard.addEventListener('click', () => showTicketDetails(docId, ticket));
-    
+
     return ticketCard;
 }
 
@@ -247,12 +247,12 @@ function showTicketDetails(docId, ticket) {
         z-index: 9999;
         padding: 20px;
     `;
-    
+
     const statusClass = getStatusClass(ticket.status);
     const statusText = formatStatus(ticket.status);
     const categoryIcon = getCategoryIcon(ticket.category);
-    
-    const dateStr = ticket.createdAt ? 
+
+    const dateStr = ticket.createdAt ?
         new Date(ticket.createdAt.toDate()).toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -260,23 +260,23 @@ function showTicketDetails(docId, ticket) {
             hour: 'numeric',
             minute: '2-digit'
         }) : 'Unknown date';
-    
+
     modal.innerHTML = `
         <div style="background: white; border-radius: 16px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: #333;">
-                    <i class="fas fa-ticket-alt" style="color: #667eea;"></i>
+            <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 70px;">
+                <h2 style="margin: 0; color: #333; flex-grow: 1; white-space: nowrap;">
+                    <i class="fas fa-ticket-alt" style="color: #933F32;"></i>
                     Ticket Details
                 </h2>
                 <button onclick="this.closest('.ticket-detail-modal').remove()" 
-                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">
+                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #933F32; padding: 0; flex-shrink: 0;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <strong style="color: #667eea;">${ticket.ticketId || docId.substring(0, 10)}</strong>
+                    <strong style="color: #933F32;">${ticket.ticketId || docId.substring(0, 10)}</strong>
                     <span class="ticket-status ${statusClass}" style="padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
                         ${statusText}
                     </span>
@@ -288,11 +288,21 @@ function showTicketDetails(docId, ticket) {
             
             <div style="margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <i class="${categoryIcon}" style="color: #667eea;"></i>
+                    <i class="${categoryIcon}" style="color: #933F32;"></i>
                     <strong>${formatCategory(ticket.category)}</strong>
                 </div>
-                <h3 style="margin: 10px 0; color: #333;">${ticket.subject}</h3>
-                <p style="color: #666; line-height: 1.6; white-space: pre-wrap;">${ticket.description}</p>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 0.85rem; color: #999; margin-bottom: 5px;">
+                        <i class="fas fa-hashtag"></i> Reference Number
+                    </label>
+                    <h3 style="margin: 0; color: #333; font-size: 1.1rem;">${ticket.subject}</h3>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 0.85rem; color: #999; margin-bottom: 5px;">
+                        <i class="fas fa-align-left"></i> Description
+                    </label>
+                    <p style="color: #666; line-height: 1.6; white-space: pre-wrap;">${ticket.description}</p>
+                </div>
             </div>
             
             ${ticket.orderId ? `
@@ -335,16 +345,17 @@ function showTicketDetails(docId, ticket) {
             
             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
                 <button onclick="this.closest('.ticket-detail-modal').remove()" 
-                    style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    style="width: 100%; padding: 12px; background: #933F32; 
+                    color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; 
+                    font-family: 'PoppinsMedium', Arial, sans-serif;">
                     Close
                 </button>
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Close on background click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {

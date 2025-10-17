@@ -83,7 +83,7 @@
             <i class="fas fa-history"></i> View Past Tickets
           </button>
         </div>
-        
+
         <!-- My Tickets Container -->
         <div id="tickets-container" class="tickets-container">
           <div id="tickets-loading" class="loading-message" style="display: none;">
@@ -103,22 +103,43 @@
       </div>
 
       <!-- Order History Section -->
-      <div class="order-history-title">Order History</div>
-
-      <!-- Order History Container -->
-      <div id="order-history-container" class="order-history-container">
-        <div id="order-loading" class="loading-message" style="display: none;">
-          <i class="fas fa-spinner fa-spin"></i> Loading your orders...
+      <div class="order-history-section">
+        <div class="order-history-header">
+          <h2><i class="fas fa-receipt"></i> Order History</h2>
         </div>
 
-        <div id="no-orders" class="no-orders-message" style="display: none;">
-          <i class="fas fa-receipt"></i>
-          <p>No orders found</p>
-          <small>Your order history will appear here once you place an order</small>
+        <!-- Order History Buttons -->
+        <div class="order-buttons">
+          <button class="btn-view-orders" id="viewOrdersBtn" onclick="togglePastOrders()" style="display: none;">
+            <i class="fas fa-history"></i> View Past Orders
+          </button>
         </div>
 
-        <div id="orders-list" class="orders-list">
-          <!-- Orders will be populated here -->
+        <!-- Order History Container -->
+        <div id="order-history-container" class="order-history-container">
+          <div id="order-loading" class="loading-message" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Loading your orders...
+          </div>
+
+          <div id="no-orders" class="no-orders-message" style="display: none;">
+            <i class="fas fa-receipt"></i>
+            <p>No orders found</p>
+            <small>Your order history will appear here once you place an order</small>
+          </div>
+
+          <!-- Recent Order Section -->
+          <div id="recent-order-container" class="recent-order-container" style="display: none;">
+            <div id="recent-order" class="recent-order">
+              <!-- Most recent order will be populated here -->
+            </div>
+          </div>
+
+          <!-- Past Orders Section -->
+          <div id="past-orders-container" class="past-orders-container" style="display: none;">
+            <div id="orders-list" class="orders-list">
+              <!-- Past orders will be populated here -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -138,7 +159,8 @@
 
       <!-- Modal Body -->
       <div class="report-modal-body">
-        <p class="modal-intro">Please provide details about your issue and we'll get back to you as soon as possible.</p>
+        <p class="modal-intro">Please provide details about your issue and we'll get back to you as soon as possible.
+        </p>
 
         <form id="reportForm" class="report-form">
           <!-- Issue Category -->
@@ -161,17 +183,9 @@
             <label for="subject">
               <i class="fas fa-hashtag"></i> Reference Number *
             </label>
-            <input 
-              type="text" 
-              id="subject" 
-              name="subject" 
-              placeholder="Enter your payment reference number"
-              pattern="[0-9]*"
-              inputmode="numeric"
-              maxlength="50"
-              required
-              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-            >
+            <input type="text" id="subject" name="subject" placeholder="Enter your payment reference number"
+              pattern="[0-9]*" inputmode="numeric" maxlength="50" required
+              oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             <small class="form-help">Enter numbers only</small>
           </div>
 
@@ -180,15 +194,9 @@
             <label for="description">
               <i class="fas fa-align-left"></i> Description *
             </label>
-            <textarea 
-              id="description" 
-              name="description" 
-              rows="5"
-              placeholder="Please provide detailed information about your issue..."
-              minlength="20"
-              maxlength="1000"
-              required
-            ></textarea>
+            <textarea id="description" name="description" rows="5"
+              placeholder="Please provide detailed information about your issue..." minlength="20" maxlength="1000"
+              required></textarea>
             <small class="form-help"><span id="descCount">0</span>/1000 characters (minimum 20)</small>
           </div>
 
@@ -198,13 +206,7 @@
               <i class="fas fa-camera"></i> Attach Photo (Optional)
             </label>
             <div class="file-upload-wrapper">
-              <input 
-                type="file" 
-                id="photoUpload" 
-                name="photo" 
-                accept="image/*"
-                class="file-input"
-              >
+              <input type="file" id="photoUpload" name="photo" accept="image/*" class="file-input">
               <label for="photoUpload" class="file-label">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <span id="fileName">Choose a photo</span>
