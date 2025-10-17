@@ -1258,7 +1258,7 @@ document.addEventListener('DOMContentLoaded', function () {
               // Show brief success feedback
               const statusDiv = document.getElementById('status-message') || document.querySelector('.status-message');
               if (statusDiv) {
-                statusDiv.style.color = 'green';
+                statusDiv.style.color = '#ffffff';
                 statusDiv.textContent = 'Payment verified! Notifying admin...';
                 setTimeout(() => {
                   statusDiv.textContent = '';
@@ -1268,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', function () {
               console.warn('⚠️ Payment notification could not be sent, but order will proceed');
               const statusDiv = document.getElementById('status-message') || document.querySelector('.status-message');
               if (statusDiv) {
-                statusDiv.style.color = 'orange';
+                statusDiv.style.color = '#ffffff';
                 statusDiv.textContent = 'Order submitted. Admin notification is queued.';
                 setTimeout(() => {
                   statusDiv.textContent = '';
