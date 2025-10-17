@@ -1,3 +1,56 @@
+/* Sidebar specific styles - Keep sidebar container visible */
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Multiple selectors with maximum specificity to override Bootstrap and nav.css */
+body aside#sidebar,
+body .sidebar,
+body aside.sidebar,
+#sidebar,
+.sidebar,
+aside#sidebar.sidebar.d-flex,
+.container-fluid > #sidebar,
+.container-fluid > .sidebar,
+.container-fluid > aside.sidebar {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1001 !important;
+    position: fixed !important;
+    left: 30px !important;
+    top: 0 !important;
+    width: 90px !important;
+    height: calc(100vh - 40px) !important;
+    min-height: 600px !important;
+    background: #fff !important;
+    border-radius: 48px !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05) !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    margin-top: 22px !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Keep nav structure visible but allow JavaScript to control individual link visibility */
+#sidebar nav,
+.sidebar nav,
+#sidebar .nav,
+.sidebar .nav {
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+}
+
+.container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    position: relative;
+}
+
 @font-face {
     font-family: 'PoppinsMedium';
     src: url('../src/fonts/Poppins-Medium.woff') format('woff');

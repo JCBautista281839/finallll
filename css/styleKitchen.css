@@ -1,3 +1,56 @@
+/* Sidebar specific styles for kitchen page - Keep sidebar container visible */
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Multiple selectors with maximum specificity to override Bootstrap and nav.css */
+body aside#sidebar,
+body .sidebar,
+body aside.sidebar,
+#sidebar,
+.sidebar,
+aside#sidebar.sidebar.d-flex,
+.container-fluid > #sidebar,
+.container-fluid > .sidebar,
+.container-fluid > aside.sidebar {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1001 !important;
+    position: fixed !important;
+    left: 30px !important;
+    top: 0 !important;
+    width: 90px !important;
+    height: calc(100vh - 40px) !important;
+    min-height: 600px !important;
+    background: #fff !important;
+    border-radius: 48px !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05) !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    margin-top: 22px !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Keep nav structure visible but allow JavaScript to control individual link visibility */
+#sidebar nav,
+.sidebar nav,
+#sidebar .nav,
+.sidebar .nav {
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+}
+
+.container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    position: relative;
+}
+
 .order-overlay.show {
     display: flex !important;
     justify-content: center;
@@ -294,10 +347,12 @@
 
 /* Main layout */
 .main-content {
-    margin-left: 80px;
+    margin-left: 140px;
     padding: 20px;
     background-color: #f5f5f5;
     min-height: 100vh;
+    width: calc(100% - 140px);
+    position: relative;
 }
 
 /* Kitchen content layout */
@@ -306,8 +361,8 @@
     flex-direction: column;
     gap: 20px;
     padding: 20px;
-    margin-left: 20px;
-    /* Reduced spacing from sidebar */
+    margin-left: 0;
+    /* Removed extra margin since main-content already has margin-left */
 }
 
 /* Orders container - 4 column grid */
@@ -316,10 +371,10 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     padding: 20px;
-    margin-left: 20px;
-    /* Reduced spacing from sidebar */
-    max-width: calc(100vw - 160px);
-    /* Adjusted for reduced margin */
+    margin-left: 0;
+    /* Removed extra margin since main-content already has margin-left */
+    max-width: calc(100vw - 180px);
+    /* Adjusted for sidebar width */
 }
 
 /* Order card */
@@ -872,5 +927,57 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+    }
+}
+
+/* CRITICAL: Override ALL media queries from nav.css to keep sidebar visible */
+@media (max-width: 1400px) {
+    body aside#sidebar,
+    body .sidebar,
+    body aside.sidebar,
+    #sidebar,
+    .sidebar,
+    aside#sidebar.sidebar {
+        display: flex !important;
+        left: 30px !important;
+        position: fixed !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 90px !important;
+        transform: translateX(0) !important;
+    }
+}
+
+@media (max-width: 991px) {
+    body aside#sidebar,
+    body .sidebar,
+    body aside.sidebar,
+    #sidebar,
+    .sidebar,
+    aside#sidebar.sidebar {
+        display: flex !important;
+        left: 30px !important;
+        position: fixed !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 90px !important;
+        transform: translateX(0) !important;
+    }
+}
+
+@media (max-width: 767px) {
+    body aside#sidebar,
+    body .sidebar,
+    body aside.sidebar,
+    #sidebar,
+    .sidebar,
+    aside#sidebar.sidebar {
+        display: flex !important;
+        left: 30px !important;
+        position: fixed !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 90px !important;
+        transform: translateX(0) !important;
     }
 }

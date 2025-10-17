@@ -72,9 +72,9 @@ class AuthGuard {
         // Define role-based access rules
         const accessRules = {
             'kitchen': {
-                allowedPages: ['kitchen', 'notifications'],
+                allowedPages: ['kitchen', 'inventory', 'notifications'],
                 redirectTo: 'kitchen',
-                message: 'Kitchen staff can only access kitchen dashboard and notifications'
+                message: 'Kitchen staff can only access kitchen dashboard, inventory and notifications'
             },
             'admin': {
                 allowedPages: 'all', // Admin can access everything
@@ -117,8 +117,8 @@ class AuthGuard {
         const pathParts = path.split('/');
         const page = pathParts[pathParts.length - 1];
         
-        // Remove .html extension if present
-        return page.replace('.html', '');
+        // Remove .html extension if present and convert to lowercase for comparison
+        return page.replace('.html', '').toLowerCase();
     }
 
     setupPageSpecificRestrictions(page) {
@@ -144,32 +144,19 @@ class AuthGuard {
     }
 
     setupKitchenRestrictions(page) {
-        // Hide admin-only elements
+        // Kitchen users have FULL access to inventory management
+        // No restrictions on inventory page - they can add/edit/delete
+        
+        // Hide admin-only elements (non-inventory related)
         const adminElements = document.querySelectorAll('[data-admin-only]');
         adminElements.forEach(el => el.style.display = 'none');
 
-        // Hide manager-only elements
+        // Hide manager-only elements (non-inventory related)
         const managerElements = document.querySelectorAll('[data-manager-only]');
         managerElements.forEach(el => el.style.display = 'none');
 
-        // Hide add/edit/delete buttons in inventory
-        const addButtons = document.querySelectorAll('#inventoryAddAction, .add-btn, .btn-add');
-        addButtons.forEach(btn => btn.style.display = 'none');
-
-        const editButtons = document.querySelectorAll('.edit-btn, .btn-edit');
-        editButtons.forEach(btn => btn.style.display = 'none');
-
-        const deleteButtons = document.querySelectorAll('.delete-btn, .btn-delete');
-        deleteButtons.forEach(btn => btn.style.display = 'none');
-
-        // Disable form submissions for restricted actions
-        const restrictedForms = document.querySelectorAll('form[data-restricted]');
-        restrictedForms.forEach(form => {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.showAccessDeniedMessage('You do not have permission to perform this action');
-            });
-        });
+        // Note: Kitchen users have full inventory management permissions
+        // They can add, edit, and delete inventory items without restrictions
     }
 
     setupServerRestrictions(page) {
@@ -202,26 +189,27 @@ class AuthGuard {
     updateNavigationForRole() {
         const navItems = {
             'kitchen': [
-                { href: '/kitchen', title: 'Kitchen Dashboard', icon: '🍳' },
-                { href: '/notifications', title: 'Notifications', icon: '🔔' }
+                { href: 'kitchen', title: 'Kitchen Dashboard', icon: '🍳' },
+                { href: 'Inventory', title: 'Inventory', icon: '📦' },
+                { href: 'notifications', title: 'Notifications', icon: '🔔' }
             ],
             'server': [
-                { href: '/dashboard', title: 'Dashboard', icon: '📊' },
-                { href: '/order', title: 'Orders', icon: '📋' },
-                { href: '/pos', title: 'POS', icon: '💳' },
-                { href: '/menu', title: 'Menu', icon: '🍽️' },
-                { href: '/notifications', title: 'Notifications', icon: '🔔' }
+                { href: 'Dashboard', title: 'Dashboard', icon: '📊' },
+                { href: 'Order', title: 'Orders', icon: '📋' },
+                { href: 'pos', title: 'POS', icon: '💳' },
+                { href: 'menu', title: 'Menu', icon: '🍽️' },
+                { href: 'notifications', title: 'Notifications', icon: '🔔' }
             ],
             'manager': [
-                { href: '/dashboard', title: 'Dashboard', icon: '📊' },
-                { href: '/order', title: 'Orders', icon: '📋' },
-                { href: '/pos', title: 'POS', icon: '💳' },
-                { href: '/menu', title: 'Menu', icon: '🍽️' },
-                { href: '/inventory', title: 'Inventory', icon: '📦' },
-                { href: '/user', title: 'Users', icon: '👥' },
-                { href: '/analytics', title: 'Analytics', icon: '📈' },
-                { href: '/settings', title: 'Settings', icon: '⚙️' },
-                { href: '/notifications', title: 'Notifications', icon: '🔔' }
+                { href: 'Dashboard', title: 'Dashboard', icon: '📊' },
+                { href: 'Order', title: 'Orders', icon: '📋' },
+                { href: 'pos', title: 'POS', icon: '💳' },
+                { href: 'menu', title: 'Menu', icon: '🍽️' },
+                { href: 'Inventory', title: 'Inventory', icon: '📦' },
+                { href: 'user', title: 'Users', icon: '👥' },
+                { href: 'analytics', title: 'Analytics', icon: '📈' },
+                { href: 'Settings', title: 'Settings', icon: '⚙️' },
+                { href: 'notifications', title: 'Notifications', icon: '🔔' }
             ],
             'admin': 'all' // Admin sees everything
         };
@@ -237,12 +225,14 @@ class AuthGuard {
         // Show only allowed navigation items
         if (allowedNavItems !== 'all') {
             allowedNavItems.forEach(item => {
-                const link = document.querySelector(`a[href*="${item.href}"]`);
-                if (link) {
+                // Match links by href containing the page name (case-insensitive)
+                // Also match by title attribute for links like Notifications that use href="#"
+                const links = document.querySelectorAll(`a[href*="${item.href}"], a[href*="${item.href.toLowerCase()}"], a[title="${item.title}"], a[title*="${item.title}"]`);
+                links.forEach(link => {
                     link.style.display = 'block';
                     link.style.visibility = 'visible';
                     link.style.opacity = '1';
-                }
+                });
             });
         } else {
             // Admin sees all navigation
@@ -253,8 +243,8 @@ class AuthGuard {
             });
         }
 
-        // Always show logout
-        const logoutLinks = document.querySelectorAll('a[href*="logout"], .logout-btn');
+        // Always show logout button
+        const logoutLinks = document.querySelectorAll('a[href*="logout"], .logout-btn, #logoutBtn, a[title="Logout"]');
         logoutLinks.forEach(link => {
             link.style.display = 'block';
             link.style.visibility = 'visible';
@@ -295,16 +285,16 @@ class AuthGuard {
     }
 
     redirectToAllowedPage(allowedPage) {
-        if (allowedPage && window.location.pathname !== `/${allowedPage}`) {
+        if (allowedPage && window.location.pathname !== `/html/${allowedPage}.html`) {
             console.log(`🔄 Redirecting to allowed page: ${allowedPage}`);
-            window.location.href = `/${allowedPage}`;
+            window.location.href = `/html/${allowedPage}.html`;
         }
     }
 
     redirectToLogin() {
         if (!window.location.pathname.includes('login') && !window.location.pathname.includes('signup')) {
             console.log('🔄 Redirecting to login');
-            window.location.href = '/login';
+            window.location.href = '/html/login.html';
         }
     }
 
