@@ -105,6 +105,65 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
+// Authentication middleware to verify user roles
+async function authenticateUser(req, res, next) {
+    try {
+        // Get the authorization header
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No valid authorization token provided' });
+        }
+        
+        const token = authHeader.split(' ')[1];
+        
+        // Verify the Firebase token
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        req.user = decodedToken;
+        
+        // Get user role from Firestore
+        const userDoc = await admin.firestore().collection('users').doc(decodedToken.uid).get();
+        
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            req.userRole = userData.role || 'user';
+        } else {
+            req.userRole = 'user';
+        }
+        
+        next();
+    } catch (error) {
+        console.error('Authentication error:', error);
+        return res.status(401).json({ error: 'Invalid token or authentication failed' });
+    }
+}
+
+// Role-based access control middleware
+function requireRole(allowedRoles) {
+    return (req, res, next) => {
+        if (!req.userRole) {
+            return res.status(403).json({ error: 'User role not found' });
+        }
+        
+        if (!allowedRoles.includes(req.userRole)) {
+            return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        
+        next();
+    };
+}
+
+// Middleware to check if user is authenticated (for HTML pages)
+function checkAuthForPage(req, res, next) {
+    // For HTML pages, we'll check authentication on the client side
+    // This middleware is mainly for logging and basic security
+    const userAgent = req.get('User-Agent') || '';
+    const referer = req.get('Referer') || '';
+    
+    console.log(`Page access attempt: ${req.path} from ${referer}`);
+    next();
+}
+
 // Basic middleware
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -2684,227 +2743,7 @@ const allowedRoutes = [
   '/favicon.ico'
 ];
 
-// Middleware to block all URLs except allowed ones
-app.use((req, res, next) => {
-  const requestedPath = req.path;
   
-  // Check if the requested path is in allowed routes
-  const isAllowed = allowedRoutes.some(route => {
-    if (route.endsWith('/')) {
-      return requestedPath === route || requestedPath.startsWith(route);
-    }
-    return requestedPath === route || requestedPath.startsWith(route + '/');
-  });
-  
-  // Special handling for dashboard - allow only if user is logged in
-  if (requestedPath === '/dashboard' || requestedPath === '/Dashboard.html') {
-    // Check if user is logged in via session or token
-    const isLoggedIn = req.session && req.session.userId;
-    
-    if (!isLoggedIn) {
-      console.log(`🚫 BLOCKED DASHBOARD ACCESS: ${req.method} ${requestedPath} from ${req.ip} - Not logged in`);
-      
-      res.status(401).send(`
-        <html>
-          <head>
-            <title>Login Required - Victoria's Bistro</title>
-            <style>
-              body { 
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                text-align: center; 
-                padding: 50px; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                margin: 0;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              }
-              .error-container {
-                background: white;
-                padding: 40px;
-                border-radius: 15px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                max-width: 600px;
-                margin: 0 auto;
-              }
-              .logo {
-                font-size: 32px;
-                font-weight: bold;
-                color: #8B4513;
-                margin-bottom: 20px;
-              }
-              .error-code { 
-                font-size: 120px; 
-                color: #e74c3c; 
-                margin: 0;
-                font-weight: bold;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-              }
-              .error-message { 
-                font-size: 28px; 
-                color: #2c3e50; 
-                margin: 20px 0;
-                font-weight: 600;
-              }
-              .error-description {
-                color: #7f8c8d;
-                margin: 20px 0;
-                font-size: 16px;
-                line-height: 1.6;
-              }
-              .login-button {
-                background: #3498db;
-                color: white;
-                padding: 15px 30px;
-                border: none;
-                border-radius: 8px;
-                font-size: 18px;
-                cursor: pointer;
-                text-decoration: none;
-                display: inline-block;
-                margin: 20px 0;
-                transition: background 0.3s;
-              }
-              .login-button:hover {
-                background: #2980b9;
-              }
-              .contact-info {
-                margin-top: 30px;
-                padding-top: 20px;
-                border-top: 1px solid #ecf0f1;
-                color: #95a5a6;
-                font-size: 14px;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="error-container">
-              <div class="logo">🍽️ Victoria's Bistro</div>
-              <h1 class="error-code">401</h1>
-              <h2 class="error-message">Login Required</h2>
-              <p class="error-description">
-                You must be logged in to access the dashboard.<br>
-                Please log in to view restaurant management data.
-              </p>
-              <a href="/login" class="login-button">Go to Login</a>
-              <div class="contact-info">
-                <strong>Victoria's Bistro</strong><br>
-                Restaurant Management System<br>
-                All rights reserved
-              </div>
-            </div>
-          </body>
-        </html>
-      `);
-      return;
-    }
-    
-    // User is logged in, allow access
-    console.log(`✅ DASHBOARD ACCESS GRANTED: ${req.method} ${requestedPath} from ${req.ip} - User logged in`);
-    next();
-    return;
-  }
-  
-  if (!isAllowed) {
-    console.log(`🚫 BLOCKED URL ACCESS: ${req.method} ${requestedPath} from ${req.ip}`);
-    
-    res.status(403).send(`
-      <html>
-        <head>
-          <title>Access Denied - Victoria's Bistro</title>
-          <style>
-            body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              text-align: center; 
-              padding: 50px; 
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              margin: 0;
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .error-container {
-              background: white;
-              padding: 40px;
-              border-radius: 15px;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-              max-width: 600px;
-              margin: 0 auto;
-            }
-            .logo {
-              font-size: 32px;
-              font-weight: bold;
-              color: #8B4513;
-              margin-bottom: 20px;
-            }
-            .error-code { 
-              font-size: 120px; 
-              color: #e74c3c; 
-              margin: 0;
-              font-weight: bold;
-              text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            }
-            .error-message { 
-              font-size: 28px; 
-              color: #2c3e50; 
-              margin: 20px 0;
-              font-weight: 600;
-            }
-            .error-description {
-              color: #7f8c8d;
-              margin: 20px 0;
-              font-size: 16px;
-              line-height: 1.6;
-            }
-            .blocked-url {
-              background: #f8f9fa;
-              padding: 10px;
-              border-radius: 5px;
-              font-family: monospace;
-              color: #e74c3c;
-              margin: 15px 0;
-            }
-            .contact-info {
-              margin-top: 30px;
-              padding-top: 20px;
-              border-top: 1px solid #ecf0f1;
-              color: #95a5a6;
-              font-size: 14px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="error-container">
-            <div class="logo">🍽️ Victoria's Bistro</div>
-            <h1 class="error-code">403</h1>
-            <h2 class="error-message">Access Denied</h2>
-            <p class="error-description">
-              This URL has been blocked for security reasons.<br>
-              Unauthorized access to this resource is not permitted.
-            </p>
-            <div class="blocked-url">
-              Blocked URL: ${requestedPath}
-            </div>
-            <p class="error-description">
-              If you believe this is an error, please contact the administrator.
-            </p>
-            <div class="contact-info">
-              <strong>Victoria's Bistro</strong><br>
-              Restaurant Management System<br>
-              All rights reserved
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
-    return;
-  }
-  
-  next();
-});
-
 /* ====== Local app routes (static pages) ====== */
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
@@ -2912,66 +2751,19 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'html', 'login.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'html', 'signup.html')));
 app.get('/otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'otp.html')));
-app.get('/pos', (req, res) => res.sendFile(path.join(__dirname, 'html', 'pos.html')));
-app.get('/payment', (req, res) => res.sendFile(path.join(__dirname, 'html', 'payment.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Dashboard.html')));
-app.get('/menu', (req, res) => res.sendFile(path.join(__dirname, 'html', 'menu.html')));
-app.get('/inventory', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Inventory.html')));
-app.get('/order', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Order.html')));
-app.get('/kitchen', (req, res) => {
-    console.log('🚫 Blocked access to /kitchen - URL blocked');
-    res.status(403).send(`
-        <html>
-            <head>
-                <title>Access Denied</title>
-                <style>
-                    body { 
-                        font-family: Arial, sans-serif; 
-                        text-align: center; 
-                        padding: 50px; 
-                        background-color: #f5f5f5;
-                    }
-                    .error-container {
-                        background: white;
-                        padding: 30px;
-                        border-radius: 10px;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                        max-width: 500px;
-                        margin: 0 auto;
-                    }
-                    .error-code { 
-                        font-size: 72px; 
-                        color: #e74c3c; 
-                        margin: 0;
-                    }
-                    .error-message { 
-                        font-size: 24px; 
-                        color: #2c3e50; 
-                        margin: 20px 0;
-                    }
-                    .error-description {
-                        color: #7f8c8d;
-                        margin: 20px 0;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="error-container">
-                    <h1 class="error-code">403</h1>
-                    <h2 class="error-message">Access Denied</h2>
-                    <p class="error-description">
-                        This URL has been blocked for security reasons.<br>
-                        Kitchen interface access is restricted.
-                    </p>
-                </div>
-            </body>
-        </html>
-    `);
+app.get('/pos', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'pos.html')));
+app.get('/payment', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'payment.html')));
+app.get('/dashboard', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Dashboard.html')));
+app.get('/menu', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'menu.html')));
+app.get('/inventory', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Inventory.html')));
+app.get('/order', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Order.html')));
+app.get('/kitchen', checkAuthForPage, (req, res) => {
+    res.sendFile(path.join(__dirname, 'html', 'kitchen.html'));
 });
-app.get('/analytics', (req, res) => res.sendFile(path.join(__dirname, 'html', 'analytics.html')));
-app.get('/settings', (req, res) => res.sendFile(path.join(__dirname, 'html', 'Settings.html')));
-app.get('/user', (req, res) => res.sendFile(path.join(__dirname, 'html', 'user.html')));
-app.get('/notifications', (req, res) => {
+app.get('/analytics', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'analytics.html')));
+app.get('/settings', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'Settings.html')));
+app.get('/user', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'user.html')));
+app.get('/notifications', checkAuthForPage, (req, res) => {
     // Check if user is kitchen user and block access
     // This is a basic check - in production you'd want proper authentication
     const userAgent = req.get('User-Agent') || '';
@@ -2985,9 +2777,9 @@ app.get('/notifications', (req, res) => {
     
     res.sendFile(path.join(__dirname, 'html', 'notifi.html'));
 });
-app.get('/receipt', (req, res) => res.sendFile(path.join(__dirname, 'html', 'receipt.html')));
-app.get('/addproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'addproduct.html')));
-app.get('/editproduct', (req, res) => res.sendFile(path.join(__dirname, 'html', 'editproduct.html')));
+app.get('/receipt', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'receipt.html')));
+app.get('/addproduct', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'addproduct.html')));
+app.get('/editproduct', checkAuthForPage, (req, res) => res.sendFile(path.join(__dirname, 'html', 'editproduct.html')));
 app.get('/forgot-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'forgot-password.html')));
 app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'html', 'reset-password.html')));
 app.get('/verify-password-reset-otp', (req, res) => res.sendFile(path.join(__dirname, 'html', 'verify-password-reset-otp.html')));
