@@ -26,7 +26,7 @@
     font-style: normal;
 }
 
-/* Password Input Container with Toggle */
+
 .password-input-container {
     position: relative;
     margin-bottom: 20px;
@@ -44,7 +44,7 @@
     padding-right: 50px;
 }
 
-/* Hide browser default password reveal buttons */
+
 .password-container .form-input::-ms-reveal,
 .password-container .form-input::-ms-clear {
     display: none;
@@ -69,7 +69,7 @@
     color: #8B2E20;
 }
 
-/* Password Strength Indicator */
+
 .password-strength {
     margin-bottom: 20px;
 }
@@ -96,7 +96,7 @@
     text-align: center;
 }
 
-/* OTP Input Container */
+
 .otp-input-container {
     display: flex;
     justify-content: center;
@@ -128,7 +128,7 @@
     background-color: #f8f8f8;
 }
 
-/* Back Button Styles */
+
 .back-button-container {
     position: fixed;
     top: 20px;
@@ -312,7 +312,7 @@ body {
     justify-content: center;
 }
 
-/* Single image container */
+
 .photo-item {
     width: 100%;
     height: 100%;

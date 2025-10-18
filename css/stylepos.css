@@ -349,7 +349,7 @@ body {
   margin-right: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
-  /* Add this for absolute positioning of child elements */
+  
 }
 
 
@@ -442,7 +442,7 @@ body {
   position: relative;
 }
 
-/* Fix: put quantity + name + price + remove button in one row */
+
 .item-info {
   display: flex;
   align-items: center;
@@ -521,7 +521,7 @@ body {
   color: #dc3545;
 }
 
-/* Styling for the plus/minus buttons row */
+
 .quantity-controls {
   display: flex;
   align-items: center;
@@ -576,7 +576,7 @@ body {
   position: relative;
 }
 
-/* Top row: quantity + name on left, remove button on right */
+
 .item-info {
   display: flex;
   align-items: center;
@@ -612,7 +612,7 @@ body {
   font-weight: 500;
 }
 
-/* edit order*/
+
 .quantity-controls .item-price {
   margin-top: 10px;
   margin-right: 110px;
@@ -638,7 +638,7 @@ body {
   color: #dc3545;
 }
 
-/* Bottom row: - quantity + */
+
 .quantity-controls {
   display: flex;
   align-items: center;
@@ -679,7 +679,7 @@ body {
 .quantity {
   font-weight: 600;
   color: #2c3e50;
-  /* match screenshot */
+  
   min-width: 20px;
   text-align: center;
   font-size: 0.9rem;
@@ -692,7 +692,7 @@ body {
   border-radius: 0;
   height: auto;
   margin-top: auto;
-  /* Push to bottom */
+  
   width: 100%;
 }
 
@@ -740,7 +740,7 @@ body {
   background: white;
   border-radius: 0 0 16px 16px;
   margin-top: 0;
-  /* Connect with summary above */
+  
 }
 
 .proceed-btn {
@@ -779,7 +779,7 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Add this to hide the up/down arrows on number input */
+
 .table-number input::-webkit-outer-spin-button,
 .table-number input::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -1324,7 +1324,7 @@ body {
   }
 }
 
-/* Table and Pax number styles */
+
 .table-number,
 .pax-number {
   padding: 0.5rem;
@@ -1413,7 +1413,7 @@ body {
   box-shadow: 0 0 0 0.2rem rgba(183, 110, 121, 0.25);
 }
 
-/* Mobile Warning Overlay */
+
 .mobile-warning-overlay {
   position: fixed;
   top: 0;
@@ -1495,7 +1495,7 @@ body {
   }
 }
 
-/* Ensure overlay is hidden outside tablet breakpoint */
+
 @media (max-width: 767px),
 (min-width: 1025px) {
   .order-panel-overlay {
@@ -1576,7 +1576,7 @@ body {
     transform: scale(1.1);
   }
 
-  /* Hide the original order panel on tablet */
+  
   .order-panel {
     display: none;
     position: fixed;
@@ -1592,13 +1592,13 @@ body {
     overflow: hidden;
   }
 
-  /* Show order panel when active */
+  
   .order-panel.active {
     display: flex;
     animation: slideInUp 0.3s ease-out;
   }
 
-  /* Overlay for modal-like behavior */
+  
   .order-panel-overlay {
     position: fixed;
     top: 0;
@@ -1621,19 +1621,19 @@ body {
     animation: fadeIn 0.3s ease-out;
   }
 
-  /* Hide gray background when overlay is active */
+  
   body:has(.order-panel-overlay.active) .main-content,
   body:has(.order-panel-overlay.active) .menu-panel {
     background: transparent !important;
   }
 
-  /* Alternative: Hide gray background when order panel is active */
+  
   body:has(.order-panel.active) .main-content,
   body:has(.order-panel.active) .menu-panel {
     background: transparent !important;
   }
 
-  /* Animation keyframes */
+  
   @keyframes slideInUp {
     from {
       opacity: 0;
@@ -1656,7 +1656,7 @@ body {
     }
   }
 
-  /* Adjust order panel content for modal */
+  
   .order-panel .order-items {
     max-height: 40vh;
     overflow-y: auto;

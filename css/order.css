@@ -692,7 +692,7 @@ input[type="date"] {
 
 #orderDetailsModal .modal-footer .btn.btn-secondary {
   background-color: #6c757d;
-  /* muted gray like your screenshot */
+  
   color: #fff;
   border: none;
 }
@@ -703,7 +703,7 @@ input[type="date"] {
 
 #orderDetailsModal .modal-footer .btn.btn-primary {
   background-color: #96392d;
-  /* Bootstrap primary blue (tweak as needed) */
+  
   color: #fff;
   border-color: #96392d;
 }
@@ -714,7 +714,7 @@ input[type="date"] {
 
 #orderDetailsModal .modal-footer .btn+.btn {
   margin-left: 12px;
-  /* gap between Close and Print */
+  
 }
 
 
@@ -723,7 +723,7 @@ input[type="date"] {
     margin-left: 0;
     padding: 1rem;
     background: #f5f6fa;
-    /* Light gray background */
+    
     min-height: 100vh;
   }
 
@@ -748,40 +748,40 @@ input[type="date"] {
     width: 100%;
   }
 
-  /* Hide first column (Order ID) on mobile/tablet */
+  
   .table th:first-child,
   .table td:first-child {
     display: none;
   }
 
-  /* Adjust remaining columns */
+  
   .table th:nth-child(2),
   .table td:nth-child(2) {
     width: 20%;
-    /* Customer column */
+    
   }
 
   .table th:nth-child(3),
   .table td:nth-child(3) {
     width: 40%;
-    /* Items column - more space */
+    
   }
 
   .table th:nth-child(4),
   .table td:nth-child(4) {
     width: 15%;
-    /* Total column */
+    
   }
 
   .table th:nth-child(5),
   .table td:nth-child(5) {
     width: 15%;
-    /* Status column */
+    
   }
 
   .table th:nth-child(6),
   .table td:nth-child(6) {
     width: 10%;
-    /* Actions column */
+    
   }
 }

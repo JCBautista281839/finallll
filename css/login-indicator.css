@@ -54,7 +54,8 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Hide existing connection */
+
 .connection-status, .user-auth {
     display: none !important;
 }
+

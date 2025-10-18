@@ -379,7 +379,7 @@
 }
 
 
-/* Hamburger Menu Button Styles */
+
 .hamburger-menu {
   display: none;
   flex-direction: column;
@@ -432,7 +432,7 @@
   visibility: hidden;
   transition: all 0.4s ease;
   display: none;
-  /* Hidden by default */
+  
   justify-content: center;
   align-items: center;
 }
@@ -454,7 +454,7 @@
   padding: 60px 20px;
 }
 
-/* Fullscreen Navigation */
+
 .fullscreen-nav {
   margin-bottom: 60px;
 }
@@ -509,7 +509,7 @@
   z-index: 2;
 }
 
-/* Fullscreen Actions */
+
 .fullscreen-actions {
   position: relative;
   margin-top: 60px;
@@ -572,7 +572,7 @@
   text-align: center;
 }
 
-/* Fullscreen User Dropdown */
+
 .fullscreen-user-dropdown {
   position: absolute;
   bottom: 100%;
@@ -816,14 +816,14 @@
   src: url('../../src/fonts/PinyonScript-Regular.ttf');
 }
 
-/* General Body Styles */
+
 body {
   background-color: #fff;
   font-family: 'PoppinsRegular';
   color: #333;
 }
 
-/* Main Content */
+
 .menu-page {
   margin-left: 20px;
   margin-top: 270px !important;
@@ -831,7 +831,7 @@ body {
   width: 2200px;
 }
 
-/* Categories - Exact POS Style */
+
 .menu-categories {
   position: fixed;
   top: 130px;
@@ -844,7 +844,7 @@ body {
 
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  /* smooth scroll on mobile */
+  
   scrollbar-width: none;
   white-space: nowrap;
 }
@@ -877,13 +877,13 @@ body {
   margin: 0;
   display: flex;
   flex-wrap: nowrap;
-  /* prevents wrapping */
+  
   gap: 0.5rem;
-  /* spacing between buttons */
+  
   position: relative;
 }
 
-/* Sliding underline element */
+
 .category-links-container::after {
   content: '';
   position: absolute;
@@ -932,27 +932,27 @@ body {
   display: none !important;
 }
 
-/* Menu Items */
+
 .menu-item {
   border: 1px solid #96392d;
   overflow: hidden;
   background-color: #fff;
   margin: 0;
-  /* remove extra gaps so grid aligns flush */
+  
 }
 
-/* enable absolute-positioned overlay inside the card */
+
 .menu-item {
   position: relative;
 }
 
-/* Make the menu grid use full width by default */
+
 .menu-items-grid {
   margin-left: 0;
   margin-right: 0;
 }
 
-/* Ensure columns don't add unexpected padding on large screens */
+
 .menu-page .col-lg-8,
 .menu-page .col-lg-9,
 .menu-page .col-lg-12 {
@@ -997,7 +997,7 @@ body {
 }
 
 .add-to-cart-btn {
-  /* overlay button - hidden by default */
+  
   position: absolute;
   top: 50%;
   left: 50%;
@@ -1030,7 +1030,7 @@ body {
 }
 
 
-/* Order Summary */
+
 .order-summary {
   background-color: #fdfdfd;
   border: 1px solid #f0f0f0;
@@ -1146,7 +1146,7 @@ body {
   display: block;
 }
 
-/* Shopping Bag Popup Styles */
+
 .shopping-bag-popup {
   display: none;
   position: fixed;
@@ -1333,13 +1333,13 @@ body {
 }
 
 
-/* Shopping Bag Counter Styles */
+
 .bag-container {
   position: relative;
   display: inline-block;
 }
 
-/* Ensure cart icon link has relative positioning for badge */
+
 #shopping-bag-btn {
   position: relative;
   display: inline-flex;
@@ -1373,7 +1373,7 @@ body {
   display: none;
 }
 
-/* Animation for counter updates */
+
 .item-counter {
   transition: all 0.3s ease;
 }
@@ -1397,7 +1397,7 @@ body {
   }
 }
 
-/* Empty cart styles */
+
 .empty-cart {
   text-align: center;
   padding: 20px;
@@ -1409,7 +1409,7 @@ body {
   font-style: italic;
 }
 
-/* Cart Control Styles */
+
 .popup-content .order-item {
   display: flex;
   flex-direction: column;
@@ -1536,7 +1536,7 @@ body {
   transform: scale(0.95);
 }
 
-/* Custom Order Summary Styles */
+
 .location-icon {
   width: 20px;
   color: #8B2E20;
@@ -1698,14 +1698,14 @@ body {
   src: url('../../src/fonts/PinyonScript-Regular.ttf');
 }
 
-/* General Body Styles */
+
 body {
   background-color: #fff;
   font-family: 'PoppinsRegular';
   color: #333;
 }
 
-/* Header */
+
 .menu-header {
   padding: 20px 0;
   background-color: #ffffff;
@@ -1714,7 +1714,7 @@ body {
   margin-top: 0;
 }
 
-/* Match index.html header structure */
+
 .header {
   position: fixed;
   top: 0;
@@ -1871,7 +1871,7 @@ body {
   color: #333;
 }
 
-/* Main Content */
+
 .menu-page {
   margin-left: 20px;
   margin-top: 370px !important;
@@ -1879,7 +1879,7 @@ body {
   width: 2200px;
 }
 
-/* Categories - Exact POS Style */
+
 .menu-categories {
   position: fixed;
   top: 130px;
@@ -1892,7 +1892,7 @@ body {
 
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  /* smooth scroll on mobile */
+  
   scrollbar-width: none;
   white-space: nowrap;
 }
@@ -1924,9 +1924,9 @@ body {
 .category-links-container {
   display: flex;
   flex-wrap: nowrap;
-  /* prevents wrapping */
+  
   gap: 0.5rem;
-  /* spacing between buttons */
+  
 }
 
 .category-link {
@@ -1958,27 +1958,27 @@ body {
   display: none !important;
 }
 
-/* Menu Items */
+
 .menu-item {
   border: 1px solid #96392d;
   overflow: hidden;
   background-color: #fff;
   margin: 0;
-  /* remove extra gaps so grid aligns flush */
+  
 }
 
-/* enable absolute-positioned overlay inside the card */
+
 .menu-item {
   position: relative;
 }
 
-/* Make the menu grid use full width by default */
+
 .menu-items-grid {
   margin-left: 0;
   margin-right: 0;
 }
 
-/* Ensure columns don't add unexpected padding on large screens */
+
 .menu-page .col-lg-8,
 .menu-page .col-lg-9,
 .menu-page .col-lg-12 {
@@ -2023,7 +2023,7 @@ body {
 }
 
 .add-to-cart-btn {
-  /* overlay button - hidden by default */
+  
   position: absolute;
   top: 50%;
   left: 50%;
@@ -2055,7 +2055,7 @@ body {
   pointer-events: auto;
 }
 
-/* Touch devices: show a small button in bottom-right so it doesn't block the image */
+
 @media (hover: none) and (pointer: coarse) {
   .add-to-cart-btn {
     width: 44px;
@@ -2071,7 +2071,7 @@ body {
   }
 }
 
-/* Order Summary */
+
 .order-summary {
   background-color: #fdfdfd;
   border: 1px solid #f0f0f0;
@@ -2177,7 +2177,7 @@ body {
   margin-top: 25px;
 }
 
-/* Responsive - Matching POS */
+
 @media (max-width: 991px) {
   .header-right-content {
     justify-content: flex-end;
@@ -2216,7 +2216,7 @@ body {
   display: block;
 }
 
-/* Shopping Bag Popup Styles */
+
 .shopping-bag-popup {
   display: none;
   position: fixed;
@@ -2402,7 +2402,7 @@ body {
   transform: translateY(1px);
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
   .popup-content {
     width: 100%;
@@ -2410,7 +2410,7 @@ body {
   }
 }
 
-/* Shopping Bag Counter Styles */
+
 .bag-container {
   position: relative;
   display: inline-block;
@@ -2442,7 +2442,7 @@ body {
   display: none;
 }
 
-/* Animation for counter updates */
+
 .item-counter {
   transition: all 0.3s ease;
 }
@@ -2466,7 +2466,7 @@ body {
   }
 }
 
-/* Empty cart styles */
+
 .empty-cart {
   text-align: center;
   padding: 20px;
@@ -2478,7 +2478,7 @@ body {
   font-style: italic;
 }
 
-/* Cart Control Styles */
+
 .popup-content .order-item {
   display: flex;
   flex-direction: column;
@@ -2605,7 +2605,7 @@ body {
   transform: scale(0.95);
 }
 
-/* Custom Order Summary Styles */
+
 .location-icon {
   width: 20px;
   color: #8B2E20;
@@ -2767,14 +2767,14 @@ body {
   src: url('../../src/fonts/PinyonScript-Regular.ttf');
 }
 
-/* General Body Styles */
+
 body {
   background-color: #fff;
   font-family: 'PoppinsRegular';
   color: #333;
 }
 
-/* Header */
+
 .menu-header {
   padding: 20px 0;
   background-color: #ffffff;
@@ -2785,7 +2785,7 @@ body {
   margin-bottom: 20px;
 }
 
-/* Match index.html header structure */
+
 .header {
   position: fixed;
   top: 0;
@@ -2943,7 +2943,7 @@ body {
   color: #333;
 }
 
-/* Main Content */
+
 .menu-page {
   margin-left: 20px;
   margin-top: 270px !important;
@@ -2951,7 +2951,7 @@ body {
   width: 2200px;
 }
 
-/* Categories - Exact POS Style */
+
 .menu-categories {
   position: fixed;
   top: 130px;
@@ -2963,7 +2963,7 @@ body {
   background-color: #ffffff;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  /* smooth scroll on mobile */
+  
   scrollbar-width: none;
   white-space: nowrap;
 }
@@ -2995,9 +2995,9 @@ body {
 .category-links-container {
   display: flex;
   flex-wrap: nowrap;
-  /* prevents wrapping */
+  
   gap: 0.5rem;
-  /* spacing between buttons */
+  
 }
 
 .category-link {
@@ -3029,27 +3029,27 @@ body {
   display: none !important;
 }
 
-/* Menu Items */
+
 .menu-item {
   border: 1px solid #96392d;
   overflow: hidden;
   background-color: #fff;
   margin: 0;
-  /* remove extra gaps so grid aligns flush */
+  
 }
 
-/* enable absolute-positioned overlay inside the card */
+
 .menu-item {
   position: relative;
 }
 
-/* Make the menu grid use full width by default */
+
 .menu-items-grid {
   margin-left: 0;
   margin-right: 0;
 }
 
-/* Ensure columns don't add unexpected padding on large screens */
+
 .menu-page .col-lg-8,
 .menu-page .col-lg-9,
 .menu-page .col-lg-12 {
@@ -3094,7 +3094,7 @@ body {
 }
 
 .add-to-cart-btn {
-  /* overlay button - hidden by default */
+  
   position: absolute;
   top: 50%;
   left: 50%;
@@ -3126,7 +3126,7 @@ body {
   pointer-events: auto;
 }
 
-/* Touch devices: show a small button in bottom-right so it doesn't block the image */
+
 @media (hover: none) and (pointer: coarse) {
   .add-to-cart-btn {
     width: 44px;
@@ -3142,7 +3142,7 @@ body {
   }
 }
 
-/* Order Summary */
+
 .order-summary {
   background-color: #fdfdfd;
   border: 1px solid #f0f0f0;
@@ -3248,7 +3248,7 @@ body {
   margin-top: 25px;
 }
 
-/* Responsive - Matching POS */
+
 @media (max-width: 991px) {
   .header-right-content {
     justify-content: flex-end;
@@ -3287,7 +3287,7 @@ body {
   display: block;
 }
 
-/* Shopping Bag Popup Styles */
+
 .shopping-bag-popup {
   display: none;
   position: fixed;
@@ -3473,7 +3473,7 @@ body {
   transform: translateY(1px);
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
   .popup-content {
     width: 100%;
@@ -3481,7 +3481,7 @@ body {
   }
 }
 
-/* Shopping Bag Counter Styles */
+
 .bag-container {
   position: relative;
   display: inline-block;
@@ -3513,7 +3513,7 @@ body {
   display: none;
 }
 
-/* Animation for counter updates */
+
 .item-counter {
   transition: all 0.3s ease;
 }
@@ -3537,7 +3537,7 @@ body {
   }
 }
 
-/* Empty cart styles */
+
 .empty-cart {
   text-align: center;
   padding: 20px;
@@ -3549,7 +3549,7 @@ body {
   font-style: italic;
 }
 
-/* Cart Control Styles */
+
 .popup-content .order-item {
   display: flex;
   flex-direction: column;

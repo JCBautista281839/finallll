@@ -1,6 +1,6 @@
-/* OMR Testing System - Custom Styles */
 
-/* Root Variables */
+
+
 :root {
     --primary-color: #007bff;
     --success-color: #28a745;
@@ -14,7 +14,7 @@
     --transition: all 0.3s ease;
 }
 
-/* Global Styles */
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -23,7 +23,7 @@ body {
     padding: 0;
 }
 
-/* Header Styles */
+
 .header-section {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -66,7 +66,7 @@ body {
     100% { opacity: 1; }
 }
 
-/* Card Styles */
+
 .card {
     border: none;
     border-radius: var(--border-radius);
@@ -82,7 +82,7 @@ body {
     padding: 2rem;
 }
 
-/* Upload Area Styles */
+
 .upload-area {
     border: 3px dashed var(--primary-color);
     border-radius: var(--border-radius);
@@ -136,7 +136,7 @@ body {
     margin-bottom: 1.5rem;
 }
 
-/* Upload Preview Styles */
+
 .upload-preview {
     text-align: center;
 }
@@ -152,7 +152,7 @@ body {
     margin-top: 1rem;
 }
 
-/* Function Cards */
+
 .function-card {
     text-align: center;
     padding: 2rem 1rem;
@@ -171,7 +171,7 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-/* Full Scan Upload Area */
+
 .full-scan-upload-area {
     border: 2px dashed var(--warning-color);
     border-radius: var(--border-radius);
@@ -206,7 +206,7 @@ body {
     font-size: 0.9rem;
 }
 
-/* Full Scan Preview */
+
 .full-scan-preview {
     text-align: center;
     margin: 1rem 0;
@@ -243,7 +243,7 @@ body {
     flex-grow: 1;
 }
 
-/* Results Section */
+
 #resultsContent {
     min-height: 200px;
 }
@@ -285,7 +285,7 @@ body {
     font-size: 0.9rem;
 }
 
-/* Debug Console */
+
 .debug-console {
     background: #1e1e1e;
     color: #ffffff;
@@ -345,7 +345,7 @@ body {
     color: #2196f3;
 }
 
-/* Footer */
+
 .footer-section {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -360,7 +360,7 @@ body {
     font-size: 0.9rem;
 }
 
-/* Loading States */
+
 .loading {
     opacity: 0.6;
     pointer-events: none;
@@ -391,7 +391,7 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
     .header-title {
         font-size: 2rem;
@@ -433,7 +433,7 @@ body {
     }
 }
 
-/* Animation Classes */
+
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
@@ -452,13 +452,13 @@ body {
     to { transform: translateX(0); }
 }
 
-/* Status Colors */
+
 .status-dot.ready { background-color: var(--success-color); }
 .status-dot.processing { background-color: var(--warning-color); }
 .status-dot.error { background-color: var(--danger-color); }
 .status-dot.offline { background-color: #6c757d; }
 
-/* Custom Scrollbar */
+
 .console-content::-webkit-scrollbar {
     width: 8px;
 }
@@ -475,3 +475,4 @@ body {
 .console-content::-webkit-scrollbar-thumb:hover {
     background: #777;
 }
+

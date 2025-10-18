@@ -267,7 +267,7 @@ aside#sidebar.sidebar.d-flex,
     background: transparent;
 }
 
-/* Firefox */
+
 .items-list {
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
@@ -305,7 +305,7 @@ aside#sidebar.sidebar.d-flex,
 
 
 
-/* Order Card Header (matches design) */
+
 .order-card-header {
     border-radius: 16px 16px 0 0;
     background: #fff;
@@ -342,7 +342,7 @@ aside#sidebar.sidebar.d-flex,
     margin-top: 200px;
 }
 
-/* Main layout */
+
 .main-content {
     margin-left: 140px;
     padding: 20px;
@@ -352,29 +352,29 @@ aside#sidebar.sidebar.d-flex,
     position: relative;
 }
 
-/* Kitchen content layout */
+
 .kitchen-content {
     display: flex;
     flex-direction: column;
     gap: 20px;
     padding: 20px;
     margin-left: 0;
-    /* Removed extra margin since main-content already has margin-left */
+    
 }
 
-/* Orders container - 4 column grid */
+
 .orders-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     padding: 20px;
     margin-left: 0;
-    /* Removed extra margin since main-content already has margin-left */
+    
     max-width: calc(100vw - 180px);
-    /* Adjusted for sidebar width */
+    
 }
 
-/* Order card */
+
 .order-card {
     font-family: 'PoppinsRegular', sans-serif;
     background: white;
@@ -405,7 +405,7 @@ aside#sidebar.sidebar.d-flex,
     position: relative;
 }
 
-/* Order header */
+
 .order-header {
     margin-bottom: 16px;
 }
@@ -427,7 +427,7 @@ aside#sidebar.sidebar.d-flex,
     font-weight: 500;
 }
 
-/* Order items */
+
 
 .items-header {
     display: flex;
@@ -482,7 +482,7 @@ aside#sidebar.sidebar.d-flex,
     margin-bottom: 0;
 }
 
-/* New item highlight inside order cards */
+
 .item-new {
     border-left: 4px solid #d93025;
     padding-left: 8px;
@@ -505,7 +505,7 @@ aside#sidebar.sidebar.d-flex,
     }
 }
 
-/* Order actions */
+
 .order-actions {
     margin-top: 16px;
     text-align: center;
@@ -521,7 +521,7 @@ aside#sidebar.sidebar.d-flex,
     pointer-events: none;
 }
 
-/* Order ready button */
+
 .order-ready-btn {
     background: #00c46c;
     border: none;
@@ -835,7 +835,7 @@ aside#sidebar.sidebar.d-flex,
 }
 
 
-/* Responsive design for different screen sizes */
+
 @media (max-width: 1400px) {
     .orders-container {
         grid-template-columns: repeat(3, 1fr);
@@ -927,7 +927,7 @@ aside#sidebar.sidebar.d-flex,
     }
 }
 
-/* CRITICAL: Override ALL media queries from nav.css to keep sidebar visible */
+
 @media (max-width: 1400px) {
     body aside#sidebar,
     body .sidebar,

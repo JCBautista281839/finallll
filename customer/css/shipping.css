@@ -5,7 +5,7 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* Header Styles - Matching Menu Design */
+
 .menu-header {
   display: flex;
   align-items: center;
@@ -37,22 +37,22 @@
   font-size: 20px;
 }
 
-/* Removed navigation styles - keeping only back button */
 
-/* Removed header actions and search bar styles - keeping only back button */
 
-/* Removed user icon styles - keeping only back button */
 
-/* Removed bag icon and hover styles - keeping only back button */
 
-/* Removed header icons styles - keeping only back button */
+
+
+
+
+
 
 .icon-link {
   font-size: 20px;
   color: #333;
 }
 
-/* Shopping Bag Counter Styles */
+
 .bag-container {
   position: relative;
 }
@@ -85,7 +85,7 @@
   opacity: 0;
 }
 
-/* Container */
+
 .container {
   padding: 20px 50px;
 }
@@ -187,7 +187,7 @@ h3 {
 
 .order-summary {
   width: 450px;
-  /* Match the width of details.html */
+  
   background: #f9f9f9;
   padding: 20px;
   border-radius: 20px;
@@ -283,7 +283,7 @@ hr {
   background: #5f2318;
 }
 
-/* Payment Information Section */
+
 .payment-title {
   margin-top: 40px;
   color: #8b1d1d;
@@ -324,7 +324,7 @@ hr {
   font-size: 16px;
 }
 
-/* Payment option disabled state */
+
 .payment-option.disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -357,19 +357,19 @@ hr {
   gap: 5px;
 }
 
-/* Order Form Sidebar */
+
 .order-form {
   width: 450px;
-  /* keep the same width */
+  
   background: #f9f9f9;
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
-  /* prevent shrinking */
+  
 }
 
-/* Align main content + order form */
+
 .page-container {
   display: flex;
   justify-content: space-between;
@@ -377,7 +377,7 @@ hr {
   gap: 20px;
 }
 
-/* Order Confirmation Modal Styles */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -391,7 +391,7 @@ hr {
   z-index: 1000;
 }
 
-/* Ensure all modal elements have white background */
+
 .modal-overlay * {
   background-color: transparent;
 }
@@ -536,7 +536,7 @@ hr {
   box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 600px) {
   .modal-content {
     margin: 20px;
@@ -557,7 +557,7 @@ hr {
   }
 }
 
-/* Payment Modal Styles */
+
 .payment-modal {
   max-width: 600px;
   width: 95%;
@@ -681,7 +681,7 @@ hr {
   font-style: italic;
 }
 
-/* File Upload Styles */
+
 .file-upload-area {
   position: relative;
   border: 2px dashed #e0e0e0;
@@ -823,7 +823,7 @@ hr {
   opacity: 0.6;
 }
 
-/* Upload loading state */
+
 .file-upload-area.uploading {
   border-color: #007bff;
   background: #f0f8ff;
@@ -862,7 +862,7 @@ hr {
   }
 }
 
-/* Upload success state */
+
 .file-upload-area.success {
   border-color: #28a745;
   background: #f8fff9;
@@ -873,7 +873,7 @@ hr {
   font-weight: 500;
 }
 
-/* Mobile Responsiveness for Payment Modal */
+
 @media (max-width: 768px) {
   .payment-modal {
     width: 95%;
@@ -895,7 +895,7 @@ hr {
   }
 }
 
-/* Order Instructions Modal Styles */
+
 .instructions-modal {
   max-width: 600px;
   width: 95%;

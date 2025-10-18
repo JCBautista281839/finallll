@@ -1,7 +1,4 @@
-/**
- * OMR Scanner Integration CSS
- * Styling for the OMR scanner modal and interface elements
- */
+
 
 
 @font-face {
@@ -39,7 +36,7 @@
     font-style: normal;
 }
 
-/* OMR Scanner Button */
+
 #omrScannerBtn {
     width: 15%;
     padding: 10px 15px;
@@ -63,7 +60,7 @@
     font-size: 1.2rem;
 }
 
-/* Upload Area */
+
 .omr-upload-area {
     font-family: 'PoppinsRegular', sans-serif;
     border: 2px dashed #6c757d;
@@ -86,7 +83,7 @@
     transform: scale(1.02);
 }
 
-/* Processing Area */
+
 .omr-processing {
     padding: 40px 20px;
     text-align: center;
@@ -97,7 +94,7 @@
     height: 3rem;
 }
 
-/* Results Area */
+
 .omr-results {
     padding: 20px 0;
 }
@@ -132,13 +129,13 @@
     font-family: 'PoppinsRegular', sans-serif;
 }
 
-/* Error Area */
+
 .omr-error {
     padding: 20px;
     text-align: center;
 }
 
-/* Modal Customization */
+
 #omrScannerModal .modal-content {
     border-radius: 12px;
     border: none;
@@ -170,7 +167,7 @@
     margin-right: 8px;
 }
 
-/* Scrollbar Styling */
+
 .omr-items-list::-webkit-scrollbar {
     width: 8px;
 }
@@ -189,7 +186,7 @@
     background: #555;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
     #omrScannerModal .modal-dialog {
         margin: 10px;
@@ -204,7 +201,7 @@
     }
 }
 
-/* Animation for successful scan */
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -221,13 +218,13 @@
     animation: fadeInUp 0.5s ease-out;
 }
 
-/* Badge styling */
+
 .omr-item-entry .badge {
     font-size: 0.75rem;
     padding: 0.35em 0.65em;
 }
 
-/* Button styling */
+
 .omr-results .btn {
     margin: 5px;
     padding: 10px 20px;
@@ -241,7 +238,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Alert styling */
+
 .omr-results .alert-success {
     border-left: 4px solid #28a745;
     background-color: #d4edda;

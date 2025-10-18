@@ -152,7 +152,7 @@ input:focus~.input-underline {
     text-decoration: underline;
 }
 
-/* add to css/login.css or css/notifications.css */
+
 .toast-notification {
     position: fixed;
     top: 20px;

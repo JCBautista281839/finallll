@@ -38,7 +38,7 @@
   src: url('src/fonts/PinyonScript-Regular.ttf');
 }
 
-/* Reset and base styles */
+
 * {
   margin: 0;
   padding: 0;
@@ -55,15 +55,15 @@ body {
   transition: none;
 }
 
-/* Simple Slide Transition Styles */
-/* Keep header fixed during transitions */
+
+
 .header {
   position: fixed !important;
   z-index: 1001;
   transition: none !important;
 }
 
-/* Ensure page content is visible during slide transitions */
+
 body.slide-out-left,
 body.slide-out-right,
 main.slide-out-left,
@@ -73,12 +73,12 @@ main.slide-out-right,
   background-color: transparent !important;
 }
 
-/* Main content container for sliding */
+
 .main-content,
 .menu-page {
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   margin-top: 80px;
-  /* Account for fixed header */
+  
   background-color: transparent;
   overflow: hidden;
 }
@@ -93,7 +93,7 @@ main.slide-out-right,
   background-color: transparent !important;
 }
 
-/* Header Styles */
+
 .header {
   position: fixed;
   top: 0;
@@ -143,7 +143,7 @@ main.slide-out-right,
   transition: .3s;
 }
 
-/* Active nav link (current page) */
+
 .nav-link.active {
   color: #96392d !important;
 }
@@ -184,7 +184,7 @@ main.slide-out-right,
   transition: .3s;
 }
 
-/* Search Dropdown Styles */
+
 .search-dropdown {
   position: absolute;
   top: 100%;
@@ -331,7 +331,7 @@ main.slide-out-right,
 }
 
 
-/* Hamburger Menu Button Styles */
+
 .hamburger-menu {
   display: none;
   flex-direction: column;
@@ -369,7 +369,7 @@ main.slide-out-right,
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Fullscreen Menu Overlay - Only show on mobile */
+
 .fullscreen-menu-overlay {
   position: fixed;
   top: 0;
@@ -385,7 +385,7 @@ main.slide-out-right,
   visibility: hidden;
   transition: all 0.4s ease;
   display: none;
-  /* Hidden by default */
+  
   justify-content: center;
   align-items: center;
 }
@@ -407,7 +407,7 @@ main.slide-out-right,
   padding: 60px 20px;
 }
 
-/* Fullscreen Navigation */
+
 .fullscreen-nav {
   margin-bottom: 60px;
 }
@@ -462,7 +462,7 @@ main.slide-out-right,
   z-index: 2;
 }
 
-/* Fullscreen Actions */
+
 .fullscreen-actions {
   position: relative;
   margin-top: 60px;
@@ -525,7 +525,7 @@ main.slide-out-right,
   text-align: center;
 }
 
-/* Fullscreen User Dropdown */
+
 .fullscreen-user-dropdown {
   position: absolute;
   bottom: 100%;
@@ -613,7 +613,7 @@ main.slide-out-right,
   color: #6B1E10;
 }
 
-/* Main Content Styles */
+
 .main-content {
   padding: 180px 0 60px 0;
   min-height: calc(100vh - 200px);
@@ -703,7 +703,7 @@ main.slide-out-right,
   box-shadow: 0 0 30px rgba(139, 46, 32, 0.185), 0 8px 25px rgba(139, 46, 32, 0.4);
 }
 
-/* Mobile: Show map overlay on click instead of hover */
+
 @media (max-width: 768px) {
   .location-container:hover .map-overlay {
     opacity: 0;
@@ -778,7 +778,7 @@ main.slide-out-right,
   margin-left: -10px !important;
 }
 
-/* Signature dishes */
+
 .signature-section {
   padding: 40px 0 60px;
   margin-top: -90px !important;
@@ -802,7 +802,7 @@ main.slide-out-right,
   text-align: center;
 }
 
-/* Hover text overlay for dish images */
+
 .dish-hover-text {
   position: absolute;
   top: 50%;
@@ -907,7 +907,7 @@ main.slide-out-right,
   color: white;
 }
 
-/* Right Content Styles */
+
 .content-right {
   display: flex;
   justify-content: center;
@@ -956,7 +956,7 @@ main.slide-out-right,
 
 
 
-/* Slide Indicators */
+
 .slide-indicators {
   position: absolute;
   bottom: 20px;
@@ -999,7 +999,7 @@ main.slide-out-right,
   z-index: 10;
 }
 
-/* Star Rating Styles */
+
 .rating-stars-input {
   display: flex;
   gap: 8px;
@@ -1015,7 +1015,7 @@ main.slide-out-right,
   background-repeat: no-repeat;
   cursor: pointer;
   transition: filter 0.2s, transform 0.1s;
-  /* filter removed to show PNG color as-is */
+  
   display: inline-block;
 }
 
@@ -1029,26 +1029,26 @@ main.slide-out-right,
   transform: scale(1.08);
 }
 
-/* Scroll animations */
+
 .in-view {
   opacity: 1;
   transform: translateX(0);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-/* When coming from bottom, reset translateY as well */
+
 .in-view.scroll-up {
   transform: translateY(0);
 }
 
-/* Exit animations */
+
 .exit-right {
   transform: translateX(100%);
   opacity: 0;
   transition: transform 60000ms ease, opacity 6000ms ease;
 }
 
-/* Dine In & Alfresco Section */
+
 .dine-option {
   position: relative;
   height: 50vh;
@@ -1111,7 +1111,7 @@ main.slide-out-right,
   color: #8B2E20;
 }
 
-/* Customer Reviews & Feedback Section Styles */
+
 .customer-reviews-section {
   background: #ffffff;
   padding: 80px 0 0 0;
@@ -1276,7 +1276,7 @@ main.slide-out-right,
 }
 
 
-/* PNG star styling for reviews */
+
 .review-stars .star-filled,
 .review-stars .star-empty {
   display: inline-block;
@@ -1296,7 +1296,7 @@ main.slide-out-right,
   background-image: url('src/Icons/star.png');
 }
 
-/* Ensure consistent star alignment */
+
 .review-stars .star-filled:last-child,
 .review-stars .star-empty:last-child {
   margin-right: 0;
@@ -1367,7 +1367,7 @@ main.slide-out-right,
   text-align: left;
   margin-bottom: 0;
   line-height: 1;
-  /* keep title compact */
+  
 }
 
 .rating-form-title-stars-row .rating-stars-input {
@@ -1376,7 +1376,7 @@ main.slide-out-right,
   margin-top: 0;
   display: inline-flex;
   align-items: center;
-  /* vertically center the star icons */
+  
   position: static;
   right: auto;
   top: auto;
@@ -1396,7 +1396,7 @@ main.slide-out-right,
 .star-input {
   cursor: pointer;
   width: 28px;
-  /* ensure consistent size */
+  
   height: 28px;
 }
 
@@ -1476,12 +1476,12 @@ main.slide-out-right,
 
 
 
-/* Laptops and smaller desktops (1200px - 1600px) */
 
 
 
 
-/* Footer Styles */
+
+
 .footer {
   background-color: #faf9f9;
   color: #000000;
@@ -1489,7 +1489,7 @@ main.slide-out-right,
   font-family: 'PoppinsRegular', sans-serif;
 }
 
-/* Ensure star images show in the feedback form's rating stars */
+
 .rating-stars-input .star-input {
   display: inline-block;
   width: 20px;
@@ -1510,7 +1510,7 @@ main.slide-out-right,
   background-image: url('src/Icons/star.png');
 }
 
-/* Star icon classes for review and feedback section */
+
 .star-filled,
 .star-empty,
 .star-input {
@@ -1522,7 +1522,7 @@ main.slide-out-right,
   background-position: center;
   vertical-align: middle;
   font-size: 0;
-  /* hide unicode */
+  
   border: none;
   margin-right: 2px;
 }
@@ -1640,7 +1640,7 @@ main.slide-out-right,
   font-size: 12px;
 }
 
-/* Styles for disabled form elements in sign-in state */
+
 .rating-form .rating-category-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -1677,7 +1677,7 @@ main.slide-out-right,
   transform: translateY(0);
 }
 
-/* User Dropdown Styles */
+
 .user-profile-container {
   position: relative;
   display: flex;
@@ -1753,7 +1753,7 @@ main.slide-out-right,
   color: #dc3545;
 }
 
-/* Anonymous toggle styling */
+
 .anonymous-toggle {
   margin: 12px 0;
   display: flex;
@@ -1804,7 +1804,7 @@ main.slide-out-right,
   border-color: #760000;
 }
 
-/* Enhanced category button styling */
+
 .rating-category-btn {
   transition: all 0.2s ease;
   cursor: pointer;
@@ -1829,7 +1829,7 @@ main.slide-out-right,
   transform: translateY(0);
 }
 
-/* Add a subtle ripple effect */
+
 .rating-category-btn::before {
   content: '';
   position: absolute;
@@ -1874,13 +1874,9 @@ main.slide-out-right,
 }
 
 
-/* ==============================================
-   RESPONSIVE DESIGN - MOBILE FIRST APPROACH
-   ============================================== */
 
-/* ==============================================
-   MOBILE DEVICES (max-width: 600px)
-   ============================================== */
+
+
 @media (max-width: 600px) {
 
   .logo-img {
@@ -1936,7 +1932,7 @@ main.slide-out-right,
     margin-right: 0;
   }
 
-  /* Mobile typography adjustments to match the image */
+  
   .filipino {
     font-size: 90px !important;
     margin-left: 20px !important;
@@ -1976,7 +1972,7 @@ main.slide-out-right,
     margin-top: -15px !important;
   }
 
-  /* Food slideshow mobile optimization - FIXED RIGHT SIDE */
+  
   .food-slideshow-container {
     margin-top: 20px;
     padding: 0;
@@ -2023,7 +2019,7 @@ main.slide-out-right,
     height: 10px;
   }
 
-  /* Rating badge mobile positioning - FIXED */
+  
   .rating-badge {
     position: absolute !important;
     bottom: 15px !important;
@@ -2057,7 +2053,7 @@ main.slide-out-right,
     text-overflow: clip !important;
   }
 
-  /* Ensure rating badge is always visible on mobile */
+  
   .food-image-container .rating-badge {
     display: flex !important;
     visibility: visible !important;
@@ -2085,7 +2081,7 @@ main.slide-out-right,
     font-size: 14px !important;
   }
 
-  /* Better spacing for mobile content - OVERRIDE TABLET CHANGES */
+  
   .content-left {
     padding: 20px 15px !important;
     margin-top: 0 !important;
@@ -2099,7 +2095,7 @@ main.slide-out-right,
     padding: 20px 0 !important;
   }
 
-  /* Mobile container adjustments - FIXED RIGHT SIDE */
+  
   .container-fluid {
     padding: 0 !important;
     margin: 0 !important;
@@ -2122,7 +2118,7 @@ main.slide-out-right,
     max-width: 100%;
   }
 
-  /* Ensure right side content is properly contained on mobile */
+  
   .scroll-right {
     overflow: hidden;
     width: 100%;
@@ -2139,7 +2135,7 @@ main.slide-out-right,
     margin: 0 !important;
   }
 
-  /* Mobile-specific image container - FIXED */
+  
   .food-image-container {
     position: relative;
     width: 100%;
@@ -2150,19 +2146,19 @@ main.slide-out-right,
     margin: 0;
   }
 
-  /* Additional mobile right side fixes */
+  
   .col-md-6:last-child {
     padding-right: 0 !important;
     margin-right: 0 !important;
     overflow: hidden;
   }
 
-  /* Ensure no horizontal scroll on mobile */
+  
   body {
     overflow-x: hidden !important;
   }
 
-  /* Fix any potential overflow from Bootstrap grid */
+  
   .container-fluid .row .col-md-6 {
     flex: 0 0 50%;
     max-width: 50%;
@@ -2180,7 +2176,7 @@ main.slide-out-right,
     margin-top: 150px !important;
   }
 
-  /* Mobile feedback form adjustments */
+  
   .rating-form-title-stars-row {
     flex-direction: column !important;
     align-items: center !important;
@@ -2194,7 +2190,7 @@ main.slide-out-right,
     display: flex !important;
   }
 
-  /* Reset positioning for mobile */
+  
   .customer-reviews-quote-bg {
     margin-left: 10px !important;
     margin-top: 0 !important;
@@ -2277,7 +2273,7 @@ main.slide-out-right,
     background-image: url('src/Icons/star.png');
   }
 
-  /* Ensure consistent star alignment */
+  
   .review-stars .star-filled:last-child,
   .review-stars .star-empty:last-child {
     margin-right: 0;
@@ -2297,23 +2293,23 @@ main.slide-out-right,
     font-size: 10px !important;
   }
 
-  /* Show hamburger menu on mobile */
+  
   .hamburger-menu {
     display: flex;
     margin-right: 1rem;
   }
 
-  /* Show fullscreen menu overlay on mobile */
+  
   .fullscreen-menu-overlay {
     display: flex;
   }
 
-  /* Hide search bar on mobile */
+  
   .search-bar {
     display: none;
   }
 
-  /* Hide search dropdown on mobile */
+  
   .search-dropdown {
     display: none !important;
   }
@@ -2329,7 +2325,7 @@ main.slide-out-right,
     height: 2.5rem;
   }
 
-  /* Main content adjustments */
+  
   .main-content {
     padding: 2rem 0;
   }
@@ -2344,7 +2340,7 @@ main.slide-out-right,
     margin-left: 1rem;
   }
 
-  /* Footer adjustments */
+  
   .footer-content {
     padding: 1rem;
     flex-direction: column;
@@ -2370,12 +2366,10 @@ main.slide-out-right,
   }
 }
 
-/* ==============================================
-   TABLET DEVICES (max-width: 992px)
-   ============================================== */
+
 @media (max-width: 992px) {
 
-  /* Adjust positioning for tablet */
+  
   .customer-reviews-quote-bg {
     margin-left: 150px !important;
     margin-top: -60px !important;
@@ -2389,7 +2383,7 @@ main.slide-out-right,
     margin-top: -10px !important;
   }
 
-  /* Header adjustments for tablet */
+  
   .nav-list {
     margin-left: 2rem;
     gap: 2rem;
@@ -2400,18 +2394,18 @@ main.slide-out-right,
   }
 
 
-  /* Show hamburger menu on tablet */
+  
   .hamburger-menu {
     display: flex;
     margin-right: 1rem;
   }
 
-  /* Show fullscreen menu overlay on tablet */
+  
   .fullscreen-menu-overlay {
     display: flex;
   }
 
-  /* Adjust left content positioning for tablet - NOT MOBILE */
+  
   @media (min-width: 769px) and (max-width: 992px) {
     .content-left {
       margin-top: -20px !important;
@@ -2423,22 +2417,20 @@ main.slide-out-right,
   }
 }
 
-/* ==============================================
-   TABLET LANDSCAPE (768px - 1024px)
-   ============================================== */
+
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
 
-  /* Hide hamburger menu on tablet landscape */
+  
   .hamburger-menu {
     display: none;
   }
 
-  /* Hide fullscreen menu overlay on tablet landscape */
+  
   .fullscreen-menu-overlay {
     display: none;
   }
 
-  /* Adjust navigation for tablet landscape - desktop style */
+  
 
 
   .nav-list {
@@ -2452,7 +2444,7 @@ main.slide-out-right,
     width: 180px;
   }
 
-  /* Adjust header actions */
+  
   .header-actions {
     gap: 15px;
     justify-content: flex-end;
@@ -2460,7 +2452,7 @@ main.slide-out-right,
     flex-shrink: 0;
   }
 
-  /* Ensure proper header layout */
+  
   .header {
     padding: 15px 15px;
 
@@ -2476,7 +2468,7 @@ main.slide-out-right,
     margin-left: 0;
   }
 
-  /* Adjust main content for tablet landscape - NOT MOBILE */
+  
   .content-left {
     padding: 40px 40px 40px 20px;
     margin-top: -30px !important;
@@ -2530,7 +2522,7 @@ main.slide-out-right,
     margin-top: -20px;
   }
 
-  /* Signature dishes - desktop style */
+  
   .signature-section {
     padding: 40px 0 60px;
     ;
@@ -2562,7 +2554,7 @@ main.slide-out-right,
     font-size: 16px;
   }
 
-  /* Dine options - desktop style */
+  
   .dine-option {
     height: 50vh;
     min-height: 350px;
@@ -2577,7 +2569,7 @@ main.slide-out-right,
   }
 }
 
-/* Main content adjustments */
+
 .content-left {
   padding: 2rem;
 }
@@ -2588,7 +2580,7 @@ main.slide-out-right,
   margin-top: -1rem;
 }
 
-/* Signature dishes */
+
 .signature-section {
   padding: 3rem 0 4rem;
   margin-top: -60px !important;
@@ -2622,7 +2614,7 @@ main.slide-out-right,
   font-size: 1rem;
 }
 
-/* Dine options */
+
 .dine-option {
   height: 40vh;
   min-height: 20rem;
@@ -2637,7 +2629,7 @@ main.slide-out-right,
   padding: 0 6%;
 }
 
-/* Customer Reviews Section - Tablet */
+
 .customer-reviews-section {
   padding: 60px 0 0 0;
 }
@@ -2720,7 +2712,7 @@ main.slide-out-right,
   font-size: 14px;
 }
 
-/* Footer adjustments */
+
 .footer-content {
   padding: 1.5rem 2rem;
   text-align: center;
@@ -2737,12 +2729,10 @@ main.slide-out-right,
 }
 
 
-/* ==============================================
-   DESKTOP DEVICES (max-width: 1200px)
-   ============================================== */
+
 @media (max-width: 1200px) {
 
-  /* Header adjustments for desktop */
+  
   .nav-list {
     margin-left: 4rem;
     gap: 2.5rem;
@@ -2758,7 +2748,7 @@ main.slide-out-right,
     margin-left: 30px;
   }
 
-  /* Main content adjustments */
+  
   .content-left {
     padding: 3rem;
     margin-top: 150px;
@@ -2770,7 +2760,7 @@ main.slide-out-right,
     margin-top: -1.5rem;
   }
 
-  /* Signature dishes */
+  
   .signature-section {
     padding: 4rem 0 5rem;
 
@@ -2804,7 +2794,7 @@ main.slide-out-right,
     font-size: 1.125rem;
   }
 
-  /* Dine options */
+  
   .dine-option {
     height: 45vh;
     min-height: 25rem;
@@ -2818,18 +2808,16 @@ main.slide-out-right,
     padding: 0 7%;
   }
 
-  /* Footer adjustments */
+  
   .footer-content {
     padding: 2rem 3rem;
   }
 }
 
-/* ==============================================
-   LARGE DESKTOP DEVICES (above 1200px)
-   ============================================== */
+
 @media (min-width: 1400px) {
 
-  /* Header adjustments for large desktop */
+  
   .nav-list {
     margin-left: 8rem;
     gap: 3rem;
@@ -2845,7 +2833,7 @@ main.slide-out-right,
     width: 20rem;
   }
 
-  /* Main content adjustments */
+  
   .content-left {
     padding: 4rem;
   }
@@ -2869,7 +2857,7 @@ main.slide-out-right,
     margin-top: -2rem;
   }
 
-  /* Signature dishes */
+  
   .signature-section {
     padding: 5rem 0 6rem;
     margin-top: -50px !important;
@@ -2901,7 +2889,7 @@ main.slide-out-right,
     font-size: 1.25rem;
   }
 
-  /* Dine options */
+  
   .dine-option {
     height: 50vh;
     min-height: 30rem;
@@ -2915,13 +2903,13 @@ main.slide-out-right,
     padding: 0 8%;
   }
 
-  /* Footer adjustments */
+  
   .footer-content {
     padding: 2.5rem 4rem;
   }
 }
 
-/* Terms of Service Modal */
+
 .terms-modal {
   position: fixed;
   top: 0;
@@ -3077,7 +3065,7 @@ main.slide-out-right,
   background: #6B1E10;
 }
 
-/* Mobile responsiveness for Terms Modal */
+
 @media (max-width: 768px) {
   .terms-modal {
     padding: 10px;

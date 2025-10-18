@@ -435,7 +435,7 @@ body {
     object-position: center;
 }
 
-/* Responsive Design */
+
 @media (max-width: 1024px) {
     .login-section {
         width: 50%;

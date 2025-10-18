@@ -105,7 +105,7 @@ body {
 @media (max-width: 768px) {
     .main-content {
         background: #f5f6fa;
-        /* Light gray background */
+        
         min-height: 100vh;
         padding: 1rem;
     }
@@ -207,7 +207,7 @@ body {
     gap: 4rem;
 }
 
-/* Calendar Styles */
+
 .calendar-section {
     margin-top: 2rem;
 }
@@ -267,7 +267,7 @@ body {
         font-size: 11px;
     }
 
-    /* Stack calendar navigation and legend vertically on mobile */
+    
     .d-flex.align-items-center.gap-3 {
         flex-direction: column !important;
         align-items: flex-end !important;
