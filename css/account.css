@@ -26,13 +26,11 @@
     font-style: normal;
 }
 
-/* Account Page Styles */
 .account-container {
     max-width: 1400px;
     margin: 0 auto;
 }
 
-/* Password Strength Indicator */
 .password-strength {
     margin-top: 10px;
 }
@@ -59,7 +57,6 @@
     text-align: center;
 }
 
-/* Login & Password Form Styles */
 .login-password-form {
     padding: 2rem;
 }
@@ -121,7 +118,6 @@
     margin-top: 0.25rem;
 }
 
-/* Menu Item Active State */
 .menu-item.active {
     background-color: #8B2E20;
     color: white;
@@ -172,7 +168,6 @@
     flex: 1;
 }
 
-/* Profile Panel */
 .profile-panel {
     background: #ffffff;
     padding: 2rem 1.5rem;
@@ -266,13 +261,7 @@
     color: #760000;
     text-align: center;
     text-transform: capitalize;
-    /* Capitalize first letter of each word */
 }
-
-/* Remove this rule - it's redundant now */
-/* .profile-name:last-child {
-    text-transform: capitalize;
-} */
 
 .profile-role {
     color: #6c757d;
@@ -315,7 +304,6 @@
     font-size: 0.95rem;
 }
 
-/* Info Panel */
 .info-panel {
     padding: 2rem;
     flex: 1;
@@ -349,7 +337,6 @@
 }
 
 
-/* Admin Controls */
 .admin-controls {
     margin-bottom: 2rem;
     padding: 1rem;
@@ -388,7 +375,6 @@
     padding: 0.25rem 0.5rem;
 }
 
-/* Gender Selection */
 .gender-selection {
     margin-bottom: 1.5rem;
 }
@@ -416,7 +402,6 @@ input {
     border-radius: 20px !important;
 }
 
-/* Verified Email */
 .verified {
     background: #d4edda;
     border-color: #c3e6cb;
@@ -446,7 +431,6 @@ input {
     transition: all 0.3s ease;
 }
 
-/* Input Groups */
 .input-group-text {
     background: #f8f9fa;
     border: 1px solid #ddd;
@@ -457,13 +441,11 @@ input {
     border-color: #007bff;
 }
 
-/* Main Content */
 .main-content {
     background: #f5f5f5;
     min-height: 100vh;
 }
 
-/* Row spacing */
 .row.mb-3 {
     margin-bottom: 1.5rem !important;
 }
@@ -472,11 +454,9 @@ input {
     margin-bottom: 1.5rem !important;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
         background: #f5f6fa;
-        /* Light gray background */
         min-height: 100vh;
         padding: 1rem;
     }
@@ -522,7 +502,6 @@ input {
     }
 }
 
-/* Profile image specific styles */
 #profileImg {
     width: 100% !important;
     height: 100% !important;
@@ -551,7 +530,6 @@ input {
     position: relative;
 }
 
-/* Login & Password Panel Styles */
 .login-password-form {
     max-width: 600px;
 }
@@ -633,7 +611,6 @@ input {
     transform: translateY(-1px);
 }
 
-/* Order History Styles */
 #order-history-container {
     margin-top: -1rem;
 }
@@ -827,7 +804,6 @@ input {
     color: #f0ad4e;
 }
 
-/* Payment Reference Code Section */
 .order-payment-ref {
     display: flex;
     align-items: center;
@@ -854,7 +830,6 @@ input {
     font-family: 'Courier New', monospace;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .order-header {
         flex-direction: column;
@@ -876,7 +851,6 @@ input {
     }
 }
 
-/* Support Tickets Section */
 .support-section {
     margin-bottom: 2rem;
     background: white;
@@ -1127,7 +1101,6 @@ input {
     font-weight: 600;
 }
 
-/* Order History Section Styles */
 .order-history-section {
     margin-top: 2rem;
 }
@@ -1151,7 +1124,6 @@ input {
     color: #933F32;
 }
 
-/* Order History Buttons */
 .order-buttons {
     display: flex;
     gap: 10px;
@@ -1186,7 +1158,6 @@ input {
     font-size: 1rem;
 }
 
-/* Recent Order Container */
 .recent-order-container {
     margin-bottom: 2rem;
     padding: 1rem;
@@ -1217,7 +1188,6 @@ input {
     flex-direction: column;
 }
 
-/* Past Orders Container */
 .past-orders-container {
     animation: slideDown 0.3s ease-out;
 }
@@ -1273,7 +1243,6 @@ input {
     color: #933F32;
 }
 
-/* Order History Container */
 .order-history-container {
     display: flex;
     flex-direction: column;
@@ -1292,7 +1261,6 @@ input {
     gap: 1rem;
 }
 
-/* Order History Item (styled like ticket card) */
 .order-history-item {
     background: #f8f9fa;
     border: 1px solid #e0e0e0;
@@ -1454,7 +1422,6 @@ input {
     color: #f0ad4e;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .order-header {
         flex-direction: column;
@@ -1477,7 +1444,6 @@ input {
     }
 }
 
-/* Ticket Detail Modal - View Photo Button Styles */
 .view-photo-btn {
     background: #f5f5f5 !important;
     border: 1px solid #ddd !important;
@@ -1501,7 +1467,6 @@ input {
     transform: translateY(-1px) !important;
 }
 
-/* Ticket Photo Container */
 .ticket-photo-container {
     display: none;
     animation: slideDown 0.3s ease;
@@ -1519,7 +1484,6 @@ input {
     }
 }
 
-/* Admin Responses Section */
 .ticket-admin-responses {
     margin-top: 20px;
     padding: 16px;

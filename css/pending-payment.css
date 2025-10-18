@@ -3,12 +3,10 @@
     transition: all 0.2s ease;
 }
 
-/* Only make pending payment status rows clickable */
 tr:not(.pending-payment-row) {
     cursor: default !important;
 }
 
-/* Special styling for pending payment rows */
 .pending-payment-row:hover {
     background-color: rgba(240, 249, 255, 0.8) !important;
     box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
@@ -17,14 +15,12 @@ tr:not(.pending-payment-row) {
 
 
 
-/* Add a visual cue for pending payment status */
 tr.pending-payment-row td .badge-pending-payment {
     background-color: #17a2b8;
     color: white;
     cursor: pointer;
 }
 
-/* Make status cells containing "Pending Payment" more visible */
 td:contains("Pending Payment") {
     position: relative;
     font-weight: bold;

@@ -1,7 +1,6 @@
 body {
   background: #f3f5f4;
 }
-/* Center the order form and set max width */
 .order-form-container {
   display: flex;
   justify-content: center;

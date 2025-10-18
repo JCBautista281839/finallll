@@ -1,10 +1,4 @@
-/* ============================================
-   RESPONSIVE DESIGN - MOBILE FIRST APPROACH
-   ============================================ */
-
-/* Mobile (max-width: 600px) */
 @media (max-width: 600px) {
-  /* Header adjustments */
   .menu-header {
     padding: 15px 0;
     margin-top: 10px;
@@ -43,14 +37,12 @@
     gap: 15px;
   }
 
-  /* Main content */
   .menu-page {
     margin-left: 10px;
     margin-top: 20px !important;
     width: 100%;
   }
 
-  /* Categories */
   .menu-categories {
     margin-left: 10px;
     margin-top: -15px;
@@ -62,12 +54,10 @@
     font-size: 11px;
   }
 
-  /* Menu items grid */
   .menu-items-grid {
     padding: 0 10px;
   }
 
-  /* Force 2 columns for mobile */
   .menu-items-grid .col-6 {
     flex: 0 0 50%;
     max-width: 50%;
@@ -92,7 +82,6 @@
     font-size: 20px;
   }
 
-  /* Shopping bag popup */
   .popup-content {
     width: 100%;
     max-width: 100%;
@@ -135,9 +124,7 @@
   }
 }
 
-/* Tablet (max-width: 992px) */
 @media (max-width: 992px) {
-  /* Header adjustments */
   .menu-header {
     padding: 18px 0;
     margin-top: 15px;
@@ -184,14 +171,12 @@
     gap: 18px;
   }
 
-  /* Main content */
   .menu-page {
     margin-left: 15px;
     margin-top: 30px !important;
     width: 100%;
   }
 
-  /* Categories */
   .menu-categories {
     margin-left: 15px;
     margin-top: -20px;
@@ -202,12 +187,10 @@
     font-size: 11px;
   }
 
-  /* Menu items grid */
   .menu-items-grid {
     padding: 0 15px;
   }
 
-  /* Force 3 columns for tablet */
   .menu-items-grid .col-md-4 {
     flex: 0 0 33.333333%;
     max-width: 33.333333%;
@@ -232,7 +215,6 @@
     font-size: 24px;
   }
 
-  /* Shopping bag popup */
   .popup-content {
     width: 350px;
     padding: 18px;
@@ -272,9 +254,7 @@
   }
 }
 
-/* Desktop (max-width: 1200px) */
 @media (max-width: 1200px) {
-  /* Header adjustments */
   .menu-header {
     padding: 20px 0;
     margin-top: 18px;
@@ -321,14 +301,12 @@
     gap: 20px;
   }
 
-  /* Main content */
   .menu-page {
     margin-left: 18px;
     margin-top: 32px !important;
     width: 100%;
   }
 
-  /* Categories */
   .menu-categories {
     margin-left: 18px;
     margin-top: -22px;
@@ -339,12 +317,10 @@
     font-size: 12px;
   }
 
-  /* Menu items grid */
   .menu-items-grid {
     padding: 0 18px;
   }
 
-  /* Force 4 columns for desktop */
   .menu-items-grid .col-lg-3 {
     flex: 0 0 25%;
     max-width: 25%;
@@ -369,7 +345,6 @@
     font-size: 28px;
   }
 
-  /* Shopping bag popup */
   .popup-content {
     width: 380px;
     padding: 20px;
@@ -409,7 +384,6 @@
   }
 }
 
-/* Hamburger Menu Styles */
 .hamburger-menu {
   background: none;
   border: none;
@@ -426,7 +400,6 @@
   z-index: 1000;
 }
 
-/* Mobile hamburger menu specific styles */
 .mobile-hamburger-container {
   display: flex !important;
   justify-content: flex-end;
@@ -519,7 +492,6 @@
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Fullscreen Menu Overlay */
 .fullscreen-menu-overlay {
   position: fixed;
   top: 0;
@@ -542,7 +514,6 @@
   visibility: visible;
 }
 
-/* Close Button */
 .fullscreen-close-btn {
   position: absolute;
   top: 20px;
@@ -575,7 +546,6 @@
   padding: 20px;
 }
 
-/* Fullscreen Navigation */
 .fullscreen-nav {
   margin-bottom: 60px;
 }
@@ -622,7 +592,6 @@
   transition: opacity 0.3s ease;
 }
 
-/* Fullscreen Actions */
 .fullscreen-actions {
   display: flex;
   justify-content: center;
@@ -695,7 +664,6 @@
   font-weight: 600;
 }
 
-/* Tablet specific styles */
 @media (min-width: 576px) and (max-width: 991px) {
   .tablet-hamburger-container {
     padding-right: 30px;
@@ -711,9 +679,7 @@
   }
 }
 
-/* Desktop (max-width: 1200px) - Full width */
 @media (max-width: 1200px) {
-  /* Make menu page full width */
   .menu-page {
     width: 100% !important;
     margin-left: 0 !important;
@@ -722,7 +688,6 @@
     padding-right: 20px;
   }
 
-  /* Make container fluid full width */
   .menu-page .container-fluid {
     width: 100% !important;
     max-width: none !important;
@@ -730,7 +695,6 @@
     padding-right: 0;
   }
 
-  /* Make menu items grid full width */
   .menu-items-grid {
     width: 100% !important;
     max-width: none !important;
@@ -738,14 +702,12 @@
     padding: 0 !important;
   }
 
-  /* Ensure columns take full width */
   .menu-items-grid .col-lg-3 {
     flex: 0 0 25%;
     max-width: 25%;
     padding: 10px;
   }
 
-  /* Make categories full width */
   .menu-categories {
     width: 100% !important;
     margin-left: 0 !important;
@@ -754,9 +716,7 @@
   }
 }
 
-/* Large desktop (above 1200px) - Full width */
 @media (min-width: 1201px) {
-  /* Make menu page full width */
   .menu-page {
     width: 100% !important;
     max-width: none !important;
@@ -765,7 +725,6 @@
     padding-right: 40px;
   }
 
-  /* Make container fluid full width */
   .menu-page .container-fluid {
     width: 100% !important;
     max-width: none !important;
@@ -773,7 +732,6 @@
     padding-right: 0;
   }
 
-  /* Make menu items grid full width */
   .menu-items-grid {
     width: 100% !important;
     max-width: none !important;
@@ -781,14 +739,12 @@
     padding: 0 !important;
   }
 
-  /* Ensure columns take full width */
   .menu-items-grid .col-lg-3 {
     flex: 0 0 25%;
     max-width: 25%;
     padding: 15px;
   }
 
-  /* Make categories full width */
   .menu-categories {
     width: 100% !important;
     margin-left: 0 !important;
@@ -796,7 +752,6 @@
     padding-right: 40px;
   }
 
-  /* Make header full width */
   .menu-header .container-fluid {
     padding-left: 40px;
     padding-right: 40px;

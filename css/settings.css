@@ -48,7 +48,6 @@
     color: #96392d;
 }
 
-/* Settings Menu */
 .settings-menu {
     background: transparent;
     border-radius: 12px;
@@ -77,7 +76,6 @@
     color: white;
 }
 
-/* Settings Sections */
 .settings-section {
     background: transparent;
     border-radius: 0;
@@ -103,7 +101,6 @@
     margin: 0;
 }
 
-/* Add Team Section */
 .add-team-section {
     padding: 1.5rem;
     background: #f8f9fa;
@@ -150,12 +147,10 @@
     border-top: 1px solid #dee2e6;
 }
 
-/* Team Table */
 .team-table {
     border: 1px solid #eee;
     border-radius: 8px;
     overflow: visible;
-    /* Changed from hidden to visible */
 }
 
 .team-header {
@@ -196,7 +191,6 @@
     display: flex;
     align-items: center;
     position: relative;
-    /* Added for dropdown positioning */
 }
 
 .team-member:hover {
@@ -230,7 +224,6 @@
     flex: 0 0 15%;
     justify-content: center;
     position: relative;
-    /* Added for dropdown positioning */
 }
 
 .member-avatar {
@@ -298,7 +291,6 @@
     color: #6b7280;
 }
 
-/* Dropdown Menu Fixes */
 .dropdown {
     position: relative;
 }
@@ -378,7 +370,6 @@
     border-top: 1px solid #e9ecef;
 }
 
-/* Admin Settings */
 .admin-settings {
     max-width: 600px;
 }
@@ -403,7 +394,6 @@
     margin-left: 0.5rem;
 }
 
-/* Loading states */
 .loading {
     text-align: center;
     padding: 2rem;
@@ -415,7 +405,6 @@
     margin-bottom: 1rem;
 }
 
-/* Password field enhancements */
 .input-group .btn-outline-secondary {
     border-left: none;
 }
@@ -425,11 +414,9 @@
 }
 
 
-/* Responsive */
 @media (max-width: 768px) {
     .main-content {
         background: #f5f6fa;
-        /* Light gray background */
         min-height: 100vh;
         padding: 1rem;
     }

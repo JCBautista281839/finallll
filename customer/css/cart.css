@@ -1,8 +1,7 @@
-/* === CART OVERLAY === */
 .cart-overlay {
   position: fixed;
   top: 0;
-  right: -400px; /* Hidden by default */
+  right: -400px; 
   width: 350px;
   height: 100%;
   background-color: #fff;

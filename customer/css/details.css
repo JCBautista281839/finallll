@@ -10,7 +10,6 @@ body {
   color: #000;
 }
 
-/* Header Styles - Matching Menu Design */
 .menu-header {
   display: flex;
   align-items: center;
@@ -43,11 +42,6 @@ body {
   font-size: 20px;
 }
 
-/* Removed navigation styles - keeping only back button */
-
-/* Removed search and icons styles - keeping only back button */
-
-/* Shopping Bag Counter Styles */
 .bag-container {
   position: relative;
 }
@@ -80,7 +74,6 @@ body {
   opacity: 0;
 }
 
-/* Container */
 .container {
   padding: 20px 50px;
 }
@@ -92,7 +85,6 @@ body {
   gap: 40px;
 }
 
-/* Left Form Section */
 .form-section {
   flex: 2;
 }
@@ -113,7 +105,6 @@ h3 {
   margin-top: 40px;
 }
 
-/* Add extra spacing before shipping address */
 h3:nth-of-type(2) {
   margin-top: 34px !important;
 }
@@ -140,7 +131,6 @@ input {
   flex: 1;
 }
 
-/* Order Summary */
 .order-summary {
   flex: 1;
   background: #f1f1f1;
@@ -244,7 +234,6 @@ hr {
   background: #7d2f24;
 }
 
-/* Location Section */
 .location-section {
   margin-top: 40px;
 }
@@ -276,7 +265,6 @@ hr {
 #map {
   width: 100%;
   height: 400px;
-  /* or any size you want */
 }
 
 .order-summary .order-menu {

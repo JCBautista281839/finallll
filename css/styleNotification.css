@@ -42,7 +42,6 @@
     margin-bottom: 0.75rem;
 }
 
-/* Payment verification notification styles */
 .payment-verification-row {
     background-color: #fff3cd;
     border-left: 4px solid #933F32;
@@ -79,7 +78,6 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive adjustments for payment verification */
 @media (max-width: 768px) {
     .main-content {
         background: #ffffff;
@@ -161,7 +159,6 @@
     line-height: 1.4;
 }
 
-/* Specific styling for notification description column */
 .inventory-table td:nth-child(2) {
     max-width: 250px;
     word-wrap: break-word;
@@ -181,7 +178,6 @@
     vertical-align: middle;
 }
 
-/* Remove any user/person icons from notifications */
 .inventory-table td::before,
 .inventory-table td::after {
     display: none !important;
@@ -193,7 +189,6 @@
     display: none !important;
 }
 
-/* Hide any Font Awesome user icons */
 .inventory-table td .fa-user,
 .inventory-table td .fa-user-circle,
 .inventory-table td .fa-user-o {
@@ -265,7 +260,6 @@
     }
 }
 
-/* Responsive styles for mobile/tablet size like in the image */
 @media (max-width: 768px) {
     .inventory-table-container {
         overflow-x: auto;
@@ -289,20 +283,17 @@
     .inventory-table th:first-child,
     .inventory-table td:first-child {
         display: none;
-        /* Hide TYPE column on mobile/tablet */
     }
 
     .inventory-table th:nth-child(2),
     .inventory-table td:nth-child(2) {
         width: 70%;
-        /* MESSAGE column takes more space */
         padding: 0.8rem;
     }
 
     .inventory-table th:last-child,
     .inventory-table td:last-child {
         width: 30%;
-        /* TIME column takes remaining space */
         text-align: right;
         font-size: 0.8rem;
     }

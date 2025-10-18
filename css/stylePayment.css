@@ -167,7 +167,6 @@ body {
 #gcashInputRow input#gcashReference,
 #cardInputRow input#cardReference {
     font-size: 1.8rem;
-    /* Slightly smaller for reference numbers */
 }
 
 .amount-value,
@@ -391,7 +390,6 @@ body {
     margin-bottom: 1.5rem;
     font-family: 'PoppinsRegular';
     border-radius: 15px;
-    /* Remove layout hacks that caused overlap */
     margin-top: -25px;
     padding: 0.5rem 0.5rem 0.25rem 0.5rem;
     margin-right: 0;

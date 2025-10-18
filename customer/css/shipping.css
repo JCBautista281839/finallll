@@ -1058,7 +1058,6 @@ hr {
   box-shadow: 0 2px 8px rgba(125, 47, 36, 0.3);
 }
 
-/* Responsive Instructions Modal */
 @media (max-width: 768px) {
   .instructions-modal {
     width: 95%;

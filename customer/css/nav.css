@@ -1,31 +1,25 @@
-/* Custom brown color */
 .text-brown {
   color: #8B2E20 !important;
   font-weight: 500;
 }
 
-/* Custom Navbar Styling */
-/* Shrink vertical height */
 .custom-navbar {
   padding-top: 10px;
   padding-bottom: 10px;
 }
 
-/* Optional: Reduce left/right padding on container */
 .custom-navbar .container-fluid {
   padding-left: 12px;
   padding-right: 12px;
 }
 
-/* Shrink nav links */
 .custom-navbar .nav-link {
   font-size: 18px;
   padding: 6px 10px;
 }
 
-/* Resize logo image */
 .custom-navbar .navbar-logo {
-  height: 80px; /* adjust as needed */
+  height: 80px;
   width: auto;
   border-radius: 50%;
 }

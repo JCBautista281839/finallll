@@ -1,4 +1,3 @@
-/* Submit Report Modal Styles */
 @font-face {
     font-family: 'PoppinsMedium';
     src: url('../../src/fonts/Poppins-Medium.woff') format('woff');
@@ -34,7 +33,6 @@
     font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
-/* Modal Overlay */
 .report-modal {
     position: fixed;
     top: 0;
@@ -95,7 +93,6 @@
     }
 }
 
-/* Modal Header */
 .report-modal-header {
     background: #933F32;
     color: white;
@@ -134,7 +131,6 @@
     transform: rotate(90deg);
 }
 
-/* Modal Body */
 .report-modal-body {
     padding: 24px;
     overflow-y: auto;
@@ -150,7 +146,6 @@
     font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
-/* Form Styles */
 .report-form {
     max-width: 100%;
     font-family: 'PoppinsRegular', 'Poppins', sans-serif;
@@ -185,7 +180,6 @@
     font-family: 'PoppinsRegular', 'Poppins', sans-serif;
     transition: all 0.3s ease;
     text-transform: none !important;
-    /* Override any capitalize styling */
 }
 
 .form-group input[type="text"]:focus,
@@ -209,7 +203,6 @@
     font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
-/* File Upload */
 .file-upload-wrapper {
     position: relative;
 }
@@ -248,7 +241,6 @@
     font-family: 'PoppinsRegular', 'Poppins', sans-serif;
 }
 
-/* Image Preview */
 .image-preview {
     margin-top: 15px;
     position: relative;
@@ -286,7 +278,6 @@
     transform: scale(1.1);
 }
 
-/* Customer Info Preview */
 .customer-info-preview {
     background: #f8f9fa;
     padding: 20px;
@@ -333,7 +324,6 @@
     font-family: 'PoppinsMedium', 'Poppins', sans-serif;
 }
 
-/* Form Actions */
 .form-actions {
     display: flex;
     gap: 15px;
@@ -382,7 +372,6 @@
     cursor: not-allowed;
 }
 
-/* Loading Indicator */
 .loading-indicator {
     text-align: center;
     padding: 20px;
@@ -396,7 +385,6 @@
     font-size: 1.2rem;
 }
 
-/* Success Modal */
 .success-modal {
     position: fixed;
     top: 0;
@@ -478,7 +466,6 @@
     box-shadow: 0 6px 20px rgba(147, 63, 50, 0.4);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .report-modal-content {
         width: 95%;

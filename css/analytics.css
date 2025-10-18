@@ -88,7 +88,6 @@ body {
 
 }
 
-/* Responsive layout for larger screens */
 @media (min-width: 1200px) {
     .analytics-charts {
         gap: 2rem;
@@ -103,7 +102,6 @@ body {
     }
 }
 
-/* Mobile responsiveness */
 @media (max-width: 768px) {
     .main-content {
         background: #f5f6fa;

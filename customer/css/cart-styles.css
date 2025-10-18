@@ -1,13 +1,4 @@
-/**
- * Cart Styles
- * 
- * CSS styles for the Firestore cart system UI components.
- * These styles work with the cart UI integration JavaScript.
- */
 
-/* ========================================
-   CART CONTAINER STYLES
-   ======================================== */
 
 .cart-container {
   background: #fff;
@@ -30,10 +21,6 @@
   color: #333;
   font-size: 1.5rem;
 }
-
-/* ========================================
-   CART ITEMS STYLES
-   ======================================== */
 
 .cart-items {
   padding: 0;
@@ -188,10 +175,6 @@
   text-align: right;
 }
 
-/* ========================================
-   EMPTY CART STYLES
-   ======================================== */
-
 .empty-cart {
   text-align: center;
   padding: 3rem 1rem;
@@ -215,10 +198,6 @@
   font-size: 1rem;
   line-height: 1.5;
 }
-
-/* ========================================
-   CART SUMMARY STYLES
-   ======================================== */
 
 .cart-summary {
   background: #f8f9fa;
@@ -255,10 +234,6 @@
   font-size: 1.3rem;
 }
 
-/* ========================================
-   CART BADGE STYLES
-   ======================================== */
-
 .cart-badge {
   position: absolute;
   top: -8px;
@@ -281,10 +256,6 @@
   display: inline-flex;
   align-items: center;
 }
-
-/* ========================================
-   MENU ITEM CART STATUS STYLES
-   ======================================== */
 
 .add-to-cart-btn {
   background: #933F32;
@@ -320,10 +291,6 @@
   cursor: not-allowed;
   transform: none;
 }
-
-/* ========================================
-   NOTIFICATION STYLES
-   ======================================== */
 
 .notification {
   position: fixed;
@@ -388,10 +355,6 @@
   }
 }
 
-/* ========================================
-   ADD TO CART SUCCESS ANIMATION
-   ======================================== */
-
 .add-to-cart-success {
   position: fixed;
   top: 50%;
@@ -431,10 +394,6 @@
     opacity: 0;
   }
 }
-
-/* ========================================
-   RESPONSIVE STYLES
-   ======================================== */
 
 @media (max-width: 768px) {
   .cart-item {
@@ -489,10 +448,6 @@
   }
 }
 
-/* ========================================
-   LOADING STATES
-   ======================================== */
-
 .loading {
   text-align: center;
   padding: 2rem;
@@ -503,10 +458,6 @@
 .cart-item.loading {
   justify-content: center;
 }
-
-/* ========================================
-   BUTTON STYLES
-   ======================================== */
 
 .btn {
   padding: 0.75rem 1.5rem;

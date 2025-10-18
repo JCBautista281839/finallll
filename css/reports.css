@@ -237,7 +237,6 @@ body {
     font-size: 0.95rem;
 }
 
-/* Status Badges */
 .status-badge {
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
@@ -267,7 +266,6 @@ body {
     color: #666;
 }
 
-/* Priority Badges */
 .priority-badge {
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
@@ -294,7 +292,6 @@ body {
     color: var(--low-priority);
 }
 
-/* Category Badge */
 .category-badge {
     display: inline-flex;
     align-items: center;
@@ -309,7 +306,6 @@ body {
     color: var(--primary-color);
 }
 
-/* Action Buttons */
 .action-btn {
     padding: 0.5rem 0.75rem;
     border: none;
@@ -331,7 +327,6 @@ body {
     box-shadow: 0 4px 12px rgba(147, 63, 50, 0.3);
 }
 
-/* Loading and Empty States */
 .loading-state,
 .no-tickets-state {
     text-align: center;
@@ -360,7 +355,6 @@ body {
     color: #999;
 }
 
-/* Modal Styles */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -452,7 +446,6 @@ body {
     flex: 1;
 }
 
-/* Ticket Detail Styles */
 .ticket-detail-header {
     border-bottom: 2px solid #f0f0f0;
     padding-bottom: 1.5rem;
@@ -518,7 +511,6 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Admin Actions Section */
 .admin-actions {
     background: #f9f9f9;
     padding: 1.5rem;
@@ -604,7 +596,6 @@ body {
     background: #d0d0d0;
 }
 
-/* Conversation Thread */
 .conversation-thread {
     margin-top: 2rem;
     border-top: 2px solid #f0f0f0;
@@ -668,7 +659,6 @@ body {
     line-height: 1.6;
 }
 
-/* Responsive Design */
 @media (max-width: 992px) {
     .stats-container {
         grid-template-columns: repeat(2, 1fr);
@@ -719,7 +709,6 @@ body {
     }
 }
 
-/* Toast Notification Styles */
 .toast-container {
     position: fixed;
     top: 20px;

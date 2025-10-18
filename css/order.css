@@ -44,7 +44,6 @@
   overflow: auto;
 }
 
-/* Transparent scrollbars by default, subtle thumb on hover */
 .container-fluid::-webkit-scrollbar,
 .table-responsive::-webkit-scrollbar {
   width: 10px;
@@ -67,13 +66,11 @@
   background: rgba(0, 0, 0, 0.12);
 }
 
-/* Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
-/* Table Styles */
 .table {
   margin-bottom: 0;
   table-layout: fixed;
@@ -93,12 +90,10 @@
 }
 
 
-/* Status cell fix (stable height, no jumping) */
 .pending-payment-row .status-cell {
   min-height: 65px;
 }
 
-/* Table layout - ensures columns maintain fixed widths */
 .table {
   table-layout: fixed;
   width: 100%;
@@ -116,28 +111,23 @@
   box-sizing: border-box;
 }
 
-/* Ensure Actions header text stays in place */
 .order-table th:last-child {
   position: relative;
   font-weight: 600;
 }
 
-/* Allow text wrapping in other columns (adjust column number as needed) */
 .table th:nth-child(7),
 .table td:nth-child(7) {
   white-space: normal;
   word-wrap: break-word;
 }
 
-/* Keep View button properly aligned and stable */
 .order-table td:last-child .btn {
   display: inline-block;
   margin: 0 auto;
   min-width: 60px;
-  /* Ensures button has consistent width */
 }
 
-/* Keep the edit hint stable under button */
 .order-table td:last-child .edit-hint {
   display: block;
   font-size: 0.75rem;
@@ -147,26 +137,22 @@
   opacity: 0.6;
   transition: opacity 0.2s ease;
   text-align: center;
-  /* Center the hint text */
 }
 
 .order-table td:last-child:hover .edit-hint {
   opacity: 1;
 }
 
-/* Additional stability - prevent content overflow */
 .order-table td:last-child * {
   max-width: 100%;
   box-sizing: border-box;
 }
 
-/* Ensure the entire table respects the fixed layout */
 .order-table {
   table-layout: fixed;
   width: 100%;
 }
 
-/* Completed orders - no hover effects */
 .table tbody tr:not(.clickable-order-row):not(.pending-payment-row) {
   cursor: default;
 }
@@ -177,11 +163,9 @@
   box-shadow: none;
 }
 
-/* Column Widths and Alignment */
 .table th:nth-child(1),
 .table td:nth-child(1) {
   width: 12%;
-  /* Allow wrapping inside the Order ID cell so date/time can break to next line */
   white-space: normal !important;
 }
 
@@ -201,7 +185,6 @@
 }
 
 .table td:nth-child(3) .order-items-list {
-  /* remove left gutter so the item pill can be centered */
   border-left: none;
   padding-left: 0;
   margin-left: 0;
@@ -225,7 +208,6 @@
   text-align: center;
 }
 
-/* Order Items Style */
 .order-items-list {
   margin: 0;
   padding: 0;
@@ -233,12 +215,10 @@
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  /* center content horizontally within the cell */
 }
 
 .item-row {
   display: inline-flex;
-  /* size to content so we can center the pill */
   justify-content: center;
   align-items: center;
   padding: 8px 14px;
@@ -246,7 +226,6 @@
   width: auto;
   text-align: center;
   background: #f6f8fa;
-  /* light pill background like the screenshot */
 }
 
 .item-row:hover {
@@ -280,17 +259,14 @@
   padding-left: 8px;
 }
 
-/* Center the injected prompt while keeping the item-row left aligned */
 .order-view-more-prompt {
   text-align: center;
   display: block;
   width: 100%;
   margin-left: 0;
-  /* ensure it's centered within the cell */
   margin-top: 4px;
 }
 
-/* Align items cell content */
 .table td:nth-child(3) {
   text-align: center;
   padding-left: 0.5rem;
@@ -471,7 +447,6 @@ input[type="date"] {
   font-weight: 600;
   color: #333;
 
-  /* Make the date/time under the order number appear on its own line and wrap if needed */
   .table td:nth-child(1) small.text-muted {
     display: block;
     white-space: normal !important;
@@ -481,7 +456,6 @@ input[type="date"] {
     line-height: 1.2;
   }
 
-  /* Slight indent for the time line to visually separate it (both lines slightly indented to keep layout simple) */
   .table td:nth-child(1) small.text-muted {
     padding-left: 6px;
   }

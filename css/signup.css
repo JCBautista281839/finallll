@@ -111,7 +111,6 @@ body {
     padding-right: 50px;
 }
 
-/* Hide browser default password reveal buttons */
 .password-container .form-input::-ms-reveal,
 .password-container .form-input::-ms-clear {
     display: none;
@@ -185,7 +184,6 @@ body {
     text-decoration: underline;
 }
 
-/* Terms and Conditions Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -253,7 +251,6 @@ body {
     scroll-behavior: smooth;
 }
 
-/* Custom scrollbar for webkit browsers */
 .modal-body::-webkit-scrollbar {
     width: 8px;
 }

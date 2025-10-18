@@ -1,11 +1,9 @@
-/* Sidebar specific styles - Keep sidebar container visible */
 body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
 }
 
-/* Multiple selectors with maximum specificity to override Bootstrap and nav.css */
 body aside#sidebar,
 body .sidebar,
 body aside.sidebar,
@@ -35,7 +33,6 @@ aside#sidebar.sidebar.d-flex,
     transition: none !important;
 }
 
-/* Keep nav structure visible but allow JavaScript to control individual link visibility */
 #sidebar nav,
 .sidebar nav,
 #sidebar .nav,
@@ -155,7 +152,6 @@ aside#sidebar.sidebar.d-flex,
     border: none;
     margin-left: -5px;
     background-color: transparent !important;
-    /* Add this line! */
 }
 
 .btn-outline-primary.dropdown-toggle.show {

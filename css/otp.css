@@ -255,7 +255,6 @@ body {
     z-index: 5;
 }
 
-/* Toggle Switch Styles */
 .toggle-group {
     display: flex;
     border-radius: 25px;
@@ -290,7 +289,6 @@ body {
     display: none;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .right-column {
         display: none;
@@ -311,7 +309,6 @@ body {
     }
 }
 
-/* Animation */
 @keyframes fadeInUp {
     from {
         opacity: 0;

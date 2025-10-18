@@ -57,7 +57,6 @@ body {
     max-width: 100%;
     width: 350px;
     height: 450px;
-    /* Reduced height since login guidance was removed */
     text-align: center;
 }
 

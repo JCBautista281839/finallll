@@ -129,7 +129,6 @@ body {
   border-color: #bd2130;
 }
 
-/* Animation for modal appearance */
 #stockWarningModal .modal-content {
   animation: stockWarningSlideIn 0.3s ease-out;
 }
@@ -232,16 +231,13 @@ body {
   margin-bottom: 2rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  /* smooth scroll on mobile */
   white-space: nowrap;
 }
 
 .category-tabs .nav {
   display: flex;
   flex-wrap: nowrap;
-  /* prevents wrapping */
   gap: 0.5rem;
-  /* spacing between buttons */
 }
 
 .category-tabs .nav-link {

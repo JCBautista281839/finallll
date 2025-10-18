@@ -48,33 +48,25 @@ body {
 
 .burger-menu-inline {
   display: none;
-  /* Hidden by default on large screens */
   background: #f5f5f5;
-  /* Light gray background */
   border: none;
   border-radius: 8px;
-  /* Rounded corners */
   font-size: 1.2rem;
   color: #8B4513;
-  /* Brown color for the lines */
   cursor: pointer;
   padding: 12px;
-  /* Square padding for square shape */
   margin-right: 15px;
   transition: all 0.3s ease;
   line-height: 1;
   z-index: 1000;
   width: 40px;
-  /* Fixed width for square */
   height: 40px;
-  /* Fixed height for square */
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Ensure burger menu is hidden on large screens (desktop) */
 @media (min-width: 992px) {
   .burger-menu-inline {
     display: none !important;
@@ -91,7 +83,6 @@ body {
   transform: scale(0.95);
 }
 
-/* Hide burger menu when sidebar is active */
 .sidebar.active~.main .burger-menu-inline,
 body:has(.sidebar.active) .burger-menu-inline {
   opacity: 0;

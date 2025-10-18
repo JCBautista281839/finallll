@@ -737,7 +737,6 @@ body.dark-mode .sticky-header table thead th {
   overflow: hidden;
 }
 
-/* Chart row container */
 .col-12.col-lg-8 .row.g-3 {
   margin-left: 0;
   margin-right: 0;
@@ -765,7 +764,6 @@ body.dark-mode .sticky-header table thead th {
   line-height: 1.1rem;
 }
 
-/* White background for Ingredient header */
 .inventory-status-table thead th:first-child {
   background: #ffffff !important;
   position: sticky;
@@ -786,11 +784,7 @@ body.dark-mode .sticky-header table thead th {
   border-radius: 3px;
 }
 
-/* ============================================
-   RESPONSIVE MEDIA QUERIES
-   ============================================ */
 
-/* Mobile Devices (Portrait) - 320px to 479px */
 @media (max-width: 479px) {
   .dashboard-container {
     margin-left: 0 !important;

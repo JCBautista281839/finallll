@@ -1,4 +1,3 @@
-/* Header Styles */
 .header {
   position: fixed;
   top: 0;
@@ -48,7 +47,6 @@
   transition: .3s;
 }
 
-/* Active nav link (current page) */
 .nav-link.active {
   color: #96392d !important;
 }
@@ -159,7 +157,6 @@
   margin-right: 20px;
 }
 
-/* Hamburger Menu Button Styles */
 .hamburger-menu {
   display: none;
   flex-direction: column;
@@ -197,7 +194,6 @@
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Responsive navigation styles to match index exactly */
 @media (max-width: 1200px) {
   .nav-list {
     margin-left: 2rem;
@@ -208,7 +204,6 @@
     width: 20rem;
   }
 
-  /* Show hamburger menu on tablet */
   .hamburger-menu {
     display: flex;
     margin-right: 1rem;
@@ -217,7 +212,6 @@
 
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
 
-  /* Hide hamburger menu on tablet landscape */
   .hamburger-menu {
     display: none;
   }
@@ -233,7 +227,6 @@
     width: 180px;
   }
 
-  /* Adjust header actions */
   .header-actions {
     gap: 15px;
     justify-content: flex-end;
@@ -241,7 +234,6 @@
     flex-shrink: 0;
   }
 
-  /* Ensure proper header layout */
   .header {
     padding: 15px 15px;
   }
@@ -259,7 +251,6 @@
 
 @media (min-width: 1400px) {
 
-  /* Header adjustments for desktop */
   .nav-list {
     margin-left: 4rem;
     gap: 2.5rem;
@@ -272,7 +263,6 @@
 
 @media (min-width: 1600px) {
 
-  /* Header adjustments for large desktop */
   .nav-list {
     margin-left: 8rem;
     gap: 3rem;
@@ -427,7 +417,6 @@
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Fullscreen Menu Overlay - Only show on mobile */
 .fullscreen-menu-overlay {
   position: fixed;
   top: 0;
