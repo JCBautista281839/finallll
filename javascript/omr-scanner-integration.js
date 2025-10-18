@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    console.log('OMR Scanner Integration: POS page detected, initializing...');
     initializeOMRScanner();
 });
 
@@ -26,7 +27,9 @@ document.addEventListener('DOMContentLoaded', function () {
  * Initialize OMR Scanner functionality
  */
 function initializeOMRScanner() {
+    console.log('OMR Scanner Integration: initializeOMRScanner called');
     const scannerBtn = document.getElementById('omrScannerBtn');
+    console.log('OMR Scanner Integration: scannerBtn =', scannerBtn);
 
     if (!scannerBtn) {
         console.warn('OMR Scanner Integration: Scanner button not found');
@@ -38,6 +41,7 @@ function initializeOMRScanner() {
 
     // Add click event listener
     scannerBtn.addEventListener('click', function () {
+        console.log('OMR Scanner Integration: Scanner button clicked');
         openScannerModal();
     });
 
@@ -145,6 +149,7 @@ function createScannerModal() {
 
     // Append modal to body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    console.log('OMR Scanner Integration: Modal HTML added to page');
 
     // Initialize event listeners
     setupModalEventListeners();
@@ -154,6 +159,7 @@ function createScannerModal() {
  * Setup event listeners for modal elements
  */
 function setupModalEventListeners() {
+    console.log('OMR Scanner Integration: setupModalEventListeners called');
     const fileInput = document.getElementById('omrFileInput');
     const selectFileBtn = document.getElementById('omrSelectFileBtn');
     const uploadArea = document.getElementById('omrUploadArea');
@@ -163,6 +169,18 @@ function setupModalEventListeners() {
     const webcamBtn = document.getElementById('omrWebcamBtn');
     const captureBtn = document.getElementById('omrCaptureBtn');
     const closeWebcamBtn = document.getElementById('omrCloseWebcamBtn');
+
+    console.log('OMR Scanner Integration: Elements found:', {
+        fileInput: !!fileInput,
+        selectFileBtn: !!selectFileBtn,
+        uploadArea: !!uploadArea,
+        addToOrderBtn: !!addToOrderBtn,
+        scanAgainBtn: !!scanAgainBtn,
+        retryBtn: !!retryBtn,
+        webcamBtn: !!webcamBtn,
+        captureBtn: !!captureBtn,
+        closeWebcamBtn: !!closeWebcamBtn
+    });
 
     // File input change
     if (fileInput) {
@@ -248,7 +266,15 @@ function setupModalEventListeners() {
  * Open the scanner modal
  */
 function openScannerModal() {
+    console.log('OMR Scanner Integration: openScannerModal called');
     const modalElement = document.getElementById('omrScannerModal');
+    console.log('OMR Scanner Integration: modalElement =', modalElement);
+
+    if (!modalElement) {
+        console.error('OMR Scanner Integration: Modal element not found');
+        return;
+    }
+
     const modal = new bootstrap.Modal(modalElement);
     resetScanner();
     modal.show();
@@ -539,6 +565,11 @@ function displayScanResults(scanData) {
         return;
     }
 
+    // Debug: Log the scan data structure
+    console.log('OMR Scanner: Full scan data:', scanData);
+    console.log('OMR Scanner: selected_item_data type:', typeof scanData.selected_item_data);
+    console.log('OMR Scanner: selected_item_data value:', scanData.selected_item_data);
+
     document.getElementById('omrProcessing').style.display = 'none';
     document.getElementById('omrResults').style.display = 'block';
 
@@ -548,16 +579,27 @@ function displayScanResults(scanData) {
 
     // Parse and display items
     if (scanData.selected_item_data && Array.isArray(scanData.selected_item_data)) {
+        console.log('OMR Scanner: Processing', scanData.selected_item_data.length, 'items');
         scanData.selected_item_data.forEach((itemStr, index) => {
+            console.log(`OMR Scanner: Processing item ${index}:`, itemStr);
+
+            // Check if itemStr is valid
+            if (!itemStr || typeof itemStr !== 'string') {
+                console.warn(`OMR Scanner: Invalid item string at index ${index}:`, itemStr);
+                return;
+            }
+
             // Parse item string format: "ID X: ItemName (Shaded)"
             const match = itemStr.match(/ID (\d+): (.+) \((Shaded|Not Shaded)\)/);
             if (match && match[3] === 'Shaded') {
                 const itemName = match[2];
+                console.log(`OMR Scanner: Found shaded item: "${itemName}"`);
 
                 // Filter out N/A items and form identifiers
                 if (itemName === 'N/A' || itemName.trim() === '' ||
                     itemName === 'FORM_ID_1' || itemName === 'FORM_ID_2' ||
                     itemName.startsWith('FORM_ID_')) {
+                    console.log(`OMR Scanner: Skipping filtered item: "${itemName}"`);
                     return; // Skip N/A items and form identifiers
                 }
 
@@ -580,11 +622,12 @@ function displayScanResults(scanData) {
     }
 
 
-    // Update summary
-    const totalItems = scanData.selected_items || 0;
-    const totalPrice = scanData.total_price || 0;
+    // Update summary with better error handling
+    const totalItems = (typeof scanData.selected_items === 'number') ? scanData.selected_items : 0;
+    const totalPrice = (typeof scanData.total_price === 'number') ? scanData.total_price : 0;
 
     console.log('OMR Scanner: Summary - Total Items:', totalItems, 'Total Price:', totalPrice);
+    console.log('OMR Scanner: Summary data types - selected_items:', typeof scanData.selected_items, 'total_price:', typeof scanData.total_price);
 
     document.getElementById('omrTotalItems').textContent = totalItems;
     document.getElementById('omrEstimatedTotal').textContent = `₱${totalPrice.toFixed(2)}`;

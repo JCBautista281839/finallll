@@ -477,10 +477,21 @@ class OMRScanner:
             selected_items = [] # Re-introduce for calculations
             selected_items_display = []
             
+            # DEBUG: Print form detection results
+            print(f"DEBUG: detected_form = {detected_form}")
+            print(f"DEBUG: active_menu_items length = {len(active_menu_items)}")
+            print(f"DEBUG: circles length = {len(circles)}")
+            print(f"DEBUG: shaded_result keys = {list(shaded_result.keys())}")
+            if 'shaded_circle_data' in shaded_result:
+                print(f"DEBUG: shaded_circle_data length = {len(shaded_result['shaded_circle_data'])}")
+            
             # Determine starting index based on detected form
             start_index = 2 if detected_form in [1, 2] else 0  # Skip first 2 if form detected
+            print(f"DEBUG: start_index = {start_index}")
             
             for i, circle in enumerate(circles): # Iterate through all circles
+                print(f"DEBUG: Processing circle {i}, ID: {circle['id']}")
+                
                 # For form identifier circles (first 2 when form is detected)
                 if detected_form in [1, 2] and i < 2:
                     is_shaded = any(c['id'] == circle['id'] for c in shaded_result['shaded_circle_data'])
@@ -490,27 +501,52 @@ class OMRScanner:
                         item_name = "FORM_ID_2"
                     status = "Shaded" if is_shaded else "Not Shaded"
                     selected_items_display.append(f"ID {circle['id']}: {item_name} ({status})")
+                    print(f"DEBUG: Form identifier circle {i}: {item_name} ({status})")
                     continue
                 
                 # For menu item circles
                 menu_index = i - start_index
-                item_name = active_menu_items[menu_index] if menu_index < len(active_menu_items) else "N/A"
+                item_name = active_menu_items[menu_index] if menu_index >= 0 and menu_index < len(active_menu_items) else "N/A"
+                print(f"DEBUG: menu_index = {menu_index}, item_name = {item_name}")
+                
                 is_shaded = any(c['id'] == circle['id'] for c in shaded_result['shaded_circle_data'])
+                print(f"DEBUG: is_shaded = {is_shaded}")
                 
                 if is_shaded and menu_index >= 0 and menu_index < len(active_menu_items): # Only add shaded menu items
-                    selected_items.append({
+                    print(f"DEBUG: Adding shaded item: {item_name}")
+                    # Safe confidence calculation
+                    try:
+                        fill_percentage = next(c['fill_percentage'] for c in shaded_result['shaded_circle_data'] if c['id'] == circle['id'])
+                        confidence = min(100, max(70, 100 - fill_percentage + 70))
+                    except StopIteration:
+                        fill_percentage = 50.0
+                        confidence = 75.0
+                    
+                    item_data = {
                         'item': item_name,
                         'quantity': 1,
                         'price': self.price_map.get(item_name, 100.00),
-                        'fill_percentage': next(c['fill_percentage'] for c in shaded_result['shaded_circle_data'] if c['id'] == circle['id']), # Get fill_percentage for shaded item
-                        'confidence': min(100, max(70, 100 - next(c['fill_percentage'] for c in shaded_result['shaded_circle_data'] if c['id'] == circle['id']) + 70))
-                    })
+                        'fill_percentage': fill_percentage,
+                        'confidence': confidence
+                    }
+                    selected_items.append(item_data)
+                    print(f"DEBUG: Added item: {item_data}")
 
                 status = "Shaded" if is_shaded else "Not Shaded"
                 selected_items_display.append(f"ID {circle['id']}: {item_name} ({status})")
 
-            # Calculate totals
-            total_price = sum(item['price'] for item in selected_items) # Keep original calculation for total price
+            # Calculate totals with error handling
+            try:
+                total_price = sum(item['price'] for item in selected_items) if selected_items else 0.0
+            except Exception as e:
+                print(f"Error calculating total price: {e}")
+                total_price = 0.0
+            
+            print(f"DEBUG: Final results:")
+            print(f"DEBUG: selected_items count = {len(selected_items)}")
+            print(f"DEBUG: selected_items = {selected_items}")
+            print(f"DEBUG: total_price = {total_price}")
+            print(f"DEBUG: selected_items_display count = {len(selected_items_display)}")
             
             # Create comprehensive debug image
             debug_image = image.copy()
