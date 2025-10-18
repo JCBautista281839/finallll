@@ -81,7 +81,7 @@
         </a>
       </nav>
 
-      <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+      
       <div id="notificationDropdown" class="notification-dropdown"
         style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
         <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
@@ -92,7 +92,7 @@
             style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
         </div>
         <div class="dropdown-body p-2" id="dropdownNotificationsList">
-          <!-- Notifications will be loaded here dynamically -->
+          
           <div class="text-center text-muted py-3">No notifications</div>
         </div>
         <div class="dropdown-footer p-2 text-center border-top">
@@ -102,10 +102,24 @@
       </div>
     </aside>
 
-    <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <main class="main-content flex-grow-1">
+      <div class="d-block d-md-none mobile-warning-overlay">
+        <div class="mobile-warning-content">
+          <div class="mobile-warning-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <h3 class="mobile-warning-title">For best experience, use a device with wider screen</h3>
+          <p class="mobile-warning-text">The POS is optimized for tablets and desktop devices</p>
+          <div class="mobile-warning-actions">
+            <button class="btn btn-primary btn-lg" onclick="window.location.href='../html/Dashboard.html'">
+              <i class="bi bi-house me-2"></i>Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="pos-container d-flex">
         <div class="menu-panel flex-grow-1">
 
@@ -120,7 +134,7 @@
           </div>
 
           <div class="search-container d-flex gap-2 align-items-start">
-            <!-- OMR Scanner Button -->
+            
             <button class="btn btn-primary" id="omrScannerBtn" title="Scan Order Sheet" style="white-space: nowrap;">
               <i class="bi bi-upc-scan"></i>
             </button>
@@ -162,9 +176,14 @@
           <div class="order-header">
             <div class="d-flex justify-content-between align-items-center">
               <h5 class="order-number">Order No. </h5>
-              <button class="btn-close-order">
-                <i class="bi bi-trash"></i>
-              </button>
+              <div class="d-flex gap-2">
+                <button class="floating-close-btn" id="floatingCloseBtn" style="display: none;">
+                  <i class="bi bi-x"></i>
+                </button>
+                <button class="btn-close-order">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </div>
             <div class="d-flex align-items-center gap-2">
               <div class="dropdown">
@@ -230,6 +249,15 @@
     </main>
   </div>
 
+  <!-- Floating Order Button for Tablet -->
+  <button class="floating-order-btn" id="floatingOrderBtn" style="display: none;">
+    <i class="bi bi-bag"></i>
+    <span class="order-count" id="orderCount" style="display: none;">0</span>
+  </button>
+
+  <!-- Order Panel Overlay -->
+  <div class="order-panel-overlay" id="orderPanelOverlay"></div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -243,7 +271,7 @@
   <script src="../javascript/clock.js"></script>
   <script src="../javascript/omr-scanner-integration.js"></script>
 
-  <!-- Dashboard Burger Menu Script -->
+  
   <script>
     (function () {
       const burgerMenu = document.getElementById('burgerMenu');
@@ -300,6 +328,146 @@
           if (typeof loadNotifications === 'function') {
             loadNotifications();
           }
+        });
+      }
+    });
+  </script>
+
+  <!-- Floating Order Panel JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const floatingOrderBtn = document.getElementById('floatingOrderBtn');
+      const floatingCloseBtn = document.getElementById('floatingCloseBtn');
+      const orderPanel = document.querySelector('.order-panel');
+      const orderPanelOverlay = document.getElementById('orderPanelOverlay');
+      const orderCount = document.getElementById('orderCount');
+
+      // Check if we're on tablet size
+      function isTabletSize() {
+        return window.innerWidth >= 768 && window.innerWidth <= 1024;
+      }
+
+      // Show/hide floating button based on screen size
+      function toggleFloatingButton() {
+        if (isTabletSize()) {
+          floatingOrderBtn.style.display = 'flex';
+          // Update order count
+          updateOrderCount();
+        } else {
+          floatingOrderBtn.style.display = 'none';
+        }
+      }
+
+      // Update order count badge
+      function updateOrderCount() {
+        const orderItems = document.querySelectorAll('.order-item');
+        const totalItems = Array.from(orderItems).reduce((total, item) => {
+          const quantity = parseInt(item.querySelector('.quantity')?.textContent || '0');
+          return total + quantity;
+        }, 0);
+
+        if (totalItems > 0) {
+          orderCount.textContent = totalItems;
+          orderCount.style.display = 'flex';
+        } else {
+          orderCount.style.display = 'none';
+        }
+      }
+
+      // Show order panel
+      function showOrderPanel() {
+        orderPanel.classList.add('active');
+        orderPanelOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        // Hide gray backgrounds
+        const mainContent = document.querySelector('.main-content');
+        const menuPanel = document.querySelector('.menu-panel');
+        if (mainContent) mainContent.style.background = 'transparent';
+        if (menuPanel) menuPanel.style.background = 'transparent';
+        // Show floating close button
+        if (floatingCloseBtn) {
+          floatingCloseBtn.style.display = 'flex';
+        }
+      }
+
+      // Hide order panel
+      function hideOrderPanel() {
+        orderPanel.classList.remove('active');
+        orderPanelOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+        // Restore gray backgrounds
+        const mainContent = document.querySelector('.main-content');
+        const menuPanel = document.querySelector('.menu-panel');
+        if (mainContent) mainContent.style.background = '';
+        if (menuPanel) menuPanel.style.background = '';
+        // Hide floating close button
+        if (floatingCloseBtn) {
+          floatingCloseBtn.style.display = 'none';
+        }
+      }
+
+      // Event listeners
+      if (floatingOrderBtn) {
+        floatingOrderBtn.addEventListener('click', showOrderPanel);
+      }
+
+      if (floatingCloseBtn) {
+        floatingCloseBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          hideOrderPanel();
+        });
+      }
+
+      if (orderPanelOverlay) {
+        orderPanelOverlay.addEventListener('click', hideOrderPanel);
+      }
+
+      // Close button in order panel
+      const closeOrderBtn = document.querySelector('.btn-close-order');
+      if (closeOrderBtn) {
+        closeOrderBtn.addEventListener('click', hideOrderPanel);
+      }
+
+      // Escape key to close
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && orderPanel.classList.contains('active')) {
+          hideOrderPanel();
+        }
+      });
+
+      // Initial setup
+      toggleFloatingButton();
+
+      // Ensure overlay is hidden on page load
+      if (orderPanelOverlay) {
+        orderPanelOverlay.classList.remove('active');
+        orderPanelOverlay.style.display = 'none';
+        orderPanelOverlay.style.opacity = '0';
+        orderPanelOverlay.style.visibility = 'hidden';
+      }
+
+      // Update on resize
+      window.addEventListener('resize', function () {
+        toggleFloatingButton();
+        if (!isTabletSize()) {
+          hideOrderPanel();
+        }
+      });
+
+      // Observer to watch for order changes
+      const orderItemsContainer = document.querySelector('.order-items');
+      if (orderItemsContainer) {
+        const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (mutation.type === 'childList') {
+              updateOrderCount();
+            }
+          });
+        });
+
+        observer.observe(orderItemsContainer, {
+          childList: true,
+          subtree: true
         });
       }
     });

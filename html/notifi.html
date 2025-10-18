@@ -2,6 +2,24 @@
 <html lang="en">
 
 <head>
+    
+    <script>
+        // Override all console methods to prevent output
+        console.log = function() {};
+        console.debug = function() {};
+        console.error = function() {};
+        console.warn = function() {};
+        console.info = function() {};
+        console.trace = function() {};
+        console.table = function() {};
+        console.group = function() {};
+        console.groupEnd = function() {};
+        console.time = function() {};
+        console.timeEnd = function() {};
+        console.count = function() {};
+        console.clear = function() {};
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications</title>
@@ -79,7 +97,7 @@
             </nav>
         </aside>
 
-        <!-- Sidebar Overlay -->
+        
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <main class="main-content flex-grow-1 p-4">
@@ -102,7 +120,7 @@
                         </tr>
                     </thead>
                     <tbody id="notificationStatus">
-                        <!-- Notifications will be dynamically loaded here. User/person icons removed by CSS and not rendered in JS. -->
+                        
                     </tbody>
                 </table>
             </div>
@@ -116,7 +134,7 @@
     <script src="../javascript/support-badge.js"></script>
     <script src="../main.js"></script>
 
-    <!-- Dashboard Burger Menu Script -->
+    
     <script>
         (function () {
             const burgerMenu = document.getElementById('burgerMenu');

@@ -2,7 +2,25 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
+    
+    <script>
+        // Override all console methods to prevent output
+        console.log = function() {};
+        console.debug = function() {};
+        console.error = function() {};
+        console.warn = function() {};
+        console.info = function() {};
+        console.trace = function() {};
+        console.table = function() {};
+        console.group = function() {};
+        console.groupEnd = function() {};
+        console.time = function() {};
+        console.timeEnd = function() {};
+        console.count = function() {};
+        console.clear = function() {};
+    </script>
+    
+    <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orders</title>
 
@@ -78,7 +96,7 @@
           <div class="nav-text">Logout</div>
         </a>
       </nav>
-      <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+      
       <div id="notificationDropdown" class="notification-dropdown"
         style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
         <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
@@ -89,7 +107,7 @@
             style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
         </div>
         <div class="dropdown-body p-2" id="dropdownNotificationsList">
-          <!-- Notifications will be loaded here dynamically -->
+          
           <div class="text-center text-muted py-3">No notifications</div>
         </div>
         <div class="dropdown-footer p-2 text-center border-top">
@@ -99,22 +117,29 @@
       </div>
     </aside>
 
-    <!-- Sidebar Overlay -->
+    
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <main class="main-content flex-grow-1">
       <div class="container-fluid px-2 px-md-3 px-lg-4">
-        <!-- Header with burger menu, search, and date picker -->
-        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3 mb-md-4">
-          <button class="burger-menu-inline d-block d-md-none mb-2 mb-md-0" id="burgerMenu" aria-label="Toggle Menu">
+        
+        <div class="d-flex flex-row align-items-center mb-3 mb-md-4">
+          <button class="burger-menu-inline d-block d-md-none me-2" id="burgerMenu" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
-          <div class="search-container flex-grow-1 w-100 w-md-auto me-md-3">
+          <div class="search-container flex-grow-1 me-md-3">
             <input type="search" id="orderSearch" class="form-control search-input"
               placeholder="Enter Order Number (e.g., 0001)" aria-label="Search orders" autocomplete="on">
-            <img src="../src/Icons/search.png" alt="Search" class="search-icon">
           </div>
-          <div class="date-container mt-2 mt-md-0">
+          <div class="date-container d-none d-md-block">
+            <input type="date" class="form-control date-input">
+            <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
+          </div>
+        </div>
+
+        
+        <div class="d-md-none mb-3">
+          <div class="date-container">
             <input type="date" class="form-control date-input">
             <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
           </div>
@@ -138,7 +163,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <!-- Orders will be dynamically loaded from Firebase -->
+                  
                 </tbody>
               </table>
             </div>
@@ -149,23 +174,23 @@
   </div>
 
 
-  <!-- Firebase SDK -->
+  
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="../javascript/unified-popup.js"></script>
 
-  <!-- Bootstrap JavaScript -->
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Initialize Firebase and load orders -->
+  
   <script src="../main.js"></script>
   <script src="../javascript/auth-manager.js"></script>
   <script src="../javascript/navnotifi.js"></script>
   <script src="../javascript/order.js"></script>
   <script src="../javascript/notifications.js"></script>
 
-  <!-- Dashboard Burger Menu Script -->
+  
   <script>
     (function () {
       const burgerMenu = document.getElementById('burgerMenu');

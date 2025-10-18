@@ -76,6 +76,11 @@ class AuthGuard {
                 redirectTo: 'kitchen',
                 message: 'Kitchen staff can only access kitchen dashboard, inventory and notifications'
             },
+            'customer': {
+                allowedPages: ['account', 'review', 'submit-report', 'menucustomer', 'details', 'shipping'],
+                redirectTo: 'menucustomer',
+                message: 'Customers can only access account, reviews, menu, and ordering pages'
+            },
             'admin': {
                 allowedPages: 'all', // Admin can access everything
                 redirectTo: null,
@@ -129,6 +134,11 @@ class AuthGuard {
             this.setupKitchenRestrictions(page);
         }
 
+        // Customer-specific restrictions
+        if (this.userRole === 'customer') {
+            this.setupCustomerRestrictions(page);
+        }
+
         // Server-specific restrictions
         if (this.userRole === 'server') {
             this.setupServerRestrictions(page);
@@ -157,6 +167,44 @@ class AuthGuard {
 
         // Note: Kitchen users have full inventory management permissions
         // They can add, edit, and delete inventory items without restrictions
+    }
+
+    setupCustomerRestrictions(page) {
+        // Customers have limited access to customer-facing pages only
+        console.log('👤 Customer role - Setting up customer restrictions');
+        
+        // Validate ordering flow: can only access shipping.html if coming from details.html
+        if (page === 'shipping') {
+            const referrer = document.referrer;
+            const fromDetails = referrer.includes('details.html');
+            
+            if (!fromDetails && !sessionStorage.getItem('orderFlowStarted')) {
+                console.log('🚫 Customer attempting to access shipping directly - redirecting to menu');
+                this.showAccessDeniedMessage('Please start your order from the menu');
+                window.location.href = '../customer/html/menucustomer.html';
+                return;
+            }
+        }
+
+        // Track ordering flow
+        if (page === 'menucustomer') {
+            sessionStorage.setItem('orderFlowStarted', 'true');
+        }
+        
+        // Clear flow when order is complete or user leaves shipping
+        if (page === 'account' || page === 'review' || page === 'submit-report') {
+            sessionStorage.removeItem('orderFlowStarted');
+        }
+
+        // Hide all admin/manager/server elements
+        const adminElements = document.querySelectorAll('[data-admin-only]');
+        adminElements.forEach(el => el.style.display = 'none');
+
+        const managerElements = document.querySelectorAll('[data-manager-only]');
+        managerElements.forEach(el => el.style.display = 'none');
+
+        const serverElements = document.querySelectorAll('[data-server-only]');
+        serverElements.forEach(el => el.style.display = 'none');
     }
 
     setupServerRestrictions(page) {

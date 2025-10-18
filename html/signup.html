@@ -1,23 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    
+    <script>
+        // Override all console methods to prevent output
+        console.log = function() {};
+        console.debug = function() {};
+        console.error = function() {};
+        console.warn = function() {};
+        console.info = function() {};
+        console.trace = function() {};
+        console.table = function() {};
+        console.group = function() {};
+        console.groupEnd = function() {};
+        console.time = function() {};
+        console.timeEnd = function() {};
+        console.count = function() {};
+        console.clear = function() {};
+    </script>
+    
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Victoria's Bistro - Create Account</title>
 
-    <!-- Font Awesome 6 -->
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <!-- Bootstrap 5 CSS -->
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Your Custom CSS -->
+    
     <link rel="stylesheet" href="../css/signup.css">
     <link rel="icon" type="image/png" href="/src/IMG/SU.png">
 </head>
 <body>
     <div class="mobile-container">
-        <!-- Create Account Section -->
+        
         <div class="login-section">
             <div class="back-arrow" onclick="window.location.href='login.html'">
                 <i class="fas fa-arrow-left"></i>
@@ -70,16 +88,16 @@
             </div>
         </div>
 
-        <!-- Photo Section -->
+        
         <div class="photo-section">
             <div class="photo-item">
-                <!-- Replace with your create account image -->
+                
                 <img src="../src/IMG/piclogin.png" alt="Create Account Image">
             </div>
         </div>
     </div>
 
-    <!-- Terms and Conditions Modal -->
+    
     <div id="termsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -127,7 +145,7 @@
         </div>
     </div>
 
-    <!-- Privacy Policy Modal -->
+    
     <div id="privacyModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -167,7 +185,7 @@
         </div>
     </div>
 
-    <!-- Message Modal (for errors and success) -->
+    
     <div id="messageModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -183,7 +201,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -197,7 +215,7 @@
     <script src="../javascript/sendgrid-otp.js?v=2.3"></script>
     <script src="../javascript/signup.js"></script>
     
-    <!-- Wait for Firebase to load before running signup.js -->
+    
     <script>
         // Wait for Firebase to be ready
         function waitForFirebase() {

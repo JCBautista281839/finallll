@@ -42,7 +42,7 @@
           <div class="profile-label">Contact Number</div>
           <input class="profile-input" type="text" name="contactNumber">
         </div>
-        <!-- Address removed per user request -->
+        
       </div>
       <div class="profile-section-title">Security</div>
       <div class="profile-fields">
@@ -55,7 +55,7 @@
           <input class="profile-input" type="password" name="password" placeholder="••••••••">
         </div>
       </div>
-      <!-- Save/Cancel buttons (hidden by default) -->
+      
       <div class="profile-btn-row" id="saveCancelButtons" style="display: none;">
         <button class="btn-cancel" type="button" onclick="cancelEdit()">
           <i class="fa-solid fa-times"></i> Cancel
@@ -70,7 +70,7 @@
     </div>
     <div class="profile-divider"></div>
     <div class="profile-right">
-      <!-- Support Tickets Section -->
+      
       <div class="support-section">
         <div class="support-header">
           <h2><i class="fas fa-headset"></i> Support</h2>
@@ -84,7 +84,7 @@
           </button>
         </div>
 
-        <!-- My Tickets Container -->
+        
         <div id="tickets-container" class="tickets-container">
           <div id="tickets-loading" class="loading-message" style="display: none;">
             <i class="fas fa-spinner fa-spin"></i> Loading your tickets...
@@ -97,25 +97,25 @@
           </div>
 
           <div id="tickets-list" class="tickets-list">
-            <!-- Tickets will be populated here -->
+            
           </div>
         </div>
       </div>
 
-      <!-- Order History Section -->
+      
       <div class="order-history-section">
         <div class="order-history-header">
           <h2><i class="fas fa-receipt"></i> Order History</h2>
         </div>
 
-        <!-- Order History Buttons -->
+        
         <div class="order-buttons">
           <button class="btn-view-orders" id="viewOrdersBtn" onclick="togglePastOrders()" style="display: none;">
             <i class="fas fa-history"></i> View Past Orders
           </button>
         </div>
 
-        <!-- Order History Container -->
+        
         <div id="order-history-container" class="order-history-container">
           <div id="order-loading" class="loading-message" style="display: none;">
             <i class="fas fa-spinner fa-spin"></i> Loading your orders...
@@ -127,17 +127,17 @@
             <small>Your order history will appear here once you place an order</small>
           </div>
 
-          <!-- Recent Order Section -->
+          
           <div id="recent-order-container" class="recent-order-container" style="display: none;">
             <div id="recent-order" class="recent-order">
-              <!-- Most recent order will be populated here -->
+              
             </div>
           </div>
 
-          <!-- Past Orders Section -->
+          
           <div id="past-orders-container" class="past-orders-container" style="display: none;">
             <div id="orders-list" class="orders-list">
-              <!-- Past orders will be populated here -->
+              
             </div>
           </div>
         </div>
@@ -145,11 +145,11 @@
     </div>
   </div>
 
-  <!-- Submit Report Modal -->
+  
   <div id="submitReportModal" class="report-modal" style="display: none;">
     <div class="report-modal-overlay" onclick="closeReportModal()"></div>
     <div class="report-modal-content">
-      <!-- Modal Header -->
+      
       <div class="report-modal-header">
         <h2><i class="fas fa-headset"></i> Submit Support Ticket</h2>
         <button class="report-modal-close" onclick="closeReportModal()">
@@ -157,13 +157,13 @@
         </button>
       </div>
 
-      <!-- Modal Body -->
+      
       <div class="report-modal-body">
         <p class="modal-intro">Please provide details about your issue and we'll get back to you as soon as possible.
         </p>
 
         <form id="reportForm" class="report-form">
-          <!-- Issue Category -->
+          
           <div class="form-group">
             <label for="category">
               <i class="fas fa-tag"></i> Issue Category *
@@ -178,7 +178,7 @@
             </select>
           </div>
 
-          <!-- Reference Number -->
+          
           <div class="form-group">
             <label for="subject">
               <i class="fas fa-hashtag"></i> Reference Number *
@@ -189,7 +189,7 @@
             <small class="form-help">Enter numbers only</small>
           </div>
 
-          <!-- Description -->
+          
           <div class="form-group">
             <label for="description">
               <i class="fas fa-align-left"></i> Description *
@@ -200,7 +200,7 @@
             <small class="form-help"><span id="descCount">0</span>/1000 characters (minimum 20)</small>
           </div>
 
-          <!-- Photo Upload (Optional) -->
+          
           <div class="form-group">
             <label for="photoUpload">
               <i class="fas fa-camera"></i> Attach Photo (Optional)
@@ -220,7 +220,7 @@
             </div>
           </div>
 
-          <!-- Customer Info Preview -->
+          
           <div class="customer-info-preview">
             <h3><i class="fas fa-user"></i> Your Contact Information</h3>
             <div class="info-grid">
@@ -239,13 +239,13 @@
             </div>
           </div>
 
-          <!-- Loading Indicator -->
+          
           <div id="loadingIndicator" class="loading-indicator" style="display: none;">
             <i class="fas fa-spinner fa-spin"></i>
             <span>Submitting your ticket...</span>
           </div>
 
-          <!-- Form Actions -->
+          
           <div class="form-actions">
             <button type="button" class="btn-cancel" onclick="closeReportModal()">
               <i class="fas fa-times"></i> Cancel
@@ -259,7 +259,7 @@
     </div>
   </div>
 
-  <!-- Success Modal -->
+  
   <div id="successModal" class="success-modal" style="display: none;">
     <div class="success-modal-overlay" onclick="closeSuccessModal()"></div>
     <div class="success-modal-content">
@@ -279,11 +279,11 @@
     </div>
   </div>
 
-  <!-- Password Change OTP Modal -->
+  
   <div id="passwordOTPModal" class="password-otp-modal" style="display: none;">
     <div class="password-otp-modal-overlay" onclick="closePasswordOTPModal()"></div>
     <div class="password-otp-modal-content">
-      <!-- Modal Header -->
+      
       <div class="password-otp-modal-header">
         <h2><i class="fas fa-shield-alt"></i> Verify Password Change</h2>
         <button class="password-otp-modal-close" onclick="closePasswordOTPModal()">
@@ -291,7 +291,7 @@
         </button>
       </div>
 
-      <!-- Modal Body -->
+      
       <div class="password-otp-modal-body">
         <div class="otp-info">
           <i class="fas fa-envelope"></i>
@@ -317,19 +317,19 @@
           </p>
         </div>
 
-        <!-- Loading Indicator -->
+        
         <div id="passwordOTPLoading" class="loading-indicator" style="display: none;">
           <i class="fas fa-spinner fa-spin"></i>
           <span>Verifying code...</span>
         </div>
 
-        <!-- Error Message -->
+        
         <div id="passwordOTPError" class="error-message" style="display: none;">
           <i class="fas fa-exclamation-triangle"></i>
           <span id="passwordOTPErrorText"></span>
         </div>
 
-        <!-- Form Actions -->
+        
         <div class="form-actions">
           <button type="button" class="btn-cancel" onclick="closePasswordOTPModal()">
             <i class="fas fa-times"></i> Cancel
@@ -342,32 +342,32 @@
     </div>
   </div>
 
-  <!-- Firebase Scripts -->
+  
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script src="../../javascript/unified-popup.js"></script>
 
-  <!-- Firebase Config -->
+  
   <script src="../firebase-config.js"></script>
 
-  <!-- API Configuration -->
+  
   <script src="../../javascript/config.js"></script>
 
-  <!-- Authentication Manager for Auto Logout -->
+  
   <script src="../javascript/auth-manager.js"></script>
 
-  <!-- Firebase Orders Management -->
+  
   <script src="../javascript/firebase-orders.js"></script>
 
-  <!-- Cloudinary Upload Script -->
+  
   <script src="../../cloud.js"></script>
 
-  <!-- Report History Script -->
+  
   <script src="../javascript/report-history.js"></script>
 
-  <!-- Report Submission Script -->
+  
   <script src="../javascript/submit-report.js"></script>
 
   <script src="../javascript/profilesettings.js"></script>

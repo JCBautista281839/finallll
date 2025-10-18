@@ -276,7 +276,7 @@ body {
   gap: 1rem;
   padding-bottom: 2rem;
   margin-top: -15px;
-  height: calc(100vh - 300px);
+  min-height: calc(100vh - 300px);
 }
 
 .menu-item-card {
@@ -932,12 +932,11 @@ body {
 }
 
 
-@media (max-width: 991px) and (min-width: 768px) {
+@media (max-width: 1024px) and (min-width: 768px) {
   .pos-container {
     flex-direction: column;
     height: auto;
   }
-
 
   .order-panel {
     width: 100%;
@@ -946,49 +945,88 @@ body {
     margin-right: 0;
   }
 
+  .search-container {
+    position: static;
+    min-width: auto;
+    margin-left: 0;
+    padding: 0;
+  }
 
   .menu-panel {
     height: 60vh;
     padding: 1rem;
+    width: 75% !important;
+    padding: 25px 10px 20px 10px !important;
+    margin-left: 25px !important;
+    margin-right: 15px !important;
+
   }
 
-
   .menu-items-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, 1fr);
     height: auto;
   }
 
   .pos-title {
     font-size: 2rem;
+    margin-bottom: -5px !important;
+    justify-content: center;
   }
 
   .datetime-display {
-    margin-right: 5rem;
-  }
-
-
-  .pos-title {
-    font-size: 2rem;
-  }
-
-  .datetime-display {
-    margin-right: 5rem;
+    font-size: 1.1rem;
+    font-family: 'PoppinsRegular';
+    color: #000000;
+    font-weight: 500;
+    text-align: center;
+    justify-content: left;
+    margin-right: -10px;
   }
 
   .search-container {
-    position: static;
     min-width: auto;
     margin-bottom: 1rem;
+    margin-left: 0;
+    margin-top: -20px !important;
     padding: 0;
   }
+
+  ;
+
+  .search-input {
+    font-family: 'PoppinsExtraLight';
+    border-radius: 13px;
+    border: 1px solid #ffffff;
+    padding: 0.5rem 1rem;
+    background: #ffffff;
+  }
+
+  .search-icon {
+    width: 25px;
+    height: 25px;
+    filter: invert(44%) sepia(1%) saturate(0%) hue-rotate(178deg) brightness(92%) contrast(87%);
+  }
+
+
+  .search-container .btn {
+    border-radius: 13px;
+    border: 1px solid #ffffff;
+    border-left: none;
+    background: #ffffff;
+  }
+
+  .category-tabs {
+    margin-top: 20px !important;
+    margin-right: 15px;
+  }
+
 }
 
 
 @media (max-width: 767px) and (min-width: 576px) {
   .main-content {
     background: #f5f6fa;
-    /* Light gray background */
     min-height: 100vh;
     padding: 1rem;
   }
@@ -1260,6 +1298,7 @@ body {
 }
 
 
+
 @media (min-width: 1800px) {
   .order-panel {
     width: 450px;
@@ -1372,4 +1411,266 @@ body {
 .form-select-sm:focus {
   border-color: #b76e79;
   box-shadow: 0 0 0 0.2rem rgba(183, 110, 121, 0.25);
+}
+
+/* Mobile Warning Overlay */
+.mobile-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #721111, #7d0f0f);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: 'PoppinsRegular';
+}
+
+.mobile-warning-content {
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 100%;
+  animation: slideInUp 0.5s ease-out;
+}
+
+.mobile-warning-icon {
+  font-size: 4rem;
+  color: #902424;
+  margin-bottom: 20px;
+}
+
+.mobile-warning-title {
+  font-family: 'PoppinsSemiBold', sans-serif;
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 15px;
+  line-height: 1.3;
+}
+
+.mobile-warning-text {
+  font-family: 'PoppinsRegular', sans-serif;
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.mobile-warning-actions .btn {
+  font-family: 'PoppinsMedium', sans-serif;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.mobile-warning-actions .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-warning-overlay {
+    display: none !important;
+  }
+}
+
+/* Ensure overlay is hidden outside tablet breakpoint */
+@media (max-width: 767px),
+(min-width: 1025px) {
+  .order-panel-overlay {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .floating-order-btn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 768px) {
+  .floating-order-btn {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    background: #721111;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 1.5rem;
+    color: white;
+  }
+
+  .floating-order-btn:hover {
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 6px 25px rgba(40, 167, 69, 0.4);
+  }
+
+  .floating-order-btn .order-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    min-width: 24px;
+  }
+
+  .floating-close-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .floating-close-btn:hover {
+    background: #c82333;
+    transform: scale(1.1);
+  }
+
+  /* Hide the original order panel on tablet */
+  .order-panel {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    height: 90vh !important;
+    z-index: 1001;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+  }
+
+  /* Show order panel when active */
+  .order-panel.active {
+    display: flex;
+    animation: slideInUp 0.3s ease-out;
+  }
+
+  /* Overlay for modal-like behavior */
+  .order-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5) !important;
+    z-index: 1000;
+    display: none !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .order-panel-overlay.active {
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Hide gray background when overlay is active */
+  body:has(.order-panel-overlay.active) .main-content,
+  body:has(.order-panel-overlay.active) .menu-panel {
+    background: transparent !important;
+  }
+
+  /* Alternative: Hide gray background when order panel is active */
+  body:has(.order-panel.active) .main-content,
+  body:has(.order-panel.active) .menu-panel {
+    background: transparent !important;
+  }
+
+  /* Animation keyframes */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -40%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Adjust order panel content for modal */
+  .order-panel .order-items {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  .order-panel .order-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .order-panel .order-summary {
+    padding: 1rem 1.5rem;
+  }
+
+  .order-panel .proceed-button-container {
+    padding: 1rem 1.5rem;
+  }
 }

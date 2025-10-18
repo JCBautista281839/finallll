@@ -6,16 +6,16 @@
   <title>Checkout</title>
   <link rel="stylesheet" href="../css/details.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome 6 -->
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Bootstrap 5 CSS -->
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="icon" type="image/png" href="/src/IMG/CH.png">
 </head>
 
 <body>
   <div class="container">
-    <!-- Header - Back Button Only -->
+    
     <header class="menu-header">
       <div class="left-section">
         <a href="../html/menucustomer.html" class="back-to-menu" id="back-btn">
@@ -25,9 +25,9 @@
       </div>
     </header>
 
-    <!-- Checkout form and order summary -->
+    
     <div class="checkout">
-      <!-- Contact and Shipping Details -->
+      
       <div class="form-section">
         <h2 class="form-title">ENTER YOUR CONTACT AND SHIPPING DETAILS</h2>
 
@@ -81,15 +81,15 @@
         </div>
       </div>
 
-      <!-- Order Summary -->
+      
       <div class="order-summary">
         <h2>ORDER SUMMARY</h2>
         <div class="order-menu" id="order-menu">
-          <!-- Cart items will be loaded dynamically -->
+          
         </div>
         <hr>
 
-        <!-- Subtotal -->
+        
         <div class="subtotal">
           <span>Subtotal</span>
           <span class="price" id="subtotal-amount">₱0</span>
@@ -97,19 +97,19 @@
 
         <hr>
 
-        <!-- Total -->
+        
         <div class="total">
           <span>Total</span>
           <span class="price" id="total-price">₱0</span>
         </div>
-        <!-- Checkout page continue button -->
+        
         <button class="continue-btn" onclick="window.location.href='shipping.html'">
           Continue
         </button>
       </div>
     </div>
 
-    <!-- Location Confirmation -->
+    
     <div class="location-section">
       <h3>Location Confirmation</h3>
       <p>Pin and confirm your address below</p>
@@ -118,21 +118,21 @@
         style="width:100%;padding:10px;margin-bottom:10px;">
       <div id="coords-result" style="margin-top:10px; font-weight:605;"></div>
 
-      <!-- Map Container -->
+      
       <div class="map-box">
         <div id="map"></div>
       </div>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="../../javascript/unified-popup.js"></script>
   <script src="../firebase-config.js"></script>
 
-  <!-- Google Maps API -->
+  
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgyZCnALMDNkeu69WlpvuilTRrggoth_s&libraries=places"></script>
   <script src="../javascript/maps.js"></script>
