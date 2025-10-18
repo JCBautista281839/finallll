@@ -516,7 +516,9 @@ function initializeProceedButton() {
 
       let paymentValid = false;
       if (activePaymentMethod === 'Cash') {
-        paymentValid = cashInput && cashInput.value && parseFloat(cashInput.value) > 0;
+        const cashAmount = cashInput && cashInput.value ? parseFloat(cashInput.value) : 0;
+        const totalAmount = calculateTotal();
+        paymentValid = cashInput && cashInput.value && cashAmount > 0 && cashAmount >= totalAmount;
       } else if (activePaymentMethod === 'GCash') {
         paymentValid = gcashInput && gcashInput.value && gcashInput.value.length >= 8;
       } else if (activePaymentMethod === 'Card') {
@@ -541,6 +543,9 @@ function initializeProceedButton() {
         proceedBtn.style.cursor = 'not-allowed';
       }
     };
+
+    // Make checkInput globally accessible
+    window.checkInput = checkInput;
 
     // Check input on page load and whenever inputs change
     checkInput();
@@ -976,6 +981,12 @@ function updateChange() {
   } else {
     if (changeLabel) changeLabel.textContent = 'Change:';
     changeEl.textContent = '₱' + (received - total).toFixed(2);
+  }
+
+  // Trigger proceed button validation when cash amount changes
+  const proceedBtn = document.querySelector('.proceed-btn');
+  if (proceedBtn && typeof window.checkInput === 'function') {
+    window.checkInput();
   }
 }
 
