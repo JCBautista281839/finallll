@@ -2,9 +2,9 @@
 <html lang="en">
 
 <head>
-    <!-- Console Override - Hide all console output -->
+    
     <script>
-        // Override all console methods to prevent output
+    
         console.log = function() {};
         console.debug = function() {};
         console.error = function() {};
@@ -94,7 +94,7 @@
                     <div class="nav-text">Logout</div>
                 </a>
             </nav>
-            <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+           
             <div id="notificationDropdown" class="notification-dropdown"
                 style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
                 <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
@@ -105,7 +105,7 @@
                         style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
                 </div>
                 <div class="dropdown-body p-2" id="dropdownNotificationsList">
-                    <!-- Notifications will be loaded here dynamically -->
+              
                     <div class="text-center text-muted py-3">No notifications</div>
                 </div>
                 <div class="dropdown-footer p-2 text-center border-top">
@@ -115,7 +115,7 @@
             </div>
         </aside>
 
-        <!-- Sidebar Overlay -->
+        
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <main class="main-content flex-grow-1 p-4">
@@ -129,7 +129,7 @@
                     </div>
 
                     <div class="account-body d-flex">
-                        <!-- Left Panel - Profile -->
+                        
                         <div class="profile-panel">
                             <div class="profile-image-container">
                                 <div class="profile-image" id="profileImageContainer">
@@ -158,18 +158,18 @@
                             </div>
                         </div>
 
-                        <!-- Right Panel - Personal Information -->
+                        
                         <div class="info-panel flex-grow-1" id="personalInfoPanel">
                             <h2 class="info-title">Personal Information</h2>
 
-                            <!-- Firebase Connection Status -->
+                            
                             <div id="connectionStatus" class="alert alert-info" style="display: none;">
                                 <i class="bi bi-cloud"></i> Connecting to Firebase...
                             </div>
 
                             <form class="personal-info-form" id="userForm"
                                 onsubmit="event.preventDefault(); return false;">
-                                <!-- Gender Selection -->
+                                
                                 <div class="gender-selection mb-4">
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="gender" id="male"
@@ -183,7 +183,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Name Fields -->
+                                
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="firstName" class="form-label">First Name</label>
@@ -197,13 +197,13 @@
                                     </div>
                                 </div>
 
-                                <!-- Address -->
+                                
                                 <div class="mb-3">
                                     <label for="address" class="form-label">Address</label>
                                     <input type="text" class="form-control" id="address" placeholder="Enter address">
                                 </div>
 
-                                <!-- Phone and Date of Birth -->
+                                
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label for="phone" class="form-label">Phone Number</label>
@@ -219,7 +219,7 @@
                                 </div>
 
 
-                                <!-- Action Buttons -->
+                                
                                 <div class="d-flex justify-content-end mt-4">
                                     <button type="button" class="btn btn-secondary me-2" id="cancelEditBtn"
                                         onclick="cancelEdit()" style="display: none;">
@@ -233,11 +233,11 @@
                             </form>
                         </div>
 
-                        <!-- Right Panel - Login & Password -->
+                        
                         <div class="info-panel flex-grow-1" id="loginPasswordPanel" style="display: none;">
                             <h2 class="info-title">Login & Password</h2>
 
-                            <!-- Firebase Connection Status -->
+                            
                             <div id="connectionStatus2" class="alert alert-info" style="display: none;">
                                 <i class="bi bi-cloud"></i> Connecting to Firebase...
                             </div>
@@ -245,7 +245,7 @@
                             <form class="login-password-form" id="loginPasswordForm"
                                 onsubmit="event.preventDefault(); return false;">
 
-                                <!-- Current Password -->
+                                
                                 <div class="mb-3">
                                     <label for="currentPassword" class="form-label">Current Password</label>
                                     <div class="input-group">
@@ -262,7 +262,7 @@
                                     </div>
                                 </div>
 
-                                <!-- New Password -->
+                                
                                 <div class="mb-3">
                                     <label for="newPassword" class="form-label">New Password</label>
                                     <div class="input-group">
@@ -278,7 +278,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Confirm New Password -->
+                                
                                 <div class="mb-3">
                                     <label for="confirmPassword" class="form-label">Confirm New Password</label>
                                     <div class="input-group">
@@ -291,7 +291,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Password Strength Indicator -->
+                                
                                 <div class="mb-3">
                                     <div class="password-strength" id="passwordStrength" style="display: none;">
                                         <div class="strength-bar">
@@ -301,7 +301,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Save Button -->
+                                
                                 <div class="d-flex justify-content-end mt-4">
                                     <button type="button" class="btn btn-primary" id="savePasswordData"
                                         onclick="handlePasswordSaveClick()" disabled>
@@ -318,7 +318,7 @@
 
 
 
-    <!-- Firebase Scripts -->
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -326,7 +326,7 @@
     <script src="../main.js"></script>
 
 
-    <!-- Other scripts -->
+    
     <script src="../javascript/navnotifi.js"></script>
     <script src="../javascript/notifications.js"></script>
     <script src="../cloud.js"></script>
@@ -334,7 +334,7 @@
     <script src="../javascript/user.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Dashboard Burger Menu Script -->
+    
     <script>
         (function () {
             const burgerMenu = document.getElementById('burgerMenu');

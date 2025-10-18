@@ -76,7 +76,7 @@
                     <div class="nav-text">Logout</div>
                 </a>
             </nav>
-            <!-- Notification Dropdown UI (anchored to nav/sidebar) -->
+            
             <div id="notificationDropdown" class="notification-dropdown"
                 style="display:none;position:absolute;top:80px;left:120px;width:370px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);z-index:1000;">
                 <div class="dropdown-header p-3 border-bottom d-flex align-items-center justify-content-between">
@@ -87,7 +87,7 @@
                         style="width:24px;height:24px;cursor:pointer;filter:grayscale(1) brightness(0.6);">
                 </div>
                 <div class="dropdown-body p-2" id="dropdownNotificationsList">
-                    <!-- Notifications will be loaded here dynamically -->
+                    
                     <div class="text-center text-muted py-3">No notifications</div>
                 </div>
                 <div class="dropdown-footer p-2 text-center border-top">
@@ -97,13 +97,13 @@
             </div>
         </aside>
 
-        <!-- Sidebar Overlay -->
+        
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- Main Content -->
+        
         <main class="main-content flex-grow-1 p-4">
             <div class="settings-container">
-                <!-- Header -->
+                
                 <div class="settings-header mb-4">
                     <button class="burger-menu-inline" id="burgerMenu" aria-label="Toggle Menu">
                         <i class="bi bi-list"></i>
@@ -112,7 +112,7 @@
                 </div>
 
                 <div class="row">
-                    <!-- Settings Menu -->
+                    
                     <div class="col-md-3">
                         <div class="settings-menu">
                             <div class="menu-item active" data-section="team">
@@ -122,15 +122,15 @@
                         </div>
                     </div>
 
-                    <!-- Settings Content -->
+                    
                     <div class="col-md-9">
-                        <!-- Team Management Section -->
+                        
                         <div id="teamSection" class="settings-section active">
                             <div class="section-header">
                                 <h2>Team Management</h2>
                             </div>
 
-                            <!-- Add Team Member -->
+                            
                             <div class="add-team-section mb-5">
                                 <h4>Add Team Member</h4>
                                 <p class="text-muted">Create new accounts for team members with system access.</p>
@@ -202,7 +202,7 @@
                                 </form>
                             </div>
 
-                            <!-- Your Team -->
+                            
                             <div class="team-section">
                                 <h4>Your Team</h4>
                                 <p class="text-muted">Manage your existing team and change roles/permissions.</p>
@@ -211,7 +211,7 @@
 
 
                                     <div class="team-list" id="teamList">
-                                        <!-- Team members will be loaded here -->
+                                        
                                         <div class="loading">
                                             <i class="bi bi-hourglass-split"></i><br>
                                             Loading team members...
@@ -229,19 +229,19 @@
 
 
 
-    <!-- Firebase Scripts -->
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="../javascript/unified-popup.js"></script>
 
-    <!-- Custom Scripts -->
+    
     <script src="../javascript/navnotifi.js"></script>
     <script src="../main.js"></script>
     <script src="../javascript/auth-manager.js"></script>
     <script src="../javascript/settings.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Dashboard Burger Menu Script -->
+    
     <script>
         (function () {
             const burgerMenu = document.getElementById('burgerMenu');

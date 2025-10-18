@@ -7,9 +7,9 @@
   <title>Shipping</title>
   <link rel="stylesheet" href="../css/shipping.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome 6 -->
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Bootstrap 5 CSS -->
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="icon" type="image/png" href="/src/IMG/SH.png">
 </head>
@@ -17,7 +17,7 @@
 <body>
   <div class="container">
 
-    <!-- Header - Back Button Only -->
+    
     <header class="menu-header">
       <div class="left-section">
         <a href="../html/details.html" class="back-to-menu" id="back-btn">
@@ -27,9 +27,9 @@
       </div>
     </header>
 
-    <!-- Main Layout -->
+    
     <div class="checkout">
-      <!-- Left Section -->
+      
       <div class="form-section">
         <h2 class="form-title">SHIPPING OPTIONS</h2>
 
@@ -61,7 +61,7 @@
           <span class="price">₱89.00<br><small>MOTORCYCLE • 0.5km</small></span>
         </div>
 
-        <!-- Payment Information Section -->
+        
         <h2 class="form-title payment-title">PAYMENT INFORMATION</h2>
 
         <h3>Payment</h3>
@@ -82,7 +82,7 @@
         </div>
       </div>
 
-      <!-- Order Summary -->
+      
       <div class="order-summary">
         <h2>ORDER SUMMARY</h2>
         <div class="order-menu" id="order-menu">
@@ -90,13 +90,13 @@
         </div>
         <hr>
 
-        <!-- Subtotal -->
+        
         <div class="subtotal">
           <span>Subtotal</span>
           <span class="price" id="subtotal-amount">₱0</span>
         </div>
 
-        <!-- Shipping Fee -->
+        
         <div class="shipping-fee">
           <span>Shipping Fee</span>
           <span class="price" id="shipping-fee-amount">FREE</span>
@@ -104,12 +104,12 @@
 
         <hr>
 
-        <!-- Updated Total -->
+        
         <div class="total">
           <span>Total</span>
           <span class="price" id="total-amount">₱0</span>
         </div>
-        <!-- Shipping page continue button -->
+        
         <button class="continue-btn" id="place-order-btn">
           Payment
         </button>
@@ -119,7 +119,7 @@
 
   </div>
 
-  <!-- Payment Modal -->
+  
   <div id="payment-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content payment-modal">
       <div class="modal-header">
@@ -128,7 +128,7 @@
       </div>
 
       <div class="modal-body">
-        <!-- QR Code Section -->
+        
         <div class="qr-code-section">
           <p class="payment-instruction">⚠️ REQUIRED: You must complete this payment and provide both reference code and
             receipt screenshot before you can place your order.</p>
@@ -138,9 +138,9 @@
           </div>
         </div>
 
-        <!-- Payment Form -->
+        
         <div class="payment-form">
-          <!-- Reference Code Input -->
+          
           <div class="form-group">
             <label for="reference-code">Payment Reference Code * (Required for Order)</label>
             <input type="text" id="reference-code" placeholder="Enter payment reference code (min 5 characters)"
@@ -149,7 +149,7 @@
               numbers only)</small>
           </div>
 
-          <!-- Receipt Upload -->
+          
           <div class="form-group">
             <label for="receipt-upload">Upload Payment Receipt Screenshot * (Required for Order)</label>
             <div class="file-upload-area" id="file-upload-area">
@@ -167,7 +167,7 @@
           </div>
         </div>
 
-        <!-- Modal Buttons -->
+        
         <div class="modal-buttons">
           <button type="button" class="btn-secondary" id="payment-cancel">Cancel</button>
           <button type="button" class="btn-primary" id="payment-confirm">Confirm Payment</button>
@@ -176,7 +176,7 @@
     </div>
   </div>
 
-  <!-- Order Confirmation Modal -->
+  
   <div id="order-confirmation-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <h2 class="modal-title">ORDER CONFIRMATION</h2>
@@ -232,7 +232,7 @@
     </div>
   </div>
 
-  <!-- Order Instructions Modal -->
+  
   <div id="order-instructions-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content instructions-modal">
       <div class="instructions-header">
@@ -299,31 +299,31 @@
       }
     });
   </script>
-  <!-- Firebase SDK -->
+  
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="../../javascript/unified-popup.js"></script>
 
-  <!-- Firebase Configuration -->
+  
   <script src="../firebase-config.js"></script>
 
-  <!-- Cloudinary Integration -->
+  
   <script src="../../cloud.js"></script>
 
-  <!-- Authentication Manager for Auto Logout -->
+  
   <script src="../javascript/auth-manager.js"></script>
 
-  <!-- Firebase Order Management -->
+  
   <script src="../javascript/firebase-orders.js"></script>
 
-  <!-- Price Utilities -->
+  
   <script src="../javascript/price-utils.js"></script>
 
-  <!-- Firebase Order Summary -->
+  
   <script src="../javascript/firebase-order-summary.js"></script>
 
-  <!-- Firestore Cart Manager -->
+  
   <script src="../javascript/firestore-cart.js"></script>
   <script src="../javascript/lalamove-quotation-manager.js"></script>
   <script src="../javascript/shipping.js"></script>
