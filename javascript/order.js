@@ -203,18 +203,38 @@ async function autoRetryFirebaseConnection() {
 function showFinalErrorState() {
     const tableBody = document.querySelector('table tbody');
     if (tableBody) {
-        tableBody.innerHTML =
-            '<tr>' +
-            '<td colspan="8" class="text-center py-4 text-warning">' +
-            '<i class="fa fa-exclamation-triangle fa-2x mb-2 d-block"></i>' +
-            '<div>Unable to Connect to Firebase</div>' +
-            '<small class="text-muted">Please check your internet connection and try refreshing the page</small>' +
-            '<br>' +
-            '<button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">' +
-            'Refresh Page' +
-            '</button>' +
-            '</td>' +
-            '</tr>';
+        // Check if user is authenticated
+        const currentUser = firebase.auth().currentUser;
+
+        if (!currentUser) {
+            // User is not logged in
+            tableBody.innerHTML =
+                '<tr>' +
+                '<td colspan="8" class="text-center py-4 text-warning">' +
+                '<i class="bi bi-person-x fa-2x mb-2 d-block"></i>' +
+                '<div>Authentication Required</div>' +
+                '<small class="text-muted">Please log in to view orders</small>' +
+                '<br>' +
+                '<button class="btn btn-sm btn-primary mt-2" onclick="window.location.href=\'../html/login.html\'">' +
+                'Go to Login' +
+                '</button>' +
+                '</td>' +
+                '</tr>';
+        } else {
+            // User is logged in but has permission issues
+            tableBody.innerHTML =
+                '<tr>' +
+                '<td colspan="8" class="text-center py-4 text-danger">' +
+                '<i class="bi bi-shield-exclamation fa-2x mb-2 d-block"></i>' +
+                '<div>Access Denied</div>' +
+                '<small class="text-muted">You don\'t have permission to view orders. Please contact your administrator.</small>' +
+                '<br>' +
+                '<button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">' +
+                'Refresh Page' +
+                '</button>' +
+                '</td>' +
+                '</tr>';
+        }
     }
 }
 
@@ -255,7 +275,14 @@ async function testFirebaseConnection() {
         }
 
         if (error.message.includes('Missing or insufficient permissions')) {
-            console.warn('⚠️ Firebase permissions issue - domain may not be authorized');
+            console.warn('⚠️ Firebase permissions issue - user may not be authenticated or authorized');
+            // Check if user is authenticated
+            const currentUser = firebase.auth().currentUser;
+            if (!currentUser) {
+                console.warn('🔐 User not authenticated - redirecting to login');
+                // Don't retry if user is not authenticated
+                return false;
+            }
         }
 
         // Just return false - error handling is done by autoRetryFirebaseConnection

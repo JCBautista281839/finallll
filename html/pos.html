@@ -102,10 +102,24 @@
       </div>
     </aside>
 
-    <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <main class="main-content flex-grow-1">
+      <div class="d-block d-md-none mobile-warning-overlay">
+        <div class="mobile-warning-content">
+          <div class="mobile-warning-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <h3 class="mobile-warning-title">For best experience, use a device with wider screen</h3>
+          <p class="mobile-warning-text">The POS is optimized for tablets and desktop devices</p>
+          <div class="mobile-warning-actions">
+            <button class="btn btn-primary btn-lg" onclick="window.location.href='../html/Dashboard.html'">
+              <i class="bi bi-house me-2"></i>Go to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="pos-container d-flex">
         <div class="menu-panel flex-grow-1">
 
