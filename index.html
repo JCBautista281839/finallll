@@ -389,6 +389,24 @@
     </div>
   </footer>
 
+  <!-- Console Override - Hide all console output -->
+  <script>
+    // Override all console methods to prevent output
+    console.log = function() {};
+    console.debug = function() {};
+    console.error = function() {};
+    console.warn = function() {};
+    console.info = function() {};
+    console.trace = function() {};
+    console.table = function() {};
+    console.group = function() {};
+    console.groupEnd = function() {};
+    console.time = function() {};
+    console.timeEnd = function() {};
+    console.count = function() {};
+    console.clear = function() {};
+  </script>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
