@@ -2,24 +2,42 @@
 <html lang="en">
 
 <head>
+    
+    <script>
+     
+        console.log = function() {};
+        console.debug = function() {};
+        console.error = function() {};
+        console.warn = function() {};
+        console.info = function() {};
+        console.trace = function() {};
+        console.table = function() {};
+        console.group = function() {};
+        console.groupEnd = function() {};
+        console.time = function() {};
+        console.timeEnd = function() {};
+        console.count = function() {};
+        console.clear = function() {};
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification - Viktoria's Bistro</title>
 
-    <!-- Bootstrap CSS -->
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Font Awesome -->
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <!-- Custom CSS -->
+    
     <link rel="stylesheet" href="../css/otp.css">
 </head>
 
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Left Column - Verification Form -->
+            
             <div class="col-md-6 left-column">
                 <button class="back-button" onclick="goBack()">
                     <i class="fas fa-arrow-left"></i>
@@ -56,7 +74,7 @@
                 </div>
             </div>
 
-            <!-- Right Column - Photo Collage -->
+            
             <div class="col-md-6 right-column">
                 <div class="photo-collage">
                     <div class="photo-item"></div>
@@ -72,35 +90,35 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="../javascript/unified-popup.js"></script>
 
-    <!-- Bootstrap JS -->
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Main Firebase Config -->
+    
     <script src="../main.js"></script>
 
 
-    <!-- API Configuration -->
+    
     <script src="../javascript/config.js"></script>
 
-    <!-- SendGrid OTP Service -->
+    
     <script src="../javascript/sendgrid-otp.js?v=2.3"></script>
 
-    <!-- Firebase OTP Service -->
+    
     <script src="../javascript/firebase-otp.js"></script>
 
-    <!-- OTP Verification Functions -->
+    
     <script src="../javascript/otp.js"></script>
 
-    <!-- Signup Functions for SMS OTP -->
+    
 
 
-    <!-- Custom CSS for Email Verification -->
+    
     <style>
         .verification-info {
             margin: 20px 0;
@@ -196,7 +214,7 @@
         }
     </style>
 
-    <!-- Custom JavaScript -->
+    
     <script>
         // Generate referral code for customer
         function generateReferralCode(name) {

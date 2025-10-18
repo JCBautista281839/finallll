@@ -13,7 +13,7 @@
 
 <body>
     <div class="report-container">
-        <!-- Header -->
+        
         <div class="report-header">
             <button class="back-btn" onclick="goBack()">
                 <i class="fas fa-arrow-left"></i>
@@ -22,7 +22,7 @@
             <div class="header-spacer"></div>
         </div>
 
-        <!-- Report Form -->
+        
         <div class="report-form-wrapper">
             <div class="form-intro">
                 <i class="fas fa-headset"></i>
@@ -31,7 +31,7 @@
             </div>
 
             <form id="reportForm" class="report-form">
-                <!-- Issue Category -->
+                
                 <div class="form-group">
                     <label for="category">
                         <i class="fas fa-tag"></i> Issue Category *
@@ -47,19 +47,19 @@
                     </select>
                 </div>
 
-                <!-- Related Order (Optional) -->
+                
                 <div class="form-group">
                     <label for="orderId">
                         <i class="fas fa-receipt"></i> Related Order (Optional)
                     </label>
                     <select id="orderId" name="orderId">
                         <option value="">Select an order (if applicable)</option>
-                        <!-- Orders will be populated dynamically -->
+                        
                     </select>
                     <small class="form-help">Select the order related to this issue, if any</small>
                 </div>
 
-                <!-- Subject -->
+                
                 <div class="form-group">
                     <label for="subject">
                         <i class="fas fa-heading"></i> Subject *
@@ -69,7 +69,7 @@
                     <small class="form-help"><span id="subjectCount">0</span>/100 characters</small>
                 </div>
 
-                <!-- Description -->
+                
                 <div class="form-group">
                     <label for="description">
                         <i class="fas fa-align-left"></i> Description *
@@ -80,7 +80,7 @@
                     <small class="form-help"><span id="descCount">0</span>/1000 characters (minimum 20)</small>
                 </div>
 
-                <!-- Priority -->
+                
                 <div class="form-group">
                     <label for="priority">
                         <i class="fas fa-exclamation-circle"></i> Priority
@@ -92,7 +92,7 @@
                     </select>
                 </div>
 
-                <!-- Photo Upload (Optional) -->
+                
                 <div class="form-group">
                     <label for="photoUpload">
                         <i class="fas fa-camera"></i> Attach Photo (Optional)
@@ -112,7 +112,7 @@
                     </div>
                 </div>
 
-                <!-- Customer Info Preview (Auto-filled) -->
+                
                 <div class="customer-info-preview">
                     <h3><i class="fas fa-user"></i> Your Contact Information</h3>
                     <div class="info-grid">
@@ -131,7 +131,7 @@
                     </div>
                 </div>
 
-                <!-- Submit Button -->
+                
                 <div class="form-actions">
                     <button type="button" class="btn-cancel" onclick="goBack()">
                         <i class="fas fa-times"></i> Cancel
@@ -141,7 +141,7 @@
                     </button>
                 </div>
 
-                <!-- Loading Indicator -->
+                
                 <div id="loadingIndicator" class="loading-indicator" style="display: none;">
                     <i class="fas fa-spinner fa-spin"></i>
                     <span>Submitting your ticket...</span>
@@ -150,7 +150,7 @@
         </div>
     </div>
 
-    <!-- Success Modal -->
+    
     <div id="successModal" class="modal" style="display: none;">
         <div class="modal-content success">
             <div class="modal-icon">
@@ -172,20 +172,20 @@
         </div>
     </div>
 
-    <!-- Firebase Scripts -->
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <script src="../../javascript/unified-popup.js"></script>
 
-    <!-- Firebase Config -->
+    
     <script src="../firebase-config.js"></script>
 
-    <!-- Authentication Manager -->
+    
     <script src="../javascript/auth-manager.js"></script>
 
-    <!-- Report Submission Script -->
+    
     <script src="../javascript/submit-report.js"></script>
 </body>
 
