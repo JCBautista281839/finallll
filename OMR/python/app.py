@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 OMR Testing System - Flask Backend Server
 Handles OMR image processing requests from the frontend
@@ -14,7 +13,7 @@ import json
 from datetime import datetime
 import traceback
 
-# Add current directory to path for imports
+# directory itech
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from omr_scanner import OMRScanner
@@ -22,12 +21,12 @@ from omr_scanner import OMRScanner
 app = Flask(__name__)
 CORS(app)
 
-# Configuration
+# mga folder kung san inuupload results
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
 RESULTS_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'results')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'}
 
-# Ensure directories exist
+# directories true
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
@@ -35,7 +34,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULTS_FOLDER'] = RESULTS_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Initialize OMR Scanner
+# initialize
 omr_scanner = OMRScanner()
 
 def allowed_file(filename):
@@ -124,7 +123,7 @@ def upload_file():
                 error="Empty filename"
             )), 400
         
-        # Save file
+        # save ang file
         filepath = save_uploaded_file(file)
         if not filepath:
             return jsonify(create_response(
@@ -133,7 +132,7 @@ def upload_file():
                 error="File type not allowed"
             )), 400
         
-        # Get file info
+        # file info
         file_size = os.path.getsize(filepath)
         
         return jsonify(create_response(
@@ -167,25 +166,25 @@ def upload_webcam():
                 error="Missing image in request"
             )), 400
         
-        # Extract base64 image data
+        # extract
         image_data = data['image']
         if image_data.startswith('data:image'):
             # Remove data URL prefix
             image_data = image_data.split(',')[1]
         
-        # Decode base64 image
+        # decode
         image_bytes = base64.b64decode(image_data)
         
-        # Generate unique filename
+        # unique filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"omr_webcam_{timestamp}.png"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        # Save image file
+        # save image
         with open(filepath, 'wb') as f:
             f.write(image_bytes)
         
-        # Get file info
+        # file path
         file_size = os.path.getsize(filepath)
         
         return jsonify(create_response(
@@ -227,7 +226,7 @@ def detect_circles():
                 error="File does not exist"
             )), 404
         
-        # Detect circles
+        # pandetect circles
         result = omr_scanner.detect_circles(filepath)
         
         return jsonify(create_response(
@@ -264,7 +263,7 @@ def analyze_shaded():
                 error="File does not exist"
             )), 404
         
-        # Analyze shaded circles
+        # pang analyze ng circles
         result = omr_scanner.analyze_shaded_circles(filepath)
         
         return jsonify(create_response(
@@ -301,7 +300,7 @@ def full_scan():
                 error="File does not exist"
             )), 404
         
-        # Perform full OMR scan
+        # full omr scaaan
         result = omr_scanner.full_omr_scan(filepath)
         
         return jsonify(create_response(

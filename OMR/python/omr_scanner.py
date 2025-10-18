@@ -15,43 +15,40 @@ from typing import Dict, List, Tuple, Optional
 class OMRScanner:
     def __init__(self):
         """Initialize OMR Scanner with default parameters"""
-        # Form 1 menu items - ordered exactly as they appear on physical Form 1
-        # Reading by column (left to right), then top to bottom within each column
+        # form 1 menu
         self.form1_items = [
-            # Column 1 (circles 3-16)
             'WhtRc', 'Bangsi', 'TnaPng', 'PnkBagn', 'Bulalo',  
             'MacChs', 'OvrBngs', 'Carbo', 'OrgChk', 'PltWhtRc',  
             'RB-Bina', 'Viktoria\'s Classic', 'SngTun', 'Alfrdo',
-            # Column 2 (circles 17-32)
+            
             'Tapsi', 'SzTofu', 'Porksi', 'PrkSsg', 'SprRc', 'Lechsi',  
             'Fst3', 'Parmesan Wings', 'Crispy Diniguan w/ Rice', 'ChkSsg', 'PrkRc',  
             'VktChk', 'BcnEggChs', 'BgrRc', 'PltGrlcRc', 'BfKald',
-            # Column 3 (circles 33-43)
+            
             'ChickBul', 'Chk&Moj', 'RB-KK', 'Fst2', 'SisiSi',  
             'Cal&Frs', 'GrnSld', 'OrgChkR', 'ChkFil', 'Chksi', 'TstBrd'
         ]
         
-        # Form 2 menu items - ordered exactly as they appear on physical Form 2
-        # Reading by column (left to right), then top to bottom within each column
+        # form 2
         self.form2_items = [
-            # Column 1 (circles 3-16)
+           
             'SngBab', 'Fst1', 'RB-BulDng', 'ClbHse', 'Liemsi', 'RB-Tofu',
             'AmpCar', 'Bagn', 'Htdog', 'Mojos', 'TndRc', 'RB-Kald',
             'Chopsy', 'FshFil',
-            # Column 2 (circles 17-32)
+           
             'Hotsi', 'Longsi', 'BtrShrp', 'CrisKK', 'HnyWngs', 'Tocsi',
             'Spag', 'CrsPata', 'TbnRc', 'Egg', 'CdnBlu', 'Nachos',
             'SngHip', 'GrlcRc', 'Fst4', 'Viktoria\'s Cheesy Bacon',
-            # Column 3 (circles 33-43)
+           
             'Fish&Moj', 'FrFrs', 'ChkTapa', 'BufWngs', 
             'Viktoria\'s Double Cheesy Bacon', 'HamEggChs', 'BfBroc', 'CrisDng',
             'Pitcher of Iced Tea', 'Pitcher of Lemonade', 'Wintermelon Milktea', 'Cucumber Lemonade', 'Spanish Latte'
         ]
         
-        # Combined menu items for backward compatibility
+        # combined na
         self.menu_items = ['Form 1', 'Form 2'] + self.form1_items + self.form2_items
         
-        # Circle detection parameters
+        # parameters ng circles
         self.circle_params = {
             'dp': 1,
             'minDist': 30,
@@ -61,7 +58,7 @@ class OMRScanner:
             'maxRadius': 80
         }
         
-        # Shaded analysis parameters
+        # analysis ng shaded circles
         self.shaded_params = {
             'dark_threshold': 100,
             'fill_ratio_threshold': 0.6,
@@ -69,7 +66,7 @@ class OMRScanner:
             'median_intensity_threshold': 100
         }
         
-        # Price mapping for menu items
+        # price mapping para sa menu
         self.price_map = {
             'WhtRc': 30.00,
             'Bangsi': 145.00,
@@ -170,13 +167,13 @@ class OMRScanner:
 
     def preprocess_image(self, image: np.ndarray) -> np.ndarray:
         """Preprocess image for better circle detection"""
-        # Convert to grayscale
+        # filter tas convert sa grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
-        # Apply bilateral filter to reduce noise while keeping edges sharp
+        # reduce ng noise
         filtered = cv2.bilateralFilter(gray, 9, 75, 75)
         
-        # Apply adaptive threshold for better edge detection
+        # treshold ng marks
         thresh = cv2.adaptiveThreshold(
             filtered, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
             cv2.THRESH_BINARY, 11, 2
@@ -189,7 +186,7 @@ class OMRScanner:
         try:
             print(f"Detecting circles in: {os.path.basename(filepath)}")
             
-            # Load and preprocess image
+            # reprocess image
             image = self.load_image(filepath)
             if image is None:
                 return {"error": "Could not load image"}
@@ -197,7 +194,7 @@ class OMRScanner:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             processed = self.preprocess_image(image)
             
-            # Detect circles using HoughCircles
+            # hough circles detection
             circles = cv2.HoughCircles(
                 processed,
                 cv2.HOUGH_GRADIENT,
@@ -208,27 +205,26 @@ class OMRScanner:
             if circles is not None:
                 circles = np.round(circles[0, :]).astype("int")
                 
-                # Group circles into columns based on X position
-                # First, sort by X to identify columns
+                # nag gogroup into columns based sa x position
                 sorted_by_x = sorted(circles, key=lambda c: c[0])
                 
-                # Group circles into columns (with tolerance for X position variations)
+                # group
                 columns = []
                 current_column = [sorted_by_x[0]]
-                column_tolerance = 100  # pixels - circles within this X distance are in the same column
+                column_tolerance = 100  # natotolerate ng distance, pag within dito madedetect circles
                 
                 for circle in sorted_by_x[1:]:
                     if abs(circle[0] - current_column[0][0]) < column_tolerance:
                         current_column.append(circle)
                     else:
-                        # Sort current column by Y position (top to bottom)
+                        # pagbasa ng columns from top to bottom
                         columns.append(sorted(current_column, key=lambda c: c[1]))
                         current_column = [circle]
                 
-                # Don't forget the last column
+                # robust para di mashuffle yung last column
                 columns.append(sorted(current_column, key=lambda c: c[1]))
                 
-                # Flatten columns back into a single list
+                # list
                 circles = [circle for column in columns for circle in column]
                 
                 for i, (x, y, r) in enumerate(circles):
@@ -240,7 +236,7 @@ class OMRScanner:
                         'area': int(np.pi * r * r)
                     })
             
-            # Create debug image
+            # debug image
             debug_image = image.copy()
             for circle in circle_data:
                 x, y, r = circle['center'][0], circle['center'][1], circle['radius']
@@ -248,7 +244,7 @@ class OMRScanner:
                 cv2.putText(debug_image, str(circle['id']), (x-10, y+5), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
             
-            # Save debug image
+            # save debug image
             debug_filename = f"circle_debug_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
             debug_path = os.path.join(os.path.dirname(os.path.dirname(filepath)), 'results', debug_filename)
             cv2.imwrite(debug_path, debug_image)
@@ -269,26 +265,26 @@ class OMRScanner:
         """Analyze if a circle is filled/shaded"""
         x, y, r = circle['center'][0], circle['center'][1], circle['radius']
         
-        # Create mask for the circle (slightly smaller to avoid border effects)
+        # para ma avoid border effects
         mask = np.zeros(gray_image.shape[:2], dtype=np.uint8)
         cv2.circle(mask, (x, y), max(1, r-5), 255, -1)
         
-        # Extract pixels within the circle
+        # extract pixels within the circle
         circle_pixels = gray_image[mask == 255]
         
         if len(circle_pixels) == 0:
             return False, 0.0
         
-        # Calculate statistics
+    
         mean_intensity = np.mean(circle_pixels)
         median_intensity = np.median(circle_pixels)
         
-        # Count dark pixels
+        # count dark pixels
         dark_pixels = np.sum(circle_pixels < self.shaded_params['dark_threshold'])
         total_pixels = len(circle_pixels)
         fill_percentage = (dark_pixels / total_pixels) * 100
         
-        # Determine if circle is shaded
+        # determine if circle is shaded
         is_shaded = bool(
             fill_percentage > (self.shaded_params['fill_ratio_threshold'] * 100) and
             mean_intensity < self.shaded_params['mean_intensity_threshold'] and
@@ -323,15 +319,14 @@ class OMRScanner:
                 columns.append(sorted(current_column, key=lambda c: c['center'][1]))
                 current_column = [circle]
         columns.append(sorted(current_column, key=lambda c: c['center'][1]))
-        
-        # Flatten and get first two circles
+      
         sorted_circles = [circle for column in columns for circle in column]
         
         # Check the first two circles (should be form identifier circles)
         form1_circle = sorted_circles[0]
         form2_circle = sorted_circles[1]
         
-        # Get fill percentages for both circles
+        # fill percentages for both circles
         _, form1_fill = self.analyze_circle_fill(gray_image, form1_circle)
         _, form2_fill = self.analyze_circle_fill(gray_image, form2_circle)
         
@@ -339,11 +334,10 @@ class OMRScanner:
         print(f"  Circle 1 (Form 1): Fill={form1_fill:.1f}%")
         print(f"  Circle 2 (Form 2): Fill={form2_fill:.1f}%")
         
-        # Use relative comparison - whichever has higher fill is considered marked
-        # As long as the difference is significant (>5%)
+        # relative comparison para malaman kung anong form ang marked
         fill_diff = abs(form1_fill - form2_fill)
         
-        if fill_diff > 5:  # Significant difference
+        if fill_diff > 5:  # 
             if form1_fill > form2_fill:
                 print(f"  → Form 1 selected (fill difference: {fill_diff:.1f}%)")
                 return 1, "Form 1 (41 menu items)"
@@ -351,7 +345,7 @@ class OMRScanner:
                 print(f"  → Form 2 selected (fill difference: {fill_diff:.1f}%)")
                 return 2, "Form 2 (38 menu items)"
         else:
-            # Not clear which one is marked
+        
             print(f"  → No clear form identifier (difference only {fill_diff:.1f}%)")
             return 0, "Warning: No clear form identifier - Using full list"
 
@@ -360,14 +354,12 @@ class OMRScanner:
         try:
             print(f"Analyzing shaded circles in: {os.path.basename(filepath)}")
             
-            # Load image
             image = self.load_image(filepath)
             if image is None:
                 return {"error": "Could not load image"}
             
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
-            # Use provided circles or detect them
             if circles_data is None:
                 circles_result = self.detect_circles(filepath)
                 if 'error' in circles_result:
@@ -457,15 +449,15 @@ class OMRScanner:
             # Select appropriate menu items list and skip form identifier circles
             if detected_form == 1:
                 active_menu_items = self.form1_items
-                menu_circles = circles[2:]  # Skip first 2 circles (form identifiers)
+                menu_circles = circles[2:]  # skip first 2 circles (form identifiers)
                 print("Using Form 1 menu items (41 items)")
             elif detected_form == 2:
                 active_menu_items = self.form2_items
-                menu_circles = circles[2:]  # Skip first 2 circles (form identifiers)
+                menu_circles = circles[2:]  # skip first 2 circles (form identifiers)
                 print("Using Form 2 menu items (38 items)")
             else:
                 active_menu_items = self.menu_items
-                menu_circles = circles  # Use all circles if form not identified
+                menu_circles = circles  # use all circles if form not identified
                 print("Using full menu items list")
             
             # Analyze shaded circles, passing the detected circles
@@ -473,8 +465,8 @@ class OMRScanner:
             if 'error' in shaded_result:
                 return shaded_result
             
-            # Map shaded circles to menu items (skipping form identifier circles if detected)
-            selected_items = [] # Re-introduce for calculations
+  
+            selected_items = [] 
             selected_items_display = []
             
             # DEBUG: Print form detection results
@@ -485,14 +477,14 @@ class OMRScanner:
             if 'shaded_circle_data' in shaded_result:
                 print(f"DEBUG: shaded_circle_data length = {len(shaded_result['shaded_circle_data'])}")
             
-            # Determine starting index based on detected form
+            # determine starting index based on detected form
             start_index = 2 if detected_form in [1, 2] else 0  # Skip first 2 if form detected
             print(f"DEBUG: start_index = {start_index}")
             
             for i, circle in enumerate(circles): # Iterate through all circles
                 print(f"DEBUG: Processing circle {i}, ID: {circle['id']}")
                 
-                # For form identifier circles (first 2 when form is detected)
+                # for form identifier circles (first 2 when form is detected)
                 if detected_form in [1, 2] and i < 2:
                     is_shaded = any(c['id'] == circle['id'] for c in shaded_result['shaded_circle_data'])
                     if i == 0:
@@ -504,7 +496,7 @@ class OMRScanner:
                     print(f"DEBUG: Form identifier circle {i}: {item_name} ({status})")
                     continue
                 
-                # For menu item circles
+                # for menu item circles
                 menu_index = i - start_index
                 item_name = active_menu_items[menu_index] if menu_index >= 0 and menu_index < len(active_menu_items) else "N/A"
                 print(f"DEBUG: menu_index = {menu_index}, item_name = {item_name}")
