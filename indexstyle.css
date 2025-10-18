@@ -1886,7 +1886,7 @@ main.slide-out-right,
   .logo-img {
     margin-left: 126px !important;
     height: 100px !important;
-    width: auto !important;
+    width: auto !important;;
   }
 
   .info-section {
@@ -1894,7 +1894,7 @@ main.slide-out-right,
   }
 
   .info-title {
-    margin-top: 25px !important;
+    margin-top: -115px !important;
     font-size: 15px !important;
     color: #666;
     margin-bottom: -0.5px;

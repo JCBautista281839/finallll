@@ -7,6 +7,7 @@
   <title>Orders</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="../css/nav.css">
   <link rel="stylesheet" href="../css/order.css">
   <link rel="stylesheet" href="../css/pending-payment.css">
@@ -98,40 +99,42 @@
       </div>
     </aside>
 
-    <main class="main-content flex-grow-1">
-      <div class="container-fluid">
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <div class="row mb-4 filters-row">
-          <div class="col-md-6">
-            <div class="search-container">
-              <input type="search" id="orderSearch" class="form-control search-input"
-                placeholder="Enter Order Number (e.g., 0001)" aria-label="Search orders" autocomplete="on">
-              <img src="../src/Icons/search.png" alt="Search" class="search-icon">
-            </div>
+    <main class="main-content flex-grow-1">
+      <div class="container-fluid px-2 px-md-3 px-lg-4">
+        <!-- Header with burger menu, search, and date picker -->
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3 mb-md-4">
+          <button class="burger-menu-inline d-block d-md-none mb-2 mb-md-0" id="burgerMenu" aria-label="Toggle Menu">
+            <i class="bi bi-list"></i>
+          </button>
+          <div class="search-container flex-grow-1 w-100 w-md-auto me-md-3">
+            <input type="search" id="orderSearch" class="form-control search-input"
+              placeholder="Enter Order Number (e.g., 0001)" aria-label="Search orders" autocomplete="on">
+            <img src="../src/Icons/search.png" alt="Search" class="search-icon">
           </div>
-          <div class="col-md-6">
-            <div class="date-container">
-              <input type="date" class="form-control date-input">
-              <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
-            </div>
+          <div class="date-container mt-2 mt-md-0">
+            <input type="date" class="form-control date-input">
+            <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
           </div>
         </div>
 
 
-        <div class="card">
-          <div class="card-body p-0">
+        <div class="card shadow-sm">
+          <div class="card-body p-0 p-md-3">
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th class="border-0 text-center" style="width: 10%">Order ID</th>
-                    <th class="border-0 text-center" style="width: 10%">Order Type</th>
-                    <th class="border-0 text-center" style="width: 8%">Table No.</th>
-                    <th class="border-0 text-center" style="width: 8%">Pax</th>
-                    <th class="border-0 text-center" style="width: 22%">Items</th>
-                    <th class="border-0 text-center" style="width: 15%">Total</th>
-                    <th class="border-0 text-center" style="width: 15%">Status</th>
-                    <th class="border-0 text-center">Actions</th>
+                    <th class="border-0 text-center d-none d-lg-table-cell small" style="width: 10%">Order ID</th>
+                    <th class="border-0 text-center small" style="width: 10%">Order Type</th>
+                    <th class="border-0 text-center d-none d-md-table-cell small" style="width: 8%">Table No.</th>
+                    <th class="border-0 text-center d-none d-md-table-cell small" style="width: 8%">Pax</th>
+                    <th class="border-0 text-center d-none d-sm-table-cell small" style="width: 22%">Items</th>
+                    <th class="border-0 text-center small" style="width: 15%">Total</th>
+                    <th class="border-0 text-center d-none d-sm-table-cell small" style="width: 15%">Status</th>
+                    <th class="border-0 text-center small" style="width: 10%">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -161,6 +164,55 @@
   <script src="../javascript/navnotifi.js"></script>
   <script src="../javascript/order.js"></script>
   <script src="../javascript/notifications.js"></script>
+
+  <!-- Dashboard Burger Menu Script -->
+  <script>
+    (function () {
+      const burgerMenu = document.getElementById('burgerMenu');
+      const sidebar = document.querySelector('.sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+
+      if (!burgerMenu || !sidebar || !overlay) return;
+
+      // Toggle sidebar
+      burgerMenu.addEventListener('click', function (e) {
+        e.stopPropagation();
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+      });
+
+      // Close sidebar when clicking overlay
+      overlay.addEventListener('click', function () {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      });
+
+      // Close sidebar when clicking nav links
+      const navLinks = sidebar.querySelectorAll('.nav-link');
+      navLinks.forEach(link => {
+        link.addEventListener('click', function () {
+          sidebar.classList.remove('active');
+          overlay.classList.remove('active');
+        });
+      });
+
+      // Close sidebar on window resize to desktop
+      window.addEventListener('resize', function () {
+        if (window.innerWidth > 991) {
+          sidebar.classList.remove('active');
+          overlay.classList.remove('active');
+        }
+      });
+
+      // Close sidebar on Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+          sidebar.classList.remove('active');
+          overlay.classList.remove('active');
+        }
+      });
+    })();
+  </script>
 
   <script>
     // Logout functionality

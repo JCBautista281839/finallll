@@ -68,6 +68,21 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // Setup date picker functionality
+    const dateInput = document.querySelector('.date-input');
+    if (dateInput) {
+        dateInput.addEventListener('change', function (e) {
+            const selectedDate = e.target.value;
+            filterOrdersByDate(selectedDate);
+        });
+
+        // Clear date filter on double-click
+        dateInput.addEventListener('dblclick', function (e) {
+            e.target.value = '';
+            filterOrdersByDate('');
+        });
+    }
 });
 
 // Helper function to sanitize order data
@@ -550,23 +565,23 @@ function createOrderRow(orderData) {
     const total = parseFloat(orderData.total) || 0;
 
     row.innerHTML =
-        '<td class="align-middle text-center text-primary">' +
+        '<td class="align-middle text-center text-primary d-none d-lg-table-cell">' +
         '<div class="fw-bold">#' + (orderData.orderNumberFormatted || orderData.orderNumber || orderData.id || 'N/A') + '</div>' +
         '<small class="text-muted">' + dateStr + ' ' + timeStr + '</small>' +
         '</td>' +
         '<td class="align-middle text-center">' +
         '<div class="text-capitalize">' + (orderData.orderType || 'Dine in') + '</div>' +
         '</td>' +
-        '<td class="align-middle text-center">' +
+        '<td class="align-middle text-center d-none d-md-table-cell">' +
         (orderData.orderType === 'Dine in' ? (orderData.tableNumber || 'N/A') : '-') +
         '</td>' +
-        '<td class="align-middle text-center">' +
+        '<td class="align-middle text-center d-none d-md-table-cell">' +
         (orderData.orderType === 'Dine in' ? (orderData.paxNumber || orderData.pax || 'N/A') : '-') +
         '</td>' +
-        '<td class="align-middle">' + formatOrderItems(orderData.items) + '</td>' +
+        '<td class="align-middle d-none d-sm-table-cell">' + formatOrderItems(orderData.items) + '</td>' +
         // Always use the saved total for display
         '<td class="align-middle text-center">₱' + total.toFixed(2) + '</td>' +
-        '<td class="align-middle text-center status-cell">' +
+        '<td class="align-middle text-center status-cell d-none d-sm-table-cell">' +
         (() => {
             const normalizedStatus = normalizeOrderStatus(orderData.status);
             return normalizedStatus === 'Pending Payment' ?
@@ -869,48 +884,125 @@ function formatOrderItems(items) {
 
 // Function to filter orders based on search term
 function filterOrders(searchTerm) {
+    const dateInput = document.querySelector('.date-input');
+    const selectedDate = dateInput ? dateInput.value : '';
+
+    // Apply both search and date filters
+    applyFilters(searchTerm, selectedDate);
+}
+
+// Function to apply both search and date filters
+function applyFilters(searchTerm, selectedDate) {
     const tableBody = document.querySelector('table tbody');
     if (!tableBody) return;
 
-    if (!searchTerm) {
-        displayOrders(allOrders);
-        return;
+    let filteredOrders = [...allOrders];
+
+    // Apply search filter if search term exists
+    if (searchTerm && searchTerm.trim()) {
+        const cleanSearchTerm = searchTerm.replace(/^#0*/, '').toLowerCase();
+
+        filteredOrders = filteredOrders.filter(order => {
+            const orderNum = order.orderNumber?.toString() || '';
+            const cleanNum = orderNum.replace(/^0+/, '');
+
+            return cleanNum === cleanSearchTerm ||
+                orderNum.includes(cleanSearchTerm) ||
+                order.orderNumberFormatted?.toLowerCase().includes(searchTerm.toLowerCase());
+        }).sort((a, b) => {
+            const aNum = a.orderNumber?.toString() || '';
+            const bNum = b.orderNumber?.toString() || '';
+            const aStartsWith = aNum.startsWith(cleanSearchTerm);
+            const bStartsWith = bNum.startsWith(cleanSearchTerm);
+
+            if (aStartsWith && !bStartsWith) return -1;
+            if (!aStartsWith && bStartsWith) return 1;
+            return 0;
+        });
     }
 
-    // Remove # and leading zeros for number comparison
-    const cleanSearchTerm = searchTerm.replace(/^#0*/, '').toLowerCase();
+    // Apply date filter if date is selected
+    if (selectedDate) {
+        const targetDate = new Date(selectedDate);
+        const targetDateString = targetDate.toDateString();
 
-    const filteredOrders = allOrders.filter(order => {
-        // Get the order number without leading zeros
-        const orderNum = order.orderNumber?.toString() || '';
-        const cleanNum = orderNum.replace(/^0+/, '');
+        filteredOrders = filteredOrders.filter(order => {
+            try {
+                let orderDate;
 
-        // Try different matching patterns
-        return cleanNum === cleanSearchTerm || // Exact match without leading zeros
-            orderNum.includes(cleanSearchTerm) || // Partial match with original number
-            order.orderNumberFormatted?.toLowerCase().includes(searchTerm.toLowerCase()); // Match with formatting
-    }).sort((a, b) => {
-        // Sort to prioritize orders that start with the search term
-        const aNum = a.orderNumber?.toString() || '';
-        const bNum = b.orderNumber?.toString() || '';
-        const aStartsWith = aNum.startsWith(cleanSearchTerm);
-        const bStartsWith = bNum.startsWith(cleanSearchTerm);
+                if (order.timestamp) {
+                    if (typeof order.timestamp.toDate === 'function') {
+                        orderDate = order.timestamp.toDate();
+                    } else if (order.timestamp.seconds) {
+                        orderDate = new Date(order.timestamp.seconds * 1000);
+                    } else if (typeof order.timestamp === 'string') {
+                        orderDate = new Date(order.timestamp);
+                    } else if (typeof order.timestamp === 'number') {
+                        orderDate = new Date(order.timestamp);
+                    }
+                } else if (order.dateCreated) {
+                    if (typeof order.dateCreated === 'string') {
+                        orderDate = new Date(order.dateCreated);
+                    } else if (order.dateCreated.toDate) {
+                        orderDate = order.dateCreated.toDate();
+                    } else if (order.dateCreated.seconds) {
+                        orderDate = new Date(order.dateCreated.seconds * 1000);
+                    } else {
+                        orderDate = new Date(order.dateCreated);
+                    }
+                } else if (order.createdAt) {
+                    if (typeof order.createdAt === 'string') {
+                        orderDate = new Date(order.createdAt);
+                    } else if (order.createdAt.toDate) {
+                        orderDate = order.createdAt.toDate();
+                    } else if (order.createdAt.seconds) {
+                        orderDate = new Date(order.createdAt.seconds * 1000);
+                    } else {
+                        orderDate = new Date(order.createdAt);
+                    }
+                }
 
-        if (aStartsWith && !bStartsWith) return -1;
-        if (!aStartsWith && bStartsWith) return 1;
-        return 0;
-    });
+                if (!orderDate || isNaN(orderDate.getTime())) {
+                    return false;
+                }
+
+                const orderDateString = orderDate.toDateString();
+                return orderDateString === targetDateString;
+            } catch (error) {
+                console.error('Error parsing order date for filtering:', error, order);
+                return false;
+            }
+        });
+    }
 
     if (filteredOrders.length === 0) {
+        let message = 'No orders found';
+        if (searchTerm && selectedDate) {
+            message = `No orders found matching "${searchTerm}" for ${selectedDate}`;
+        } else if (searchTerm) {
+            message = `No orders found matching "${searchTerm}"`;
+        } else if (selectedDate) {
+            message = `No orders found for ${selectedDate}`;
+        }
+
         tableBody.innerHTML =
             '<tr>' +
             '<td colspan="8" class="text-center py-4">' +
-            '<div class="text-muted">No orders found matching "' + searchTerm + '"</div>' +
+            '<div class="text-muted">' + message + '</div>' +
             '</td>' +
             '</tr>';
     } else {
         displayOrders(filteredOrders);
     }
+}
+
+// Function to filter orders by date
+function filterOrdersByDate(selectedDate) {
+    const searchInput = document.querySelector('.search-input');
+    const searchTerm = searchInput ? searchInput.value.trim() : '';
+
+    // Apply both date and search filters
+    applyFilters(searchTerm, selectedDate);
 }
 
 // Function to display filtered or all orders
