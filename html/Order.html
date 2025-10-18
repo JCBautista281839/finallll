@@ -105,16 +105,23 @@
     <main class="main-content flex-grow-1">
       <div class="container-fluid px-2 px-md-3 px-lg-4">
         <!-- Header with burger menu, search, and date picker -->
-        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3 mb-md-4">
-          <button class="burger-menu-inline d-block d-md-none mb-2 mb-md-0" id="burgerMenu" aria-label="Toggle Menu">
+        <div class="d-flex flex-row align-items-center mb-3 mb-md-4">
+          <button class="burger-menu-inline d-block d-md-none me-2" id="burgerMenu" aria-label="Toggle Menu">
             <i class="bi bi-list"></i>
           </button>
-          <div class="search-container flex-grow-1 w-100 w-md-auto me-md-3">
+          <div class="search-container flex-grow-1 me-md-3">
             <input type="search" id="orderSearch" class="form-control search-input"
               placeholder="Enter Order Number (e.g., 0001)" aria-label="Search orders" autocomplete="on">
-            <img src="../src/Icons/search.png" alt="Search" class="search-icon">
           </div>
-          <div class="date-container mt-2 mt-md-0">
+          <div class="date-container d-none d-md-block">
+            <input type="date" class="form-control date-input">
+            <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
+          </div>
+        </div>
+
+        <!-- Mobile date picker row -->
+        <div class="d-md-none mb-3">
+          <div class="date-container">
             <input type="date" class="form-control date-input">
             <img src="../src/Icons/calendar.png" alt="Calendar" class="calendar-icon">
           </div>

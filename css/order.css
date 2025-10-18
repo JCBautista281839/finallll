@@ -311,11 +311,13 @@
   outline: none;
   padding-right: 46px;
   transition: border-color 0.3s ease, background-color 0.3s ease;
+  margin-left: -9px;
 }
 
 .search-input:focus {
-  border-color: #96392d !important;
-  background-color: white;
+  border-color: #860e0e !important;
+  background-color: #f8f9fa !important;
+  box-shadow: none;
 }
 
 .search-input::placeholder {
@@ -333,7 +335,9 @@
 .date-container {
   position: relative;
   width: fit-content;
-  margin-left: auto;
+  margin-left: -19px;
+  margin-right: 10px;
+  margin-top: 18px;
 }
 
 .form-control {
@@ -383,6 +387,34 @@ input[type="date"] {
 
 @media (max-width: 768px) {
 
+  .main-content {
+    margin-left: 0;
+    padding: 30px !important;
+    background: #ffffff !important;
+    min-height: 100vh;
+    min-width: 95%;
+    margin-left: 10px !important;
+    display: block;
+  }
+
+  .search-input{
+    width: 95% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-top: 13px !important;
+    margin-bottom: 0 !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .date-container{
+    width: auto !important;
+    margin-top: -15px !important;
+    margin-left: 0px !important;
+  }
+
   .filters-row>.col-md-6:first-child,
   .filters-row>.col-md-6:last-child {
     flex: 0 0 100%;
@@ -418,6 +450,7 @@ input[type="date"] {
 .date-input:focus {
   border-color: #ce947d;
   background-color: white;
+  box-shadow: none;
 }
 
 .date-icon {
