@@ -65,8 +65,22 @@
                         Must contain a number and a symbol.
                     </div>
                     
+                    <div class="email-error-message" id="emailErrorMessage" style="display: none;">
+                        <span style="color: #dc3545; font-size: 12px;">
+                            <i class="fas fa-times" style="margin-right: 5px;"></i>
+                            Email is already in use. Please try logging in instead.
+                        </span>
+                    </div>
+                    
                     <div class="password-match" id="passwordMatch" style="display: none;">
                         <span id="matchText"></span>
+                    </div>
+                    
+                    <div class="email-success-message" id="emailSuccessMessage" style="display: none;">
+                        <span style="color: #28a745; font-size: 12px;">
+                            <i class="fas fa-check-circle" style="margin-right: 5px;"></i>
+                            Email is available for registration.
+                        </span>
                     </div>
                     
                     <div class="terms-checkbox">
@@ -212,6 +226,7 @@
 
     <script src="../javascript/config.js"></script>
 
+    <script src="../javascript/unified-popup.js"></script>
     <script src="../javascript/sendgrid-otp.js?v=2.3"></script>
     <script src="../javascript/signup.js"></script>
     

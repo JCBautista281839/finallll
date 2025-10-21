@@ -7,7 +7,41 @@ function generateReferralCode(name) {
     return `${namePart}${randomPart}`;
 }
 
-// Error display function
+// Show email error message inline (below password requirements)
+function showEmailErrorInline(message) {
+    const emailErrorDiv = document.getElementById('emailErrorMessage');
+    if (emailErrorDiv) {
+        emailErrorDiv.querySelector('span').innerHTML = '<i class="fas fa-times" style="margin-right: 5px;"></i>' + message;
+        emailErrorDiv.style.display = 'block';
+    }
+}
+
+// Hide email error message inline
+function hideEmailErrorInline() {
+    const emailErrorDiv = document.getElementById('emailErrorMessage');
+    if (emailErrorDiv) {
+        emailErrorDiv.style.display = 'none';
+    }
+}
+
+// Show email success message inline (below confirm password)
+function showEmailSuccessInline(message) {
+    const emailSuccessDiv = document.getElementById('emailSuccessMessage');
+    if (emailSuccessDiv) {
+        emailSuccessDiv.querySelector('span').innerHTML = '<i class="fas fa-check-circle" style="margin-right: 5px;"></i>' + message;
+        emailSuccessDiv.style.display = 'block';
+    }
+}
+
+// Hide email success message inline
+function hideEmailSuccessInline() {
+    const emailSuccessDiv = document.getElementById('emailSuccessMessage');
+    if (emailSuccessDiv) {
+        emailSuccessDiv.style.display = 'none';
+    }
+}
+
+// Error display function using unified popup system
 function showError(message) {
     // Sanitize message to remove any URLs or technical details
     if (typeof message === 'string') {
@@ -17,10 +51,26 @@ function showError(message) {
         message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
         message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
     }
-    showMessageModal('Error', message, 'error');
+    
+    // Use unified popup system if available
+    if (typeof unifiedPopup !== 'undefined') {
+        unifiedPopup.error(message, {
+            timeout: 5000,
+            onClose: () => {
+                // Focus back to the form after error is closed
+                const firstInvalidField = document.querySelector('.form-input:invalid, .form-input.is-invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                }
+            }
+        });
+    } else {
+        // Fallback to old method if unified popup is not available
+        showMessageModal('Error', message, 'error');
+    }
 }
 
-// Success display function
+// Success display function using unified popup system
 function showSuccess(message) {
     // Sanitize message to remove any URLs or technical details
     if (typeof message === 'string') {
@@ -30,9 +80,39 @@ function showSuccess(message) {
         message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
         message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
     }
-    showMessageModal('Success', message, 'success');
+    
+    // Use unified popup system if available
+    if (typeof unifiedPopup !== 'undefined') {
+        unifiedPopup.success(message, {
+            timeout: 60000
+        });
+    } else {
+        // Fallback to old method if unified popup is not available
+        showMessageModal('Success', message, 'success');
+    }
 }
 
+// Info display function using unified popup system
+function showInfo(message) {
+    // Sanitize message to remove any URLs or technical details
+    if (typeof message === 'string') {
+        message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
+        message = message.replace(/127\.\d+\.\d+\.\d+/g, '[IP]');
+        message = message.replace(/localhost:\d+/g, '[LOCAL]');
+        message = message.replace(/ID:\s*[A-Za-z0-9-]+/g, 'ID: [HIDDEN]');
+        message = message.replace(/Reference:\s*[A-Za-z0-9-]+/g, 'Reference: [HIDDEN]');
+    }
+    
+    // Use unified popup system if available
+    if (typeof unifiedPopup !== 'undefined') {
+        unifiedPopup.info(message, {
+            timeout: 4000
+        });
+    } else {
+        // Fallback to old method if unified popup is not available
+        showMessageModal('Information', message, 'info');
+    }
+}
 
 // Send Email OTP function using SendGrid (primary) or local generation (fallback)
 async function sendEmailOTP(email, userName) {
@@ -239,8 +319,8 @@ async function initiateSignupProcess(name, email, phone, password) {
             continueBtn.textContent = originalText;
             continueBtn.disabled = false;
 
-            // Show error message
-            showError('This email address is already registered. Please use a different email or try logging in.');
+            // Show error message inline instead of popup
+            showEmailErrorInline('Email is already in use. Please try logging in instead.');
             return;
         }
 
@@ -369,6 +449,9 @@ document.addEventListener('DOMContentLoaded', function () {
     nameInput.addEventListener('input', updateButtonState);
     emailInput.addEventListener('input', function () {
         updateButtonState();
+        // Hide inline email messages when user starts typing
+        hideEmailErrorInline();
+        hideEmailSuccessInline();
         // Add real-time email validation with debouncing
         clearTimeout(emailInput.validationTimeout);
         emailInput.validationTimeout = setTimeout(() => {
@@ -502,15 +585,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Show checking state
-        showEmailChecking();
+        // Remove the email checking indicator
+        // showEmailChecking(); // Removed as requested
 
         try {
             const emailExists = await checkEmailExists(email);
 
             if (emailExists) {
-                showEmailError('This email address is already registered. Please use a different email.');
+                showEmailErrorInline('Email is already in use. Please try logging in instead.');
             } else {
-                showEmailSuccess('Email is available for registration.');
+                showEmailSuccessInline('Email is available for registration.');
             }
         } catch (error) {
             console.error('Error during real-time email validation:', error);
@@ -538,27 +622,6 @@ document.addEventListener('DOMContentLoaded', function () {
         errorDiv.textContent = message;
 
         emailInput.parentNode.appendChild(errorDiv);
-    }
-
-    function showEmailChecking() {
-        // Remove existing messages
-        const existingError = emailInput.parentNode.querySelector('.email-error');
-        if (existingError) {
-            existingError.remove();
-        }
-
-        // Add checking styling
-        emailInput.style.borderColor = '#ffc107';
-
-        // Create checking message
-        const checkingDiv = document.createElement('div');
-        checkingDiv.className = 'email-error';
-        checkingDiv.style.color = '#ffc107';
-        checkingDiv.style.fontSize = '12px';
-        checkingDiv.style.marginTop = '5px';
-        checkingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking email availability...';
-
-        emailInput.parentNode.appendChild(checkingDiv);
     }
 
     function showEmailSuccess(message) {

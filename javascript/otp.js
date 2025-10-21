@@ -508,7 +508,7 @@ class OTPVerificationManager {
             
             switch (error.code) {
                 case 'auth/email-already-in-use':
-                    errorMessage = 'This email address is already registered. Please use a different email or try logging in.';
+                    errorMessage = 'Email is already in use. Please try logging in instead.';
                     break;
                 case 'auth/invalid-email':
                     errorMessage = 'Please enter a valid email address.';
