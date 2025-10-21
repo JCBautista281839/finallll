@@ -667,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 sortInventoryByStatus();
                 updateRegisteredItemsCount(querySnapshot.size);
                 addRowClickHandlers();
-                checkExpiringItems(); // Check for expiring items after loading
+                checkExpiringItemsVisualOnly(); // Check for expiring items (visual alerts only)
                 startExpirationMonitoring(); // Start periodic expiration monitoring
                 console.log('Inventory loaded successfully! Rows loaded:', loadedRows);
                 if (loadedRows === 0) {
@@ -687,7 +687,39 @@ document.addEventListener('DOMContentLoaded', function () {
     const NOTIFICATION_COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutes cooldown
 
 
-    // Check for expiring items and show alerts
+    // Check for expiring items and show visual alerts only (no notifications)
+    function checkExpiringItemsVisualOnly() {
+        const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
+        const expiringItems = [];
+        const expiredItems = [];
+
+        rows.forEach(row => {
+            const expirationCell = row.cells[4]; // Expiration status is 5th column (index 4)
+            if (!expirationCell) return;
+
+            const expirationClass = expirationCell.className;
+            const itemName = row.cells[0].textContent.trim();
+
+            if (expirationClass.includes('expired')) {
+                expiredItems.push(itemName);
+            } else if (expirationClass.includes('expiring-soon')) {
+                expiringItems.push(itemName);
+            }
+        });
+
+        // Show visual alerts only (no notifications)
+        if (expiredItems.length > 0) {
+            const message = `⚠️ EXPIRED ITEMS DETECTED:\n${expiredItems.join(', ')}\n\nPlease remove these items from inventory immediately!`;
+            showMessage(message, 'error');
+        }
+
+        if (expiringItems.length > 0) {
+            const message = `⚠️ ITEMS EXPIRING SOON (within 3 days):\n${expiringItems.join(', ')}\n\nPlease use these items first!`;
+            showMessage(message, 'warning');
+        }
+    }
+
+    // Check for expiring items and show alerts (with notifications)
     function checkExpiringItems() {
         const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
         const expiringItems = [];
@@ -782,17 +814,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Start periodic monitoring for expiration dates
     function startExpirationMonitoring() {
-        // Check for expiring items every 30 minutes
+        // Check for expiring items every 30 minutes (with notifications)
         setInterval(() => {
             console.log('Checking for expiring items...');
             checkExpiringItems();
         }, 30 * 60 * 1000); // 30 minutes
 
-        // Also check when the page becomes visible (user returns to tab)
+        // When page becomes visible, only show visual alerts (no notifications)
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                console.log('Page became visible, checking expiration dates...');
-                checkExpiringItems();
+                console.log('Page became visible, checking expiration dates (visual only)...');
+                checkExpiringItemsVisualOnly();
             }
         });
     }
