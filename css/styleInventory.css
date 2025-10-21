@@ -4,15 +4,42 @@ body {
     overflow-x: hidden;
 }
 
+/* Expiration Status Styles */
+.expiration-status {
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.expiration-status.expired {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.expiration-status.expiring-soon {
+    background-color: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ffcc02;
+}
+
+.expiration-status.good {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
 body aside#sidebar,
 body .sidebar,
 body aside.sidebar,
 #sidebar,
 .sidebar,
 aside#sidebar.sidebar.d-flex,
-.container-fluid > #sidebar,
-.container-fluid > .sidebar,
-.container-fluid > aside.sidebar {
+.container-fluid>#sidebar,
+.container-fluid>.sidebar,
+.container-fluid>aside.sidebar {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;

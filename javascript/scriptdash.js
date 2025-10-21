@@ -571,13 +571,25 @@ function createInventoryRow(item) {
   let statusClass = '';
   let statusLabel = '';
 
+  // Get threshold based on unit of measure
+  const unit = (item.unitOfMeasure || 'pcs').toLowerCase();
+  let threshold = 10; // default for pcs
+
+  if (unit.includes('kg')) {
+    threshold = 5;
+  } else if (unit.includes('g')) {
+    threshold = 500;
+  } else if (unit.includes('pc') || unit.includes('pcs')) {
+    threshold = 10;
+  }
+
   if (quantity === 0) {
     statusClass = 'empty';
     statusLabel = 'Empty';
-  } else if (quantity >= 1 && quantity <= 5) {
+  } else if (quantity > 0 && quantity < threshold) {
     statusClass = 'restock';
     statusLabel = 'Need Restocking';
-  } else if (quantity >= 6) {
+  } else if (quantity >= threshold) {
     statusClass = 'steady';
     statusLabel = 'Steady';
   }

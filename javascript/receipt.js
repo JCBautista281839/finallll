@@ -66,12 +66,12 @@ document.addEventListener('DOMContentLoaded', function () {
       let discountAmount = Number(data.discountAmount || 0);
       console.log('Discount amount:', discountAmount);
       if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
-      let tax = Number(data.tax || 0);
-      console.log('Tax amount:', tax);
-      if (taxEl) taxEl.textContent = `₱${tax.toFixed(2)}`;
-      // Always recalculate total as subtotal + tax - discount
-      let total = subtotal + tax - discountAmount;
-      console.log('Final total calculation:', subtotal, '+', tax, '-', discountAmount, '=', total);
+      let serviceCharge = Number(data.tax || 0);
+      console.log('Service Charge amount:', serviceCharge);
+      if (taxEl) taxEl.textContent = `₱${serviceCharge.toFixed(2)}`;
+      // Always recalculate total as subtotal + service charge - discount
+      let total = subtotal + serviceCharge - discountAmount;
+      console.log('Final total calculation:', subtotal, '+', serviceCharge, '-', discountAmount, '=', total);
       if (totalEl) totalEl.textContent = `₱${total.toFixed(2)}`;
 
       // Handle collapsible discount row
