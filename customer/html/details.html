@@ -220,7 +220,7 @@
 
       if (cartItems.length === 0) {
         orderMenu.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>';
-        totalPriceElement.textContent = '₱0';
+        totalPriceElement.textContent = '₱0.00';
         return;
       }
 
@@ -250,7 +250,7 @@
             <p>x${quantity}</p>
           </div>
           <div class="item-price">
-            ₱${itemTotal.toFixed(0)}
+            ₱${itemTotal.toFixed(2)}
           </div>
         `;
 
@@ -258,7 +258,7 @@
       });
 
       // Update total price
-      totalPriceElement.textContent = `₱${totalPrice.toFixed(0)}`;
+      totalPriceElement.textContent = `₱${totalPrice.toFixed(2)}`;
     }
 
     // Utility function to parse price

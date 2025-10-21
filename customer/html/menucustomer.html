@@ -560,7 +560,7 @@
                     <p class="text-muted">Add some delicious items from our menu to get started!</p>
                   </div>
             `;
-          orderTotalDiv.querySelector('.order-total-price').textContent = 'Php 0';
+          orderTotalDiv.querySelector('.order-total-price').textContent = '₱ 0.00';
         } else {
           let orderItemsHTML = '<h5>Order Menu</h5>';
           let total = 0;
@@ -598,7 +598,7 @@
           });
 
           orderMenuDiv.innerHTML = orderItemsHTML;
-          orderTotalDiv.querySelector('.order-total-price').textContent = `Php ${total}`;
+          orderTotalDiv.querySelector('.order-total-price').textContent = `₱ ${total.toFixed(2)}`;
 
           // Add event listeners for the new controls
           addCartControlListeners();

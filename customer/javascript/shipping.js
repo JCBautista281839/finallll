@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const total = subtotal + shippingCost;
-        totalElement.textContent = `₱${total.toFixed(0)}`;
+        totalElement.textContent = `₱${total.toFixed(2)}`;
 
         console.log('[shipping.js] Shipping costs updated - Subtotal:', subtotal, 'Shipping:', shippingCost, 'Total:', total);
       }
@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (cartItems.length === 0) {
         console.log('[shipping.js] No cart items, showing empty message');
         orderItemsContainer.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">Your cart is empty</p>';
-        totalElement.textContent = '₱0';
+        totalElement.textContent = '₱0.00';
         return;
       }
 
@@ -691,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const itemPrice = document.createElement('div');
         itemPrice.style.cssText = 'text-align: right;';
-        itemPrice.innerHTML = '<span class="price" style="font-weight: 600; color: #8b1d1d;">₱' + itemTotal.toFixed(0) + '</span>';
+        itemPrice.innerHTML = '<span class="price" style="font-weight: 600; color: #8b1d1d;">₱' + itemTotal.toFixed(2) + '</span>';
 
         itemDiv.appendChild(itemName);
         itemDiv.appendChild(itemPrice);
@@ -701,7 +701,7 @@ document.addEventListener('DOMContentLoaded', function () {
       orderItemsContainer.appendChild(itemsContainer);
 
       // Update total
-      totalElement.textContent = '₱' + totalPrice.toFixed(0);
+      totalElement.textContent = '₱' + totalPrice.toFixed(2);
 
       // Store total for Firebase integration
       sessionStorage.setItem('orderSubtotal', totalPrice.toString());
