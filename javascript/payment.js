@@ -117,10 +117,10 @@ function initializeOrderControls() {
       }
       orderData.subtotal = subtotal;
 
-      // Calculate tax based on order type - Delivery orders have no tax
+      // Calculate service charge based on order type - Delivery orders have no service charge
       const orderType = orderData.orderType || '';
-      const tax = orderType === 'Delivery' ? 0.00 : 5.00;
-      orderData.tax = tax;
+      const serviceCharge = orderType === 'Delivery' ? 0.00 : subtotal * 0.05;
+      orderData.tax = serviceCharge;
 
       // Calculate discount
       let discount = 0;
@@ -131,8 +131,8 @@ function initializeOrderControls() {
       }
       orderData.discount = discount;
 
-      // Calculate total with tax
-      orderData.total = subtotal + tax - discount;
+      // Calculate total with service charge
+      orderData.total = subtotal + serviceCharge - discount;
 
       // Set status to 'Pending Payment' for Later
       orderData.status = 'Pending Payment';
@@ -185,7 +185,7 @@ function initializeOrderControls() {
         console.log('Later button - Updated existing order document:', {
           orderId: pendingOrderId,
           subtotal: orderData.subtotal,
-          tax: orderData.tax,
+          serviceCharge: orderData.tax,
           discount: orderData.discount,
           total: orderData.total,
           status: 'Pending Payment'
@@ -674,10 +674,10 @@ function initializeProceedButton() {
         }, 0);
       }
       orderData.subtotal = subtotal;
-      // Calculate tax based on order type - Delivery orders have no tax
+      // Calculate service charge based on order type - Delivery orders have no service charge
       const orderType = orderData.orderType || '';
-      const tax = orderType === 'Delivery' ? 0.00 : 5.00;
-      orderData.tax = tax;
+      const serviceCharge = orderType === 'Delivery' ? 0.00 : subtotal * 0.05;
+      orderData.tax = serviceCharge;
       let discount = 0;
       if (typeof orderData.discountAmount !== 'undefined') {
         discount = parseFloat(orderData.discountAmount) || 0;
@@ -685,7 +685,7 @@ function initializeProceedButton() {
         discount = parseFloat(orderData.discount) || 0;
       }
       orderData.discount = discount;
-      orderData.total = subtotal + tax - discount;
+      orderData.total = subtotal + serviceCharge - discount;
       // Remove discount fields if no discount is applied
       if (!discount || discount === 0) {
         delete orderData.discount;
@@ -809,17 +809,17 @@ function updateOrderSummary() {
         return sum + (price * qty);
       }, 0);
     }
-    // Calculate tax based on order type - Delivery orders have no tax
+    // Calculate service charge based on order type - Delivery orders have no service charge
     const orderType = orderData.orderType || '';
-    const tax = orderType === 'Delivery' ? 0.00 : 5.00;
+    const serviceCharge = orderType === 'Delivery' ? 0.00 : subtotal * 0.05;
     const discountAmount = parseFloat(orderData.discountAmount) || 0;
-    // Always recalculate total as subtotal + tax - discountAmount
-    const total = subtotal + tax - discountAmount;
+    // Always recalculate total as subtotal + service charge - discountAmount
+    const total = subtotal + serviceCharge - discountAmount;
 
     // Debug logging (can be removed in production)
     console.log('Payment updateOrderSummary - Order data:', orderData);
     console.log('Payment updateOrderSummary - Subtotal:', subtotal);
-    console.log('Payment updateOrderSummary - Tax calculated:', tax, 'Order Type:', orderType);
+    console.log('Payment updateOrderSummary - Service Charge calculated:', serviceCharge, 'Order Type:', orderType);
     const discountPercent = parseFloat(orderData.discountPercent) || 0;
     // Update summary fields by DOM position, not by summaryRows index
     // Subtotal
@@ -829,11 +829,11 @@ function updateOrderSummary() {
       subtotalEl.style.fontWeight = '400';
       subtotalEl.style.textAlign = 'right';
     }
-    // Tax
+    // Service Charge
     const taxEl = document.querySelector('.order-summary .summary-row:nth-child(2) .summary-value');
     if (taxEl) {
-      const taxDisplay = '₱' + tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      taxEl.textContent = taxDisplay;
+      const serviceChargeDisplay = '₱' + serviceCharge.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      taxEl.textContent = serviceChargeDisplay;
       taxEl.style.fontWeight = '400';
       taxEl.style.textAlign = 'right';
     }
@@ -897,7 +897,7 @@ function updateOrderSummary() {
     // Total
     const totalEl = document.querySelector('.order-summary .total-row .summary-value');
     if (totalEl) {
-      totalEl.textContent = '₱' + (subtotal + tax - discountAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      totalEl.textContent = '₱' + (subtotal + serviceCharge - discountAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       totalEl.style.fontWeight = '700';
       totalEl.style.textAlign = 'right';
     }

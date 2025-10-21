@@ -864,11 +864,11 @@ async function startPOSSystem() {
                 if (itemNumberEl) itemNumberEl.textContent = quantity;
             });
 
-            // Calculate tax based on order type
-            // Delivery orders have no tax
+            // Calculate service charge based on order type
+            // Delivery orders have no service charge
             const orderTypeEl = document.querySelector('.order-type span');
             const orderType = orderTypeEl ? orderTypeEl.textContent.trim() : '';
-            const tax = orderType === 'Delivery' ? 0.00 : 5.00;
+            const serviceCharge = orderType === 'Delivery' ? 0.00 : subtotal * 0.05;
             let discountPercent = 0;
             let discount = 0;
             let discountType = 'none';
@@ -917,14 +917,14 @@ async function startPOSSystem() {
                 }
             }
             // Calculate total
-            const total = subtotal + tax - discount;
+            const total = subtotal + serviceCharge - discount;
             // Update summary displays
             const subtotalEl = document.querySelector('.summary-subtotal');
             const taxEl = document.querySelector('.summary-tax');
             const discountEl = document.querySelector('.summary-discount');
             const totalEl = document.querySelector('.summary-total');
             if (subtotalEl) subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
-            if (taxEl) taxEl.textContent = `₱${tax.toFixed(2)}`;
+            if (taxEl) taxEl.textContent = `₱${serviceCharge.toFixed(2)}`;
             if (discountEl) discountEl.textContent = `${discountPercent}%`;
             if (totalEl) {
                 totalEl.textContent = `₱${total.toFixed(2)}`;
@@ -955,13 +955,13 @@ async function startPOSSystem() {
             posOrder.discountAmount = discount;
             // Also save computed totals for Payment page
             posOrder.subtotal = subtotal;
-            posOrder.tax = tax;
+            posOrder.tax = serviceCharge;
             posOrder.total = total;
             sessionStorage.setItem('posOrder', JSON.stringify(posOrder));
             // --- END PATCH ---
 
             window.activeDiscountID = discountID;
-            console.log('Order summary updated:', { subtotal, tax, discountPercent, discount, total, discountType, discountID });
+            console.log('Order summary updated:', { subtotal, serviceCharge, discountPercent, discount, total, discountType, discountID });
         }
 
         // Save order data and proceed to payment
@@ -1075,7 +1075,7 @@ async function startPOSSystem() {
 
             // Numeric fields
             const subtotal = parseFloat(document.querySelector('.summary-subtotal').textContent.replace('₱', ''));
-            const tax = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
+            const serviceCharge = parseFloat(document.querySelector('.summary-tax').textContent.replace('₱', ''));
 
             // Get discount from posOrder object instead of sessionStorage
             let discount = 0;
@@ -1117,7 +1117,7 @@ async function startPOSSystem() {
                 }),
                 items,
                 subtotal,
-                tax,
+                serviceCharge,
                 discount,
                 total,
                 // No status field - Payment Page will control status
@@ -1132,7 +1132,7 @@ async function startPOSSystem() {
             };
 
             // Debug logging
-            console.log('Preparing order for Payment page:', { subtotal, tax, discount, total });
+            console.log('Preparing order for Payment page:', { subtotal, serviceCharge, discount, total });
 
             // Save to sessionStorage for payment page (NO Firebase save from POS)
             sessionStorage.setItem('posOrder', JSON.stringify(orderData));

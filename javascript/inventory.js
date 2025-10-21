@@ -1,7 +1,7 @@
 // Update the status cell in an inventory row
 function updateRowStatus(row) {
     const cells = row.querySelectorAll('td');
-    if (cells.length < 4) return;
+    if (cells.length < 5) return;
 
     const itemName = (cells[0].textContent || '').trim();
     const stockText = (cells[1].textContent || '').trim();
@@ -13,17 +13,30 @@ function updateRowStatus(row) {
     let notifyType = '';
     let notifyMsg = '';
 
+    // Get threshold based on unit of measure
+    const unitCell = cells[2]; // Unit of measure is in the 3rd column
+    const unit = (unitCell.textContent || '').trim().toLowerCase();
+    let threshold = 10; // default for pcs
+
+    if (unit.includes('kg')) {
+        threshold = 5;
+    } else if (unit.includes('g')) {
+        threshold = 500;
+    } else if (unit.includes('pc') || unit.includes('pcs')) {
+        threshold = 10;
+    }
+
     if (stock === 0) {
         statusClass = 'empty';
         statusLabel = 'Empty';
         notifyType = 'empty';
         notifyMsg = `${itemName} is out of stock!`;
-    } else if (stock >= 1 && stock <= 5) {
+    } else if (stock > 0 && stock < threshold) {
         statusClass = 'restock';
         statusLabel = 'Need Restocking';
         notifyType = 'restock';
         notifyMsg = `Low stock: ${itemName}`;
-    } else if (stock >= 6) {
+    } else if (stock >= threshold) {
         statusClass = 'steady';
         statusLabel = 'Steady';
     }
@@ -124,12 +137,43 @@ function createInventoryRow(docId, data) {
     if (data.quantity != null && data.unitOfMeasure) {
         display = getDisplayStock(data.quantity, data.unitOfMeasure);
     }
+    // Format expiration status (show labels instead of dates)
+    let expirationStatus = '';
+    let expirationLabel = 'N/A';
+    let actualExpirationDate = null;
+    if (data.expirationDate) {
+        const expDate = new Date(data.expirationDate.toDate ? data.expirationDate.toDate() : data.expirationDate);
+        actualExpirationDate = expDate;
+
+        // Calculate expiration status
+        const today = new Date();
+        const threeDaysFromNow = new Date(today.getTime() + (3 * 24 * 60 * 60 * 1000));
+
+        if (expDate <= today) {
+            expirationStatus = 'expired';
+            expirationLabel = 'Expired';
+        } else if (expDate <= threeDaysFromNow) {
+            expirationStatus = 'expiring-soon';
+            expirationLabel = 'Expiring Soon';
+        } else {
+            expirationStatus = 'good';
+            expirationLabel = 'Good';
+        }
+    }
+
     row.innerHTML = `
         <td>${data.name || 'N/A'}</td>
         <td>${display.value}</td>
         <td>${display.unit || 'N/A'}</td>
         <td></td>
+        <td class="expiration-status ${expirationStatus}">${expirationLabel}</td>
     `;
+
+    // Store actual expiration date in data attribute for Excel reports
+    if (actualExpirationDate) {
+        row.setAttribute('data-expiration-date', actualExpirationDate.toISOString());
+    }
+
     updateRowStatus(row);
     return row;
 }
@@ -274,15 +318,28 @@ window.resetInventoryNotificationSystem = function () {
         const stock = isNaN(stockValue) ? 0 : stockValue;
         const statusText = (cells[3].textContent || '').trim();
 
+        // Get threshold based on unit of measure
+        const unitCell = cells[2]; // Unit of measure is in the 3rd column
+        const unit = (unitCell.textContent || '').trim().toLowerCase();
+        let threshold = 10; // default for pcs
+
+        if (unit.includes('kg')) {
+            threshold = 5;
+        } else if (unit.includes('g')) {
+            threshold = 500;
+        } else if (unit.includes('pc') || unit.includes('pcs')) {
+            threshold = 10;
+        }
+
         if (stock === 0 && statusText.includes('Empty')) {
             localStorage.setItem('inventory_notified_' + itemName + '_empty', 'true');
             localStorage.setItem('inventory_prevStatus_' + itemName, 'Empty');
             console.log('[Inventory] Marked as notified (empty):', itemName);
-        } else if (stock >= 1 && stock <= 5 && statusText.includes('Need Restocking')) {
+        } else if (stock > 0 && stock < threshold && statusText.includes('Need Restocking')) {
             localStorage.setItem('inventory_notified_' + itemName + '_restock', 'true');
             localStorage.setItem('inventory_prevStatus_' + itemName, 'Need Restocking');
             console.log('[Inventory] Marked as notified (restock):', itemName);
-        } else if (stock >= 6) {
+        } else if (stock >= threshold) {
             localStorage.setItem('inventory_prevStatus_' + itemName, 'Steady');
             console.log('[Inventory] Marked as steady:', itemName);
         }
@@ -610,20 +667,135 @@ document.addEventListener('DOMContentLoaded', function () {
                 sortInventoryByStatus();
                 updateRegisteredItemsCount(querySnapshot.size);
                 addRowClickHandlers();
+                checkExpiringItems(); // Check for expiring items after loading
+                startExpirationMonitoring(); // Start periodic expiration monitoring
                 console.log('Inventory loaded successfully! Rows loaded:', loadedRows);
                 if (loadedRows === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-warning">No inventory items found after loading.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-warning">No inventory items found after loading.</td></tr>';
                 }
             })
             .catch((error) => {
                 console.error('Error loading inventory:', error);
                 alert('Error loading inventory. Please try again.');
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading inventory. Please try again.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading inventory. Please try again.</td></tr>';
             });
     }
 
     // Track notified items to prevent duplicate notifications
-    // Track notified items to prevent duplicate notifications
+    const notifiedItems = new Set(); // Track which items have already been notified
+    const notificationCooldown = new Map(); // Track when notifications were last sent
+    const NOTIFICATION_COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutes cooldown
+
+
+    // Check for expiring items and show alerts
+    function checkExpiringItems() {
+        const rows = document.querySelectorAll('#inventoryStatus tr[data-doc-id]');
+        const expiringItems = [];
+        const expiredItems = [];
+
+        rows.forEach(row => {
+            const expirationCell = row.cells[4]; // Expiration status is 5th column (index 4)
+            if (!expirationCell) return;
+
+            const expirationClass = expirationCell.className;
+            const itemName = row.cells[0].textContent.trim();
+
+            if (expirationClass.includes('expired')) {
+                expiredItems.push(itemName);
+            } else if (expirationClass.includes('expiring-soon')) {
+                expiringItems.push(itemName);
+            }
+        });
+
+        const currentTime = Date.now();
+
+        // Show alerts for expired items (only notify if not already notified)
+        if (expiredItems.length > 0) {
+            const message = `⚠️ EXPIRED ITEMS DETECTED:\n${expiredItems.join(', ')}\n\nPlease remove these items from inventory immediately!`;
+            showMessage(message, 'error');
+
+            // Check if any expired items haven't been notified yet
+            const newExpiredItems = expiredItems.filter(item => !notifiedItems.has(`expired_${item}`));
+            if (newExpiredItems.length > 0) {
+                sendExpirationNotification(newExpiredItems, 'expired');
+                // Mark these items as notified
+                newExpiredItems.forEach(item => notifiedItems.add(`expired_${item}`));
+            }
+        }
+
+        // Show alerts for expiring items (only notify if not already notified)
+        if (expiringItems.length > 0) {
+            const message = `⚠️ ITEMS EXPIRING SOON (within 3 days):\n${expiringItems.join(', ')}\n\nPlease use these items first!`;
+            showMessage(message, 'warning');
+
+            // Check if any expiring items haven't been notified yet
+            const newExpiringItems = expiringItems.filter(item => !notifiedItems.has(`expiring_${item}`));
+            if (newExpiringItems.length > 0) {
+                sendExpirationNotification(newExpiringItems, 'expiring');
+                // Mark these items as notified
+                newExpiringItems.forEach(item => notifiedItems.add(`expiring_${item}`));
+            }
+        }
+    }
+
+    // Send expiration date notifications (prevent duplicates)
+    function sendExpirationNotification(items, type) {
+        try {
+            // Check if notifications.js is available
+            if (typeof sendInventoryNotification === 'function') {
+                const notificationType = type === 'expired' ? 'expired' : 'expiring';
+
+                // Send only ONE notification for all items of the same type to avoid duplicates
+                const message = type === 'expired'
+                    ? `${items.length} items have expired and need immediate attention!`
+                    : `${items.length} items are expiring soon and should be used first!`;
+
+                // Send single notification with all items listed
+                const itemList = items.join(', ');
+                const fullMessage = type === 'expired'
+                    ? `Expired items: ${itemList} - Remove immediately!`
+                    : `Expiring soon: ${itemList} - Use first!`;
+
+                sendInventoryNotification(notificationType, fullMessage, 'Inventory Alert');
+
+                console.log(`Expiration notification sent: ${type} - ${items.length} items (single notification)`);
+            } else {
+                console.warn('Notification system not available');
+            }
+        } catch (error) {
+            console.error('Error sending expiration notification:', error);
+        }
+    }
+
+    // Clear notification tracking for specific items (call when items are restocked or status changes)
+    function clearItemNotificationTracking(itemName) {
+        notifiedItems.delete(`expired_${itemName}`);
+        notifiedItems.delete(`expiring_${itemName}`);
+        console.log(`Cleared notification tracking for: ${itemName}`);
+    }
+
+    // Clear all notification tracking (useful for testing or manual reset)
+    function clearAllNotificationTracking() {
+        notifiedItems.clear();
+        console.log('Cleared all notification tracking');
+    }
+
+    // Start periodic monitoring for expiration dates
+    function startExpirationMonitoring() {
+        // Check for expiring items every 30 minutes
+        setInterval(() => {
+            console.log('Checking for expiring items...');
+            checkExpiringItems();
+        }, 30 * 60 * 1000); // 30 minutes
+
+        // Also check when the page becomes visible (user returns to tab)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('Page became visible, checking expiration dates...');
+                checkExpiringItems();
+            }
+        });
+    }
     const notifiedInventoryStatus = {};
 
     function updateRowStatus(row) {
@@ -696,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        cells[3].innerHTML = '<div class="status-item">' +
+        cells[4].innerHTML = '<div class="status-item">' +
             '<span class="status-indicator ' + statusClass + '"></span>' +
             '<span class="status-text">' + statusLabel + '</span>' +
             '</div>';
@@ -821,7 +993,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
         if (downloadTemplateBtn) {
-            downloadTemplateBtn.addEventListener('click', downloadRestockTemplate);
+            downloadTemplateBtn.addEventListener('click', async () => {
+                await downloadRestockTemplate();
+            });
         }
 
         // Drag and drop functionality
@@ -916,13 +1090,26 @@ document.addEventListener('DOMContentLoaded', function () {
         sortInventoryByStatus();
     }
 
-    // Sort inventory rows by status priority
+    // Sort inventory rows by expiration date first, then by status priority
     function sortInventoryByStatus() {
         const tbody = document.getElementById('inventoryStatus');
         if (!tbody) return;
         const rows = Array.from(tbody.querySelectorAll('tr[data-doc-id]'));
-        // Assign priority: Empty=1, Restock=2, Steady=3
-        function getPriority(row) {
+
+        // Get expiration status priority (expired=1, expiring-soon=2, good=3, no-status=4)
+        function getExpirationPriority(row) {
+            const expirationCell = row.cells[4]; // Expiration status is 5th column (index 4)
+            if (!expirationCell) return 4;
+
+            const expirationClass = expirationCell.className;
+            if (expirationClass.includes('expired')) return 1;
+            if (expirationClass.includes('expiring-soon')) return 2;
+            if (expirationClass.includes('good')) return 3;
+            return 4; // No expiration status
+        }
+
+        // Assign status priority: Empty=1, Restock=2, Steady=3
+        function getStatusPriority(row) {
             const statusCell = row.querySelector('.status-text');
             if (!statusCell) return 4;
             const label = statusCell.textContent.trim().toLowerCase();
@@ -931,15 +1118,24 @@ document.addEventListener('DOMContentLoaded', function () {
             if (label === 'steady') return 3;
             return 4;
         }
+
         rows.sort((a, b) => {
-            const pa = getPriority(a);
-            const pb = getPriority(b);
-            if (pa !== pb) return pa - pb;
-            // If same priority, sort by name
+            // First sort by expiration priority
+            const expA = getExpirationPriority(a);
+            const expB = getExpirationPriority(b);
+            if (expA !== expB) return expA - expB;
+
+            // Then sort by status priority
+            const statusA = getStatusPriority(a);
+            const statusB = getStatusPriority(b);
+            if (statusA !== statusB) return statusA - statusB;
+
+            // Finally sort by name
             const nameA = (a.cells[0].textContent || '').toLowerCase();
             const nameB = (b.cells[0].textContent || '').toLowerCase();
             return nameA.localeCompare(nameB);
         });
+
         // Re-append sorted rows
         rows.forEach(row => tbody.appendChild(row));
     }
@@ -1218,14 +1414,31 @@ document.addEventListener('DOMContentLoaded', function () {
         data.push(['VIKTORIAS BISTRO - GENERAL INVENTORY REPORT']);
         data.push([`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`]);
         data.push([]); // Empty row
-        data.push(['Item Name', 'Restock Quantity']);
+        data.push(['Item Name', 'Current Stock', 'Unit of Measure', 'Status', 'Expiration Date']);
 
         // Add inventory data
         rows.forEach(row => {
             const name = row.cells[0].textContent.trim();
             const stock = parseFloat(row.cells[1].textContent.trim()) || 0;
+            const unit = row.cells[2] ? row.cells[2].textContent.trim() : '';
+            const status = row.cells[3] ? row.cells[3].textContent.trim() : '';
 
-            data.push([name, stock]);
+            // Get actual expiration date from data attributes or show status
+            let expirationInfo = 'N/A';
+            const docId = row.getAttribute('data-doc-id');
+            if (docId) {
+                // Try to get the actual date from the row's data attributes
+                const expirationDateAttr = row.getAttribute('data-expiration-date');
+                if (expirationDateAttr) {
+                    const expDate = new Date(expirationDateAttr);
+                    expirationInfo = expDate.toLocaleDateString();
+                } else {
+                    // Fallback to showing the status label
+                    expirationInfo = row.cells[4] ? row.cells[4].textContent.trim() : 'N/A';
+                }
+            }
+
+            data.push([name, stock, unit, status, expirationInfo]);
         });
 
         // Add summary
@@ -1252,15 +1465,47 @@ document.addEventListener('DOMContentLoaded', function () {
         // Prepare data for Excel
         const data = [];
 
-
-
-        data.push(['Item Name', 'Restock Quantity', 'Unit of Measure']);
+        data.push(['Item Name', 'Current Stock', 'Unit of Measure', 'Expiration Date', 'Suggested quantity']);
 
         restockItems.forEach(row => {
             const name = row.cells[0].textContent.trim();
             const stock = parseFloat(row.cells[1].textContent.trim()) || 0;
             const unit = row.cells[2] ? row.cells[2].textContent.trim() : '';
-            data.push([name, stock, unit]);
+
+            // Calculate suggested quantity
+            const unitLower = unit.toLowerCase();
+            let threshold = 10; // default for pcs
+            if (unitLower.includes('kg')) {
+                threshold = 5;
+            } else if (unitLower.includes('g')) {
+                threshold = 500;
+            } else if (unitLower.includes('pc') || unitLower.includes('pcs')) {
+                threshold = 10;
+            }
+
+            // If current stock < threshold, suggest fixed safe amounts
+            // If current stock >= threshold, suggest 0
+            let suggestedQuantity = 0;
+            if (stock < threshold) {
+                if (unitLower.includes('kg')) {
+                    suggestedQuantity = 10; // 10kg
+                } else if (unitLower.includes('g')) {
+                    suggestedQuantity = 100; // 100g
+                } else if (unitLower.includes('pc') || unitLower.includes('pcs')) {
+                    suggestedQuantity = 20; // 20 pcs
+                }
+            }
+            const suggestedQuantityWithUnit = suggestedQuantity > 0 ? `${suggestedQuantity} ${unit}` : '0';
+
+            // Get actual expiration date from data attributes
+            let expirationDate = 'N/A';
+            const expirationDateAttr = row.getAttribute('data-expiration-date');
+            if (expirationDateAttr) {
+                const expDate = new Date(expirationDateAttr);
+                expirationDate = expDate.toLocaleDateString();
+            }
+
+            data.push([name, stock, unit, expirationDate, suggestedQuantityWithUnit]);
         });
 
         downloadExcelReport(data, 'Restock_Needed_Report.xlsx', 'Restock Report');
@@ -1291,8 +1536,26 @@ document.addEventListener('DOMContentLoaded', function () {
             data.push([`Generated on: ${new Date().toLocaleDateString()}`]);
             data.push([]); // Empty row
 
-            // Add headers
-            data.push(['Ingredient Name', 'Last Restock Quantity', 'Used Quantity', 'Current Stock']);
+            // Collect all restock dates to find the majority date
+            const restockDates = [];
+            inventorySnapshot.forEach(doc => {
+                const itemData = doc.data();
+                if (itemData.lastRestockDate) {
+                    const dateStr = new Date(itemData.lastRestockDate.toDate()).toLocaleDateString();
+                    restockDates.push(dateStr);
+                }
+            });
+
+            // Find the most common restock date (majority date)
+            const dateCounts = {};
+            restockDates.forEach(date => {
+                dateCounts[date] = (dateCounts[date] || 0) + 1;
+            });
+            const majorityDate = Object.keys(dateCounts).reduce((a, b) =>
+                dateCounts[a] > dateCounts[b] ? a : b, 'No restock data');
+
+            // Add headers with majority date
+            data.push(['Ingredient Name', `Last Restock Quantity (${majorityDate})`, 'Used Quantity', 'Current Stock']);
 
             // Process each ingredient from Firestore
             inventorySnapshot.forEach(doc => {
@@ -1301,17 +1564,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 const currentStock = itemData.quantity || 0;
                 const baseUnit = itemData.unitOfMeasure || 'pcs';
 
-                // Get restock data from Firestore
-                const lastRestockQty = itemData.lastRestockQuantity || currentStock;
-                const lastRestockDate = itemData.lastRestockDate ?
-                    new Date(itemData.lastRestockDate.toDate()).toLocaleDateString() : 'No restock data';
+                // Get restock data from Firestore - this should be the quantity when last restocked
+                const lastRestockQty = itemData.lastRestockQuantity || 0;
 
                 // Convert quantities to display units
                 const currentStockDisplay = getDisplayStock(currentStock, baseUnit);
                 const lastRestockDisplay = getDisplayStock(lastRestockQty, baseUnit);
 
-                // Calculate used quantity in display units (should be negative)
-                const usedQuantity = currentStockDisplay.value - lastRestockDisplay.value;
+                // Calculate used quantity in display units (last restock - current stock)
+                const usedQuantity = lastRestockDisplay.value - currentStockDisplay.value;
 
                 // Format quantities with units (2 decimal places)
                 const lastRestockFormatted = `${lastRestockDisplay.value.toFixed(2)} ${lastRestockDisplay.unit}`;
@@ -1453,6 +1714,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showMessage(message, type = 'info') {
+        // Play sound notification based on message type
+        if (typeof playNotificationSound === 'function') {
+            let soundType = 'default';
+            if (type === 'error') {
+                soundType = 'expired'; // Use urgent sound for errors
+            } else if (type === 'warning') {
+                soundType = 'expiring'; // Use warning sound for warnings
+            } else if (type === 'success') {
+                soundType = 'restock'; // Use info sound for success
+            }
+            playNotificationSound(soundType);
+        }
+
         // Sanitize message to remove any URLs or technical details
         if (typeof message === 'string') {
             message = message.replace(/https?:\/\/[^\s]+/g, '[URL]');
@@ -1666,6 +1940,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 row['Current Stock'] || row['current stock'] || row['Stock'] || row['stock'] ||
                 row['RESTOCK QUANTITY'] || row['QUANTITY'] || row['CURRENT STOCK'] || row['STOCK'];
             let unitOfMeasure = row['Unit of Measure'] || row['unit of measure'] || row['Unit'] || row['unit'] || row['UOM'] || row['uom'] || row['UNIT OF MEASURE'] || row['UNIT'];
+            let expirationDate = row['Expiration Date'] || row['expiration date'] || row['Expiration'] || row['expiration'] ||
+                row['EXPIRATION DATE'] || row['EXPIRATION'] || row['Exp Date'] || row['exp date'] || row['EXP DATE'];
             if (!itemName || itemName.toString().trim() === '') continue;
             const itemNameStr = itemName.toString().toLowerCase();
             if (itemNameStr.includes('summary') ||
@@ -1715,10 +1991,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 baseUnit = 'pcs';
                 baseQty = qty;
             }
+            // Parse expiration date if provided
+            let parsedExpirationDate = null;
+            if (expirationDate && expirationDate.toString().trim() !== '') {
+                try {
+                    // Try to parse the date in various formats
+                    const dateStr = expirationDate.toString().trim();
+                    const parsedDate = new Date(dateStr);
+                    if (!isNaN(parsedDate.getTime())) {
+                        parsedExpirationDate = parsedDate;
+                    } else {
+                        console.warn(`Invalid expiration date format for ${itemName}: ${dateStr}`);
+                    }
+                } catch (error) {
+                    console.warn(`Error parsing expiration date for ${itemName}: ${error.message}`);
+                }
+            }
+
             processedItems.push({
                 itemName: itemName.toString().trim(),
                 restockQuantity: baseQty,
-                unitOfMeasure: baseUnit
+                unitOfMeasure: baseUnit,
+                expirationDate: parsedExpirationDate
             });
         }
 
@@ -1777,12 +2071,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (querySnapshot.empty) {
                     // Add new ingredient if not found
-                    await db.collection('inventory').add({
+                    const newItemData = {
                         name: item.itemName,
                         quantity: baseQty,
                         unitOfMeasure: baseUnit,
                         lastUpdated: firebase.firestore.Timestamp.now()
-                    });
+                    };
+
+                    // Add expiration date if provided
+                    if (item.expirationDate) {
+                        newItemData.expirationDate = firebase.firestore.Timestamp.fromDate(item.expirationDate);
+                    }
+
+                    await db.collection('inventory').add(newItemData);
                     addedCount++;
                     continue;
                 }
@@ -1807,6 +2108,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         })
                     };
 
+                    // Add expiration date if provided
+                    if (item.expirationDate) {
+                        restockData.expirationDate = firebase.firestore.Timestamp.fromDate(item.expirationDate);
+                    }
+
                     batch.update(doc.ref, restockData);
                     updatedCount++;
                 });
@@ -1818,6 +2124,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (updatedCount > 0) {
             await batch.commit();
+
+            // Clear notification tracking for restocked items
+            restockItems.forEach(item => {
+                clearItemNotificationTracking(item.itemName);
+            });
         }
 
         let message = `Successfully updated ${updatedCount} items.`;
@@ -1834,30 +2145,96 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function downloadRestockTemplate() {
+    async function downloadRestockTemplate() {
+        // Get current inventory data to find items that need restocking
+        let inventoryData = [];
+        try {
+            const db = firebase.firestore();
+            const snapshot = await db.collection('inventory').get();
+            inventoryData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error('Error fetching inventory data for template:', error);
+        }
+
+        // Filter items that need restocking (same logic as Restock Needed report)
+        const restockItems = inventoryData.filter(item => {
+            const currentStock = item.quantity || 0;
+            const unit = (item.unitOfMeasure || 'pcs').toLowerCase();
+
+            // Get threshold based on unit of measure
+            let threshold = 10; // default for pcs
+            if (unit.includes('kg')) {
+                threshold = 5;
+            } else if (unit.includes('g')) {
+                threshold = 500;
+            } else if (unit.includes('pc') || unit.includes('pcs')) {
+                threshold = 10;
+            }
+
+            // Items need restocking if they are empty or below threshold
+            return currentStock === 0 || currentStock < threshold;
+        });
+
+        // Create template data in the same format as Restock Needed report
         const templateData = [
             ['VIKTORIAS BISTRO - RESTOCK TEMPLATE'],
             ['Use this template to upload restock quantities'],
-            ['You can also use exported restock reports directly for upload'],
+            ['This template contains items that need restocking'],
             [],
-            ['OPTION 1: Restock Format'],
-            ['Item Name', 'Restock Quantity', 'Unit of Measure', 'Notes'],
-            ['Chicken Breast', 50, 'kg', 'Add 50 kg to current stock'],
-            ['Rice', 25, 'kg', 'Add 25 kg to current stock'],
-            ['Cooking Oil', 10, 'liters', 'Add 10 liters to current stock'],
-            [],
-            ['OPTION 2: Current Stock Format (from reports)'],
-            ['Item Name', 'Current Stock', 'Unit of Measure'],
-            ['can', 15, 'pcs'],
-            ['egg', 20, 'pcs'],
-            [],
-            ['Instructions:'],
-            ['- Use Item Name column (required)'],
-            ['- Use Restock Quantity OR Current Stock column'],
-            ['- Include Unit of Measure for clarity (required for upload)'],
-            ['- System will automatically detect and process the format'],
-            ['- You can upload exported restock reports directly']
+            ['Item Name', 'Restock Quantity', 'Unit of Measure', 'Expiration Date', 'Suggested quantity']
         ];
+
+        // Add items that need restocking (same format as Restock Needed report)
+        if (restockItems.length > 0) {
+            restockItems.forEach(item => {
+                const name = item.name || 'Unknown';
+                const unit = item.unitOfMeasure || 'pcs';
+                const currentStock = item.quantity || 0;
+
+                // Calculate suggested quantity
+                const unitLower = unit.toLowerCase();
+                let threshold = 10; // default for pcs
+                if (unitLower.includes('kg')) {
+                    threshold = 5;
+                } else if (unitLower.includes('g')) {
+                    threshold = 500;
+                } else if (unitLower.includes('pc') || unitLower.includes('pcs')) {
+                    threshold = 10;
+                }
+
+                // If current stock < threshold, suggest fixed safe amounts
+                // If current stock >= threshold, suggest 0
+                let suggestedQuantity = 0;
+                if (currentStock < threshold) {
+                    if (unitLower.includes('kg')) {
+                        suggestedQuantity = 10; // 10kg
+                    } else if (unitLower.includes('g')) {
+                        suggestedQuantity = 100; // 100g
+                    } else if (unitLower.includes('pc') || unitLower.includes('pcs')) {
+                        suggestedQuantity = 20; // 20 pcs
+                    }
+                }
+                const suggestedQuantityWithUnit = suggestedQuantity > 0 ? `${suggestedQuantity} ${unit}` : '0';
+
+                // For template, we'll leave Restock Quantity and Expiration Date empty for user to fill
+                templateData.push([name, '', unit, '', suggestedQuantityWithUnit]);
+            });
+        } else {
+            templateData.push(['No items need restocking at this time', '', '', '', '']);
+        }
+
+        // Add instructions
+        templateData.push([]);
+        templateData.push(['Instructions:']);
+        templateData.push(['- Fill in the Restock Quantity column with the amount you want to add']);
+        templateData.push(['- Fill in the Expiration Date column (format: YYYY-MM-DD) for the new stock']);
+        templateData.push(['- Suggested quantity shows the minimum amount needed to reach Steady status']);
+        templateData.push(['- Leave empty if you do not want to restock that item']);
+        templateData.push(['- System will add the restock quantity to current stock']);
+        templateData.push(['- You can also use exported restock reports directly for upload']);
 
         try {
             const wb = XLSX.utils.book_new();
@@ -1866,8 +2243,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Set column widths
             ws['!cols'] = [
                 { wch: 25 }, // Item Name
-                { wch: 18 }, // Restock Quantity/Current Stock
-                { wch: 40 }  // Notes/Unit
+                { wch: 18 }, // Restock Quantity
+                { wch: 15 }, // Unit of Measure
+                { wch: 15 }, // Expiration Date
+                { wch: 20 }  // Suggested quantity
             ];
 
             // Style headers

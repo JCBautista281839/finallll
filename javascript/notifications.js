@@ -912,6 +912,95 @@ async function getCustomerInfoFromOrder(orderId) {
 
 // notifications.js - Send notifications to notifi.html for inventory status
 
+// Global sound notification system
+window.playNotificationSound = function (type = 'default') {
+    try {
+        // Create audio context for sound generation
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Different sound patterns for different notification types
+        let frequency, duration, pattern;
+
+        switch (type) {
+            case 'expired':
+                // Urgent sound for expired items
+                frequency = 800;
+                duration = 0.3;
+                pattern = [0, 0.1, 0.2, 0.3, 0.4, 0.5]; // Rapid beeps
+                break;
+            case 'expiring':
+                // Warning sound for expiring items
+                frequency = 600;
+                duration = 0.2;
+                pattern = [0, 0.15, 0.3]; // Three beeps
+                break;
+            case 'empty':
+                // Alert sound for empty inventory
+                frequency = 1000;
+                duration = 0.4;
+                pattern = [0, 0.2]; // Two beeps
+                break;
+            case 'restock':
+                // Info sound for restock needed
+                frequency = 500;
+                duration = 0.3;
+                pattern = [0]; // Single beep
+                break;
+            default:
+                // Default notification sound
+                frequency = 700;
+                duration = 0.2;
+                pattern = [0]; // Single beep
+        }
+
+        // Play the sound pattern
+        pattern.forEach((delay, index) => {
+            setTimeout(() => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                oscillator.type = 'sine';
+
+                // Fade in and out for smooth sound
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            }, delay * 1000);
+        });
+
+        console.log(`🔊 Notification sound played: ${type}`);
+    } catch (error) {
+        console.warn('Could not play notification sound:', error);
+        // Fallback: try to play a simple beep using Web Audio API
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(700, audioContext.currentTime);
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (fallbackError) {
+            console.warn('Fallback sound also failed:', fallbackError);
+        }
+    }
+}
+
 // Call this function when an inventory item is empty or needs restocking
 async function sendInventoryNotification(type, message, itemName) {
     // Only notify once per item per status in the last 24 hours
@@ -936,6 +1025,9 @@ async function sendInventoryNotification(type, message, itemName) {
         seen: false
     }).then(() => {
         console.log('[Notification] Notification sent:', fullMessage);
+
+        // Play notification sound
+        playNotificationSound(type);
 
         // Refresh dropdown notifications if available
         if (typeof loadDropdownNotifications === 'function') {
@@ -1645,7 +1737,7 @@ async function loadNotifications() {
                         const declinedBanner = isDeclined ? `<div style="background: #933F32; color: white; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; text-align: center; font-weight: 600;">
                             <i class="fas fa-times-circle"></i> Payment Declined
                         </div>` : '';
-                        
+
                         rows += `<tr class="payment-verification-row ${isDeclined ? 'declined-row' : ''}" data-doc-id="${doc.id}" style="${isDeclined ? 'opacity: 0.7;' : ''}">
                         <td><span style='font-weight:600; color: #933F32;'>${typeText}</span></td>
                         <td>
@@ -2360,7 +2452,7 @@ window.handlePaymentVerification = async function (docId, action) {
 
             // Redirect to POS with order data
             createSuccessModal('Payment approved! Redirecting to POS for order processing...', reference);
-            
+
             // Store order data for POS to pick up
             sessionStorage.setItem('approvedOrderId', orderDoc.id);
             sessionStorage.setItem('approvedOrderData', JSON.stringify(orderDoc.data()));
@@ -2635,6 +2727,11 @@ async function approveOrder(orderId, notificationId) {
         // Send notification to kitchen/orders
         await sendOrderToKitchen(orderId);
 
+        // Play success sound
+        if (typeof window.playNotificationSound === 'function') {
+            window.playNotificationSound('restock'); // Use success sound
+        }
+
         // Reload notifications to update UI
         loadNotifications();
 
@@ -2683,6 +2780,11 @@ async function declineOrder(orderId, notificationId) {
             declineReason: reason,
             message: `Order #${orderId} has been DECLINED by admin - Reason: ${reason}`
         });
+
+        // Play warning sound for declined order
+        if (typeof window.playNotificationSound === 'function') {
+            window.playNotificationSound('expiring'); // Use warning sound
+        }
 
         // Reload notifications to update UI
         loadNotifications();

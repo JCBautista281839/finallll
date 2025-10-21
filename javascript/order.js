@@ -113,7 +113,7 @@ function sanitizeOrderData(orderData) {
             tableNumber: orderData.tableNumber || '',
             paxNumber: orderData.paxNumber || orderData.pax || '',
             subtotal: parseFloat(orderData.subtotal) || 0,
-            tax: parseFloat(orderData.tax) || 0,
+            serviceCharge: parseFloat(orderData.tax) || 0,
             discount: parseFloat(orderData.discount) || 0,
             total: parseFloat(orderData.total) || 0
         };
@@ -391,7 +391,7 @@ function initializeOrdersListener() {
                 }
             });
 
-            // Sort orders by timestamp or creation date (newest first)
+            // Sort orders by status priority, then by timestamp within each status
             allOrders.sort((a, b) => {
                 const getOrderDate = (order) => {
                     try {
@@ -451,7 +451,29 @@ function initializeOrdersListener() {
                     }
                 };
 
-                return getOrderDate(b) - getOrderDate(a); // Newest first
+                // Define status priority: Pending Payment (1), In the Kitchen (2), Completed (3)
+                const getStatusPriority = (status) => {
+                    const normalizedStatus = normalizeOrderStatus(status);
+                    switch (normalizedStatus) {
+                        case 'Pending Payment': return 1;
+                        case 'In the Kitchen': return 2;
+                        case 'Completed': return 3;
+                        default: return 4; // Unknown status goes last
+                    }
+                };
+
+                const statusA = getStatusPriority(a.status);
+                const statusB = getStatusPriority(b.status);
+
+                // First sort by status priority
+                if (statusA !== statusB) {
+                    return statusA - statusB;
+                }
+
+                // Within same status, sort by timestamp (newest first)
+                const dateA = getOrderDate(a);
+                const dateB = getOrderDate(b);
+                return dateB - dateA;
             });
 
             console.debug('Displaying', allOrders.length, 'orders');
@@ -716,9 +738,9 @@ function goToPayment(orderNumber) {
 
                 // Store order data for payment page, always recalculate total
                 const subtotal = parseFloat(orderData.subtotal) || 0;
-                const tax = parseFloat(orderData.tax) || 0;
+                const serviceCharge = parseFloat(orderData.tax) || 0;
                 const discount = parseFloat(orderData.discount) || 0;
-                const total = subtotal + tax - discount;
+                const total = subtotal + serviceCharge - discount;
                 const orderForPayment = {
                     orderNumber: orderData.orderNumber,
                     orderNumberFormatted: orderData.orderNumberFormatted,
@@ -731,7 +753,7 @@ function goToPayment(orderNumber) {
                     orderType: orderData.orderType || 'Dine in',
                     tableNumber: orderData.tableNumber,
                     subtotal: subtotal,
-                    tax: tax,
+                    serviceCharge: serviceCharge,
                     discount: discount,
                     total: total,
                     status: orderData.status,
@@ -780,15 +802,15 @@ function updateOrderTimestamp(orderNumber) {
 
 function updateOrderStatus(orderNumber, status) {
     const db = firebase.firestore();
-    // Fetch the order to get subtotal, tax, discount
+    // Fetch the order to get subtotal, service charge, discount
     return db.collection('orders').doc(orderNumber).get()
         .then(doc => {
             if (!doc.exists) throw new Error('Order not found');
             const data = doc.data();
             const subtotal = parseFloat(data.subtotal) || 0;
-            const tax = parseFloat(data.tax) || 0;
+            const serviceCharge = parseFloat(data.tax) || 0;
             const discount = parseFloat(data.discount) || 0;
-            const total = subtotal + tax - discount;
+            const total = subtotal + serviceCharge - discount;
             return db.collection('orders').doc(orderNumber).update({
                 status: status,
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
@@ -937,6 +959,26 @@ function applyFilters(searchTerm, selectedDate) {
                 orderNum.includes(cleanSearchTerm) ||
                 order.orderNumberFormatted?.toLowerCase().includes(searchTerm.toLowerCase());
         }).sort((a, b) => {
+            // Define status priority: Pending Payment (1), In the Kitchen (2), Completed (3)
+            const getStatusPriority = (status) => {
+                const normalizedStatus = normalizeOrderStatus(status);
+                switch (normalizedStatus) {
+                    case 'Pending Payment': return 1;
+                    case 'In the Kitchen': return 2;
+                    case 'Completed': return 3;
+                    default: return 4; // Unknown status goes last
+                }
+            };
+
+            const statusA = getStatusPriority(a.status);
+            const statusB = getStatusPriority(b.status);
+
+            // First sort by status priority
+            if (statusA !== statusB) {
+                return statusA - statusB;
+            }
+
+            // Within same status, prioritize exact matches and starts-with matches
             const aNum = a.orderNumber?.toString() || '';
             const bNum = b.orderNumber?.toString() || '';
             const aStartsWith = aNum.startsWith(cleanSearchTerm);
@@ -1301,10 +1343,10 @@ function viewOrderDetails(orderNumber) {
                 }).join('');
             }
             // Use orderData.tax and orderData.discount if present, else 0
-            const computedTax = parseFloat(orderData.tax || 0);
+            const computedServiceCharge = parseFloat(orderData.tax || 0);
             const computedDiscount = parseFloat(orderData.discount || 0);
             // Always use the saved total for display
-            const savedTotal = parseFloat(orderData.total) || (computedSubtotal + computedTax - computedDiscount);
+            const savedTotal = parseFloat(orderData.total) || (computedSubtotal + computedServiceCharge - computedDiscount);
             // Create the modal using DOM methods instead of template literals to avoid syntax issues
             // First, create a container to hold the modal HTML
             const modalContainer = document.createElement('div');
@@ -1356,8 +1398,8 @@ function viewOrderDetails(orderNumber) {
                 '<td class="text-end">₱' + computedSubtotal.toFixed(2) + '</td>' +
                 '</tr>' +
                 '<tr>' +
-                '<td colspan="2" class="text-end"><strong>Tax:</strong></td>' +
-                '<td class="text-end">₱' + computedTax.toFixed(2) + '</td>' +
+                '<td colspan="2" class="text-end"><strong>Service Charge (5%):</strong></td>' +
+                '<td class="text-end">₱' + computedServiceCharge.toFixed(2) + '</td>' +
                 '</tr>' +
                 ((computedDiscount > 0 || (orderData.discountType && orderData.discountPercent)) ? (
                     '<tr>' +
@@ -1635,7 +1677,7 @@ function printOrder(orderNumber) {
                             <td class="amount">₱${orderData.subtotal}</td>
                         </tr>
                         <tr>
-                            <td class="label">Tax:</td>
+                            <td class="label">Service Charge (5%):</td>
                             <td class="amount">₱${orderData.tax}</td>
                         </tr>
                         ${orderData.discount ? `
@@ -1691,7 +1733,7 @@ function extractOrderDataFromModal(modalContent) {
         pax: '',
         items: [],
         subtotal: '0.00',
-        tax: '0.00',
+        serviceCharge: '0.00',
         discount: '',
         customerName: '',
         customerId: '',
@@ -1765,7 +1807,7 @@ function extractOrderDataFromModal(modalContent) {
 
                 if (label.includes('Subtotal:')) {
                     orderData.subtotal = value.replace('₱', '').trim();
-                } else if (label.includes('Tax:')) {
+                } else if (label.includes('Service Charge (5%):')) {
                     orderData.tax = value.replace('₱', '').trim();
                 } else if (label.includes('Discount:')) {
                     orderData.discount = value;
