@@ -917,6 +917,8 @@ async function loadSalesSummaryData() {
       let dayGrowth = 0;
       if (yesterdaySales > 0) {
         dayGrowth = ((todaySales - yesterdaySales) / yesterdaySales) * 100;
+        // Cap percentage at 100% maximum
+        dayGrowth = Math.min(dayGrowth, 100);
       } else if (todaySales > 0) {
         dayGrowth = 100;
       }
@@ -966,17 +968,21 @@ function updateSalesSummary(total, thisMonth, today, growthPercentage) {
     if (icon) {
       icon.style.color = color;
     }
-    growthElement.textContent = `${Math.abs(growthPercentage).toFixed(1)}% from last day`;
+    // Cap percentage at 100% maximum for display
+    const cappedPercentage = Math.min(Math.abs(growthPercentage), 100);
+    growthElement.textContent = `${cappedPercentage.toFixed(1)}% from last day`;
   }
 
   // Update Sales Overview mini-cards (trend-revenue and trend-orders)
   const trendRevenue = document.querySelector('.trend-revenue');
   const trendOrders = document.querySelector('.trend-orders');
   if (trendRevenue) {
-    trendRevenue.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> <span style="color:#d7268a">${Math.abs(growthPercentage).toFixed(1)}% from last day</span>`;
+    const cappedPercentage = Math.min(Math.abs(growthPercentage), 100);
+    trendRevenue.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> <span style="color:#d7268a">${cappedPercentage.toFixed(1)}% from last day</span>`;
   }
   if (trendOrders) {
-    trendOrders.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> <span style="color:#a259c6">${Math.abs(growthPercentage).toFixed(1)}% from last day</span>`;
+    const cappedPercentage = Math.min(Math.abs(growthPercentage), 100);
+    trendOrders.innerHTML = `<img src="/src/Icons/trend.png" alt="Trend Up"> <span style="color:#a259c6">${cappedPercentage.toFixed(1)}% from last day</span>`;
   }
 }
 
