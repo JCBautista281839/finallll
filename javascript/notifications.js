@@ -1669,7 +1669,15 @@ async function loadNotifications() {
                                         ${data.orderSummary?.items?.map(item =>
                             `${item.name} x${item.quantity} - ₱${(typeof item.total === 'number' ? item.total.toFixed(2) : '0.00')}`
                         ).join('<br>') || 'No items'}<br>
-                                        <strong>Subtotal:</strong> ₱${(typeof data.orderSummary?.subtotal === 'number' ? data.orderSummary.subtotal.toFixed(2) : '0.00')} | 
+                                        <strong>Subtotal:</strong> ₱${(typeof data.orderSummary?.subtotal === 'number' ? data.orderSummary.subtotal.toFixed(2) : '0.00')}<br>
+                                        <strong>Shipping Fee:</strong> ₱${(() => {
+                                            let shippingFee = typeof data.orderSummary?.shippingFee === 'number' ? data.orderSummary.shippingFee : 0;
+                                            // If shipping fee is 0 but total > subtotal, calculate it
+                                            if (shippingFee === 0 && data.orderSummary?.total > data.orderSummary?.subtotal) {
+                                                shippingFee = data.orderSummary.total - data.orderSummary.subtotal;
+                                            }
+                                            return shippingFee.toFixed(2);
+                                        })()}<br>
                                         <strong>Total:</strong> ₱${(typeof data.orderSummary?.total === 'number' ? data.orderSummary.total.toFixed(2) : '0.00')}
                                     </small>
                                 </div>
