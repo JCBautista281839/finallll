@@ -332,7 +332,7 @@
         </div>
       </div>
       
-      <form class="rating-form" autocomplete="off">
+      <form class="rating-form" autocomplete="off" style="display: none;">
         <div class="rating-form-title-stars-row">
           <span class="rating-form-title">Rate your experience</span>
           <span class="rating-stars-input" id="customRatingStars">
@@ -533,6 +533,13 @@
 
       // Add welcome message or user info if needed
       console.log('UI updated for logged-in user:', user.email);
+      
+      // Show rating form for logged-in users
+      const ratingForm = document.querySelector('.rating-form');
+      if (ratingForm) {
+        ratingForm.style.display = 'block';
+        console.log('✅ Rating form shown for logged-in user');
+      }
     }
 
     function updateUIForGuestUser() {
@@ -544,6 +551,13 @@
           `;
       }
       console.log('UI updated for guest user');
+      
+      // Hide rating form for guest users
+      const ratingForm = document.querySelector('.rating-form');
+      if (ratingForm) {
+        ratingForm.style.display = 'none';
+        console.log('❌ Rating form hidden for guest user');
+      }
     }
 
     // Handle user profile click (toggle dropdown for logged-in users)
