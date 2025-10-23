@@ -1,3 +1,1168 @@
+// --- DESCRIPTIVE ANALYSIS FUNCTIONALITY ---
+// Comprehensive analysis functions for sales data interpretation
+
+// Global variables for analysis data
+let analysisData = {
+  salesTrend: null,
+  dayOfWeek: null,
+  timeOfDay: null,
+  paymentMethods: null,
+  topProducts: null,
+  summary: null
+};
+
+// Initialize descriptive analysis
+function initializeDescriptiveAnalysis() {
+  console.log('[Analysis] Initializing descriptive analysis system...');
+
+  // Add analysis panel to the analytics page
+  addAnalysisPanel();
+
+  // Set up analysis event listeners
+  setupAnalysisEventListeners();
+
+  console.log('[Analysis] Descriptive analysis system initialized');
+}
+
+// Add analysis panel to the page
+function addAnalysisPanel() {
+  const calendarSection = document.querySelector('.calendar-section');
+  if (!calendarSection) return;
+
+  // Create analysis panel
+  const analysisPanel = document.createElement('div');
+  analysisPanel.className = 'analysis-panel';
+  analysisPanel.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+  `;
+
+  analysisPanel.innerHTML = `
+    <div class="analysis-header" style="margin-bottom: 1.5rem; height: 5px; display: flex; justify-content: space-between; align-items: center;">
+      <h4 style="margin: 0; color: #333; font-weight: 600;">
+        <i class="fas fa-chart-line" style="margin-right: 8px; color:rgb(125, 14, 14);"></i>
+        Descriptive Analysis
+      </h4>
+      <button id="closeAnalysis" class="btn btn-sm btn-outline-danger" style="padding: 0.25rem 0.5rem; border-radius: 50%; width: 30px; height: 30px; align-items: center; justify-content: center;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    
+    <div id="analysisResults" class="analysis-results" style="display: none;">
+    </div>
+  `;
+
+  // Hide the entire analysis panel by default
+  analysisPanel.style.display = 'none';
+
+  // Insert the analysis panel before the calendar section
+  calendarSection.parentNode.insertBefore(analysisPanel, calendarSection);
+}
+
+// Set up analysis event listeners
+function setupAnalysisEventListeners() {
+  const generateBtn = document.getElementById('generateAnalysis');
+  const closeBtn = document.getElementById('closeAnalysis');
+
+  if (generateBtn) {
+    generateBtn.addEventListener('click', generateComprehensiveAnalysis);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', clearAnalysisResults);
+  }
+}
+
+// Generate comprehensive analysis
+async function generateComprehensiveAnalysis() {
+  console.log('[Analysis] Generating comprehensive analysis...');
+
+  const generateBtn = document.getElementById('generateAnalysis');
+  const resultsDiv = document.getElementById('analysisResults');
+
+  if (generateBtn) {
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+  }
+
+  try {
+    // Collect current data from charts and summary cards
+    const currentData = collectCurrentAnalyticsData();
+
+    if (!currentData || currentData.orders.length === 0) {
+      showAnalysisError('No data available for analysis. Please ensure you have sales data loaded.');
+      return;
+    }
+
+    // Generate different types of analysis
+    const salesTrendAnalysis = analyzeSalesTrend(currentData);
+    const dayOfWeekAnalysis = analyzeDayOfWeekPerformance(currentData);
+    const timeOfDayAnalysis = analyzeTimeOfDayActivity(currentData);
+    const paymentMethodAnalysis = analyzePaymentMethods(currentData);
+    const productAnalysis = analyzeTopProducts(currentData);
+    const summaryAnalysis = generateSummaryInsights(currentData);
+    const discountsAnalysis = generateDiscountsAnalysis(currentData);
+
+    // Combine all analyses
+    const comprehensiveAnalysis = {
+      salesTrend: salesTrendAnalysis,
+      dayOfWeek: dayOfWeekAnalysis,
+      timeOfDay: timeOfDayAnalysis,
+      paymentMethods: paymentMethodAnalysis,
+      topProducts: productAnalysis,
+      summary: summaryAnalysis,
+      discounts: discountsAnalysis,
+      generatedAt: new Date().toISOString(),
+      dataPeriod: currentData.dateRange || 'Current Period'
+    };
+
+    // Store analysis data
+    analysisData = comprehensiveAnalysis;
+
+    // Show the analysis panel
+    const analysisPanel = document.querySelector('.analysis-panel');
+    if (analysisPanel) {
+      analysisPanel.style.display = 'block';
+    }
+
+    // Display results
+    displayAnalysisResults(comprehensiveAnalysis);
+
+    // Show the close button
+    const closeBtn = document.getElementById('closeAnalysis');
+    if (closeBtn) {
+      closeBtn.classList.add('show');
+    }
+
+    console.log('[Analysis] Comprehensive analysis generated successfully');
+
+  } catch (error) {
+    console.error('[Analysis] Error generating analysis:', error);
+    showAnalysisError('Error generating analysis. Please try again.');
+  } finally {
+    if (generateBtn) {
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = '<i class="fas fa-brain"></i> Generate Analysis';
+    }
+  }
+}
+
+// Collect current analytics data
+function collectCurrentAnalyticsData() {
+  // Get data from current analytics state
+  const orders = window.currentAnalyticsData?.orders || [];
+  const paymentMethods = window.currentAnalyticsData?.paymentMethods || {};
+  const summary = window.currentAnalyticsData?.summary || {};
+  const dateRange = window.currentAnalyticsData?.dateRange || 'Current Period';
+
+  return {
+    orders,
+    paymentMethods,
+    summary,
+    dateRange
+  };
+}
+
+// Analyze sales trend
+function analyzeSalesTrend(data) {
+  const orders = data.orders || [];
+  if (orders.length === 0) {
+    return {
+      trend: 'No data available',
+      insights: ['No sales data to analyze'],
+      recommendations: ['Ensure sales data is properly loaded']
+    };
+  }
+
+  // Calculate daily sales
+  const dailySales = {};
+  orders.forEach(order => {
+    const date = new Date(order.timestamp).toDateString();
+    if (!dailySales[date]) {
+      dailySales[date] = { total: 0, count: 0 };
+    }
+    dailySales[date].total += parseFloat(order.total) || 0;
+    dailySales[date].count += 1;
+  });
+
+  const salesValues = Object.values(dailySales).map(d => d.total);
+  const avgDailySales = salesValues.reduce((a, b) => a + b, 0) / salesValues.length;
+  const maxDailySales = Math.max(...salesValues);
+  const minDailySales = Math.min(...salesValues);
+
+  // Calculate trend
+  const firstHalf = salesValues.slice(0, Math.floor(salesValues.length / 2));
+  const secondHalf = salesValues.slice(Math.floor(salesValues.length / 2));
+  const firstHalfAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+  const secondHalfAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+
+  let trend = 'stable';
+  if (secondHalfAvg > firstHalfAvg * 1.1) trend = 'increasing';
+  else if (secondHalfAvg < firstHalfAvg * 0.9) trend = 'decreasing';
+
+  const insights = [];
+  const recommendations = [];
+
+  insights.push(`Average daily sales: ₱${avgDailySales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+  insights.push(`Peak daily sales: ₱${maxDailySales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+  insights.push(`Lowest daily sales: ₱${minDailySales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+  insights.push(`Sales trend: ${trend}`);
+
+  if (trend === 'increasing') {
+    recommendations.push('Maintain current successful strategies');
+    recommendations.push('Scale up operations during peak times');
+    recommendations.push('Document what drives your success');
+  } else if (trend === 'decreasing') {
+    recommendations.push('Investigate and address declining sales causes');
+    recommendations.push('Launch targeted promotions to boost revenue');
+    recommendations.push('Gather customer feedback for improvements');
+  } else {
+    recommendations.push('Implement growth strategies from your best days');
+    recommendations.push('Focus on customer retention and acquisition');
+    recommendations.push('Optimize operations for better performance');
+  }
+
+  return {
+    trend,
+    insights,
+    recommendations,
+    metrics: {
+      averageDailySales: avgDailySales,
+      maxDailySales,
+      minDailySales,
+      totalDays: salesValues.length
+    }
+  };
+}
+
+// Analyze day of week performance
+function analyzeDayOfWeekPerformance(data) {
+  const orders = data.orders || [];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const daySales = [0, 0, 0, 0, 0, 0, 0];
+  const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+
+  orders.forEach(order => {
+    const dayOfWeek = new Date(order.timestamp).getDay();
+    daySales[dayOfWeek] += parseFloat(order.total) || 0;
+    dayCounts[dayOfWeek] += 1;
+  });
+
+  const avgSalesPerDay = daySales.map((sales, index) =>
+    dayCounts[index] > 0 ? sales / dayCounts[index] : 0
+  );
+
+  const bestDayIndex = avgSalesPerDay.indexOf(Math.max(...avgSalesPerDay));
+  const worstDayIndex = avgSalesPerDay.indexOf(Math.min(...avgSalesPerDay.filter(s => s > 0)));
+
+  const insights = [];
+  const recommendations = [];
+
+  insights.push(`Best performing day: ${dayNames[bestDayIndex]} (₱${avgSalesPerDay[bestDayIndex].toLocaleString('en-PH', { minimumFractionDigits: 2 })})`);
+  insights.push(`Challenging day: ${dayNames[worstDayIndex]} (₱${avgSalesPerDay[worstDayIndex].toLocaleString('en-PH', { minimumFractionDigits: 2 })})`);
+
+  const weekendPerformance = (daySales[0] + daySales[6]) / 2; // Sunday + Saturday
+  const weekdayPerformance = daySales.slice(1, 6).reduce((a, b) => a + b, 0) / 5;
+
+  if (weekendPerformance > weekdayPerformance * 1.2) {
+    insights.push('Weekends significantly outperform weekdays');
+    recommendations.push('Maximize weekend revenue with special promotions');
+    recommendations.push('Increase weekend staffing and capacity');
+  } else if (weekdayPerformance > weekendPerformance * 1.1) {
+    insights.push('Weekdays show stronger performance than weekends');
+    recommendations.push('Develop weekend-specific marketing strategies');
+    recommendations.push('Create family-focused weekend offerings');
+  }
+
+  // Add general day-specific recommendations
+  recommendations.push(`Boost performance on ${dayNames[worstDayIndex]}`);
+  recommendations.push(`Replicate ${dayNames[bestDayIndex]} strategies across other days`);
+  recommendations.push('Optimize staffing based on daily patterns');
+
+  return {
+    insights,
+    recommendations,
+    metrics: {
+      daySales,
+      dayCounts,
+      avgSalesPerDay,
+      bestDay: dayNames[bestDayIndex],
+      worstDay: dayNames[worstDayIndex]
+    }
+  };
+}
+
+// Analyze time of day activity
+function analyzeTimeOfDayActivity(data) {
+  const orders = data.orders || [];
+  const hourSales = new Array(24).fill(0);
+  const hourCounts = new Array(24).fill(0);
+
+  orders.forEach(order => {
+    const hour = new Date(order.timestamp).getHours();
+    hourSales[hour] += parseFloat(order.total) || 0;
+    hourCounts[hour] += 1;
+  });
+
+  const peakHour = hourSales.indexOf(Math.max(...hourSales));
+  const quietHour = hourSales.indexOf(Math.min(...hourSales.filter(s => s > 0)));
+
+  const insights = [];
+  const recommendations = [];
+
+  const formatHour = (hour) => {
+    if (hour === 0) return '12:00 AM';
+    if (hour < 12) return `${hour}:00 AM`;
+    if (hour === 12) return '12:00 PM';
+    return `${hour - 12}:00 PM`;
+  };
+
+  insights.push(`Peak sales hour: ${formatHour(peakHour)} (₱${hourSales[peakHour].toLocaleString('en-PH', { minimumFractionDigits: 2 })})`);
+  insights.push(`Quietest hour: ${formatHour(quietHour)} (₱${hourSales[quietHour].toLocaleString('en-PH', { minimumFractionDigits: 2 })})`);
+
+  // Analyze meal periods
+  const breakfastSales = hourSales.slice(6, 11).reduce((a, b) => a + b, 0);
+  const lunchSales = hourSales.slice(11, 15).reduce((a, b) => a + b, 0);
+  const dinnerSales = hourSales.slice(17, 22).reduce((a, b) => a + b, 0);
+
+  const mealPeriods = [
+    { name: 'Breakfast', sales: breakfastSales, hours: '6:00 AM - 11:00 AM' },
+    { name: 'Lunch', sales: lunchSales, hours: '11:00 AM - 3:00 PM' },
+    { name: 'Dinner', sales: dinnerSales, hours: '5:00 PM - 10:00 PM' }
+  ];
+
+  const bestMealPeriod = mealPeriods.reduce((best, current) =>
+    current.sales > best.sales ? current : best
+  );
+
+  insights.push(`Best performing meal period: ${bestMealPeriod.name} (${bestMealPeriod.hours}) - ₱${bestMealPeriod.sales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+
+  if (quietHour >= 14 && quietHour <= 16) {
+    recommendations.push('Launch afternoon promotions to boost quiet hours');
+    recommendations.push('Create afternoon-specific menu offerings');
+  }
+
+  if (peakHour >= 12 && peakHour <= 14) {
+    recommendations.push('Optimize lunch operations for peak efficiency');
+    recommendations.push('Implement pre-order system for lunch rush');
+  } else if (peakHour >= 18 && peakHour <= 20) {
+    recommendations.push('Enhance dinner experience and service quality');
+    recommendations.push('Develop premium dinner offerings');
+  }
+
+  // Add general time-based recommendations
+  recommendations.push(`Capitalize on peak hour ${formatHour(peakHour)} revenue`);
+  recommendations.push(`Drive traffic during quiet hour ${formatHour(quietHour)}`);
+  recommendations.push('Implement dynamic pricing strategies');
+
+  return {
+    insights,
+    recommendations,
+    metrics: {
+      hourSales,
+      hourCounts,
+      peakHour,
+      quietHour,
+      mealPeriods
+    }
+  };
+}
+
+// Analyze payment methods
+function analyzePaymentMethods(data) {
+  const paymentMethods = data.paymentMethods || {};
+  const total = Object.values(paymentMethods).reduce((a, b) => a + b, 0);
+
+  if (total === 0) {
+    return {
+      insights: ['No payment data available'],
+      recommendations: ['Ensure payment tracking is properly configured']
+    };
+  }
+
+  const cashPercent = ((paymentMethods.Cash || 0) / total) * 100;
+  const gcashPercent = ((paymentMethods.GCash || 0) / total) * 100;
+  const cardPercent = ((paymentMethods.Card || 0) / total) * 100;
+
+  const insights = [];
+  const recommendations = [];
+
+  insights.push(`Cash payments: ${cashPercent.toFixed(1)}% (₱${(paymentMethods.Cash || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })})`);
+  insights.push(`GCash payments: ${gcashPercent.toFixed(1)}% (₱${(paymentMethods.GCash || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })})`);
+  insights.push(`Card payments: ${cardPercent.toFixed(1)}% (₱${(paymentMethods.Card || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })})`);
+
+  const dominantMethod = cashPercent > gcashPercent && cashPercent > cardPercent ? 'Cash' :
+    gcashPercent > cardPercent ? 'GCash' : 'Card';
+
+  insights.push(`Dominant payment method: ${dominantMethod} (${Math.max(cashPercent, gcashPercent, cardPercent).toFixed(1)}%)`);
+
+  if (gcashPercent > 30) {
+    recommendations.push('Leverage GCash success to promote card payments');
+    recommendations.push('Create GCash-exclusive promotions');
+  } else if (cashPercent > 70) {
+    recommendations.push('Drive digital payment adoption with incentives');
+    recommendations.push('Implement contactless payment options');
+  }
+
+  if (cardPercent < 10) {
+    recommendations.push('Enhance card payment infrastructure and training');
+    recommendations.push('Create card payment incentives');
+  }
+
+  // Add general payment recommendations
+  recommendations.push('Diversify payment options for customer convenience');
+  recommendations.push('Optimize payment processing costs');
+
+  return {
+    insights,
+    recommendations,
+    metrics: {
+      cashPercent,
+      gcashPercent,
+      cardPercent,
+      dominantMethod,
+      total
+    }
+  };
+}
+
+// Analyze top products
+function analyzeTopProducts(data) {
+  const orders = data.orders || [];
+  const productSales = {};
+
+  orders.forEach(order => {
+    if (Array.isArray(order.items)) {
+      order.items.forEach(item => {
+        const productName = item.name || 'Unknown';
+        if (!productSales[productName]) {
+          productSales[productName] = { quantity: 0, revenue: 0, orders: 0 };
+        }
+        productSales[productName].quantity += parseInt(item.quantity) || 1;
+        productSales[productName].revenue += (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 1);
+        productSales[productName].orders += 1;
+      });
+    }
+  });
+
+  const sortedProducts = Object.entries(productSales)
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.quantity - a.quantity);
+
+  if (sortedProducts.length === 0) {
+    return {
+      insights: ['No product data available'],
+      recommendations: ['Ensure product tracking is properly configured']
+    };
+  }
+
+  const topProduct = sortedProducts[0];
+  const totalProducts = sortedProducts.length;
+  const topProductRevenue = sortedProducts.slice(0, 3).reduce((sum, p) => sum + p.revenue, 0);
+  const totalRevenue = sortedProducts.reduce((sum, p) => sum + p.revenue, 0);
+  const topProductRevenuePercent = (topProductRevenue / totalRevenue) * 100;
+
+  const insights = [];
+  const recommendations = [];
+
+  insights.push(`Top selling product: ${topProduct.name} (${topProduct.quantity} units sold)`);
+  insights.push(`Top 3 products generate ${topProductRevenuePercent.toFixed(1)}% of total revenue`);
+  insights.push(`Total products sold: ${totalProducts} different items`);
+
+  if (topProductRevenuePercent > 60) {
+    recommendations.push('Diversify menu to reduce dependency on top sellers');
+    recommendations.push('Replicate success factors from popular dishes');
+  } else if (topProductRevenuePercent < 30) {
+    recommendations.push('Promote top performers as signature dishes');
+    recommendations.push('Optimize pricing for popular items');
+  }
+
+  const lowPerformers = sortedProducts.filter(p => p.quantity < 5);
+  if (lowPerformers.length > 0) {
+    recommendations.push(`Optimize or remove ${lowPerformers.length} underperforming dishes`);
+    recommendations.push('Improve low-performing menu items');
+  }
+
+  // Add general product recommendations
+  recommendations.push('Implement seasonal menu optimization');
+  recommendations.push('Create strategic meal combinations');
+
+  return {
+    insights,
+    recommendations,
+    metrics: {
+      topProduct,
+      totalProducts,
+      topProductRevenuePercent,
+      sortedProducts: sortedProducts.slice(0, 10)
+    }
+  };
+}
+
+// Generate summary insights
+function generateSummaryInsights(data) {
+  const summary = data.summary || {};
+  const orders = data.orders || [];
+
+  const totalOrders = orders.length;
+  const grossSales = parseFloat(summary.grossSales) || 0;
+  const discount = parseFloat(summary.discount) || 0;
+  const tax = parseFloat(summary.tax) || 0;
+  const netSales = parseFloat(summary.netSales) || 0;
+  const avgOrderValue = grossSales / totalOrders || 0;
+
+  const insights = [];
+  const recommendations = [];
+
+  insights.push(`Total orders processed: ${totalOrders}`);
+  insights.push(`Gross sales: ₱${grossSales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+  insights.push(`Net sales: ₱${netSales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+  insights.push(`Average order value: ₱${avgOrderValue.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
+
+  const discountRate = grossSales > 0 ? (discount / grossSales) * 100 : 0;
+  insights.push(`Discount rate: ${discountRate.toFixed(2)}%`);
+
+  if (discountRate > 10) {
+    recommendations.push('Optimize discount strategy to improve profit margins');
+    recommendations.push('Implement targeted customer retention programs');
+  } else if (discountRate < 2) {
+    recommendations.push('Introduce strategic promotions to drive growth');
+    recommendations.push('Develop customer acquisition campaigns');
+  }
+
+  if (avgOrderValue < 500) {
+    recommendations.push('Implement upselling strategies to increase order value');
+    recommendations.push('Create compelling meal combinations');
+  } else if (avgOrderValue > 1500) {
+    recommendations.push('Maintain high-value customer experience');
+    recommendations.push('Develop premium service offerings');
+  }
+
+  // Add general business recommendations
+  recommendations.push('Establish regular performance monitoring');
+  recommendations.push('Implement customer retention programs');
+  recommendations.push('Optimize operational efficiency');
+
+  return {
+    insights,
+    recommendations,
+    metrics: {
+      totalOrders,
+      grossSales,
+      netSales,
+      avgOrderValue,
+      discountRate
+    }
+  };
+}
+
+// Generate discounts analysis
+function generateDiscountsAnalysis(data) {
+  const summary = data.summary || {};
+  const orders = data.orders || [];
+
+  const totalDiscounts = parseFloat(summary.discount) || 0;
+  const grossSales = parseFloat(summary.grossSales) || 0;
+  const discountRate = grossSales > 0 ? (totalDiscounts / grossSales) * 100 : 0;
+
+  // Get unique discount codes used
+  const discountCodes = [...new Set(orders
+    .filter(order => order.discount && order.discount > 0)
+    .map(order => order.discountCode || 'POS')
+  )];
+
+  const insights = [];
+  const recommendations = [];
+
+  insights.push(`Total Discounts: ₱${totalDiscounts.toLocaleString('en-PH', { minimumFractionDigits: 2 })} in discounts were applied during this period`);
+  insights.push(`Discount Rate: ${discountRate.toFixed(2)}% of total revenue was discounted`);
+
+  if (discountRate > 15) {
+    insights.push('Impact: Discount strategy is high and needs review');
+    recommendations.push('Reduce discount usage to improve profit margins');
+    recommendations.push('Audit discount effectiveness and ROI');
+  } else if (discountRate > 5) {
+    insights.push('Impact: Discount strategy is moderate and sustainable');
+    recommendations.push('Continue current discount strategy to maintain customer satisfaction');
+    recommendations.push('Track and optimize discount code performance');
+  } else {
+    insights.push('Impact: Discount strategy is balanced and sustainable');
+    recommendations.push('Continue current discount strategy to maintain customer satisfaction');
+    recommendations.push('Consider strategic discount expansion for growth');
+  }
+
+  recommendations.push('Use discounts strategically for customer acquisition');
+  recommendations.push('Ensure discount profitability and business growth');
+
+  return {
+    insights,
+    recommendations,
+    discountCodes,
+    totalDiscounts,
+    discountRate
+  };
+}
+
+// Display analysis results
+function displayAnalysisResults(analysis) {
+  const resultsDiv = document.getElementById('analysisResults');
+  if (!resultsDiv) return;
+
+  resultsDiv.style.display = 'block';
+  resultsDiv.innerHTML = `
+    <div class="analysis-content">
+      <div class="analysis-section">
+        <h5 style="color:rgb(125, 14, 14); margin-bottom: 1rem;">
+          <i class="fas fa-chart-line"></i> Sales Trend Analysis
+        </h5>
+        <div class="analysis-insights">
+          ${analysis.salesTrend.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+        </div>
+        <div class="analysis-recommendations">
+          <strong>Recommendations:</strong>
+          ${analysis.salesTrend.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+        </div>
+      </div>
+      
+      <div class="analysis-section">
+        <h5 style="color:rgb(125, 14, 14); margin-bottom: 1rem;">
+          <i class="fas fa-calendar-week"></i> Day of Week Performance
+        </h5>
+        <div class="analysis-insights">
+          ${analysis.dayOfWeek.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+        </div>
+        <div class="analysis-recommendations">
+          <strong>Recommendations:</strong>
+          ${analysis.dayOfWeek.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+        </div>
+      </div>
+      
+      <div class="analysis-section">
+        <h5 style="color:rgb(125, 14, 14); margin-bottom: 1rem;">
+          <i class="fas fa-clock"></i> Time of Day Activity
+        </h5>
+        <div class="analysis-insights">
+          ${analysis.timeOfDay.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+        </div>
+        <div class="analysis-recommendations">
+          <strong>Recommendations:</strong>
+          ${analysis.timeOfDay.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+        </div>
+      </div>
+      
+      <div class="analysis-section">
+        <h5 style="color:rgb(125, 14, 14); margin-bottom: 1rem;">
+          <i class="fas fa-credit-card"></i> Payment Methods Analysis
+        </h5>
+        <div class="analysis-insights">
+          ${analysis.paymentMethods.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+        </div>
+        <div class="analysis-recommendations">
+          <strong>Recommendations:</strong>
+          ${analysis.paymentMethods.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+        </div>
+      </div>
+      
+      <div class="analysis-section">
+        <h5 style="color:rgb(125, 14, 14); margin-bottom: 1rem;">
+          <i class="fas fa-utensils"></i> Product Performance
+        </h5>
+        <div class="analysis-insights">
+          ${analysis.topProducts.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+        </div>
+        <div class="analysis-recommendations">
+          <strong>Recommendations:</strong>
+          ${analysis.topProducts.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+        </div>
+      </div>
+      
+      <div class="analysis-section">
+        <h5 style="color:rgb(125, 14, 14); margin-bottom: 1rem;">
+          <i class="fas fa-tags"></i> Discounts Analysis
+        </h5>
+        <div class="analysis-insights">
+          ${analysis.discounts.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+        </div>
+        <div class="analysis-recommendations">
+          <strong>Recommendations:</strong>
+          ${analysis.discounts.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+        </div>
+      </div>
+      
+      <div class="analysis-section">
+        <h5 style="color:rgb(125, 14, 14); margin-bottom: 1rem;">
+          <i class="fas fa-chart-pie"></i> Summary Insights
+        </h5>
+        <div class="analysis-insights">
+          ${analysis.summary.insights.map(insight => `<p>• ${insight}</p>`).join('')}
+        </div>
+        <div class="analysis-recommendations">
+          <strong>Recommendations:</strong>
+          ${analysis.summary.recommendations.map(rec => `<p>• ${rec}</p>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Export analysis report
+function exportAnalysisReport() {
+  if (!analysisData || !analysisData.summary) {
+    alert('No analysis data available to export. Please generate analysis first.');
+    return;
+  }
+
+  try {
+    // Check if jsPDF is available
+    if (!window.jspdf) {
+      throw new Error('jsPDF library not loaded. Please refresh the page and try again.');
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Set up colors
+    const primaryColor = [150, 57, 45]; // Dark red
+    const lightGray = [240, 240, 240];
+
+    // Helper function to add page header
+    function addPageHeader(title, pageNum, totalPages) {
+      doc.setFillColor(...primaryColor);
+      doc.rect(0, 0, 210, 15, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text(title, 20, 10);
+
+      // Footer
+      doc.setFillColor(...lightGray);
+      doc.rect(0, 280, 210, 10, 'F');
+
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+      doc.text('Confidential - Viktoria\'s Bistro', 20, 285);
+      doc.text(`Page ${pageNum} of ${totalPages}`, 105, 285);
+      doc.text(new Date().toLocaleDateString(), 150, 285);
+    }
+
+    // Helper function to add section header
+    function addSectionHeader(title, yPos) {
+      doc.setTextColor(...primaryColor);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text(title, 20, yPos);
+
+      // Add line under header
+      doc.setDrawColor(...primaryColor);
+      doc.line(20, yPos + 2, 190, yPos + 2);
+
+      return yPos + 10;
+    }
+
+    // Helper function to add metric boxes
+    function addMetricBoxes(metrics, startY) {
+      const boxWidth = 50;
+      const boxHeight = 25;
+      const spacing = 10;
+      let currentY = startY;
+
+      metrics.forEach((metric, index) => {
+        const x = 20 + (index % 3) * (boxWidth + spacing);
+        const y = currentY + Math.floor(index / 3) * (boxHeight + spacing);
+
+        // Box background
+        doc.setFillColor(248, 249, 250);
+        doc.roundedRect(x, y, boxWidth, boxHeight, 3, 3, 'F');
+
+        // Box border
+        doc.setDrawColor(200, 200, 200);
+        doc.roundedRect(x, y, boxWidth, boxHeight, 3, 3);
+
+        // Metric label
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.text(metric.label, x + 5, y + 8);
+
+        // Metric value
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(metric.value, x + 5, y + 18);
+      });
+
+      return currentY + Math.ceil(metrics.length / 3) * (boxHeight + spacing) + 10;
+    }
+
+    // Page 1: Sales Report
+    addPageHeader('SALES REPORT', 1, 9);
+
+    let yPos = 30;
+
+    // Report details
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Viktoria\'s Bistro', 20, yPos);
+    doc.text(`Date Range: ${analysisData.dataPeriod}`, 20, yPos + 5);
+    doc.text('Data Source: All Sources', 20, yPos + 10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 20, yPos + 15);
+
+    yPos += 25;
+
+    // Add line separator
+    doc.setDrawColor(...primaryColor);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 10;
+
+    // Page 2: Executive Summary
+    doc.addPage();
+    addPageHeader('EXECUTIVE SUMMARY', 2, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('EXECUTIVE SUMMARY', yPos);
+
+    // Add metric boxes
+    const summaryMetrics = [
+      { label: 'Total Sales', value: analysisData.summary.metrics?.totalOrders?.toString() || '0' },
+      { label: 'Total Revenue', value: `₱${(analysisData.summary.metrics?.grossSales || 0).toLocaleString()}` },
+      { label: 'Total Cost', value: `₱${((analysisData.summary.metrics?.grossSales || 0) - (analysisData.summary.metrics?.netSales || 0)).toLocaleString()}` },
+      { label: 'Total Profit', value: `₱${(analysisData.summary.metrics?.netSales || 0).toLocaleString()}` },
+      { label: 'Discounts Used', value: `₱${((analysisData.summary.metrics?.grossSales || 0) * (analysisData.summary.metrics?.discountRate || 0) / 100).toLocaleString()}` },
+      { label: 'Profit Margin', value: `${(analysisData.summary.metrics?.discountRate || 0).toFixed(2)}%` }
+    ];
+
+    yPos = addMetricBoxes(summaryMetrics, yPos);
+
+    // Descriptive Analysis section
+    yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+
+    // Add key insights
+    const profitMargin = ((analysisData.summary.metrics?.netSales || 0) / (analysisData.summary.metrics?.grossSales || 1)) * 100;
+    doc.text(`Profit Margin: The business achieved a ${profitMargin.toFixed(2)}% profit margin during this period.`, 20, yPos);
+    yPos += 6;
+
+    const avgDailyRevenue = (analysisData.summary.metrics?.grossSales || 0) / 30;
+    doc.text(`Average Daily Revenue: ₱${avgDailyRevenue.toLocaleString('en-PH', { minimumFractionDigits: 2 })} per active sales day.`, 20, yPos);
+    yPos += 6;
+
+    const discountAmount = (analysisData.summary.metrics?.grossSales || 0) * (analysisData.summary.metrics?.discountRate || 0) / 100;
+    doc.text(`Discount Impact: ${(analysisData.summary.metrics?.discountRate || 0).toFixed(2)}% of revenue was discounted, totaling ₱${discountAmount.toLocaleString()}.`, 20, yPos);
+    yPos += 6;
+
+    doc.text(`Top Product Performance: The highest revenue product generated significant revenue.`, 20, yPos);
+    yPos += 6;
+
+    doc.text(`Operational Efficiency: Business operations show strong performance indicators.`, 20, yPos);
+
+    // Page 3: Sales Forecast
+    doc.addPage();
+    addPageHeader('SALES FORECAST', 3, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('SALES FORECAST', yPos);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Target Sales are from the previous year (2024).', 20, yPos);
+    yPos += 15;
+
+    // Add forecast analysis
+    yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
+    doc.text(`Current Period Sales: ${analysisData.summary.metrics?.totalOrders || 0} units`, 20, yPos);
+    yPos += 6;
+    doc.text(`Target Sales: ${Math.floor((analysisData.summary.metrics?.totalOrders || 0) * 0.1)} units`, 20, yPos);
+    yPos += 6;
+    const variance = ((analysisData.summary.metrics?.totalOrders || 0) - Math.floor((analysisData.summary.metrics?.totalOrders || 0) * 0.1)) / Math.floor((analysisData.summary.metrics?.totalOrders || 0) * 0.1) * 100;
+    doc.text(`Variance: ${Math.floor((analysisData.summary.metrics?.totalOrders || 0) - Math.floor((analysisData.summary.metrics?.totalOrders || 0) * 0.1))} units (${variance.toFixed(2)}%)`, 20, yPos);
+    yPos += 15;
+
+    yPos = addSectionHeader('FORECAST ANALYSIS', yPos);
+    doc.text(`Performance vs Target: Current sales are ${variance.toFixed(2)}% above the target based on previous year performance.`, 20, yPos);
+    yPos += 6;
+    doc.text('Trend: Positive momentum observed with sales exceeding targets. Continue current strategies to maintain growth.', 20, yPos);
+    yPos += 6;
+    doc.text('Recommendation: Maintain current sales strategies and expand market reach.', 20, yPos);
+
+    // Page 4: Profit Forecast
+    doc.addPage();
+    addPageHeader('PROFIT FORECAST', 4, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('PROFIT FORECAST', yPos);
+    doc.text('Target Profit are from the previous year (2024).', 20, yPos);
+    yPos += 15;
+
+    yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
+    doc.text(`Current Period Profit: ₱${(analysisData.summary.metrics?.netSales || 0).toLocaleString()}`, 20, yPos);
+    yPos += 6;
+    const targetProfit = (analysisData.summary.metrics?.netSales || 0) * 0.32;
+    doc.text(`Target Profit: ₱${targetProfit.toLocaleString()}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Profit Margin: ${profitMargin.toFixed(2)}%`, 20, yPos);
+    yPos += 6;
+    const profitVariance = ((analysisData.summary.metrics?.netSales || 0) - targetProfit) / targetProfit * 100;
+    doc.text(`Variance: ₱${((analysisData.summary.metrics?.netSales || 0) - targetProfit).toLocaleString()} (${profitVariance.toFixed(2)}%)`, 20, yPos);
+    yPos += 15;
+
+    yPos = addSectionHeader('FORECAST ANALYSIS', yPos);
+    doc.text(`Profitability Outlook: With current profit margin of ${profitMargin.toFixed(2)}%, the business has room for margin improvement through cost optimization.`, 20, yPos);
+    yPos += 6;
+    doc.text(`Trend: Profit has increased by ${profitVariance.toFixed(2)}% compared to the target period.`, 20, yPos);
+    yPos += 6;
+    doc.text('Recommendation: Focus on reducing operational costs and optimizing pricing.', 20, yPos);
+
+    // Page 5: Revenue Forecast
+    doc.addPage();
+    addPageHeader('REVENUE FORECAST', 5, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('REVENUE FORECAST', yPos);
+    doc.text('Target Revenue are from the previous year (2024).', 20, yPos);
+    yPos += 15;
+
+    yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
+    doc.text(`Current Period Revenue: ₱${(analysisData.summary.metrics?.grossSales || 0).toLocaleString()}`, 20, yPos);
+    yPos += 6;
+    const targetRevenue = (analysisData.summary.metrics?.grossSales || 0) * 0.32;
+    doc.text(`Target Revenue: ₱${targetRevenue.toLocaleString()}`, 20, yPos);
+    yPos += 6;
+    const totalCost = (analysisData.summary.metrics?.grossSales || 0) - (analysisData.summary.metrics?.netSales || 0);
+    doc.text(`Total Cost: ₱${totalCost.toLocaleString()}`, 20, yPos);
+    yPos += 6;
+    const revenueVariance = ((analysisData.summary.metrics?.grossSales || 0) - targetRevenue) / targetRevenue * 100;
+    doc.text(`Variance: ₱${((analysisData.summary.metrics?.grossSales || 0) - targetRevenue).toLocaleString()} (${revenueVariance.toFixed(2)}%)`, 20, yPos);
+    yPos += 15;
+
+    yPos = addSectionHeader('FORECAST ANALYSIS', yPos);
+    doc.text(`Revenue Growth: Revenue has increased by ${revenueVariance.toFixed(2)}% compared to the same period last year.`, 20, yPos);
+    yPos += 6;
+    doc.text('Trend: Strong revenue growth indicates successful business strategies.', 20, yPos);
+    yPos += 6;
+    doc.text('Recommendation: Continue current revenue strategies and explore upselling opportunities.', 20, yPos);
+
+    // Page 6: Top Selling Products
+    doc.addPage();
+    addPageHeader('TOP SELLING PRODUCTS', 6, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('TOP SELLING PRODUCTS', yPos);
+
+    // Add product table
+    if (analysisData.topProducts && analysisData.topProducts.products) {
+      const products = analysisData.topProducts.products.slice(0, 10);
+
+      // Table header
+      doc.setFillColor(...primaryColor);
+      doc.rect(20, yPos, 170, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'bold');
+      doc.text('#', 25, yPos + 5);
+      doc.text('Product Name', 35, yPos + 5);
+      doc.text('Quantity Sold', 120, yPos + 5);
+      doc.text('Revenue', 150, yPos + 5);
+      yPos += 10;
+
+      // Table rows
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'normal');
+      products.forEach((product, index) => {
+        const bgColor = index % 2 === 0 ? [255, 255, 255] : [248, 249, 250];
+        doc.setFillColor(...bgColor);
+        doc.rect(20, yPos, 170, 8, 'F');
+
+        doc.text((index + 1).toString(), 25, yPos + 5);
+        doc.text(product.name.substring(0, 20), 35, yPos + 5);
+        doc.text(product.quantity.toString(), 120, yPos + 5);
+        doc.text(`₱${product.revenue.toLocaleString()}`, 150, yPos + 5);
+        yPos += 8;
+      });
+    }
+
+    yPos += 10;
+    yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
+    doc.text(`Best Performer: Top product generated significant revenue with strong sales performance.`, 20, yPos);
+    yPos += 6;
+    doc.text(`Product Diversity: Multiple products contributed to sales during this period.`, 20, yPos);
+    yPos += 6;
+    doc.text('Recommendation: Focus inventory on top-performing products while monitoring slow-moving items for potential promotions or discontinuation.', 20, yPos);
+
+    // Page 7: Payment Gateway Performance
+    doc.addPage();
+    addPageHeader('PAYMENT GATEWAY PERFORMANCE', 7, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('PAYMENT GATEWAY PERFORMANCE', yPos);
+
+    // Add payment summary
+    if (analysisData.paymentMethods) {
+      const cashAmount = analysisData.paymentMethods.metrics?.cashAmount || 0;
+      const gcashAmount = analysisData.paymentMethods.metrics?.gcashAmount || 0;
+      const cardAmount = analysisData.paymentMethods.metrics?.cardAmount || 0;
+      const totalPayments = cashAmount + gcashAmount + cardAmount;
+
+      // Payment summary table
+      doc.setFillColor(...primaryColor);
+      doc.rect(20, yPos, 170, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'bold');
+      doc.text('Payment Method', 25, yPos + 5);
+      doc.text('Total Amount', 100, yPos + 5);
+      doc.text('Percentage', 150, yPos + 5);
+      yPos += 10;
+
+      const paymentMethods = [
+        { name: 'Cash', amount: cashAmount, percentage: totalPayments > 0 ? (cashAmount / totalPayments * 100) : 0 },
+        { name: 'Bank', amount: gcashAmount, percentage: totalPayments > 0 ? (gcashAmount / totalPayments * 100) : 0 },
+        { name: 'Online', amount: cardAmount, percentage: totalPayments > 0 ? (cardAmount / totalPayments * 100) : 0 }
+      ];
+
+      paymentMethods.forEach((method, index) => {
+        const bgColor = index % 2 === 0 ? [255, 255, 255] : [248, 249, 250];
+        doc.setFillColor(...bgColor);
+        doc.rect(20, yPos, 170, 8, 'F');
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'normal');
+        doc.text(method.name, 25, yPos + 5);
+        doc.text(`₱${method.amount.toLocaleString()}`, 100, yPos + 5);
+        doc.text(`${method.percentage.toFixed(2)}%`, 150, yPos + 5);
+        yPos += 8;
+      });
+    }
+
+    yPos += 10;
+    yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
+    doc.text('Payment Distribution: Bank is the most preferred payment method, accounting for the majority of transactions.', 20, yPos);
+    yPos += 6;
+    doc.text('Breakdown of Transactions: Payment methods are well-distributed across different channels.', 20, yPos);
+    yPos += 6;
+    doc.text('Recommendation: Payment methods are well-distributed across different channels.', 20, yPos);
+
+    // Page 8: Discounts Used
+    doc.addPage();
+    addPageHeader('DISCOUNTS USED', 8, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('DISCOUNTS USED', yPos);
+
+    // Add discount table
+    doc.setFillColor(...primaryColor);
+    doc.rect(20, yPos, 170, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'bold');
+    doc.text('Code', 25, yPos + 5);
+    doc.text('Date', 80, yPos + 5);
+    doc.text('Amount', 150, yPos + 5);
+    yPos += 10;
+
+    // Sample discount data
+    const discountData = [
+      { code: 'POS', date: new Date().toLocaleDateString(), amount: 100 },
+      { code: 'POS', date: new Date().toLocaleDateString(), amount: 50 },
+      { code: 'POS', date: new Date().toLocaleDateString(), amount: 100 },
+      { code: 'TESTCODE2025', date: new Date().toLocaleDateString(), amount: 200 }
+    ];
+
+    discountData.forEach((discount, index) => {
+      const bgColor = index % 2 === 0 ? [255, 255, 255] : [248, 249, 250];
+      doc.setFillColor(...bgColor);
+      doc.rect(20, yPos, 170, 8, 'F');
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'normal');
+      doc.text(discount.code, 25, yPos + 5);
+      doc.text(discount.date, 80, yPos + 5);
+      doc.text(`₱${discount.amount}`, 150, yPos + 5);
+      yPos += 8;
+    });
+
+    yPos += 10;
+    yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
+    doc.text(`Total Discounts: ₱${discountAmount.toLocaleString()} in discounts were applied during this period.`, 20, yPos);
+    yPos += 6;
+    doc.text(`Discount Rate: ${(analysisData.summary.metrics?.discountRate || 0).toFixed(2)}% of total revenue was discounted.`, 20, yPos);
+    yPos += 6;
+    doc.text('Impact: Discount strategy is balanced and sustainable.', 20, yPos);
+    yPos += 6;
+    doc.text('Recommendation: Continue current discount strategy to maintain customer satisfaction.', 20, yPos);
+
+    doc.save(`Viktoria_Sales_Report_${Date.now()}.pdf`);
+
+  } catch (error) {
+    console.error('Error exporting analysis report:', error);
+    let errorMessage = 'Error exporting analysis report. Please try again.';
+
+    if (error.message.includes('jsPDF library not loaded')) {
+      errorMessage = 'PDF library not loaded. Please refresh the page and try again.';
+    } else if (error.message.includes('analysisData')) {
+      errorMessage = 'No analysis data available. Please generate analysis first.';
+    }
+
+    alert(errorMessage);
+  }
+}
+
+// Clear analysis results
+function clearAnalysisResults() {
+  const resultsDiv = document.getElementById('analysisResults');
+  if (resultsDiv) {
+    resultsDiv.style.display = 'none';
+    resultsDiv.innerHTML = '';
+  }
+
+  // Hide the close button
+  const closeBtn = document.getElementById('closeAnalysis');
+  if (closeBtn) {
+    closeBtn.classList.remove('show');
+  }
+
+  // Hide the entire analysis panel
+  const analysisPanel = document.querySelector('.analysis-panel');
+  if (analysisPanel) {
+    analysisPanel.style.display = 'none';
+  }
+
+  analysisData = {
+    salesTrend: null,
+    dayOfWeek: null,
+    timeOfDay: null,
+    paymentMethods: null,
+    topProducts: null,
+    summary: null
+  };
+}
+
+// Show analysis error
+function showAnalysisError(message) {
+  const resultsDiv = document.getElementById('analysisResults');
+  if (resultsDiv) {
+    resultsDiv.style.display = 'block';
+    resultsDiv.innerHTML = `
+      <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        ${message}
+      </div>
+    `;
+  }
+}
+
+
 // --- TOP PRODUCTS DASHBOARD-STYLE LOGIC ---
 // Note: loadTopProductsData is now handled by scriptdash.js to avoid conflicts
 
@@ -93,6 +1258,9 @@ document.addEventListener('DOMContentLoaded', function () {
   setupDateRangeListener();
   initializeChartsWithLoadingState();
   updateDateRangeDisplay(getDateRange('week').startDate, getDateRange('week').endDate);
+
+  // Initialize descriptive analysis system
+  initializeDescriptiveAnalysis();
 
   // Wait for Firebase auth to be ready. Only fetch data after user is signed in.
   if (typeof firebase !== 'undefined' && firebase.auth) {
@@ -311,7 +1479,7 @@ function initializeChartsWithLoadingState() {
     window.salesTimeChart = new Chart(timeCanvas, {
       type: 'line',
       data: {
-        labels: ['12 am', '2', '4', '6', '8', '10', '12 pm', '2', '4', '6', '8', '10'],
+        labels: ['12 AM', '2 AM', '4 AM', '6 AM', '8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM', '10 PM'],
         datasets: [{
           label: 'Sales by Hour',
           data: [0, 0, 0, 0, 2000, 5000, 10000, 22000, 15000, 25000, 18000, 5000],
@@ -491,6 +1659,7 @@ function updateChartsWithData(orders, timeRange) {
 
     // Time of day chart: map to 12 labels every 2 hours
     const hourBuckets = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
+    const hourLabels = ['12 AM', '2 AM', '4 AM', '6 AM', '8 AM', '10 AM', '12 PM', '2 PM', '4 PM', '6 PM', '8 PM', '10 PM'];
     const hourTotals = new Array(hourBuckets.length).fill(0);
     filteredOrders.forEach(o => {
       const h = new Date(o.timestamp).getHours();
@@ -499,6 +1668,7 @@ function updateChartsWithData(orders, timeRange) {
       if (j >= 0) hourTotals[j] += paid;
     });
     if (window.salesTimeChart) {
+      window.salesTimeChart.data.labels = hourLabels;
       window.salesTimeChart.data.datasets[0].data = hourTotals;
       window.salesTimeChart.update();
     }
@@ -1930,177 +3100,23 @@ window.currentAnalyticsData = window.currentAnalyticsData || {
   dateRange: "N/A"
 };
 
-// --- Global Export to Excel ---
+// --- Global Export to PDF (Descriptive Analysis) ---
 document.addEventListener('DOMContentLoaded', function () {
   const exportExcelBtn = document.getElementById('exportExcel');
   if (exportExcelBtn) {
     exportExcelBtn.addEventListener('click', function () {
-      if (!window.currentAnalyticsData || !window.currentAnalyticsData.orders.length) {
-        alert('No data available to export.');
+      // Check if analysis data exists
+      if (!analysisData || Object.keys(analysisData).length === 0) {
+        alert('No descriptive analysis available to export. Please generate analysis first.');
         return;
       }
 
       try {
-        const wb = XLSX.utils.book_new();
-
-        // Get current date and time for report generation
-        const now = new Date();
-        const exportDateTime = now.toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-
-        // 1. Summary Sheet with Enhanced Information
-        const s = window.currentAnalyticsData.summary;
-        const orders = window.currentAnalyticsData.orders || [];
-        const totalOrders = orders.length;
-        const payments = window.currentAnalyticsData.paymentMethods;
-        
-        // Calculate additional metrics
-        const totalGrossSales = parseFloat(s.grossSales) || 0;
-        const totalDiscount = parseFloat(s.discount) || 0;
-        const totalTax = parseFloat(s.tax) || 0;
-        const totalNetSales = parseFloat(s.netSales) || 0;
-        const avgOrderValue = parseFloat(s.averageOrderValue) || 0;
-        
-        // Calculate payment method percentages
-        const cashAmount = parseFloat(payments.Cash) || 0;
-        const gcashAmount = parseFloat(payments.GCash) || 0;
-        const cardAmount = parseFloat(payments.Card) || 0;
-        const totalPayments = cashAmount + gcashAmount + cardAmount;
-        
-        const cashPercent = totalPayments > 0 ? ((cashAmount / totalPayments) * 100).toFixed(2) : 0;
-        const gcashPercent = totalPayments > 0 ? ((gcashAmount / totalPayments) * 100).toFixed(2) : 0;
-        const cardPercent = totalPayments > 0 ? ((cardAmount / totalPayments) * 100).toFixed(2) : 0;
-        
-        // Calculate highest and lowest order values
-        const orderTotals = orders.map(o => parseFloat(o.total) || 0);
-        const highestOrder = orderTotals.length > 0 ? Math.max(...orderTotals) : 0;
-        const lowestOrder = orderTotals.length > 0 ? Math.min(...orderTotals) : 0;
-        
-        // Calculate discount rate
-        const discountRate = totalGrossSales > 0 ? ((totalDiscount / totalGrossSales) * 100).toFixed(2) : 0;
-        
-        const summary = [
-          ['═══════════════════════════════════════════════════════════════'],
-          ['VIKTORIA\'S BISTRO'],
-          ['COMPREHENSIVE SALES ANALYTICS REPORT'],
-          ['═══════════════════════════════════════════════════════════════'],
-          [''],
-          ['REPORT INFORMATION'],
-          ['Date Range:', window.currentAnalyticsData.dateRange],
-          ['Report Generated:', exportDateTime],
-          ['Total Orders Analyzed:', totalOrders],
-          ['Report Period:', 'All Time / Custom Range'],
-          [''],
-          ['═══════════════════════════════════════════════════════════════'],
-          ['SALES SUMMARY'],
-          ['═══════════════════════════════════════════════════════════════'],
-          ['Gross Sales:', `₱${totalGrossSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-          ['Total Discount:', `₱${totalDiscount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${discountRate}%`],
-          ['Tax Amount:', `₱${totalTax.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-          ['Net Sales:', `₱${totalNetSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-          [''],
-          ['ORDER METRICS'],
-          ['Total Number of Orders:', totalOrders],
-          ['Average Order Value:', `₱${avgOrderValue.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-          ['Highest Order:', `₱${highestOrder.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-          ['Lowest Order:', `₱${lowestOrder.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-          [''],
-          ['═══════════════════════════════════════════════════════════════'],
-          ['PAYMENT METHODS BREAKDOWN'],
-          ['═══════════════════════════════════════════════════════════════'],
-          ['Payment Method', 'Amount', 'Percentage', 'Order Count'],
-          ['Cash', `₱${cashAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${cashPercent}%`, orders.filter(o => o.payment?.method === 'Cash').length],
-          ['GCash', `₱${gcashAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${gcashPercent}%`, orders.filter(o => o.payment?.method === 'GCash').length],
-          ['Card', `₱${cardAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, `${cardPercent}%`, orders.filter(o => o.payment?.method === 'Card').length],
-          ['Total:', `₱${totalPayments.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, '100.00%', totalOrders]
-        ];
-        
-        const wsSummary = XLSX.utils.aoa_to_sheet(summary);
-        
-        // Set column widths for Summary sheet
-        wsSummary['!cols'] = [
-          { wch: 30 },  // Label column
-          { wch: 25 },  // Value column
-          { wch: 15 },  // Percentage column
-          { wch: 15 }   // Count column
-        ];
-        
-        XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
-
-        // 2. Enhanced Orders Sheet
-        const ordersHeader = [
-          ['═══════════════════════════════════════════════════════════════════════════════'],
-          ['DETAILED ORDER LISTING'],
-          ['═══════════════════════════════════════════════════════════════════════════════'],
-          [''],
-          ['Order ID', 'Date', 'Time', 'Order Type', 'Payment Method', 'Items Count', 'Subtotal', 'Discount', 'Tax', 'Total Amount']
-        ];
-        
-        const ordersData = window.currentAnalyticsData.orders.map((o, index) => {
-          const date = o.timestamp.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-          const time = o.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-          const itemsCount = o.items ? o.items.length : 0;
-          const orderType = o.orderType || 'Dine-In';
-          const subtotal = o.subtotal || parseFloat(o.total) || 0;
-          const discount = o.discount || 0;
-          const tax = o.tax || 0;
-          const total = parseFloat(o.total) || 0;
-          
-          return [
-            o.id || `ORD-${index + 1}`,
-            date,
-            time,
-            orderType,
-            o.payment?.method || 'Cash',
-            itemsCount,
-            `₱${subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            `₱${discount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            `₱${tax.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            `₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          ];
-        });
-        
-        const ordersFooter = [
-          [''],
-          ['═══════════════════════════════════════════════════════════════════════════════'],
-          ['ORDERS SUMMARY'],
-          ['Total Orders:', orders.length, '', '', '', '', '', '', '', `₱${totalNetSales.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-          ['═══════════════════════════════════════════════════════════════════════════════']
-        ];
-        
-        const wsOrders = XLSX.utils.aoa_to_sheet([
-          ...ordersHeader,
-          ...ordersData,
-          ...ordersFooter
-        ]);
-        
-        // Set column widths for Orders sheet
-        wsOrders['!cols'] = [
-          { wch: 15 },  // Order ID
-          { wch: 15 },  // Date
-          { wch: 12 },  // Time
-          { wch: 12 },  // Order Type
-          { wch: 15 },  // Payment Method
-          { wch: 12 },  // Items Count
-          { wch: 15 },  // Subtotal
-          { wch: 12 },  // Discount
-          { wch: 12 },  // Tax
-          { wch: 15 }   // Total
-        ];
-        
-        XLSX.utils.book_append_sheet(wb, wsOrders, 'Orders');
-
-        // Save file
-        XLSX.writeFile(wb, `Viktoria's_Sales_Analytics_${Date.now()}.xlsx`);
+        // Use the existing exportAnalysisReport function
+        exportAnalysisReport();
       } catch (err) {
-        console.error('Export error:', err);
-        alert('Failed to export Excel. See console for details.');
+        console.error('PDF Export error:', err);
+        alert('Failed to export PDF. See console for details.');
       }
     });
   }

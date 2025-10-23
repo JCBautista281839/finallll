@@ -38,6 +38,246 @@
     white-space: nowrap;
 }
 
+/* Descriptive Analysis Panel Styles */
+.analysis-panel {
+    background: white;
+    border-radius: 40px;
+    padding: 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e9ecef;
+    font-family: 'PoppinsRegular', sans-serif;
+    transition: all 0.3s ease;
+    display: none;
+}
+
+.analysis-header h4 {
+    margin: 0;
+    color: #222;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.analysis-header p {
+    margin: 0.5rem 0 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.analysis-controls {
+    margin-bottom: 1.5rem;
+}
+
+.analysis-controls .btn {
+    margin-right: 1rem;
+    font-weight: 500;
+    border-radius: 15px !important;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.analysis-controls .btn-primary {
+    background: #96392d;
+    color: white;
+}
+
+.analysis-controls .btn-primary:hover {
+    background: #7a2e24;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(150, 57, 45, 0.3);
+}
+
+.analysis-controls .btn-secondary {
+    background: #b76e79;
+    color: white;
+}
+
+.analysis-controls .btn-secondary:hover {
+    background: #a55d6a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(183, 110, 121, 0.3);
+}
+
+.analysis-controls .btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.analysis-controls .btn-success:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.analysis-controls .btn-warning {
+    background: #ffc107;
+    color: #222;
+}
+
+.analysis-controls .btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.analysis-results {
+    display: none;
+}
+
+.analysis-content {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.analysis-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 32px;
+    border-left: 4px solid #96392d;
+}
+
+.analysis-section h5 {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #222;
+}
+
+.analysis-section h5 i {
+    margin-right: 8px;
+    color: #96392d;
+}
+
+.analysis-insights {
+    margin-bottom: 1rem;
+}
+
+.analysis-insights p {
+    margin: 0.5rem 0;
+    color: #222;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.analysis-recommendations {
+    background: #fff4f4;
+    padding: 1rem;
+    border-radius: 16px;
+    border-left: 3px solid #b76e79;
+}
+
+.analysis-recommendations strong {
+    color: #96392d;
+    font-weight: 600;
+}
+
+.analysis-recommendations p {
+    margin: 0.5rem 0;
+    color: #222;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Color coding for different analysis sections */
+.analysis-section:nth-child(1) {
+    border-left-color: #96392d;
+}
+
+.analysis-section:nth-child(2) {
+    border-left-color: #b76e79;
+}
+
+.analysis-section:nth-child(3) {
+    border-left-color: #8B4513;
+}
+
+.analysis-section:nth-child(4) {
+    border-left-color: #a55d6a;
+}
+
+.analysis-section:nth-child(5) {
+    border-left-color: #7a2e24;
+}
+
+.analysis-section:nth-child(6) {
+    border-left-color: #96392d;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .analysis-panel {
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .analysis-controls .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .analysis-section {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .analysis-content {
+        max-height: 400px;
+    }
+}
+
+/* Loading animation for analysis generation */
+.btn .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Alert styles for analysis errors */
+.analysis-results .alert {
+    border-radius: 8px;
+    border: none;
+    padding: 1rem;
+    margin: 0;
+}
+
+.analysis-results .alert-danger {
+    background-color: #fff4f4;
+    color: #96392d;
+    border-left: 4px solid #96392d;
+    border-radius: 16px;
+}
+
+.analysis-results .alert i {
+    margin-right: 8px;
+}
+
+/* Close button for analysis panel */
+#closeAnalysis {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    transition: all 0.3s ease;
+}
+
+#closeAnalysis.show {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 body {
     background: #f3f3f3;
     font-family: 'PoppinsRegular';
@@ -81,6 +321,29 @@ body {
     margin-bottom: 2rem;
 }
 
+.analytics-controls .form-select {
+    border-radius: 8px;
+}
+
+.analytics-controls .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.analytics-controls .btn-primary {
+    background: #96392d;
+    border-color: #96392d;
+    color: white;
+}
+
+.analytics-controls .btn-primary:hover {
+    background: #7a2e24;
+    border-color: #7a2e24;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(150, 57, 45, 0.3);
+}
+
 .analytics-charts {
     display: flex;
     flex-direction: column;
@@ -105,7 +368,7 @@ body {
 @media (max-width: 768px) {
     .main-content {
         background: #f5f6fa;
-        
+
         min-height: 100vh;
         padding: 1rem;
     }
@@ -267,7 +530,7 @@ body {
         font-size: 11px;
     }
 
-    
+
     .d-flex.align-items-center.gap-3 {
         flex-direction: column !important;
         align-items: flex-end !important;
