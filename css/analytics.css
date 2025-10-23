@@ -181,6 +181,26 @@
     line-height: 1.4;
 }
 
+.analysis-forecast {
+    background: #f0f8f0;
+    padding: 1rem;
+    border-radius: 16px;
+    border-left: 3px solid #28a745;
+    margin-top: 1rem;
+}
+
+.analysis-forecast strong {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.analysis-forecast p {
+    margin: 0.5rem 0;
+    color: #222;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
 /* Color coding for different analysis sections */
 .analysis-section:nth-child(1) {
     border-left-color: #96392d;
