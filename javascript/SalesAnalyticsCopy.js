@@ -1937,10 +1937,10 @@ function clearCachedChartData() {
   // localStorage.removeItem('sales_analytics_cache');
 }
 
-// Update charts with an array of order objects
+// Update charts gamit yung order data
 function updateChartsWithData(orders, timeRange) {
   // orders: [{ timestamp: Date, total: Number, items: [], payment: {...}, paxNumber: Number }, ...]
-  // Build day-by-day series between current date range displayed
+  // Create daily sales data for the selected period
   try {
     // Filter orders by time range
     const filteredOrders = orders.filter(order => {
@@ -1961,26 +1961,32 @@ function updateChartsWithData(orders, timeRange) {
       }
     });
 
+    // Basahin yung date range sa display text
     const dateRangeTextEl = document.getElementById('date-range-text');
-    const range = (() => {
-      // Get the current date range from the display text
-      if (dateRangeTextEl && dateRangeTextEl.textContent) {
-        const text = dateRangeTextEl.textContent;
-        // Parse the date range from the display text
-        const parts = text.split(' - ');
-        if (parts.length === 2) {
-          const startDate = new Date(parts[0]);
-          const endDate = new Date(parts[1]);
-          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-            return { start: startDate, end: endDate };
-          }
+    let range;
+
+    if (dateRangeTextEl && dateRangeTextEl.textContent) {
+      const text = dateRangeTextEl.textContent;
+      const parts = text.split(' - ');
+
+      if (parts.length === 2) {
+        const startDate = new Date(parts[0]);
+        const endDate = new Date(parts[1]);
+
+        if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+          range = { start: startDate, end: endDate };
         }
       }
-      // fallback to last 7 days if parsing fails
+    }
+
+    // Gamitin last 7 days kung hindi ma-parse yung date range
+    if (!range) {
       const end = new Date();
-      const start = new Date(); start.setDate(end.getDate() - 6); start.setHours(0, 0, 0, 0);
-      return { start, end };
-    })();
+      const start = new Date();
+      start.setDate(end.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+      range = { start, end };
+    }
     const msDay = 24 * 60 * 60 * 1000;
     const days = Math.max(1, Math.round((range.end - range.start) / msDay) + 1);
     const labels = [];
@@ -1997,7 +2003,7 @@ function updateChartsWithData(orders, timeRange) {
       if (idx >= 0 && idx < days) dayTotals[idx] += paid;
     });
 
-    // Update main line chart (daily)
+    // Update yung main sales chart
     if (window.salesLineChart) {
       window.salesLineChart.data.labels = labels;
       if (window.salesLineChart.data.datasets && window.salesLineChart.data.datasets[0]) {
@@ -2046,16 +2052,14 @@ function updateChartsWithData(orders, timeRange) {
   }
 }
 
-// Set up date range listener
+// Handle pag nag-change yung dropdown
 function setupDateRangeListener() {
   const dateRangeSelector = document.getElementById('date-range');
   const timeRangeSelector = document.getElementById('time-range');
 
   if (dateRangeSelector) {
     dateRangeSelector.addEventListener('change', function () {
-      console.log('Date range changed to:', this.value);
       const { startDate, endDate } = getDateRange(this.value);
-      console.log('Calculated date range:', startDate, 'to', endDate);
       updateDateRangeDisplay(startDate, endDate);
       fetchDataWithDateRange(startDate, endDate);
     });
@@ -2071,7 +2075,7 @@ function setupDateRangeListener() {
   }
 }
 
-// Get date range based on selection
+// Kunin yung start at end dates based sa user selection
 function getDateRange(range) {
   const endDate = new Date();
   let startDate = new Date();
@@ -2091,30 +2095,18 @@ function getDateRange(range) {
       break;
 
     case 'week':
-      startDate.setDate(startDate.getDate() - 6);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-
     case 'last7days':
       startDate.setDate(startDate.getDate() - 6);
       startDate.setHours(0, 0, 0, 0);
       break;
 
     case 'month':
-      startDate.setDate(startDate.getDate() - 29);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-
     case 'last30days':
       startDate.setDate(startDate.getDate() - 29);
       startDate.setHours(0, 0, 0, 0);
       break;
 
     case 'year':
-      startDate.setFullYear(startDate.getFullYear() - 1);
-      startDate.setHours(0, 0, 0, 0);
-      break;
-
     case 'lastYear':
       startDate.setFullYear(startDate.getFullYear() - 1);
       startDate.setHours(0, 0, 0, 0);
@@ -2128,7 +2120,7 @@ function getDateRange(range) {
   return { startDate, endDate };
 }
 
-// Update date range display
+// I-display yung selected date range sa UI
 function updateDateRangeDisplay(startDate, endDate) {
   const dateRangeText = document.getElementById('date-range-text');
   if (dateRangeText) {
@@ -2140,7 +2132,7 @@ function updateDateRangeDisplay(startDate, endDate) {
   }
 }
 
-// Fetch data from Firestore and update charts
+// Load data tapos refresh lahat ng charts
 function fetchDataAndUpdateCharts() {
   console.log('Fetching data...');
   const dateRange = document.getElementById('date-range').value || 'week';
@@ -2158,7 +2150,6 @@ function fetchDataAndUpdateCharts() {
 }
 
 function fetchDataWithDateRange(startDate, endDate, timeRange) {
-  console.log('fetchDataWithDateRange called with:', startDate, endDate, timeRange);
   updateDateRangeDisplay(startDate, endDate);
 
   if (typeof firebase !== 'undefined' && firebase.firestore) {
@@ -2168,7 +2159,7 @@ function fetchDataWithDateRange(startDate, endDate, timeRange) {
   }
 }
 
-// Fetch real data from Firebase
+// Kunin yung orders sa Firebase
 async function fetchRealDataFromFirebase(startDate, endDate, timeRange) {
   console.log('[Firestore] Fetching all orders for analytics...');
   try {
@@ -2192,7 +2183,7 @@ async function fetchRealDataFromFirebase(startDate, endDate, timeRange) {
       return;
     }
 
-    // Parse and filter orders by date range in JS
+    // I-filter yung orders sa selected date range
     const orders = [];
     rawSnapshot.forEach(doc => {
       const data = doc.data();
@@ -2230,7 +2221,7 @@ async function fetchRealDataFromFirebase(startDate, endDate, timeRange) {
 
     orders.sort((a, b) => a.timestamp - b.timestamp);
 
-    // Now update charts and summary cards with real orders
+    // Update yung charts gamit yung real data
     updateChartsWithData(orders, timeRange);
     updateSummaryCards(orders);
     updateDataSourceIndicator('firebase');
@@ -2245,7 +2236,7 @@ async function fetchRealDataFromFirebase(startDate, endDate, timeRange) {
   }
 }
 
-// Detect which timestamp field exists
+// Hanapin yung right timestamp field sa data
 function detectTimestampField(sample) {
   // Priority: createdAt > completedAt > lastUpdated > dateCreated (string) > sentToKitchen
   // Return { field, type: 'timestamp'|'string', queryable: boolean }
@@ -3568,13 +3559,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Generate Custom PDF
   const generateCustomPDFBtn = document.getElementById('generateCustomPDF');
-  console.log('Generate Custom PDF button found:', generateCustomPDFBtn);
   if (generateCustomPDFBtn) {
     generateCustomPDFBtn.addEventListener('click', function (e) {
       e.preventDefault();
-      console.log('Generate Custom PDF button clicked');
 
-      // Get customization options
+      // Kunin yung user selections
       const selectedTimeRange = document.getElementById('pdfTimeRange').value;
       const includeExecutive = document.getElementById('includeExecutive').checked;
       const includeForecast = document.getElementById('includeForecast').checked;
@@ -3589,21 +3578,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const modal = bootstrap.Modal.getInstance(document.getElementById('pdfCustomizationModal'));
       modal.hide();
 
-      // Generate custom PDF
-      console.log('Calling generateCustomPDF with options:', {
-        timeRange: selectedTimeRange,
-        sections: {
-          executive: includeExecutive,
-          forecast: includeForecast,
-          profit: includeProfit,
-          revenue: includeRevenue,
-          products: includeProducts,
-          payments: includePayments,
-          discounts: includeDiscounts,
-          predictive: includePredictive
-        }
-      });
-
+      // Gumawa ng PDF
       generateCustomPDF({
         timeRange: selectedTimeRange,
         sections: {
@@ -3621,10 +3596,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
-// Generate Custom PDF function
+// Gumawa ng custom PDF report
 function generateCustomPDF(options) {
-  console.log('generateCustomPDF function called with options:', options);
-
   if (!analysisData || !analysisData.summary) {
     alert('No analysis data available to export. Please generate analysis first.');
     return;
