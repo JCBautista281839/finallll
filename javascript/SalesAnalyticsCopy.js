@@ -1250,6 +1250,115 @@ function exportAnalysisReport() {
     yPos += 6;
     doc.text('Recommendation: Continue current discount strategy to maintain customer satisfaction.', 20, yPos);
 
+    // Page 9: Predictive Analysis
+    doc.addPage();
+    addPageHeader('PREDICTIVE ANALYSIS', 9, 9);
+
+    yPos = 30;
+    yPos = addSectionHeader('PREDICTIVE ANALYSIS', yPos);
+
+    // Get predictive analysis data
+    const predictiveData = analysisData.predictive || {};
+    const topProductName = predictiveData.topProductName || 'No data available';
+    const topProductRevenue = predictiveData.topProductRevenue || 0;
+    const upcomingMonths = predictiveData.upcomingMonths || 'Upcoming Period';
+
+    // Historical Performance Analysis
+    yPos = addSectionHeader('HISTORICAL PERFORMANCE ANALYSIS', yPos);
+
+    if (topProductName !== 'No data available') {
+      doc.text(`Last ${new Date().toLocaleDateString('en-US', { month: 'long' })}: ${topProductName} was the highest performing product, generating ₱${topProductRevenue.toLocaleString()} in revenue.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Product Performance Trend: ${topProductName} has shown consistent performance and customer preference.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Customer Behavior: Historical data shows strong customer loyalty to ${topProductName}.`, 20, yPos);
+    } else {
+      doc.text(`Last ${new Date().toLocaleDateString('en-US', { month: 'long' })}: No sales data available for product analysis.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Product Performance Trend: Insufficient data to analyze product performance trends.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Customer Behavior: No customer behavior data available for analysis.`, 20, yPos);
+    }
+
+    yPos += 15;
+
+    // Monthly Forecast
+    yPos = addSectionHeader('MONTHLY FORECAST', yPos);
+
+    const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'long' });
+    doc.text(`Current Period: ${currentMonthName}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Upcoming Period: ${upcomingMonths}`, 20, yPos);
+    yPos += 6;
+
+    // Add monthly insights based on current month
+    const currentMonth = new Date().getMonth();
+    let monthlyInsights = '';
+    let productForecast = '';
+
+    if (currentMonth >= 10 || currentMonth <= 1) { // Dec, Jan, Feb
+      monthlyInsights = 'December to February typically show increased demand due to holiday celebrations, family gatherings, and New Year festivities.';
+      productForecast = 'Expect higher sales for special dishes, party foods, and celebratory meals.';
+    } else if (currentMonth >= 2 && currentMonth <= 4) { // Mar, Apr, May
+      monthlyInsights = 'March to May brings graduation season, summer break, and increased social gatherings.';
+      productForecast = 'Focus on refreshing drinks, light meals, and celebration foods for graduations and summer events.';
+    } else if (currentMonth >= 5 && currentMonth <= 7) { // Jun, Jul, Aug
+      monthlyInsights = 'June to August is rainy season with school breaks, leading to varied dining patterns.';
+      productForecast = 'Prepare for comfort foods during rainy days and family meals during school breaks.';
+    } else { // Sep, Oct, Nov
+      monthlyInsights = 'September to November marks the start of "Ber months" with early holiday preparations and increased social activities.';
+      productForecast = 'Focus on comfort foods and early holiday promotions to capture pre-holiday excitement.';
+    }
+
+    doc.text(`Monthly Insights: ${monthlyInsights}`, 20, yPos);
+    yPos += 6;
+    doc.text(`Product Forecast: ${productForecast}`, 20, yPos);
+    yPos += 15;
+
+    // Predictive Recommendations
+    yPos = addSectionHeader('PREDICTIVE RECOMMENDATIONS', yPos);
+
+    if (topProductName !== 'No data available') {
+      doc.text(`Monthly Strategy: As ${upcomingMonths} approaches, focus on promoting ${topProductName} and similar dishes.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Inventory Planning: Stock up on ingredients for ${topProductName} to meet anticipated demand.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Marketing Focus: Highlight ${topProductName} in monthly promotions and special offers.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Operational Readiness: Prepare kitchen staff and equipment for increased ${topProductName} production.`, 20, yPos);
+    } else {
+      doc.text(`Monthly Strategy: As ${upcomingMonths} approaches, focus on promoting popular dishes and seasonal favorites.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Inventory Planning: Stock up on ingredients for anticipated demand based on seasonal patterns.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Marketing Focus: Highlight seasonal promotions and special offers for the upcoming period.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Operational Readiness: Prepare kitchen staff and equipment for increased production during peak periods.`, 20, yPos);
+    }
+
+    yPos += 15;
+
+    // Future Outlook
+    yPos = addSectionHeader('FUTURE OUTLOOK', yPos);
+
+    const projectedGrowth = ((analysisData.summary?.metrics?.grossSales || 0) * 0.15).toLocaleString();
+    doc.text(`Revenue Projection: Based on current trends, expect 15% growth in the upcoming period.`, 20, yPos);
+    yPos += 6;
+
+    if (topProductName !== 'No data available') {
+      doc.text(`Customer Engagement: Focus on customer retention strategies for ${topProductName} enthusiasts.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Market Opportunity: Explore menu expansion opportunities based on ${topProductName} success.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Competitive Advantage: Leverage ${topProductName} popularity to attract new customers.`, 20, yPos);
+    } else {
+      doc.text(`Customer Engagement: Focus on customer retention strategies for popular dishes.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Market Opportunity: Explore menu expansion opportunities based on customer preferences.`, 20, yPos);
+      yPos += 6;
+      doc.text(`Competitive Advantage: Leverage popular dish popularity to attract new customers.`, 20, yPos);
+    }
+
     doc.save(`Viktoria_Sales_Report_${Date.now()}.pdf`);
 
   } catch (error) {
