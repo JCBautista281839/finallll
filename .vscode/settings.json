@@ -89,5 +89,5 @@
     "terminal.integrated.tabs.activeBorderBottomDimmed": "terminal.ansiGreen",
     "terminal.integrated.tabs.inactiveBorderBottomDimmed": "terminal.ansiBlue",
     "terminal.integrated.tabs.hoverBorderBottomDimmed": "terminal.ansiYellow",
-    "liveServer.settings.port": 5501
+    "liveServer.settings.port": 5502
 }
