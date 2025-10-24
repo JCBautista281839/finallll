@@ -1810,8 +1810,8 @@ function exportAnalysisReport() {
       doc.rect(0, 0, 210, 15, 'F');
 
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
       doc.text(title, 20, 10);
 
       // Footer
@@ -1829,8 +1829,8 @@ function exportAnalysisReport() {
     // Helper function to add section header
     function addSectionHeader(title, yPos) {
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'bold');
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
       doc.text(title, 20, yPos);
 
       // Add line under header
@@ -1844,7 +1844,7 @@ function exportAnalysisReport() {
     function addDescriptiveEntry(label, description, yPos) {
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(10);
-      doc.setFont(undefined, 'bold');
+      doc.setFont(undefined, 'normal');
       doc.text(label, 20, yPos);
       
       doc.setFont(undefined, 'normal');
@@ -1878,14 +1878,14 @@ function exportAnalysisReport() {
 
         // Metric label
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont(undefined, 'normal');
         doc.text(metric.label, x + 5, y + 8);
 
         // Metric value
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
         doc.text(metric.value, x + 5, y + 18);
       });
 
@@ -2189,8 +2189,8 @@ function exportAnalysisReport() {
       doc.setFillColor(...primaryColor);
       doc.rect(20, yPos, 170, 8, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont(undefined, 'bold');
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
       doc.text('#', 25, yPos + 5);
       doc.text('Product Name', 35, yPos + 5);
       doc.text('Qty Sold', 120, yPos + 5);
@@ -2258,8 +2258,8 @@ function exportAnalysisReport() {
       doc.setFillColor(...primaryColor);
       doc.rect(20, yPos, 170, 8, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(7);
-      doc.setFont(undefined, 'bold');
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
       doc.text('Payment Method', 25, yPos + 5);
       doc.text('Amount', 85, yPos + 5);
       doc.text('Percentage', 125, yPos + 5);
@@ -2311,7 +2311,7 @@ function exportAnalysisReport() {
 
         doc.setTextColor(0, 0, 0);
         doc.setFont(undefined, 'normal');
-        doc.setFontSize(7);
+        doc.setFontSize(10);
         doc.text(method.name, 25, yPos + 5);
         doc.text(`PHP ${method.amount.toFixed(2)}`, 85, yPos + 5);
         doc.text(`${method.percentage.toFixed(1)}%`, 125, yPos + 5);
@@ -2537,7 +2537,7 @@ function exportAnalysisReport() {
         doc.rect(20, yPos, 170, 8, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(8);
-        doc.setFont(undefined, 'bold');
+        doc.setFont(undefined, 'normal');
         doc.text('Code', 25, yPos + 5);
         doc.text('Uses', 80, yPos + 5);
         doc.text('Total Amount', 120, yPos + 5);
@@ -2559,7 +2559,7 @@ function exportAnalysisReport() {
 
           doc.setTextColor(0, 0, 0);
           doc.setFont(undefined, 'normal');
-          doc.setFontSize(7);
+          doc.setFontSize(10);
           doc.text(code, 25, yPos + 5);
           doc.text(perf.count.toString(), 80, yPos + 5);
           doc.text(`PHP ${perf.totalAmount.toFixed(2)}`, 120, yPos + 5);
@@ -2579,7 +2579,7 @@ function exportAnalysisReport() {
         doc.rect(20, yPos, 170, 8, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(8);
-        doc.setFont(undefined, 'bold');
+        doc.setFont(undefined, 'normal');
         doc.text('Code', 25, yPos + 5);
         doc.text('Date', 80, yPos + 5);
         doc.text('Amount', 130, yPos + 5);
@@ -2594,7 +2594,7 @@ function exportAnalysisReport() {
 
           doc.setTextColor(0, 0, 0);
           doc.setFont(undefined, 'normal');
-          doc.setFontSize(7);
+          doc.setFontSize(10);
           doc.text(discount.code, 25, yPos + 5);
           doc.text(discount.date, 80, yPos + 5);
           doc.text(`PHP ${discount.amount.toFixed(2)}`, 130, yPos + 5);
@@ -4427,18 +4427,18 @@ function downloadDailySalesPDF(date, dateKey, salesData) {
     let yPosition = 20;
 
     // Header
-    doc.setFontSize(16);
-    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
     doc.text('DAILY SALES REPORT', 20, yPosition);
     yPosition += 10;
 
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     doc.text(dateStr, 20, yPosition);
     yPosition += 20;
 
     // Sales Summary Section
-    doc.setFont(undefined, 'bold');
+    doc.setFont(undefined, 'normal');
     doc.text('SALES SUMMARY', 20, yPosition);
     yPosition += 10;
 
@@ -4451,7 +4451,7 @@ function downloadDailySalesPDF(date, dateKey, salesData) {
     yPosition += 15;
 
     // Payment Methods Section
-    doc.setFont(undefined, 'bold');
+    doc.setFont(undefined, 'normal');
     doc.text('PAYMENT METHODS BREAKDOWN', 20, yPosition);
     yPosition += 10;
 
@@ -4467,12 +4467,12 @@ function downloadDailySalesPDF(date, dateKey, salesData) {
     yPosition += 10;
 
     // Orders Section
-    doc.setFont(undefined, 'bold');
+    doc.setFont(undefined, 'normal');
     doc.text('ORDER DETAILS', 20, yPosition);
     yPosition += 10;
 
     // Table headers
-    doc.setFont(undefined, 'bold');
+    doc.setFont(undefined, 'normal');
     doc.text('Order #', 20, yPosition);
     doc.text('Time', 60, yPosition);
     doc.text('Type', 100, yPosition);
@@ -4902,8 +4902,8 @@ function generateCustomPDF(options) {
       doc.rect(0, 0, 210, 15, 'F');
 
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
       doc.text(title, 20, 10);
 
       // Footer
@@ -4921,8 +4921,8 @@ function generateCustomPDF(options) {
     // Helper function to add section header
     function addSectionHeader(title, yPos) {
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'bold');
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
       doc.text(title, 20, yPos);
 
       // Add line under header
