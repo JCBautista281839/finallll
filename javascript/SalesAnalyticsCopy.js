@@ -1818,7 +1818,7 @@ function exportAnalysisReport() {
       doc.setFillColor(...lightGray);
       doc.rect(0, 280, 210, 10, 'F');
 
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(8);
       doc.setFont(undefined, 'normal');
       doc.text('Confidential - Viktoria\'s Bistro', 20, 285);
@@ -1828,7 +1828,7 @@ function exportAnalysisReport() {
 
     // Helper function to add section header
     function addSectionHeader(title, yPos) {
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(14);
       doc.setFont(undefined, 'bold');
       doc.text(title, 20, yPos);
@@ -1877,7 +1877,7 @@ function exportAnalysisReport() {
         doc.roundedRect(x, y, boxWidth, boxHeight, 3, 3);
 
         // Metric label
-        doc.setTextColor(100, 100, 100);
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.text(metric.label, x + 5, y + 8);
@@ -2215,7 +2215,7 @@ function exportAnalysisReport() {
         yPos += 8;
       });
     } else {
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(10);
       doc.text('No product data available for this period.', 20, yPos);
       yPos += 15;
@@ -4910,7 +4910,7 @@ function generateCustomPDF(options) {
       doc.setFillColor(...lightGray);
       doc.rect(0, 280, 210, 10, 'F');
 
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(8);
       doc.setFont(undefined, 'normal');
       doc.text('Confidential - Viktoria\'s Bistro', 20, 285);
@@ -4920,7 +4920,7 @@ function generateCustomPDF(options) {
 
     // Helper function to add section header
     function addSectionHeader(title, yPos) {
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(0, 0, 0);
       doc.setFontSize(14);
       doc.setFont(undefined, 'bold');
       doc.text(title, 20, yPos);
