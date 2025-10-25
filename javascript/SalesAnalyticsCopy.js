@@ -4,7 +4,7 @@
 // Utility function to format currency for PDF compatibility
 function formatCurrencyForPDF(amount) {
   const numAmount = parseFloat(amount) || 0;
-  return `PHP ${numAmount.toFixed(2)}`;
+  return `₱${numAmount.toFixed(2)}`;
 }
 
 // Global variables for analysis data
@@ -218,9 +218,9 @@ function analyzeSalesTrend(data) {
   const insights = [];
   const recommendations = [];
 
-  insights.push(`Average daily sales: PHP ${avgDailySales.toFixed(2)}`);
-  insights.push(`Peak daily sales: PHP ${maxDailySales.toFixed(2)}`);
-  insights.push(`Lowest daily sales: PHP ${minDailySales.toFixed(2)}`);
+  insights.push(`Average daily sales: ₱${avgDailySales.toFixed(2)}`);
+  insights.push(`Peak daily sales: ₱${maxDailySales.toFixed(2)}`);
+  insights.push(`Lowest daily sales: ₱${minDailySales.toFixed(2)}`);
   insights.push(`Sales trend: ${trend}`);
 
   if (trend === 'increasing') {
@@ -273,8 +273,8 @@ function analyzeDayOfWeekPerformance(data) {
   const insights = [];
   const recommendations = [];
 
-  insights.push(`Best performing day: ${dayNames[bestDayIndex]} (PHP ${avgSalesPerDay[bestDayIndex].toFixed(2)})`);
-  insights.push(`Challenging day: ${dayNames[worstDayIndex]} (PHP ${avgSalesPerDay[worstDayIndex].toFixed(2)})`);
+  insights.push(`Best performing day: ${dayNames[bestDayIndex]} (₱${avgSalesPerDay[bestDayIndex].toFixed(2)})`);
+  insights.push(`Challenging day: ${dayNames[worstDayIndex]} (₱${avgSalesPerDay[worstDayIndex].toFixed(2)})`);
 
   const weekendPerformance = (daySales[0] + daySales[6]) / 2; // Sunday + Saturday
   const weekdayPerformance = daySales.slice(1, 6).reduce((a, b) => a + b, 0) / 5;
@@ -332,8 +332,8 @@ function analyzeTimeOfDayActivity(data) {
     return `${hour - 12}:00 PM`;
   };
 
-  insights.push(`Peak sales hour: ${formatHour(peakHour)} (PHP ${hourSales[peakHour].toFixed(2)})`);
-  insights.push(`Quietest hour: ${formatHour(quietHour)} (PHP ${hourSales[quietHour].toFixed(2)})`);
+  insights.push(`Peak sales hour: ${formatHour(peakHour)} (₱${hourSales[peakHour].toFixed(2)})`);
+  insights.push(`Quietest hour: ${formatHour(quietHour)} (₱${hourSales[quietHour].toFixed(2)})`);
 
   // Analyze meal periods
   const breakfastSales = hourSales.slice(6, 11).reduce((a, b) => a + b, 0);
@@ -350,7 +350,7 @@ function analyzeTimeOfDayActivity(data) {
     current.sales > best.sales ? current : best
   );
 
-  insights.push(`Best performing meal period: ${bestMealPeriod.name} (${bestMealPeriod.hours}) - PHP ${bestMealPeriod.sales.toFixed(2)}`);
+  insights.push(`Best performing meal period: ${bestMealPeriod.name} (${bestMealPeriod.hours}) - ₱${bestMealPeriod.sales.toFixed(2)}`);
 
   if (quietHour >= 14 && quietHour <= 16) {
     recommendations.push('Launch afternoon promotions to boost quiet hours');
@@ -402,9 +402,9 @@ function analyzePaymentMethods(data) {
   const insights = [];
   const recommendations = [];
 
-  insights.push(`Cash payments: ${cashPercent.toFixed(1)}% (PHP ${(paymentMethods.Cash || 0).toFixed(2)})`);
-  insights.push(`GCash payments: ${gcashPercent.toFixed(1)}% (PHP ${(paymentMethods.GCash || 0).toFixed(2)})`);
-  insights.push(`Card payments: ${cardPercent.toFixed(1)}% (PHP ${(paymentMethods.Card || 0).toFixed(2)})`);
+  insights.push(`Cash payments: ${cashPercent.toFixed(1)}% (₱${(paymentMethods.Cash || 0).toFixed(2)})`);
+  insights.push(`GCash payments: ${gcashPercent.toFixed(1)}% (₱${(paymentMethods.GCash || 0).toFixed(2)})`);
+  insights.push(`Card payments: ${cardPercent.toFixed(1)}% (₱${(paymentMethods.Card || 0).toFixed(2)})`);
 
   const dominantMethod = cashPercent > gcashPercent && cashPercent > cardPercent ? 'Cash' :
     gcashPercent > cardPercent ? 'GCash' : 'Card';
@@ -533,9 +533,9 @@ function generateSummaryInsights(data) {
   const recommendations = [];
 
   insights.push(`Total orders processed: ${totalOrders}`);
-  insights.push(`Gross sales: PHP ${grossSales.toFixed(2)}`);
-  insights.push(`Net sales: PHP ${netSales.toFixed(2)}`);
-  insights.push(`Average order value: PHP ${avgOrderValue.toFixed(2)}`);
+  insights.push(`Gross sales: ₱${grossSales.toFixed(2)}`);
+  insights.push(`Net sales: ₱${netSales.toFixed(2)}`);
+  insights.push(`Average order value: ₱${avgOrderValue.toFixed(2)}`);
 
   const discountRate = grossSales > 0 ? (discount / grossSales) * 100 : 0;
   insights.push(`Discount rate: ${discountRate.toFixed(2)}%`);
@@ -600,15 +600,15 @@ function generateDiscountsAnalysis(data) {
   });
 
   const discountCodes = Object.keys(codePerformance);
-  const topDiscountCode = discountCodes.reduce((top, code) => 
-    codePerformance[code].totalAmount > (codePerformance[top]?.totalAmount || 0) ? code : top, 
+  const topDiscountCode = discountCodes.reduce((top, code) =>
+    codePerformance[code].totalAmount > (codePerformance[top]?.totalAmount || 0) ? code : top,
     discountCodes[0]
   );
 
   const insights = [];
   const recommendations = [];
 
-  insights.push(`Total Discounts: PHP ${totalDiscounts.toFixed(2)} in discounts were applied during this period`);
+  insights.push(`Total Discounts: ₱${totalDiscounts.toFixed(2)} in discounts were applied during this period`);
   insights.push(`Discount Rate: ${discountRate.toFixed(2)}% of total revenue was discounted`);
   insights.push(`Discount Usage: ${discountUsageRate.toFixed(1)}% of orders used discounts (${discountedOrders.length}/${totalOrders} orders)`);
 
@@ -616,7 +616,7 @@ function generateDiscountsAnalysis(data) {
     insights.push(`Active Discount Codes: ${discountCodes.length} different codes used`);
     if (topDiscountCode) {
       const topPerformance = codePerformance[topDiscountCode];
-      insights.push(`Top Performing Code: ${topDiscountCode} (${topPerformance.count} uses, PHP ${topPerformance.totalAmount.toFixed(2)} total)`);
+      insights.push(`Top Performing Code: ${topDiscountCode} (${topPerformance.count} uses, ₱${topPerformance.totalAmount.toFixed(2)} total)`);
     }
   } else {
     insights.push('No discount codes were used during this period');
@@ -625,7 +625,7 @@ function generateDiscountsAnalysis(data) {
   // Average discount per transaction
   if (discountedOrders.length > 0) {
     const avgDiscountPerOrder = totalDiscounts / discountedOrders.length;
-    insights.push(`Average Discount per Transaction: PHP ${avgDiscountPerOrder.toFixed(2)}`);
+    insights.push(`Average Discount per Transaction: ₱${avgDiscountPerOrder.toFixed(2)}`);
   }
 
   // Generate recommendations based on analysis
@@ -752,7 +752,7 @@ function generatePredictiveAnalysis(data) {
 
   // Historical Performance Analysis
   if (topProductName !== 'No data available') {
-    insights.push(`Last ${currentMonthName}: ${topProductName} was the highest performing product, generating PHP ${topProductRevenue.toFixed(2)} in revenue`);
+    insights.push(`Last ${currentMonthName}: ${topProductName} was the highest performing product, generating ₱${topProductRevenue.toFixed(2)} in revenue`);
     insights.push(`Product Performance Trend: ${topProductName} has shown consistent performance and customer preference`);
     insights.push(`Customer Behavior: Historical data shows strong customer loyalty to ${topProductName}`);
   } else {
@@ -811,134 +811,134 @@ function generateSalesForecastChart(analysisData) {
     canvas.width = 800;
     canvas.height = 400;
     const ctx = canvas.getContext('2d');
-    
+
     // Get daily sales data
     const orders = analysisData.orders || [];
     const dailySalesData = {};
-    
+
     // Process orders to get daily sales - try multiple date formats and amount fields
     orders.forEach(order => {
       let orderDate = null;
       let orderAmount = 0;
-      
+
       // Try different date field names
       if (order.date) orderDate = new Date(order.date);
       else if (order.timestamp) orderDate = new Date(order.timestamp);
       else if (order.createdAt) orderDate = new Date(order.createdAt);
       else if (order.orderDate) orderDate = new Date(order.orderDate);
-      
+
       // Try different amount field names
       if (order.totalAmount) orderAmount = parseFloat(order.totalAmount);
       else if (order.total) orderAmount = parseFloat(order.total);
       else if (order.amount) orderAmount = parseFloat(order.amount);
       else if (order.grandTotal) orderAmount = parseFloat(order.grandTotal);
-      
+
       if (orderDate && !isNaN(orderDate.getTime()) && orderAmount > 0) {
         const day = orderDate.getDate();
-        
+
         if (!dailySalesData[day]) {
           dailySalesData[day] = 0;
         }
         dailySalesData[day] += orderAmount;
       }
     });
-    
+
     // If no daily data found, generate sample data based on summary metrics
     if (Object.keys(dailySalesData).length === 0 && analysisData.summary?.metrics) {
       const totalSales = analysisData.summary.metrics.grossSales || analysisData.summary.metrics.totalRevenue || 50000;
       const totalOrders = analysisData.summary.metrics.totalOrders || 30;
       const avgPerDay = totalSales / 30;
-      
+
       // Generate realistic daily variations
       for (let i = 1; i <= 31; i++) {
         let dailySale = avgPerDay;
-        
+
         // Add realistic variations
         if (i % 7 === 0 || (i + 1) % 7 === 0) { // Weekends
           dailySale *= (1.2 + Math.random() * 0.3);
         } else {
           dailySale *= (0.7 + Math.random() * 0.6);
         }
-        
+
         // Special peaks for certain days
         if (i === 15 || i === 20) {
           dailySale *= 2;
         }
-        
+
         dailySalesData[i] = Math.round(dailySale);
       }
     }
-    
+
     // Generate data for 31 days
     const days = [];
     const actualSales = [];
     const targetSales = [];
-    
+
     // Calculate average sales for target baseline
     const totalActualSales = Object.values(dailySalesData).reduce((a, b) => a + b, 0);
     const avgSales = totalActualSales / Object.keys(dailySalesData).length || 1000;
-    
+
     for (let i = 1; i <= 31; i++) {
       days.push(i);
       const actualSale = dailySalesData[i] || 0;
       actualSales.push(actualSale);
-      
+
       // Generate more realistic target patterns
       let targetSale = avgSales * 0.85; // Base target slightly below average
-      
+
       // Weekend patterns (Friday-Sunday)
       const dayOfWeek = i % 7;
       if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) {
         targetSale = avgSales * (1.1 + Math.random() * 0.3);
       }
-      
+
       // Special event days with higher targets
       if (i === 15 || i === 20) {
         targetSale = avgSales * (1.8 + Math.random() * 0.4);
       }
-      
+
       // Mid-month targets
       if (i >= 10 && i <= 12) {
         targetSale = avgSales * (1.0 + Math.random() * 0.2);
       }
-      
+
       // End of month push
       if (i >= 28) {
         targetSale = avgSales * (1.2 + Math.random() * 0.2);
       }
-      
+
       // Add some random variation to make it look more realistic
       targetSale *= (0.9 + Math.random() * 0.2);
-      
+
       targetSales.push(Math.round(targetSale));
     }
-    
+
     // Clear canvas
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Chart dimensions
     const padding = 60;
     const chartWidth = canvas.width - padding * 2;
     const chartHeight = canvas.height - padding * 2;
     const maxValue = Math.max(...actualSales, ...targetSales, 1000); // Ensure minimum scale
-    
+
     console.log('Sales Forecast Data:', {
       actualSales: actualSales.slice(0, 5),
       targetSales: targetSales.slice(0, 5),
       maxValue,
       totalData: dailySalesData
     });
-    
+
     // Draw title
     ctx.fillStyle = '#8B0000';
     ctx.font = 'bold 18px Arial';
     ctx.fillText('Sales Forecast', padding, 30);
-    
+
     ctx.fillStyle = '#666';
     ctx.font = '12px Arial';
     ctx.fillText('Target Sales are from the previous year (2024).', padding, 50);
-    
+
     // Draw axes
     ctx.strokeStyle = '#ccc';
     ctx.lineWidth = 1;
@@ -950,20 +950,20 @@ function generateSalesForecastChart(analysisData) {
     ctx.moveTo(padding, padding + chartHeight);
     ctx.lineTo(padding + chartWidth, padding + chartHeight);
     ctx.stroke();
-    
+
     // Draw grid lines and labels
     const stepX = chartWidth / 31;
     const stepY = chartHeight / 4;
-    
+
     ctx.fillStyle = '#666';
     ctx.font = '10px Arial';
-    
+
     // X-axis labels (days)
     for (let i = 0; i <= 31; i += 2) {
       const x = padding + (i * stepX);
       if (i > 0) {
         ctx.fillText(i.toString(), x - 5, padding + chartHeight + 15);
-        
+
         // Grid lines
         ctx.strokeStyle = '#f0f0f0';
         ctx.beginPath();
@@ -972,16 +972,16 @@ function generateSalesForecastChart(analysisData) {
         ctx.stroke();
       }
     }
-    
+
     // Y-axis labels
     for (let i = 0; i <= 4; i++) {
       const y = padding + chartHeight - (i * stepY);
       const value = (maxValue / 4) * i;
-      const formattedValue = value >= 1000 ? 
-        (value / 1000).toFixed(1) + 'k' : 
+      const formattedValue = value >= 1000 ?
+        (value / 1000).toFixed(1) + 'k' :
         value.toFixed(0);
       ctx.fillText(formattedValue, 10, y + 3);
-      
+
       if (i > 0) {
         // Grid lines
         ctx.strokeStyle = '#f0f0f0';
@@ -991,7 +991,7 @@ function generateSalesForecastChart(analysisData) {
         ctx.stroke();
       }
     }
-    
+
     // Draw actual sales line (green)
     ctx.strokeStyle = '#00CC00';
     ctx.lineWidth = 2;
@@ -999,10 +999,10 @@ function generateSalesForecastChart(analysisData) {
     for (let i = 0; i < actualSales.length; i++) {
       const x = padding + (i * stepX);
       const y = padding + chartHeight - (actualSales[i] / maxValue * chartHeight);
-      
+
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
-      
+
       // Draw points
       ctx.fillStyle = '#00CC00';
       ctx.beginPath();
@@ -1010,7 +1010,7 @@ function generateSalesForecastChart(analysisData) {
       ctx.fill();
     }
     ctx.stroke();
-    
+
     // Draw target sales line (red)
     ctx.strokeStyle = '#CC0000';
     ctx.lineWidth = 2;
@@ -1018,10 +1018,10 @@ function generateSalesForecastChart(analysisData) {
     for (let i = 0; i < targetSales.length; i++) {
       const x = padding + (i * stepX);
       const y = padding + chartHeight - (targetSales[i] / maxValue * chartHeight);
-      
+
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
-      
+
       // Draw points
       ctx.fillStyle = '#CC0000';
       ctx.beginPath();
@@ -1029,10 +1029,10 @@ function generateSalesForecastChart(analysisData) {
       ctx.fill();
     }
     ctx.stroke();
-    
+
     // Draw legend
     const legendY = padding + chartHeight + 40;
-    
+
     // Actual line
     ctx.strokeStyle = '#00CC00';
     ctx.lineWidth = 2;
@@ -1040,16 +1040,16 @@ function generateSalesForecastChart(analysisData) {
     ctx.moveTo(padding, legendY);
     ctx.lineTo(padding + 20, legendY);
     ctx.stroke();
-    
+
     ctx.fillStyle = '#00CC00';
     ctx.beginPath();
     ctx.arc(padding + 10, legendY, 3, 0, 2 * Math.PI);
     ctx.fill();
-    
+
     ctx.fillStyle = '#000';
     ctx.font = '12px Arial';
     ctx.fillText('Actual', padding + 30, legendY + 4);
-    
+
     // Target line
     ctx.strokeStyle = '#CC0000';
     ctx.lineWidth = 2;
@@ -1057,18 +1057,18 @@ function generateSalesForecastChart(analysisData) {
     ctx.moveTo(padding + 100, legendY);
     ctx.lineTo(padding + 120, legendY);
     ctx.stroke();
-    
+
     ctx.fillStyle = '#CC0000';
     ctx.beginPath();
     ctx.arc(padding + 110, legendY, 3, 0, 2 * Math.PI);
     ctx.fill();
-    
+
     ctx.fillStyle = '#000';
     ctx.fillText('Target', padding + 130, legendY + 4);
-    
+
     // Convert canvas to data URL
     return canvas.toDataURL('image/png');
-    
+
   } catch (error) {
     console.error('Error generating sales forecast chart:', error);
     return null;
@@ -1082,108 +1082,108 @@ function generateProfitForecastChart(analysisData) {
     canvas.width = 800;
     canvas.height = 400;
     const ctx = canvas.getContext('2d');
-    
+
     // Get daily profit data
     const orders = analysisData.orders || [];
     const dailyProfitData = {};
-    
+
     // Process orders to calculate daily profit
     orders.forEach(order => {
       let orderDate = null;
       let orderProfit = 0;
-      
+
       // Try different date field names
       if (order.date) orderDate = new Date(order.date);
       else if (order.timestamp) orderDate = new Date(order.timestamp);
       else if (order.createdAt) orderDate = new Date(order.createdAt);
-      
+
       // Calculate profit (assuming 30% profit margin)
       if (order.totalAmount) orderProfit = parseFloat(order.totalAmount) * 0.3;
       else if (order.total) orderProfit = parseFloat(order.total) * 0.3;
       else if (order.amount) orderProfit = parseFloat(order.amount) * 0.3;
-      
+
       if (orderDate && !isNaN(orderDate.getTime()) && orderProfit > 0) {
         const day = orderDate.getDate();
-        
+
         if (!dailyProfitData[day]) {
           dailyProfitData[day] = 0;
         }
         dailyProfitData[day] += orderProfit;
       }
     });
-    
+
     // If no daily data found, generate sample data
     if (Object.keys(dailyProfitData).length === 0 && analysisData.summary?.metrics) {
       const totalProfit = analysisData.summary.metrics.netSales || 15000;
       const avgPerDay = totalProfit / 30;
-      
+
       for (let i = 1; i <= 31; i++) {
         let dailyProfit = avgPerDay * (0.7 + Math.random() * 0.6);
-        
+
         // Weekend variations
         if (i % 7 === 0 || (i + 1) % 7 === 0) {
           dailyProfit *= 1.3;
         }
-        
+
         // Special peaks
         if (i === 15 || i === 25) {
           dailyProfit *= 1.8;
         }
-        
+
         dailyProfitData[i] = Math.round(dailyProfit);
       }
     }
-    
+
     // Generate data for chart
     const days = [];
     const actualProfit = [];
     const targetProfit = [];
-    
+
     const totalActualProfit = Object.values(dailyProfitData).reduce((a, b) => a + b, 0);
     const avgProfit = totalActualProfit / Object.keys(dailyProfitData).length || 500;
-    
+
     for (let i = 1; i <= 31; i++) {
       days.push(i);
       const actualProfitValue = dailyProfitData[i] || 0;
       actualProfit.push(actualProfitValue);
-      
+
       // Generate target profit pattern
       let targetProfitValue = avgProfit * 0.8;
-      
+
       // Weekend targets
       const dayOfWeek = i % 7;
       if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) {
         targetProfitValue = avgProfit * 1.1;
       }
-      
+
       // Special target days
       if (i === 15 || i === 25) {
         targetProfitValue = avgProfit * 1.5;
       }
-      
+
       targetProfitValue *= (0.9 + Math.random() * 0.2);
       targetProfit.push(Math.round(targetProfitValue));
     }
-    
+
     // Clear canvas
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Chart dimensions
     const padding = 60;
     const chartWidth = canvas.width - padding * 2;
     const chartHeight = canvas.height - padding * 2;
     const maxValue = Math.max(...actualProfit, ...targetProfit, 1000);
-    
+
     // Draw title
     ctx.fillStyle = '#8B0000';
     ctx.font = 'bold 18px Arial';
     ctx.fillText('Profit Forecast', padding, 30);
-    
+
     ctx.fillStyle = '#666';
     ctx.font = '12px Arial';
     ctx.fillText('Target Profit are from the previous year (2024).', padding, 50);
-    
+
     // Draw axes and grid
     ctx.strokeStyle = '#ccc';
     ctx.lineWidth = 1;
@@ -1193,10 +1193,10 @@ function generateProfitForecastChart(analysisData) {
     ctx.moveTo(padding, padding + chartHeight);
     ctx.lineTo(padding + chartWidth, padding + chartHeight);
     ctx.stroke();
-    
+
     const stepX = chartWidth / 31;
     const stepY = chartHeight / 4;
-    
+
     // X-axis labels
     ctx.fillStyle = '#666';
     ctx.font = '10px Arial';
@@ -1204,7 +1204,7 @@ function generateProfitForecastChart(analysisData) {
       const x = padding + (i * stepX);
       if (i > 0) {
         ctx.fillText(i.toString(), x - 5, padding + chartHeight + 15);
-        
+
         ctx.strokeStyle = '#f0f0f0';
         ctx.beginPath();
         ctx.moveTo(x, padding);
@@ -1212,16 +1212,16 @@ function generateProfitForecastChart(analysisData) {
         ctx.stroke();
       }
     }
-    
+
     // Y-axis labels
     for (let i = 0; i <= 4; i++) {
       const y = padding + chartHeight - (i * stepY);
       const value = (maxValue / 4) * i;
-      const formattedValue = value >= 1000 ? 
-        (value / 1000).toFixed(1) + 'k' : 
+      const formattedValue = value >= 1000 ?
+        (value / 1000).toFixed(1) + 'k' :
         value.toFixed(0);
       ctx.fillText(formattedValue, 10, y + 3);
-      
+
       if (i > 0) {
         ctx.strokeStyle = '#f0f0f0';
         ctx.beginPath();
@@ -1230,7 +1230,7 @@ function generateProfitForecastChart(analysisData) {
         ctx.stroke();
       }
     }
-    
+
     // Draw actual profit line (green)
     ctx.strokeStyle = '#00CC00';
     ctx.lineWidth = 2;
@@ -1238,17 +1238,17 @@ function generateProfitForecastChart(analysisData) {
     for (let i = 0; i < actualProfit.length; i++) {
       const x = padding + (i * stepX);
       const y = padding + chartHeight - (actualProfit[i] / maxValue * chartHeight);
-      
+
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
-      
+
       ctx.fillStyle = '#00CC00';
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.stroke();
-    
+
     // Draw target profit line (red)
     ctx.strokeStyle = '#CC0000';
     ctx.lineWidth = 2;
@@ -1256,20 +1256,20 @@ function generateProfitForecastChart(analysisData) {
     for (let i = 0; i < targetProfit.length; i++) {
       const x = padding + (i * stepX);
       const y = padding + chartHeight - (targetProfit[i] / maxValue * chartHeight);
-      
+
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
-      
+
       ctx.fillStyle = '#CC0000';
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.stroke();
-    
+
     // Draw legend
     const legendY = padding + chartHeight + 40;
-    
+
     // Actual line
     ctx.strokeStyle = '#00CC00';
     ctx.lineWidth = 2;
@@ -1277,16 +1277,16 @@ function generateProfitForecastChart(analysisData) {
     ctx.moveTo(padding, legendY);
     ctx.lineTo(padding + 20, legendY);
     ctx.stroke();
-    
+
     ctx.fillStyle = '#00CC00';
     ctx.beginPath();
     ctx.arc(padding + 10, legendY, 3, 0, 2 * Math.PI);
     ctx.fill();
-    
+
     ctx.fillStyle = '#000';
     ctx.font = '12px Arial';
     ctx.fillText('Actual', padding + 30, legendY + 4);
-    
+
     // Target line
     ctx.strokeStyle = '#CC0000';
     ctx.lineWidth = 2;
@@ -1294,17 +1294,17 @@ function generateProfitForecastChart(analysisData) {
     ctx.moveTo(padding + 100, legendY);
     ctx.lineTo(padding + 120, legendY);
     ctx.stroke();
-    
+
     ctx.fillStyle = '#CC0000';
     ctx.beginPath();
     ctx.arc(padding + 110, legendY, 3, 0, 2 * Math.PI);
     ctx.fill();
-    
+
     ctx.fillStyle = '#000';
     ctx.fillText('Target', padding + 130, legendY + 4);
-    
+
     return canvas.toDataURL('image/png');
-    
+
   } catch (error) {
     console.error('Error generating profit forecast chart:', error);
     return null;
@@ -1318,100 +1318,100 @@ function generateRevenueForecastChart(analysisData) {
     canvas.width = 800;
     canvas.height = 400;
     const ctx = canvas.getContext('2d');
-    
+
     // Get daily revenue data (reuse logic from sales forecast but for revenue)
     const orders = analysisData.orders || [];
     const dailyRevenueData = {};
-    
+
     orders.forEach(order => {
       let orderDate = null;
       let orderAmount = 0;
-      
+
       if (order.date) orderDate = new Date(order.date);
       else if (order.timestamp) orderDate = new Date(order.timestamp);
       else if (order.createdAt) orderDate = new Date(order.createdAt);
-      
+
       if (order.totalAmount) orderAmount = parseFloat(order.totalAmount);
       else if (order.total) orderAmount = parseFloat(order.total);
       else if (order.amount) orderAmount = parseFloat(order.amount);
-      
+
       if (orderDate && !isNaN(orderDate.getTime()) && orderAmount > 0) {
         const day = orderDate.getDate();
-        
+
         if (!dailyRevenueData[day]) {
           dailyRevenueData[day] = 0;
         }
         dailyRevenueData[day] += orderAmount;
       }
     });
-    
+
     // Generate sample data if needed
     if (Object.keys(dailyRevenueData).length === 0 && analysisData.summary?.metrics) {
       const totalRevenue = analysisData.summary.metrics.grossSales || 50000;
       const avgPerDay = totalRevenue / 30;
-      
+
       for (let i = 1; i <= 31; i++) {
         let dailyRevenue = avgPerDay * (0.7 + Math.random() * 0.6);
-        
+
         if (i % 7 === 0 || (i + 1) % 7 === 0) {
           dailyRevenue *= 1.2;
         }
-        
+
         if (i === 15 || i === 20) {
           dailyRevenue *= 2;
         }
-        
+
         dailyRevenueData[i] = Math.round(dailyRevenue);
       }
     }
-    
+
     // Generate chart data
     const days = [];
     const actualRevenue = [];
     const targetRevenue = [];
-    
+
     const totalActualRevenue = Object.values(dailyRevenueData).reduce((a, b) => a + b, 0);
     const avgRevenue = totalActualRevenue / Object.keys(dailyRevenueData).length || 1500;
-    
+
     for (let i = 1; i <= 31; i++) {
       days.push(i);
       const actualRevenueValue = dailyRevenueData[i] || 0;
       actualRevenue.push(actualRevenueValue);
-      
+
       let targetRevenueValue = avgRevenue * 0.85;
-      
+
       const dayOfWeek = i % 7;
       if (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0) {
         targetRevenueValue = avgRevenue * (1.1 + Math.random() * 0.3);
       }
-      
+
       if (i === 15 || i === 20) {
         targetRevenueValue = avgRevenue * (1.8 + Math.random() * 0.4);
       }
-      
+
       targetRevenueValue *= (0.9 + Math.random() * 0.2);
       targetRevenue.push(Math.round(targetRevenueValue));
     }
-    
+
     // Clear canvas
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Chart dimensions
     const padding = 60;
     const chartWidth = canvas.width - padding * 2;
     const chartHeight = canvas.height - padding * 2;
     const maxValue = Math.max(...actualRevenue, ...targetRevenue, 2000);
-    
+
     // Draw title
     ctx.fillStyle = '#8B0000';
     ctx.font = 'bold 18px Arial';
     ctx.fillText('Revenue Forecast', padding, 30);
-    
+
     ctx.fillStyle = '#666';
     ctx.font = '12px Arial';
     ctx.fillText('Target Revenue are from the previous year (2024).', padding, 50);
-    
+
     // Draw axes and grid (same as profit chart)
     ctx.strokeStyle = '#ccc';
     ctx.lineWidth = 1;
@@ -1421,10 +1421,10 @@ function generateRevenueForecastChart(analysisData) {
     ctx.moveTo(padding, padding + chartHeight);
     ctx.lineTo(padding + chartWidth, padding + chartHeight);
     ctx.stroke();
-    
+
     const stepX = chartWidth / 31;
     const stepY = chartHeight / 4;
-    
+
     // X-axis labels
     ctx.fillStyle = '#666';
     ctx.font = '10px Arial';
@@ -1432,7 +1432,7 @@ function generateRevenueForecastChart(analysisData) {
       const x = padding + (i * stepX);
       if (i > 0) {
         ctx.fillText(i.toString(), x - 5, padding + chartHeight + 15);
-        
+
         ctx.strokeStyle = '#f0f0f0';
         ctx.beginPath();
         ctx.moveTo(x, padding);
@@ -1440,16 +1440,16 @@ function generateRevenueForecastChart(analysisData) {
         ctx.stroke();
       }
     }
-    
+
     // Y-axis labels
     for (let i = 0; i <= 4; i++) {
       const y = padding + chartHeight - (i * stepY);
       const value = (maxValue / 4) * i;
-      const formattedValue = value >= 1000 ? 
-        (value / 1000).toFixed(1) + 'k' : 
+      const formattedValue = value >= 1000 ?
+        (value / 1000).toFixed(1) + 'k' :
         value.toFixed(0);
       ctx.fillText(formattedValue, 10, y + 3);
-      
+
       if (i > 0) {
         ctx.strokeStyle = '#f0f0f0';
         ctx.beginPath();
@@ -1458,7 +1458,7 @@ function generateRevenueForecastChart(analysisData) {
         ctx.stroke();
       }
     }
-    
+
     // Draw actual revenue line (blue)
     ctx.strokeStyle = '#0066CC';
     ctx.lineWidth = 2;
@@ -1466,17 +1466,17 @@ function generateRevenueForecastChart(analysisData) {
     for (let i = 0; i < actualRevenue.length; i++) {
       const x = padding + (i * stepX);
       const y = padding + chartHeight - (actualRevenue[i] / maxValue * chartHeight);
-      
+
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
-      
+
       ctx.fillStyle = '#0066CC';
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.stroke();
-    
+
     // Draw target revenue line (red)
     ctx.strokeStyle = '#CC0000';
     ctx.lineWidth = 2;
@@ -1484,20 +1484,20 @@ function generateRevenueForecastChart(analysisData) {
     for (let i = 0; i < targetRevenue.length; i++) {
       const x = padding + (i * stepX);
       const y = padding + chartHeight - (targetRevenue[i] / maxValue * chartHeight);
-      
+
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
-      
+
       ctx.fillStyle = '#CC0000';
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, 2 * Math.PI);
       ctx.fill();
     }
     ctx.stroke();
-    
+
     // Draw legend
     const legendY = padding + chartHeight + 40;
-    
+
     // Actual line
     ctx.strokeStyle = '#0066CC';
     ctx.lineWidth = 2;
@@ -1505,16 +1505,16 @@ function generateRevenueForecastChart(analysisData) {
     ctx.moveTo(padding, legendY);
     ctx.lineTo(padding + 20, legendY);
     ctx.stroke();
-    
+
     ctx.fillStyle = '#0066CC';
     ctx.beginPath();
     ctx.arc(padding + 10, legendY, 3, 0, 2 * Math.PI);
     ctx.fill();
-    
+
     ctx.fillStyle = '#000';
     ctx.font = '12px Arial';
     ctx.fillText('Actual', padding + 30, legendY + 4);
-    
+
     // Target line
     ctx.strokeStyle = '#CC0000';
     ctx.lineWidth = 2;
@@ -1522,17 +1522,17 @@ function generateRevenueForecastChart(analysisData) {
     ctx.moveTo(padding + 100, legendY);
     ctx.lineTo(padding + 120, legendY);
     ctx.stroke();
-    
+
     ctx.fillStyle = '#CC0000';
     ctx.beginPath();
     ctx.arc(padding + 110, legendY, 3, 0, 2 * Math.PI);
     ctx.fill();
-    
+
     ctx.fillStyle = '#000';
     ctx.fillText('Target', padding + 130, legendY + 4);
-    
+
     return canvas.toDataURL('image/png');
-    
+
   } catch (error) {
     console.error('Error generating revenue forecast chart:', error);
     return null;
@@ -1560,7 +1560,7 @@ function displayAnalysisResults(analysis) {
         </div>
         <div class="analysis-forecast">
           <strong>Sales Forecast:</strong>
-          <p>• Based on current trend, sales are projected to reach PHP ${Math.round((analysis.summary?.metrics?.grossSales || 0) * 1.12).toFixed(2)} in the next period (12% growth expected).</p>
+          <p>• Based on current trend, sales are projected to reach ₱${Math.round((analysis.summary?.metrics?.grossSales || 0) * 1.12).toFixed(2)} in the next period (12% growth expected).</p>
           <p>• Peak sales days are forecasted to maintain their current performance levels.</p>
         </div>
       </div>
@@ -1748,16 +1748,16 @@ function getTimeRangeLabel(selectedTimeRange) {
 // Helper function to wrap text and add to PDF with proper margins
 function addWrappedText(doc, text, x, y, maxWidth, lineHeight = 6) {
   if (!text) return y;
-  
+
   const words = text.toString().split(' ');
   let currentLine = '';
   let currentY = y;
-  
+
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
     const testLine = currentLine + (currentLine ? ' ' : '') + word;
     const textWidth = doc.getTextWidth(testLine);
-    
+
     if (textWidth > maxWidth && currentLine !== '') {
       // Add current line and start new line
       doc.text(currentLine, x, currentY);
@@ -1767,13 +1767,13 @@ function addWrappedText(doc, text, x, y, maxWidth, lineHeight = 6) {
       currentLine = testLine;
     }
   }
-  
+
   // Add the last line
   if (currentLine) {
     doc.text(currentLine, x, currentY);
     currentY += lineHeight;
   }
-  
+
   return currentY;
 }
 
@@ -1846,13 +1846,13 @@ function exportAnalysisReport() {
       doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
       doc.text(label, 20, yPos);
-      
+
       doc.setFont(undefined, 'normal');
       // Split long descriptions into multiple lines
       const maxWidth = 140;
       const lines = doc.splitTextToSize(description, maxWidth);
       doc.text(lines, 80, yPos);
-      
+
       // Return new Y position accounting for multiple lines
       return yPos + (lines.length * 4);
     }
@@ -1926,13 +1926,13 @@ function exportAnalysisReport() {
     const execNetSales = analysisData.summary.metrics?.netSales || 0;
     const execTotalCost = execGrossSales - execNetSales;
     const execDiscountAmount = execGrossSales * (analysisData.summary.metrics?.discountRate || 0) / 100;
-    
+
     const summaryMetrics = [
       { label: 'Total Sales', value: analysisData.summary.metrics?.totalOrders?.toString() || '0' },
       { label: 'Total Revenue', value: `P${Math.round(execGrossSales).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}` },
       { label: 'Total Cost', value: `P${Math.round(execTotalCost).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}` },
       { label: 'Total Profit', value: `P${Math.round(execNetSales).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}` },
-      { label: 'Discounts Used', value: `PHP ${execDiscountAmount.toFixed(2)}` },
+      { label: 'Discounts Used', value: `₱${execDiscountAmount.toFixed(2)}` },
       { label: 'Profit Margin', value: `${(analysisData.summary.metrics?.discountRate || 0).toFixed(2)}%` }
     ];
 
@@ -1950,7 +1950,7 @@ function exportAnalysisReport() {
     const avgDailyRevenue = (analysisData.summary.metrics?.grossSales || 0) / 30;
     const discountAmount = (analysisData.summary.metrics?.grossSales || 0) * (analysisData.summary.metrics?.discountRate || 0) / 100;
     const discountRate = analysisData.summary.metrics?.discountRate || 0;
-    
+
     // Get top product data
     const orders = analysisData.orders || [];
     const productRevenue = {};
@@ -1963,28 +1963,28 @@ function exportAnalysisReport() {
         });
       }
     });
-    
+
     const topProduct = Object.entries(productRevenue).sort((a, b) => b[1] - a[1])[0];
     const execTopProductName = topProduct ? topProduct[0] : 'No data available';
     const execTopProductRevenue = topProduct ? topProduct[1] : 0;
-    
+
     // Count operational discrepancies (orders with issues)
-    const discrepancies = orders.filter(order => 
-      order.status === 'cancelled' || 
-      order.issues || 
+    const discrepancies = orders.filter(order =>
+      order.status === 'cancelled' ||
+      order.issues ||
       (order.items && order.items.some(item => item.quantity <= 0))
     ).length;
 
     // Format currency values properly
     const avgDailyRevenueFormatted = `P${Math.round(avgDailyRevenue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-    const discountAmountFormatted = `PHP ${discountAmount.toFixed(2)}`;
+    const discountAmountFormatted = `₱${discountAmount.toFixed(2)}`;
     const execTopProductRevenueFormatted = `P${Math.round(execTopProductRevenue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
     // Add simple descriptive analysis entries
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    
+
     yPos = addWrappedText(doc, `Profit Margin: The business achieved a ${profitMargin.toFixed(2)}% profit margin during this period, with a product markup of 10%.`, 20, yPos, 170);
     yPos = addWrappedText(doc, `Average Daily Revenue: ${avgDailyRevenueFormatted} per active sales day.`, 20, yPos, 170);
     yPos = addWrappedText(doc, `Discount Impact: ${discountRate.toFixed(2)}% of revenue was discounted, totaling ${discountAmountFormatted}.`, 20, yPos, 170);
@@ -2006,7 +2006,7 @@ function exportAnalysisReport() {
 
     // Generate Sales Forecast Chart Data
     const forecastChartData = generateSalesForecastChart(analysisData);
-    
+
     // Add the forecast chart
     if (forecastChartData) {
       doc.addImage(forecastChartData, 'PNG', 20, yPos, 160, 80);
@@ -2039,7 +2039,7 @@ function exportAnalysisReport() {
 
     // Generate Profit Forecast Chart Data
     const profitChartData = generateProfitForecastChart(analysisData);
-    
+
     // Add the profit chart
     if (profitChartData) {
       doc.addImage(profitChartData, 'PNG', 20, yPos, 160, 80);
@@ -2047,27 +2047,27 @@ function exportAnalysisReport() {
     }
 
     yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
-    
+
     const currentProfit = analysisData.summary.metrics?.netSales || 0;
     const currentProfitFormatted = `P${Math.round(currentProfit).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
     const targetProfit = currentProfit * 0.32;
     const targetProfitFormatted = `P${Math.round(targetProfit).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
     const profitVariance = (currentProfit - targetProfit) / targetProfit * 100;
     const profitVarianceFormatted = `P${Math.round(currentProfit - targetProfit).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-    
+
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    
+
     doc.text(`Current Period Profit: ${currentProfitFormatted}`, 20, yPos);
     yPos += 6;
-    
+
     doc.text(`Target Profit: ${targetProfitFormatted}`, 20, yPos);
     yPos += 6;
-    
+
     doc.text(`Profit Margin: ${profitMargin.toFixed(2)}%`, 20, yPos);
     yPos += 6;
-    
+
     doc.text(`Variance: ${profitVarianceFormatted} (${profitVariance.toFixed(2)}%)`, 20, yPos);
     yPos += 15;
 
@@ -2087,7 +2087,7 @@ function exportAnalysisReport() {
 
     // Generate Revenue Forecast Chart Data
     const revenueChartData = generateRevenueForecastChart(analysisData);
-    
+
     // Add the revenue chart
     if (revenueChartData) {
       doc.addImage(revenueChartData, 'PNG', 20, yPos, 160, 80);
@@ -2095,7 +2095,7 @@ function exportAnalysisReport() {
     }
 
     yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
-    
+
     const currentRevenue = analysisData.summary.metrics?.grossSales || 0;
     const currentRevenueFormatted = `P${Math.round(currentRevenue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
     const targetRevenue = currentRevenue * 0.32;
@@ -2104,20 +2104,20 @@ function exportAnalysisReport() {
     const revTotalCostFormatted = `P${Math.round(revTotalCost).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
     const revenueVariance = (currentRevenue - targetRevenue) / targetRevenue * 100;
     const revenueVarianceFormatted = `P${Math.round(currentRevenue - targetRevenue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-    
+
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    
+
     doc.text(`Current Period Revenue: ${currentRevenueFormatted}`, 20, yPos);
     yPos += 6;
-    
+
     doc.text(`Target Revenue: ${targetRevenueFormatted}`, 20, yPos);
     yPos += 6;
-    
+
     doc.text(`Total Cost: ${revTotalCostFormatted}`, 20, yPos);
     yPos += 6;
-    
+
     doc.text(`Variance: ${revenueVarianceFormatted} (${revenueVariance.toFixed(2)}%)`, 20, yPos);
     yPos += 15;
 
@@ -2136,7 +2136,7 @@ function exportAnalysisReport() {
     // Process orders to calculate top selling products
     const ordersList = analysisData.orders || [];
     const productStats = {};
-    
+
     // Extract product data from orders
     ordersList.forEach(order => {
       if (order.items && Array.isArray(order.items)) {
@@ -2145,7 +2145,7 @@ function exportAnalysisReport() {
           const quantity = parseInt(item.quantity) || 1;
           const price = parseFloat(item.price) || 0;
           const revenue = quantity * price;
-          
+
           if (!productStats[productName]) {
             productStats[productName] = {
               name: productName,
@@ -2154,19 +2154,19 @@ function exportAnalysisReport() {
               orders: 0
             };
           }
-          
+
           productStats[productName].quantity += quantity;
           productStats[productName].revenue += revenue;
           productStats[productName].orders += 1;
         });
       }
     });
-    
+
     // Convert to array and sort by revenue (descending)
     let topProducts = Object.values(productStats)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
-    
+
     // If no products found, generate sample data
     if (topProducts.length === 0) {
       topProducts = [
@@ -2207,7 +2207,7 @@ function exportAnalysisReport() {
 
         // Format revenue properly
         const revenueFormatted = `P${Math.round(product.revenue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-        
+
         doc.text((index + 1).toString(), 25, yPos + 5);
         doc.text(product.name.substring(0, 25), 35, yPos + 5);
         doc.text(product.quantity.toString(), 125, yPos + 5);
@@ -2223,22 +2223,22 @@ function exportAnalysisReport() {
 
     yPos += 10;
     yPos = addSectionHeader('DESCRIPTIVE ANALYSIS', yPos);
-    
+
     if (topProducts.length > 0) {
       const bestProduct = topProducts[0];
       const totalProductRevenue = topProducts.reduce((sum, p) => sum + p.revenue, 0);
       const totalQuantity = topProducts.reduce((sum, p) => sum + p.quantity, 0);
-      const bestProductRevenueFormatted = `PHP ${bestProduct.revenue.toFixed(2)}`;
-      const totalRevenueFormatted = `PHP ${totalProductRevenue.toFixed(2)}`;
-      
+      const bestProductRevenueFormatted = `₱${bestProduct.revenue.toFixed(2)}`;
+      const totalRevenueFormatted = `₱${totalProductRevenue.toFixed(2)}`;
+
       // Use wrapped text for long lines with 170 width (210 - 20 left margin - 20 right margin)
       yPos = addWrappedText(doc, `Best Performer: ${bestProduct.name} generated ${bestProductRevenueFormatted} revenue with ${bestProduct.quantity} units sold.`, 20, yPos, 170);
       yPos = addWrappedText(doc, `Product Diversity: ${topProducts.length} products contributed ${totalRevenueFormatted} total revenue (${totalQuantity} units).`, 20, yPos, 170);
-      yPos = addWrappedText(doc, `Market Share: Top 3 products account for ${((topProducts.slice(0,3).reduce((sum, p) => sum + p.revenue, 0) / totalProductRevenue) * 100).toFixed(1)}% of product revenue.`, 20, yPos, 170);
+      yPos = addWrappedText(doc, `Market Share: Top 3 products account for ${((topProducts.slice(0, 3).reduce((sum, p) => sum + p.revenue, 0) / totalProductRevenue) * 100).toFixed(1)}% of product revenue.`, 20, yPos, 170);
     } else {
       yPos = addWrappedText(doc, `Product Performance: No detailed product data available for analysis during this period.`, 20, yPos, 170);
     }
-    
+
     yPos = addWrappedText(doc, 'Recommendation: Focus inventory on top-performing products while monitoring slow-moving items for potential promotions or discontinuation.', 20, yPos, 170);
 
     // Page 7: Payment Gateway Performance
@@ -2255,222 +2255,222 @@ function exportAnalysisReport() {
         const gcashAmount = analysisData.paymentMethods.metrics?.gcashAmount || 0;
         const cardAmount = analysisData.paymentMethods.metrics?.cardAmount || 0;
         const totalPayments = cashAmount + gcashAmount + cardAmount;      // Enhanced payment summary table with performance metrics
-      doc.setFillColor(...primaryColor);
-      doc.rect(20, yPos, 170, 8, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text('Payment Method', 25, yPos + 5);
-      doc.text('Amount', 85, yPos + 5);
-      doc.text('Percentage', 125, yPos + 5);
-      doc.text('Avg Transaction', 155, yPos + 5);
-      yPos += 10;
+        doc.setFillColor(...primaryColor);
+        doc.rect(20, yPos, 170, 8, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text('Payment Method', 25, yPos + 5);
+        doc.text('Amount', 85, yPos + 5);
+        doc.text('Percentage', 125, yPos + 5);
+        doc.text('Avg Transaction', 155, yPos + 5);
+        yPos += 10;
 
-      // Calculate transaction counts and averages from orders if available
-      let cashTransactions = 0, gcashTransactions = 0, cardTransactions = 0;
-      
-      if (window.currentAnalyticsData && window.currentAnalyticsData.orders) {
-        window.currentAnalyticsData.orders.forEach(order => {
-          if (order.paymentMethod === 'Cash') cashTransactions++;
-          else if (order.paymentMethod === 'GCash') gcashTransactions++;
-          else if (order.paymentMethod === 'Card') cardTransactions++;
+        // Calculate transaction counts and averages from orders if available
+        let cashTransactions = 0, gcashTransactions = 0, cardTransactions = 0;
+
+        if (window.currentAnalyticsData && window.currentAnalyticsData.orders) {
+          window.currentAnalyticsData.orders.forEach(order => {
+            if (order.paymentMethod === 'Cash') cashTransactions++;
+            else if (order.paymentMethod === 'GCash') gcashTransactions++;
+            else if (order.paymentMethod === 'Card') cardTransactions++;
+          });
+        }
+
+        const paymentMethods = [
+          {
+            name: 'Cash',
+            amount: cashAmount,
+            percentage: totalPayments > 0 ? (cashAmount / totalPayments * 100) : 0,
+            avgTransaction: cashTransactions > 0 ? cashAmount / cashTransactions : 0,
+            transactions: cashTransactions,
+            status: 'Available'
+          },
+          {
+            name: 'GCash/Mobile',
+            amount: gcashAmount,
+            percentage: totalPayments > 0 ? (gcashAmount / totalPayments * 100) : 0,
+            avgTransaction: gcashTransactions > 0 ? gcashAmount / gcashTransactions : 0,
+            transactions: gcashTransactions,
+            status: 'Available'
+          },
+          {
+            name: 'Card/Online',
+            amount: cardAmount,
+            percentage: totalPayments > 0 ? (cardAmount / totalPayments * 100) : 0,
+            avgTransaction: cardTransactions > 0 ? cardAmount / cardTransactions : 0,
+            transactions: cardTransactions,
+            status: 'Available'
+          }
+        ];
+
+        paymentMethods.forEach((method, index) => {
+          const bgColor = index % 2 === 0 ? [255, 255, 255] : [248, 249, 250];
+          doc.setFillColor(...bgColor);
+          doc.rect(20, yPos, 170, 8, 'F');
+
+          doc.setTextColor(0, 0, 0);
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(10);
+          doc.text(method.name, 25, yPos + 5);
+          doc.text(`₱${method.amount.toFixed(2)}`, 85, yPos + 5);
+          doc.text(`${method.percentage.toFixed(1)}%`, 125, yPos + 5);
+          doc.text(`₱${method.avgTransaction.toFixed(2)}`, 155, yPos + 5);
+          yPos += 8;
         });
       }
 
-      const paymentMethods = [
-        { 
-          name: 'Cash', 
-          amount: cashAmount, 
-          percentage: totalPayments > 0 ? (cashAmount / totalPayments * 100) : 0,
-          avgTransaction: cashTransactions > 0 ? cashAmount / cashTransactions : 0,
-          transactions: cashTransactions,
-          status: 'Available'
-        },
-        { 
-          name: 'GCash/Mobile', 
-          amount: gcashAmount, 
-          percentage: totalPayments > 0 ? (gcashAmount / totalPayments * 100) : 0,
-          avgTransaction: gcashTransactions > 0 ? gcashAmount / gcashTransactions : 0,
-          transactions: gcashTransactions,
-          status: 'Available'
-        },
-        { 
-          name: 'Card/Online', 
-          amount: cardAmount, 
-          percentage: totalPayments > 0 ? (cardAmount / totalPayments * 100) : 0,
-          avgTransaction: cardTransactions > 0 ? cardAmount / cardTransactions : 0,
-          transactions: cardTransactions,
-          status: 'Available'
-        }
-      ];
+      yPos += 10;
+      yPos = addSectionHeader('PAYMENT GATEWAY INSIGHTS', yPos);
 
-      paymentMethods.forEach((method, index) => {
-        const bgColor = index % 2 === 0 ? [255, 255, 255] : [248, 249, 250];
-        doc.setFillColor(...bgColor);
-        doc.rect(20, yPos, 170, 8, 'F');
-
-        doc.setTextColor(0, 0, 0);
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(10);
-        doc.text(method.name, 25, yPos + 5);
-        doc.text(`PHP ${method.amount.toFixed(2)}`, 85, yPos + 5);
-        doc.text(`${method.percentage.toFixed(1)}%`, 125, yPos + 5);
-        doc.text(`PHP ${method.avgTransaction.toFixed(2)}`, 155, yPos + 5);
-        yPos += 8;
-      });
-    }
-
-    yPos += 10;
-    yPos = addSectionHeader('PAYMENT GATEWAY INSIGHTS', yPos);
-
-    // Add insights and recommendations from analysis
-    if (analysisData.paymentMethods && analysisData.paymentMethods.insights) {
-      analysisData.paymentMethods.insights.forEach(insight => {
-        if (yPos > 270) { // Check if we need a new page
-          doc.addPage();
-          addPageHeader('PAYMENT GATEWAY PERFORMANCE (CONTINUED)', 7, 9);
-          yPos = 30;
-        }
-        yPos = addWrappedText(doc, `• ${insight}`, 25, yPos, 165);
-      });
-    } else {
-      yPos = addWrappedText(doc, '• No payment analysis data available', 25, yPos, 165);
-    }
-
-    yPos += 5;
-    yPos = addSectionHeader('RECOMMENDATIONS', yPos);
-
-    if (analysisData.paymentMethods && analysisData.paymentMethods.recommendations) {
-      analysisData.paymentMethods.recommendations.forEach(recommendation => {
-        if (yPos > 270) { // Check if we need a new page
-          doc.addPage();
-          addPageHeader('PAYMENT GATEWAY PERFORMANCE (CONTINUED)', 7, 9);
-          yPos = 30;
-        }
-        yPos = addWrappedText(doc, `• ${recommendation}`, 25, yPos, 165);
-      });
-    } else {
-      yPos = addWrappedText(doc, '• Ensure payment tracking is properly configured', 25, yPos, 165);
-    }
-
-    // Add transaction count and success rate
-    yPos += 5;
-    yPos = addSectionHeader('TRANSACTION METRICS', yPos);
-
-    if (analysisData.paymentMethods && analysisData.paymentMethods.metrics) {
-      const metrics = analysisData.paymentMethods.metrics;
-      
-      // Safely format the total with null checks
-      const total = metrics.total || 0;
-      doc.text(`Total Payment Volume: PHP ${total.toFixed(2)}`, 25, yPos);
-      yPos += 6;
-      
-      const dominantMethod = metrics.dominantMethod || 'Unknown';
-      doc.text(`Dominant Payment Method: ${dominantMethod}`, 25, yPos);
-      yPos += 6;
-      
-      // Calculate transaction counts if we have access to orders data
-      if (analysisData.summary && analysisData.summary.totalOrders) {
-        doc.text(`Total Transactions: ${analysisData.summary.totalOrders}`, 25, yPos);
-        yPos += 6;
-        doc.text(`Payment Success Rate: 100% (All recorded transactions)`, 25, yPos);
-        yPos += 6;
+      // Add insights and recommendations from analysis
+      if (analysisData.paymentMethods && analysisData.paymentMethods.insights) {
+        analysisData.paymentMethods.insights.forEach(insight => {
+          if (yPos > 270) { // Check if we need a new page
+            doc.addPage();
+            addPageHeader('PAYMENT GATEWAY PERFORMANCE (CONTINUED)', 7, 9);
+            yPos = 30;
+          }
+          yPos = addWrappedText(doc, `• ${insight}`, 25, yPos, 165);
+        });
+      } else {
+        yPos = addWrappedText(doc, '• No payment analysis data available', 25, yPos, 165);
       }
 
-      // Add payment method diversity analysis
-      const cashAmt = metrics.cashAmount || 0;
-      const gcashAmt = metrics.gcashAmount || 0;
-      const cardAmt = metrics.cardAmount || 0;
-      
-      const nonZeroMethods = [
-        cashAmt > 0 ? 1 : 0,
-        gcashAmt > 0 ? 1 : 0,
-        cardAmt > 0 ? 1 : 0
-      ].reduce((a, b) => a + b, 0);
+      yPos += 5;
+      yPos = addSectionHeader('RECOMMENDATIONS', yPos);
 
-      doc.text(`Payment Method Diversity: ${nonZeroMethods} out of 3 methods active`, 25, yPos);
-      yPos += 6;
-
-      // Payment concentration analysis - with safe percentage handling
-      const cashPercent = metrics.cashPercent || 0;
-      const gcashPercent = metrics.gcashPercent || 0;
-      const cardPercent = metrics.cardPercent || 0;
-      
-      const maxPercentage = Math.max(cashPercent, gcashPercent, cardPercent);
-      let concentrationLevel = 'Balanced';
-      if (maxPercentage > 70) concentrationLevel = 'High concentration';
-      else if (maxPercentage > 50) concentrationLevel = 'Moderate concentration';
-
-      const safeMaxPercentage = isNaN(maxPercentage) ? 0 : maxPercentage;
-      yPos = addWrappedText(doc, `Payment Concentration: ${concentrationLevel} (${safeMaxPercentage.toFixed(1)}% in dominant method)`, 25, yPos, 165);
-    }
-
-    // Add performance summary
-    yPos += 5;
-    yPos = addSectionHeader('PERFORMANCE SUMMARY', yPos);
-
-    if (analysisData.paymentMethods && analysisData.paymentMethods.metrics) {
-      const metrics = analysisData.paymentMethods.metrics;
-      
-      // Gateway reliability
-      doc.text('• Payment Gateway Status: Operational (100% uptime)', 25, yPos);
-      yPos += 6;
-      
-      // Processing efficiency
-      if (metrics.total > 0) {
-        yPos = addWrappedText(doc, `• Processing Efficiency: Excellent (PHP ${safeTotal.toFixed(2)} processed successfully)`, 25, yPos, 165);
+      if (analysisData.paymentMethods && analysisData.paymentMethods.recommendations) {
+        analysisData.paymentMethods.recommendations.forEach(recommendation => {
+          if (yPos > 270) { // Check if we need a new page
+            doc.addPage();
+            addPageHeader('PAYMENT GATEWAY PERFORMANCE (CONTINUED)', 7, 9);
+            yPos = 30;
+          }
+          yPos = addWrappedText(doc, `• ${recommendation}`, 25, yPos, 165);
+        });
+      } else {
+        yPos = addWrappedText(doc, '• Ensure payment tracking is properly configured', 25, yPos, 165);
       }
 
-      // Customer preference insights - using safe percentage values
-      const customerPreferences = [];
-      const cashPct = metrics.cashPercent || 0;
-      const gcashPct = metrics.gcashPercent || 0;
-      const cardPct = metrics.cardPercent || 0;
-      
-      if (cashPct > 40) customerPreferences.push('Strong cash preference');
-      if (gcashPct > 30) customerPreferences.push('Growing digital adoption');
-      if (cardPct < 10) customerPreferences.push('Limited card usage');
+      // Add transaction count and success rate
+      yPos += 5;
+      yPos = addSectionHeader('TRANSACTION METRICS', yPos);
 
-      if (customerPreferences.length > 0) {
-        doc.text(`• Customer Behavior: ${customerPreferences.join(', ')}`, 25, yPos);
+      if (analysisData.paymentMethods && analysisData.paymentMethods.metrics) {
+        const metrics = analysisData.paymentMethods.metrics;
+
+        // Safely format the total with null checks
+        const total = metrics.total || 0;
+        doc.text(`Total Payment Volume: ₱${total.toFixed(2)}`, 25, yPos);
+        yPos += 6;
+
+        const dominantMethod = metrics.dominantMethod || 'Unknown';
+        doc.text(`Dominant Payment Method: ${dominantMethod}`, 25, yPos);
+        yPos += 6;
+
+        // Calculate transaction counts if we have access to orders data
+        if (analysisData.summary && analysisData.summary.totalOrders) {
+          doc.text(`Total Transactions: ${analysisData.summary.totalOrders}`, 25, yPos);
+          yPos += 6;
+          doc.text(`Payment Success Rate: 100% (All recorded transactions)`, 25, yPos);
+          yPos += 6;
+        }
+
+        // Add payment method diversity analysis
+        const cashAmt = metrics.cashAmount || 0;
+        const gcashAmt = metrics.gcashAmount || 0;
+        const cardAmt = metrics.cardAmount || 0;
+
+        const nonZeroMethods = [
+          cashAmt > 0 ? 1 : 0,
+          gcashAmt > 0 ? 1 : 0,
+          cardAmt > 0 ? 1 : 0
+        ].reduce((a, b) => a + b, 0);
+
+        doc.text(`Payment Method Diversity: ${nonZeroMethods} out of 3 methods active`, 25, yPos);
+        yPos += 6;
+
+        // Payment concentration analysis - with safe percentage handling
+        const cashPercent = metrics.cashPercent || 0;
+        const gcashPercent = metrics.gcashPercent || 0;
+        const cardPercent = metrics.cardPercent || 0;
+
+        const maxPercentage = Math.max(cashPercent, gcashPercent, cardPercent);
+        let concentrationLevel = 'Balanced';
+        if (maxPercentage > 70) concentrationLevel = 'High concentration';
+        else if (maxPercentage > 50) concentrationLevel = 'Moderate concentration';
+
+        const safeMaxPercentage = isNaN(maxPercentage) ? 0 : maxPercentage;
+        yPos = addWrappedText(doc, `Payment Concentration: ${concentrationLevel} (${safeMaxPercentage.toFixed(1)}% in dominant method)`, 25, yPos, 165);
+      }
+
+      // Add performance summary
+      yPos += 5;
+      yPos = addSectionHeader('PERFORMANCE SUMMARY', yPos);
+
+      if (analysisData.paymentMethods && analysisData.paymentMethods.metrics) {
+        const metrics = analysisData.paymentMethods.metrics;
+
+        // Gateway reliability
+        doc.text('• Payment Gateway Status: Operational (100% uptime)', 25, yPos);
+        yPos += 6;
+
+        // Processing efficiency
+        if (metrics.total > 0) {
+          yPos = addWrappedText(doc, `• Processing Efficiency: Excellent (₱${safeTotal.toFixed(2)} processed successfully)`, 25, yPos, 165);
+        }
+
+        // Customer preference insights - using safe percentage values
+        const customerPreferences = [];
+        const cashPct = metrics.cashPercent || 0;
+        const gcashPct = metrics.gcashPercent || 0;
+        const cardPct = metrics.cardPercent || 0;
+
+        if (cashPct > 40) customerPreferences.push('Strong cash preference');
+        if (gcashPct > 30) customerPreferences.push('Growing digital adoption');
+        if (cardPct < 10) customerPreferences.push('Limited card usage');
+
+        if (customerPreferences.length > 0) {
+          doc.text(`• Customer Behavior: ${customerPreferences.join(', ')}`, 25, yPos);
+          yPos += 6;
+        }
+
+        // Risk assessment - using safe percentage values
+        const safeCashPercent = metrics.cashPercent || 0;
+        const safeGcashPercent = metrics.gcashPercent || 0;
+        const safeCardPercent = metrics.cardPercent || 0;
+
+        const maxMethodPercentage = Math.max(safeCashPercent, safeGcashPercent, safeCardPercent);
+        const riskLevel = maxMethodPercentage > 80 ? 'High (over-reliance on single method)' :
+          maxMethodPercentage > 60 ? 'Medium (some concentration risk)' :
+            'Low (well-diversified)';
+        doc.text(`• Risk Assessment: ${riskLevel}`, 25, yPos);
+        yPos += 6;
+
+        // Gateway effectiveness score
+        let effectivenessScore = 85; // Base score
+
+        // Recalculate method diversity for this section - using safe amounts
+        const safeCashAmount = metrics.cashAmount || 0;
+        const safeGcashAmount = metrics.gcashAmount || 0;
+        const safeCardAmount = metrics.cardAmount || 0;
+
+        const activeMethodsCount = [
+          safeCashAmount > 0 ? 1 : 0,
+          safeGcashAmount > 0 ? 1 : 0,
+          safeCardAmount > 0 ? 1 : 0
+        ].reduce((a, b) => a + b, 0);
+
+        if (activeMethodsCount === 3) effectivenessScore += 10; // Bonus for all methods active
+        if (maxMethodPercentage < 60) effectivenessScore += 5; // Bonus for good distribution
+
+        const safeTotal = metrics.total || 0;
+        if (safeTotal > 10000) effectivenessScore += 5; // Bonus for high volume
+
+        doc.text(`• Gateway Effectiveness Score: ${effectivenessScore}/100`, 25, yPos);
         yPos += 6;
       }
-
-      // Risk assessment - using safe percentage values
-      const safeCashPercent = metrics.cashPercent || 0;
-      const safeGcashPercent = metrics.gcashPercent || 0;
-      const safeCardPercent = metrics.cardPercent || 0;
-      
-      const maxMethodPercentage = Math.max(safeCashPercent, safeGcashPercent, safeCardPercent);
-      const riskLevel = maxMethodPercentage > 80 ? 'High (over-reliance on single method)' : 
-                       maxMethodPercentage > 60 ? 'Medium (some concentration risk)' : 
-                       'Low (well-diversified)';
-      doc.text(`• Risk Assessment: ${riskLevel}`, 25, yPos);
-      yPos += 6;
-
-      // Gateway effectiveness score
-      let effectivenessScore = 85; // Base score
-      
-      // Recalculate method diversity for this section - using safe amounts
-      const safeCashAmount = metrics.cashAmount || 0;
-      const safeGcashAmount = metrics.gcashAmount || 0;
-      const safeCardAmount = metrics.cardAmount || 0;
-      
-      const activeMethodsCount = [
-        safeCashAmount > 0 ? 1 : 0,
-        safeGcashAmount > 0 ? 1 : 0,
-        safeCardAmount > 0 ? 1 : 0
-      ].reduce((a, b) => a + b, 0);
-      
-      if (activeMethodsCount === 3) effectivenessScore += 10; // Bonus for all methods active
-      if (maxMethodPercentage < 60) effectivenessScore += 5; // Bonus for good distribution
-      
-      const safeTotal = metrics.total || 0;
-      if (safeTotal > 10000) effectivenessScore += 5; // Bonus for high volume
-
-      doc.text(`• Gateway Effectiveness Score: ${effectivenessScore}/100`, 25, yPos);
-      yPos += 6;
-    }
 
     } catch (paymentError) {
       console.error('Error in Payment Gateway Performance section:', paymentError);
@@ -2511,20 +2511,20 @@ function exportAnalysisReport() {
       const codePerformance = discountAnalysis.codePerformance || {};
 
       yPos = addSectionHeader('DISCOUNT SUMMARY', yPos);
-      yPos = addWrappedText(doc, `Total Discounts Applied: PHP ${totalDiscounts.toFixed(2)}`, 25, yPos, 165);
+      yPos = addWrappedText(doc, `Total Discounts Applied: ₱${totalDiscounts.toFixed(2)}`, 25, yPos, 165);
       yPos = addWrappedText(doc, `Discount Rate: ${discountRate.toFixed(2)}% of gross sales`, 25, yPos, 165);
       yPos = addWrappedText(doc, `Discount Usage Rate: ${discountUsageRate.toFixed(1)}% of orders used discounts`, 25, yPos, 165);
       yPos = addWrappedText(doc, `Active Discount Codes: ${discountCodes.length} codes (${discountCodes.length > 0 ? discountCodes.join(', ') : 'None'})`, 25, yPos, 165);
 
       if (topDiscountCode && codePerformance[topDiscountCode]) {
         const topPerf = codePerformance[topDiscountCode];
-        yPos = addWrappedText(doc, `Top Performing Code: ${topDiscountCode} (${topPerf.count} uses, PHP ${topPerf.totalAmount.toFixed(2)} total)`, 25, yPos, 165);
+        yPos = addWrappedText(doc, `Top Performing Code: ${topDiscountCode} (${topPerf.count} uses, ₱${topPerf.totalAmount.toFixed(2)} total)`, 25, yPos, 165);
       }
 
       // Add average discount per order if data is available
       if (discountTransactions.length > 0) {
         const avgDiscountPerOrder = totalDiscounts / discountTransactions.length;
-        yPos = addWrappedText(doc, `Average Discount per Transaction: PHP ${avgDiscountPerOrder.toFixed(2)}`, 25, yPos, 165);
+        yPos = addWrappedText(doc, `Average Discount per Transaction: ₱${avgDiscountPerOrder.toFixed(2)}`, 25, yPos, 165);
       }
       yPos += 4;
 
@@ -2545,7 +2545,7 @@ function exportAnalysisReport() {
         yPos += 10;
 
         // Sort codes by total amount
-        const sortedCodes = discountCodes.sort((a, b) => 
+        const sortedCodes = discountCodes.sort((a, b) =>
           codePerformance[b].totalAmount - codePerformance[a].totalAmount
         );
 
@@ -2562,8 +2562,8 @@ function exportAnalysisReport() {
           doc.setFontSize(10);
           doc.text(code, 25, yPos + 5);
           doc.text(perf.count.toString(), 80, yPos + 5);
-          doc.text(`PHP ${perf.totalAmount.toFixed(2)}`, 120, yPos + 5);
-          doc.text(`PHP ${avgPerUse.toFixed(2)}`, 160, yPos + 5);
+          doc.text(`₱${perf.totalAmount.toFixed(2)}`, 120, yPos + 5);
+          doc.text(`₱${avgPerUse.toFixed(2)}`, 160, yPos + 5);
           yPos += 8;
         });
 
@@ -2597,7 +2597,7 @@ function exportAnalysisReport() {
           doc.setFontSize(10);
           doc.text(discount.code, 25, yPos + 5);
           doc.text(discount.date, 80, yPos + 5);
-          doc.text(`PHP ${discount.amount.toFixed(2)}`, 130, yPos + 5);
+          doc.text(`₱${discount.amount.toFixed(2)}`, 130, yPos + 5);
           doc.text(discount.orderId.toString().slice(0, 8), 160, yPos + 5);
           yPos += 8;
         });
@@ -2674,7 +2674,7 @@ function exportAnalysisReport() {
     yPos = addSectionHeader('HISTORICAL PERFORMANCE ANALYSIS', yPos);
 
     if (topProductName !== 'No data available') {
-      yPos = addWrappedText(doc, `Last ${new Date().toLocaleDateString('en-US', { month: 'long' })}: ${topProductName} was the highest performing product, generating PHP ${topProductRevenue.toFixed(2)} in revenue.`, 20, yPos, 170);
+      yPos = addWrappedText(doc, `Last ${new Date().toLocaleDateString('en-US', { month: 'long' })}: ${topProductName} was the highest performing product, generating ₱${topProductRevenue.toFixed(2)} in revenue.`, 20, yPos, 170);
       yPos = addWrappedText(doc, `Product Performance Trend: ${topProductName} has shown consistent performance and customer preference.`, 20, yPos, 170);
       yPos = addWrappedText(doc, `Customer Behavior: Historical data shows strong customer loyalty to ${topProductName}.`, 20, yPos, 170);
     } else {
@@ -4447,7 +4447,7 @@ function downloadDailySalesPDF(date, dateKey, salesData) {
     yPosition += 8;
     doc.text(`Number of Orders: ${salesData.orders}`, 30, yPosition);
     yPosition += 8;
-    doc.text(`Average Order: PHP ${(salesData.total / salesData.orders).toFixed(2)}`, 30, yPosition);
+    doc.text(`Average Order: ₱${(salesData.total / salesData.orders).toFixed(2)}`, 30, yPosition);
     yPosition += 15;
 
     // Payment Methods Section
@@ -4796,7 +4796,7 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         // Direct download without modal
         exportAnalysisReport();
-        
+
         // Success feedback
         setTimeout(() => {
           exportExcelBtn.textContent = 'Downloaded!';
@@ -4809,7 +4809,7 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (error) {
         console.error('PDF Export error:', error);
         alert('Failed to export PDF. Please try again.');
-        
+
         // Reset button
         exportExcelBtn.textContent = originalText;
         exportExcelBtn.disabled = false;
@@ -4985,11 +4985,11 @@ function generateCustomPDF(options) {
       doc.setFont(undefined, 'normal');
       doc.text(`Total Sales: ${analysisData.summary.metrics?.totalOrders || 0}`, 20, yPos);
       yPos += 6;
-      doc.text(`Total Revenue: PHP ${(analysisData.summary.metrics?.grossSales || 0).toFixed(2)}`, 20, yPos);
+      doc.text(`Total Revenue: ₱${(analysisData.summary.metrics?.grossSales || 0).toFixed(2)}`, 20, yPos);
       yPos += 6;
-      doc.text(`Total Profit: PHP ${(analysisData.summary.metrics?.netSales || 0).toFixed(2)}`, 20, yPos);
+      doc.text(`Total Profit: ₱${(analysisData.summary.metrics?.netSales || 0).toFixed(2)}`, 20, yPos);
       yPos += 6;
-      doc.text(`Discounts Used: PHP ${((analysisData.summary.metrics?.grossSales || 0) * (analysisData.summary.metrics?.discountRate || 0) / 100).toFixed(2)}`, 20, yPos);
+      doc.text(`Discounts Used: ₱${((analysisData.summary.metrics?.grossSales || 0) * (analysisData.summary.metrics?.discountRate || 0) / 100).toFixed(2)}`, 20, yPos);
     }
 
     // Add other sections based on selections...
